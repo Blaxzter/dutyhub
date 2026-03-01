@@ -35,7 +35,9 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         if created_by_id:
             query = query.where(col(Event.created_by_id) == created_by_id)
         order_col = getattr(Event, sort_by)
-        query = query.order_by(col(order_col).asc() if sort_dir == "asc" else col(order_col).desc())
+        query = query.order_by(
+            col(order_col).asc() if sort_dir == "asc" else col(order_col).desc()
+        )
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
         return list(result.scalars().all())

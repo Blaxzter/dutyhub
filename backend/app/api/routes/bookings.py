@@ -46,26 +46,40 @@ async def create_booking(
     current_user: CurrentUser,
 ) -> Booking:
     """Book a duty slot for the current user."""
-    slot = await crud_duty_slot.get(session, str(booking_in.duty_slot_id), raise_404_error=True)
+    slot = await crud_duty_slot.get(
+        session, str(booking_in.duty_slot_id), raise_404_error=True
+    )
 
     existing = await crud_booking.get_by_slot_and_user(
         session, duty_slot_id=slot.id, user_id=current_user.id
     )
     if existing and existing.status == "confirmed":
-        raise_problem(409, code="booking.already_exists", detail="You already have a confirmed booking for this slot")
+        raise_problem(
+            409,
+            code="booking.already_exists",
+            detail="You already have a confirmed booking for this slot",
+        )
 
-    confirmed_count = await crud_booking.get_confirmed_count(session, duty_slot_id=slot.id)
+    confirmed_count = await crud_booking.get_confirmed_count(
+        session, duty_slot_id=slot.id
+    )
     if confirmed_count >= slot.max_bookings:
-        raise_problem(409, code="booking.slot_full", detail="This duty slot is fully booked")
+        raise_problem(
+            409, code="booking.slot_full", detail="This duty slot is fully booked"
+        )
 
     # If previously cancelled, reactivate
     if existing and existing.status == "cancelled":
         return await crud_booking.update(
-            session, db_obj=existing, obj_in=BookingUpdate(status="confirmed", notes=booking_in.notes),
+            session,
+            db_obj=existing,
+            obj_in=BookingUpdate(status="confirmed", notes=booking_in.notes),
         )
 
     full_booking = BookingBase(
-        duty_slot_id=booking_in.duty_slot_id, user_id=current_user.id, notes=booking_in.notes,
+        duty_slot_id=booking_in.duty_slot_id,
+        user_id=current_user.id,
+        notes=booking_in.notes,
     )
     return await crud_booking.create(session, obj_in=full_booking)  # type: ignore[arg-type]
 
@@ -78,7 +92,9 @@ async def get_booking(
 ) -> Booking:
     db_booking = await crud_booking.get(session, booking_id, raise_404_error=True)
     if not current_user.is_admin and db_booking.user_id != current_user.id:
-        raise_problem(403, code="booking.forbidden", detail="You can only view your own bookings")
+        raise_problem(
+            403, code="booking.forbidden", detail="You can only view your own bookings"
+        )
     return db_booking
 
 
@@ -92,7 +108,11 @@ async def update_booking(
     """Update a booking. Only the owner or admin can modify."""
     db_booking = await crud_booking.get(session, booking_id, raise_404_error=True)
     if not current_user.is_admin and db_booking.user_id != current_user.id:
-        raise_problem(403, code="booking.forbidden", detail="You can only modify your own bookings")
+        raise_problem(
+            403,
+            code="booking.forbidden",
+            detail="You can only modify your own bookings",
+        )
     return await crud_booking.update(session, db_obj=db_booking, obj_in=booking_in)
 
 
@@ -105,7 +125,11 @@ async def cancel_booking(
     """Cancel a booking (soft-cancel by setting status to 'cancelled')."""
     db_booking = await crud_booking.get(session, booking_id, raise_404_error=True)
     if not current_user.is_admin and db_booking.user_id != current_user.id:
-        raise_problem(403, code="booking.forbidden", detail="You can only cancel your own bookings")
+        raise_problem(
+            403,
+            code="booking.forbidden",
+            detail="You can only cancel your own bookings",
+        )
     return await crud_booking.update(
         session, db_obj=db_booking, obj_in=BookingUpdate(status="cancelled")
     )

@@ -38,10 +38,17 @@ async def list_duty_slots(
     if event_id:
         db_event = await crud_event.get(session, event_id, raise_404_error=True)
         if not current_user.is_admin and db_event.status != "published":
-            raise_problem(403, code="event.not_published", detail="Event is not published")
+            raise_problem(
+                403, code="event.not_published", detail="Event is not published"
+            )
 
     items = await crud_duty_slot.get_multi_filtered(
-        session, skip=skip, limit=limit, event_id=event_id, category=category, search=search
+        session,
+        skip=skip,
+        limit=limit,
+        event_id=event_id,
+        category=category,
+        search=search,
     )
     enriched = [await _enrich_slot(session, s) for s in items]
     total = await crud_duty_slot.get_count_filtered(

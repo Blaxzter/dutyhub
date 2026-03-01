@@ -35,7 +35,9 @@ class CRUDDutySlot(CRUDBase[DutySlot, DutySlotCreate, DutySlotUpdate]):
                 | col(DutySlot.description).ilike(f"%{search}%")
             )
         order_col = getattr(DutySlot, sort_by)
-        query = query.order_by(col(order_col).asc() if sort_dir == "asc" else col(order_col).desc())
+        query = query.order_by(
+            col(order_col).asc() if sort_dir == "asc" else col(order_col).desc()
+        )
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
         return list(result.scalars().all())

@@ -1,9 +1,13 @@
 import uuid
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship
 
 from app.models.base import Base
+
+if TYPE_CHECKING:
+    from app.models.duty_slot import DutySlot  # noqa: F401
 
 
 class Booking(Base, table=True):
@@ -13,12 +17,18 @@ class Booking(Base, table=True):
     )
 
     duty_slot_id: uuid.UUID = Field(
-        sa_column=sa.Column(sa.Uuid, sa.ForeignKey("duty_slots.id"), nullable=False, index=True)
+        sa_column=sa.Column(
+            sa.Uuid, sa.ForeignKey("duty_slots.id"), nullable=False, index=True
+        )
     )
     user_id: uuid.UUID = Field(
-        sa_column=sa.Column(sa.Uuid, sa.ForeignKey("users.id"), nullable=False, index=True)
+        sa_column=sa.Column(
+            sa.Uuid, sa.ForeignKey("users.id"), nullable=False, index=True
+        )
     )
-    status: str = Field(default="confirmed", sa_column=sa.Column(sa.String, nullable=False, index=True))
+    status: str = Field(
+        default="confirmed", sa_column=sa.Column(sa.String, nullable=False, index=True)
+    )
     notes: str | None = Field(default=None, sa_column=sa.Column(sa.Text, nullable=True))
 
-    duty_slot: "DutySlot" = Relationship(back_populates="bookings")  # type: ignore[name-defined]
+    duty_slot: "DutySlot" = Relationship(back_populates="bookings")
