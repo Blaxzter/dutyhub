@@ -1,54 +1,21 @@
 {
     "breadcrumbs": {
-        "breadcrumbExamples": "Breadcrumb Examples",
-        "dialogExamples": "Dialog Examples",
-        "errorBoundaryDemo": "Error Boundary Demo",
-        "errorHandlingDemo": "Error Handling Demo",
-        "examples": "Examples",
         "home": "Home",
-        "layoutDemo": "Layout Demo",
-        "project": "Project",
-        "projects": "Projects",
         "settings": "Settings"
     },
     "sidebar": {
         "items": {
-            "billing": "Billing",
-            "breadcrumbExamples": "Breadcrumb Examples",
-            "changelog": "Changelog",
-            "dialogExamples": "Dialog Examples",
-            "errorBoundaryDemo": "Error Boundary Demo",
-            "errorHandlingDemo": "Error Handling Demo",
-            "general": "General",
-            "getStarted": "Get Started",
-            "history": "History",
-            "introduction": "Introduction",
-            "layoutDemo": "Layout Demo",
-            "limits": "Limits",
-            "projects": "Projects",
-            "settings": "Settings",
-            "starred": "Starred",
-            "team": "Team",
-            "tutorials": "Tutorials"
+            "settings": "Settings"
         },
         "platform": "Platform",
-        "sections": {
-            "documentation": "Documentation",
-            "examples": "Examples",
-            "playground": "Playground",
-            "settings": "Settings",
-            "starter": "Starter"
-        }
+        "sections": {}
     },
     "user": {
         "actions": {
             "account": "Account",
-            "billing": "Billing",
             "logout": "Log out",
-            "notifications": "Notifications",
             "switchToDark": "Switch to Dark",
-            "switchToLight": "Switch to Light",
-            "upgradeToPro": "Upgrade to Pro"
+            "switchToLight": "Switch to Light"
         },
         "loginPrompt": "Please log in to access your account."
     }

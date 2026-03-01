@@ -4,12 +4,9 @@ import { computed } from 'vue'
 import { useColorMode } from '@vueuse/core'
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
   Moon,
-  Sparkles,
   Sun,
 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
@@ -112,13 +109,7 @@ const initials = computed(() => {
               </div>
             </div>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuItem>
-              <Sparkles />
-              {{ $t('navigation.user.actions.upgradeToPro') }}
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
+
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem @click="mode = mode === 'dark' ? 'light' : 'dark'">
@@ -137,14 +128,7 @@ const initials = computed(() => {
               <BadgeCheck />
               {{ $t('navigation.user.actions.account') }}
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <CreditCard />
-              {{ $t('navigation.user.actions.billing') }}
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Bell />
-              {{ $t('navigation.user.actions.notifications') }}
-            </DropdownMenuItem>
+
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem @click="authStore.logout">

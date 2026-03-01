@@ -89,23 +89,6 @@ build-frontend:
 # Build Docker images
 build tag="latest":
     TAG={{tag}} FRONTEND_ENV=production docker compose -f docker-compose.yml build
-
-# ── Template Cleanup ─────────────────────────────────────────
-
-# Remove example/demo content (views, schemas, demo pages)
-remove-examples:
-    python scripts/remove_examples.py
-
-# Remove project/task domain (models, CRUD, routes, views, migrations, tests)
-remove-domain:
-    python scripts/remove_project_task_domain.py
-
-# Full cleanup: remove examples + domain, then regenerate client
-clean-template:
-    python scripts/remove_examples.py --yes
-    python scripts/remove_project_task_domain.py --yes
-    just generate-client
-
 # ── Pre-commit ────────────────────────────────────────────────
 
 # Run all pre-commit hooks

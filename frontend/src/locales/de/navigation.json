@@ -1,54 +1,21 @@
 {
     "breadcrumbs": {
-        "breadcrumbExamples": "Breadcrumb Beispiele",
-        "dialogExamples": "Dialog Beispiele",
-        "errorBoundaryDemo": "Error Boundary Demo",
-        "errorHandlingDemo": "Fehlerbehandlung Demo",
-        "examples": "Beispiele",
         "home": "Startseite",
-        "layoutDemo": "Layout Demo",
-        "project": "Projekt",
-        "projects": "Projekte",
         "settings": "Einstellungen"
     },
     "sidebar": {
         "items": {
-            "billing": "Abrechnung",
-            "breadcrumbExamples": "Breadcrumb Beispiele",
-            "changelog": "Änderungsprotokoll",
-            "dialogExamples": "Dialog Beispiele",
-            "errorBoundaryDemo": "Error Boundary Demo",
-            "errorHandlingDemo": "Fehlerbehandlung Demo",
-            "general": "Allgemein",
-            "getStarted": "Erste Schritte",
-            "history": "Verlauf",
-            "introduction": "Einführung",
-            "layoutDemo": "Layout Demo",
-            "limits": "Limits",
-            "projects": "Projekte",
-            "settings": "Einstellungen",
-            "starred": "Favoriten",
-            "team": "Team",
-            "tutorials": "Tutorials"
+            "settings": "Einstellungen"
         },
         "platform": "Plattform",
-        "sections": {
-            "documentation": "Dokumentation",
-            "examples": "Beispiele",
-            "playground": "Spielwiese",
-            "settings": "Einstellungen",
-            "starter": "Starter"
-        }
+        "sections": {}
     },
     "user": {
         "actions": {
             "account": "Konto",
-            "billing": "Abrechnung",
             "logout": "Abmelden",
-            "notifications": "Benachrichtigungen",
             "switchToDark": "Zu Dunkel wechseln",
-            "switchToLight": "Zu Hell wechseln",
-            "upgradeToPro": "Auf Pro upgraden"
+            "switchToLight": "Zu Hell wechseln"
         },
         "loginPrompt": "Bitte melden Sie sich an, um auf Ihr Konto zuzugreifen."
     }
