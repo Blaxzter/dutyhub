@@ -3,80 +3,77 @@
         "backToHome": "Back to Home",
         "sections": {
             "development": {
-                "description": "This is a full-stack template designed to accelerate development with modern best practices. The architecture follows clean code principles and includes comprehensive tooling for development, testing, and deployment.",
-                "title": "Development"
+                "description": "DutyHub is a digital duty scheduling platform for churches and communities. Organizers create events with duty slots, and volunteers book themselves in — simple, transparent, and reliable.",
+                "title": "How It Works"
             },
             "features": {
                 "apiIntegration": {
-                    "description": "RESTful API with automatic documentation and type-safe client generation.",
-                    "title": "API Integration"
+                    "description": "Browse available duty slots, book with one click, and manage your commitments from anywhere.",
+                    "title": "Easy Booking"
                 },
                 "authentication": {
-                    "description": "Secure user authentication with Auth0 integration and session management.",
-                    "title": "Authentication"
+                    "description": "Your bookings are locked — only you or an admin can change them. No accidental overwrites.",
+                    "title": "Secure & Reliable"
                 },
                 "responsiveDesign": {
-                    "description": "Mobile-first design that works seamlessly across all devices.",
-                    "title": "Responsive Design"
+                    "description": "Works on your phone, tablet, or desktop — manage duties on the go.",
+                    "title": "Works Everywhere"
                 },
                 "title": "Features"
             },
             "techStack": {
                 "backend": {
                     "items": {
-                        "0": "FastAPI framework",
-                        "1": "Python with type hints",
-                        "2": "SQLAlchemy ORM",
-                        "3": "Alembic for migrations",
-                        "4": "PostgreSQL database",
-                        "5": "OAuth2 with JWT tokens",
-                        "6": "Docker containerization"
+                        "0": "Create events (e.g. Pfingsten, Kirchentag)",
+                        "1": "Define duty slots with date, time, and location",
+                        "2": "Set how many volunteers each slot needs",
+                        "3": "Publish when ready for booking",
+                        "4": "See who's signed up at a glance",
+                        "5": "Manage bookings across all events"
                     },
-                    "title": "Backend"
+                    "title": "For Organizers"
                 },
                 "frontend": {
                     "items": {
-                        "0": "Vue.js 3 with Composition API",
-                        "1": "TypeScript for type safety",
-                        "2": "Vue Router for navigation",
-                        "3": "Pinia for state management",
-                        "4": "Tailwind CSS for styling",
-                        "5": "Shadcn/ui components",
-                        "6": "Auth0 for authentication"
+                        "0": "Browse published events and duty slots",
+                        "1": "Book a slot with one click",
+                        "2": "See all your bookings in one place",
+                        "3": "Cancel if your plans change",
+                        "4": "Get a clear overview of availability"
                     },
-                    "title": "Frontend"
+                    "title": "For Volunteers"
                 },
-                "title": "Technology Stack"
+                "title": "How It Works"
             }
         },
-        "subtitle": "Learn more about this application and the technology stack.",
-        "title": "About"
+        "subtitle": "Learn more about DutyHub and how it helps organize duty schedules.",
+        "title": "About DutyHub"
     },
     "landing": {
-        "authNote": "Secure authentication powered by Auth0",
+        "authNote": "Sign in to browse events and book your duties",
         "features": {
             "easyToUse": {
-                "description": "Intuitive interface designed for productivity and ease of use.",
-                "title": "Easy to Use"
+                "description": "Browse events, pick a slot, and book — it's that simple. No spreadsheets, no confusion.",
+                "title": "Easy Booking"
             },
             "fastSecure": {
-                "description": "Built with modern technologies for optimal performance and security.",
-                "title": "Fast & Secure"
+                "description": "Your bookings are locked and can't be changed by others. Only you or an admin can cancel.",
+                "title": "Locked Bookings"
             },
             "scalable": {
-                "description": "Architecture designed to grow with your needs and requirements.",
-                "title": "Scalable"
+                "description": "Whether it's a small gathering or a large church congress — DutyHub scales with your needs.",
+                "title": "Any Event Size"
             }
         },
-        "getStarted": "Get Started",
+        "getStarted": "Sign In",
         "learnMore": "Learn More",
-        "subtitle": "A modern full-stack application built with FastAPI and Vue.js. Sign in to access your dashboard and start managing your data.",
-        "welcome": "Welcome to Your App"
+        "subtitle": "The digital duty scheduling platform for church events. Book your shifts for Pfingsten, Kirchentag, and more — simple, transparent, and reliable.",
+        "welcome": "Welcome to DutyHub"
     },
     "layout": {
-        "appName": "Your App",
+        "appName": "DutyHub",
         "footer": {
-            "copyright": "© 2025 Your App. All rights reserved."
+            "copyright": "© 2026 DutyHub. Duty scheduling made simple."
         },
         "navigation": {
             "about": "About",

@@ -1,43 +1,26 @@
 {
     "home": {
-        "recentActivity": {
-            "items": {
-                "backup": {
-                    "description": "Alle Daten erfolgreich gesichert",
-                    "time": "vor 1 Stunde",
-                    "title": "System-Backup abgeschlossen"
-                },
-                "newUser": {
-                    "email": "john{'@'}example.com",
-                    "time": "vor 2 Minuten",
-                    "title": "Neuer Benutzer registriert"
-                },
-                "payment": {
-                    "amount": "299,00€ vom Premium-Plan",
-                    "time": "vor 15 Minuten",
-                    "title": "Zahlung erhalten"
-                }
-            },
-            "title": "Letzte Aktivitäten"
+        "quickActions": {
+            "browseEvents": "Veranstaltungen durchsuchen",
+            "myBookings": "Meine Buchungen",
+            "title": "Schnellzugriff"
         },
         "stats": {
-            "activeSessions": {
-                "change": "+5% seit letzter Stunde",
-                "title": "Aktive Sitzungen",
-                "value": "892"
+            "admin": {
+                "action": "Veranstaltungen verwalten",
+                "description": "Veranstaltungen erstellen, Schichten hinzufügen und Buchungen verwalten.",
+                "title": "Admin"
             },
-            "revenue": {
-                "change": "+8% seit letztem Monat",
-                "title": "Umsatz",
-                "value": "45.678€"
+            "bookings": {
+                "description": "Ihre bestätigten Dienstbuchungen",
+                "title": "Meine Buchungen"
             },
-            "totalUsers": {
-                "change": "+12% seit letztem Monat",
-                "title": "Benutzer insgesamt",
-                "value": "1.234"
+            "events": {
+                "description": "Verfügbare Veranstaltungen",
+                "title": "Veranstaltungen"
             }
         },
-        "subtitle": "Willkommen zurück! Hier ist, was mit Ihrer Anwendung passiert.",
+        "subtitle": "Willkommen zurück! Hier ist Ihre Dienstübersicht.",
         "title": "Dashboard"
     }
 }

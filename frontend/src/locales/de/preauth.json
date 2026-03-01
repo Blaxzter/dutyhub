@@ -3,80 +3,77 @@
         "backToHome": "Zurück zur Startseite",
         "sections": {
             "development": {
-                "description": "Dies ist ein Full-Stack-Template, das entwickelt wurde, um die Entwicklung mit modernen Best Practices zu beschleunigen. Die Architektur folgt Clean-Code-Prinzipien und umfasst umfassende Tools für Entwicklung, Testing und Deployment.",
-                "title": "Entwicklung"
+                "description": "DutyHub ist eine digitale Dienstplan-Plattform für Kirchen und Gemeinden. Organisatoren erstellen Veranstaltungen mit Dienstschichten, und Freiwillige buchen sich selbst ein — einfach, transparent und zuverlässig.",
+                "title": "So funktioniert's"
             },
             "features": {
                 "apiIntegration": {
-                    "description": "RESTful API mit automatischer Dokumentation und typsicherer Client-Generierung.",
-                    "title": "API-Integration"
+                    "description": "Verfügbare Dienstschichten durchsuchen, mit einem Klick buchen und Ihre Einsätze von überall verwalten.",
+                    "title": "Einfache Buchung"
                 },
                 "authentication": {
-                    "description": "Sichere Benutzerauthentifizierung mit Auth0-Integration und Session-Management.",
-                    "title": "Authentifizierung"
+                    "description": "Ihre Buchungen sind gesperrt — nur Sie oder ein Admin können sie ändern. Kein versehentliches Überschreiben.",
+                    "title": "Sicher & Zuverlässig"
                 },
                 "responsiveDesign": {
-                    "description": "Mobile-First-Design, das nahtlos auf allen Geräten funktioniert.",
-                    "title": "Responsive Design"
+                    "description": "Funktioniert auf Handy, Tablet oder Desktop — Dienste auch unterwegs verwalten.",
+                    "title": "Überall nutzbar"
                 },
                 "title": "Features"
             },
             "techStack": {
                 "backend": {
                     "items": {
-                        "0": "FastAPI Framework",
-                        "1": "Python mit Type Hints",
-                        "2": "SQLAlchemy ORM",
-                        "3": "Alembic für Migrationen",
-                        "4": "PostgreSQL Datenbank",
-                        "5": "OAuth2 mit JWT Tokens",
-                        "6": "Docker Containerisierung"
+                        "0": "Veranstaltungen erstellen (z.B. Pfingsten, Kirchentag)",
+                        "1": "Dienstschichten mit Datum, Uhrzeit und Ort definieren",
+                        "2": "Festlegen, wie viele Freiwillige pro Schicht benötigt werden",
+                        "3": "Veröffentlichen, wenn alles bereit ist",
+                        "4": "Auf einen Blick sehen, wer sich eingetragen hat",
+                        "5": "Buchungen über alle Veranstaltungen hinweg verwalten"
                     },
-                    "title": "Backend"
+                    "title": "Für Organisatoren"
                 },
                 "frontend": {
                     "items": {
-                        "0": "Vue.js 3 mit Composition API",
-                        "1": "TypeScript für Typsicherheit",
-                        "2": "Vue Router für Navigation",
-                        "3": "Pinia für Zustandsverwaltung",
-                        "4": "Tailwind CSS für Styling",
-                        "5": "Shadcn/ui Komponenten",
-                        "6": "Auth0 für Authentifizierung"
+                        "0": "Veröffentlichte Veranstaltungen und Schichten durchsuchen",
+                        "1": "Mit einem Klick eine Schicht buchen",
+                        "2": "Alle Buchungen an einem Ort sehen",
+                        "3": "Stornieren, wenn sich Pläne ändern",
+                        "4": "Klare Übersicht über Verfügbarkeit"
                     },
-                    "title": "Frontend"
+                    "title": "Für Freiwillige"
                 },
-                "title": "Technologie-Stack"
+                "title": "So funktioniert's"
             }
         },
-        "subtitle": "Erfahren Sie mehr über diese Anwendung und den Technologie-Stack.",
-        "title": "Über uns"
+        "subtitle": "Erfahren Sie mehr über DutyHub und wie es bei der Organisation von Dienstplänen hilft.",
+        "title": "Über DutyHub"
     },
     "landing": {
-        "authNote": "Sichere Authentifizierung powered by Auth0",
+        "authNote": "Melden Sie sich an, um Veranstaltungen zu sehen und Dienste zu buchen",
         "features": {
             "easyToUse": {
-                "description": "Intuitive Benutzeroberfläche für Produktivität und Benutzerfreundlichkeit.",
-                "title": "Einfach zu bedienen"
+                "description": "Veranstaltung durchsuchen, Schicht auswählen und buchen — so einfach geht's. Keine Tabellen, kein Durcheinander.",
+                "title": "Einfache Buchung"
             },
             "fastSecure": {
-                "description": "Entwickelt mit modernen Technologien für optimale Leistung und Sicherheit.",
-                "title": "Schnell & Sicher"
+                "description": "Ihre Buchungen sind gesperrt und können von anderen nicht geändert werden. Nur Sie oder ein Admin können stornieren.",
+                "title": "Gesperrte Buchungen"
             },
             "scalable": {
-                "description": "Architektur, die mit Ihren Bedürfnissen und Anforderungen wächst.",
-                "title": "Skalierbar"
+                "description": "Ob kleines Treffen oder großer Kirchentag — DutyHub wächst mit Ihren Anforderungen.",
+                "title": "Jede Veranstaltungsgröße"
             }
         },
-        "getStarted": "Loslegen",
+        "getStarted": "Anmelden",
         "learnMore": "Mehr erfahren",
-        "subtitle": "Eine moderne Full-Stack-Anwendung, entwickelt mit FastAPI und Vue.js. Melden Sie sich an, um auf Ihr Dashboard zuzugreifen und mit der Verwaltung Ihrer Daten zu beginnen.",
-        "welcome": "Willkommen in Ihrer App"
+        "subtitle": "Die digitale Dienstplan-Plattform für kirchliche Veranstaltungen. Buchen Sie Ihre Schichten für Pfingsten, Kirchentag und mehr — einfach, transparent und zuverlässig.",
+        "welcome": "Willkommen bei DutyHub"
     },
     "layout": {
-        "appName": "Ihre App",
+        "appName": "DutyHub",
         "footer": {
-            "copyright": "© 2025 Ihre App. Alle Rechte vorbehalten."
+            "copyright": "© 2026 DutyHub. Dienstplanung leicht gemacht."
         },
         "navigation": {
             "about": "Über uns",
