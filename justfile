@@ -80,6 +80,16 @@ generate-client:
     cd frontend && pnpm exec prettier --write ./src/client
     rm -f frontend/openapi.json
 
+# ── Upstream Sync ─────────────────────────────────────────────
+
+# Add the upstream template remote (run once after forking)
+add-upstream url:
+    python scripts/sync_upstream.py --add-remote {{url}}
+
+# Fetch and merge upstream template changes into your fork
+sync-upstream remote="upstream" branch="main":
+    python scripts/sync_upstream.py --remote {{remote}} --branch {{branch}}
+
 # ── Build & Deploy ────────────────────────────────────────────
 
 # Build frontend for production
@@ -89,6 +99,7 @@ build-frontend:
 # Build Docker images
 build tag="latest":
     TAG={{tag}} FRONTEND_ENV=production docker compose -f docker-compose.yml build
+
 # ── Pre-commit ────────────────────────────────────────────────
 
 # Run all pre-commit hooks
