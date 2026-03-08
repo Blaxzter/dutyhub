@@ -1,0 +1,22 @@
+{
+    "sidebar": {
+        "section": "Administration"
+    },
+    "users": {
+        "title": "User Management",
+        "subtitle": "View and manage platform users and their roles.",
+        "columns": {
+            "name": "Name",
+            "email": "Email",
+            "roles": "Roles",
+            "status": "Status",
+            "actions": "Actions"
+        },
+        "active": "Active",
+        "inactive": "Inactive",
+        "makeAdmin": "Make Admin",
+        "removeAdmin": "Remove Admin",
+        "grantedAdmin": "Granted admin role to {name}.",
+        "removedAdmin": "Removed admin role from {name}."
+    }
+}

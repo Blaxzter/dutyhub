@@ -13,6 +13,10 @@ const router = useRouter()
 useI18n()
 
 const handleGetStarted = () => {
+  if (authStore.isAuthenticated) {
+    router.push({ name: 'home' })
+    return
+  }
   const redirectUri = import.meta.env.VITE_AUTH0_CALLBACK_URL || `${window.location.origin}/app/home`
   authStore.auth0.loginWithRedirect({
     authorizationParams: {
@@ -39,7 +43,7 @@ const navigateToAbout = () => {
     <div class="space-y-4">
       <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
         <Button @click="handleGetStarted" size="lg" class="px-8 py-3 text-lg font-medium">
-          {{ $t('preauth.landing.getStarted') }}
+          {{ authStore.isAuthenticated ? $t('preauth.layout.navigation.goToDashboard') : $t('preauth.landing.getStarted') }}
         </Button>
         <Button
           @click="navigateToAbout"

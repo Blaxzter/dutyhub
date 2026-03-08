@@ -1,54 +1,38 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { Plus, Search, Trash2 } from 'lucide-vue-next'
+import { Calendar, List, Plus, Search } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import type { EventListResponse, EventRead } from '@/client/types.gen'
-import Badge from '@/components/ui/badge/Badge.vue'
+import type {
+  EventGroupListResponse,
+  EventGroupRead,
+  EventListResponse,
+  EventRead,
+} from '@/client/types.gen'
 import Button from '@/components/ui/button/Button.vue'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import Input from '@/components/ui/input/Input.vue'
-import Label from '@/components/ui/label/Label.vue'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
 import { toastApiError } from '@/lib/api-errors'
 import { useAuthStore } from '@/stores/auth'
 
+import EventCalendarView from '@/components/events/EventCalendarView.vue'
+import EventListView from '@/components/events/EventListView.vue'
+
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
-const { get, post, delete: del } = useAuthenticatedClient()
+const { get, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 
 const events = ref<EventRead[]>([])
+const eventGroups = ref<EventGroupRead[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
-const showCreateDialog = ref(false)
-
-// Create form
-const createForm = ref({
-  name: '',
-  description: '',
-  start_date: '',
-  end_date: '',
-})
+const viewMode = ref<'list' | 'calendar'>('list')
 
 const filteredEvents = computed(() => {
   if (!searchQuery.value) return events.value
@@ -60,55 +44,19 @@ const filteredEvents = computed(() => {
   )
 })
 
-const statusVariant = (status?: string) => {
-  switch (status) {
-    case 'published':
-      return 'default'
-    case 'draft':
-      return 'secondary'
-    case 'archived':
-      return 'outline'
-    default:
-      return 'secondary'
-  }
-}
-
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString()
-}
-
 const loadEvents = async () => {
   loading.value = true
   try {
-    const response = await get<{ data: EventListResponse }>({
-      url: '/events/',
-      query: { limit: 100 },
-    })
-    events.value = response.data.items
+    const [eventsRes, groupsRes] = await Promise.all([
+      get<{ data: EventListResponse }>({ url: '/events/', query: { limit: 100 } }),
+      get<{ data: EventGroupListResponse }>({ url: '/event-groups/', query: { limit: 100 } }),
+    ])
+    events.value = eventsRes.data.items
+    eventGroups.value = groupsRes.data.items
   } catch (error) {
     toastApiError(error)
   } finally {
     loading.value = false
-  }
-}
-
-const handleCreate = async () => {
-  try {
-    await post({
-      url: '/events/',
-      body: {
-        name: createForm.value.name,
-        description: createForm.value.description || undefined,
-        start_date: createForm.value.start_date,
-        end_date: createForm.value.end_date,
-      },
-    })
-    showCreateDialog.value = false
-    createForm.value = { name: '', description: '', start_date: '', end_date: '' }
-    toast.success(t('duties.events.create'))
-    await loadEvents()
-  } catch (error) {
-    toastApiError(error)
   }
 }
 
@@ -129,116 +77,77 @@ const navigateToEvent = (event: EventRead) => {
   router.push({ name: 'event-detail', params: { eventId: event.id } })
 }
 
+const navigateToGroup = (group: EventGroupRead) => {
+  router.push({ name: 'event-group-detail', params: { groupId: group.id } })
+}
+
 onMounted(loadEvents)
 </script>
 
 <template>
   <div class="mx-auto max-w-7xl space-y-6">
     <!-- Header -->
-    <div class="flex items-start justify-between">
+    <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
         <h1 class="text-3xl font-bold">{{ t('duties.events.title') }}</h1>
         <p class="text-muted-foreground">{{ t('duties.events.subtitle') }}</p>
       </div>
-      <Button v-if="authStore.isAdmin" @click="showCreateDialog = true">
-        <Plus class="mr-2 h-4 w-4" />
-        {{ t('duties.events.create') }}
-      </Button>
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- View Toggle -->
+        <div class="flex overflow-hidden rounded-md border">
+          <Button
+            :variant="viewMode === 'list' ? 'default' : 'ghost'"
+            size="sm"
+            class="rounded-none border-0"
+            @click="viewMode = 'list'"
+          >
+            <List class="mr-1.5 h-4 w-4" />
+            <span class="hidden sm:inline">{{ t('duties.events.views.list') }}</span>
+          </Button>
+          <Button
+            :variant="viewMode === 'calendar' ? 'default' : 'ghost'"
+            size="sm"
+            class="rounded-none border-0 border-l"
+            @click="viewMode = 'calendar'"
+          >
+            <Calendar class="mr-1.5 h-4 w-4" />
+            <span class="hidden sm:inline">{{ t('duties.events.views.calendar') }}</span>
+          </Button>
+        </div>
+
+        <Button v-if="authStore.isAdmin" @click="router.push({ name: 'event-create' })">
+          <Plus class="mr-2 h-4 w-4" />
+          {{ t('duties.events.create') }}
+        </Button>
+      </div>
     </div>
 
     <!-- Search -->
     <div class="relative">
       <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input
-        v-model="searchQuery"
-        :placeholder="t('common.actions.search')"
-        class="pl-10"
-      />
+      <Input v-model="searchQuery" :placeholder="t('common.actions.search')" class="pl-10" />
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="text-center py-12 text-muted-foreground">
+    <div v-if="loading" class="py-12 text-center text-muted-foreground">
       {{ t('common.states.loading') }}
     </div>
 
-    <!-- Empty -->
-    <div
-      v-else-if="filteredEvents.length === 0"
-      class="text-center py-12 text-muted-foreground"
-    >
-      {{ t('duties.events.empty') }}
-    </div>
+    <template v-else>
+      <EventListView
+        v-if="viewMode === 'list'"
+        :events="filteredEvents"
+        @navigate="navigateToEvent"
+        @delete="handleDelete"
+      />
+      <EventCalendarView
+        v-else
+        :events="filteredEvents"
+        :event-groups="eventGroups"
+        @navigate="navigateToEvent"
+        @navigate-group="navigateToGroup"
+      />
+    </template>
 
-    <!-- Event Grid -->
-    <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <Card
-        v-for="event in filteredEvents"
-        :key="event.id"
-        class="cursor-pointer transition-colors hover:bg-muted/50"
-        @click="navigateToEvent(event)"
-      >
-        <CardHeader class="pb-3">
-          <div class="flex items-start justify-between">
-            <CardTitle class="text-lg">{{ event.name }}</CardTitle>
-            <Badge :variant="statusVariant(event.status)">
-              {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
-            </Badge>
-          </div>
-          <CardDescription v-if="event.description">
-            {{ event.description }}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div class="flex items-center justify-between text-sm text-muted-foreground">
-            <span>{{ formatDate(event.start_date) }} - {{ formatDate(event.end_date) }}</span>
-            <Button
-              v-if="authStore.isAdmin"
-              variant="ghost"
-              size="icon"
-              class="h-8 w-8"
-              @click.stop="handleDelete(event)"
-            >
-              <Trash2 class="h-4 w-4 text-destructive" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-
-    <!-- Create Event Dialog -->
-    <Dialog v-model:open="showCreateDialog">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{{ t('duties.events.create') }}</DialogTitle>
-          <DialogDescription>{{ t('duties.events.subtitle') }}</DialogDescription>
-        </DialogHeader>
-        <form class="space-y-4" @submit.prevent="handleCreate">
-          <div class="space-y-2">
-            <Label>{{ t('duties.events.fields.name') }}</Label>
-            <Input v-model="createForm.name" required />
-          </div>
-          <div class="space-y-2">
-            <Label>{{ t('duties.events.fields.description') }}</Label>
-            <Input v-model="createForm.description" />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <Label>{{ t('duties.events.fields.startDate') }}</Label>
-              <Input v-model="createForm.start_date" type="date" required />
-            </div>
-            <div class="space-y-2">
-              <Label>{{ t('duties.events.fields.endDate') }}</Label>
-              <Input v-model="createForm.end_date" type="date" required />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" @click="showCreateDialog = false">
-              {{ t('common.actions.cancel') }}
-            </Button>
-            <Button type="submit">{{ t('common.actions.create') }}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
   </div>
 </template>

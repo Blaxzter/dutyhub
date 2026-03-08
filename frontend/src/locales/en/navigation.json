@@ -5,6 +5,13 @@
     },
     "sidebar": {
         "items": {
+            "home": {
+                "label": "Home"
+            },
+            "eventGroups": {
+                "description": "Browse event programmes",
+                "label": "Event Groups"
+            },
             "events": {
                 "description": "Browse duty events",
                 "label": "Events"

@@ -67,6 +67,11 @@
             "title": "404"
         }
     },
+    "validation": {
+        "required": "Dieses Feld ist erforderlich",
+        "invalidDate": "Bitte wählen Sie ein gültiges Datum",
+        "endDateBeforeStart": "Das Enddatum muss nach dem Startdatum liegen"
+    },
     "language": {
         "current": "Aktuelle Sprache",
         "switch": "Sprache wechseln"

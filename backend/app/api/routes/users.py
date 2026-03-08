@@ -114,7 +114,7 @@ async def get_user(
 async def create_user(
     user_in: UserCreate,
     session: DBDep,
-    _: CurrentUser,
+    _: CurrentSuperuser,
 ) -> User:
     return await crud_user.create(session, obj_in=user_in)
 
@@ -124,7 +124,7 @@ async def update_user(
     user_id: uuid.UUID,
     user_in: UserUpdate,
     session: DBDep,
-    _: CurrentUser,
+    _: CurrentSuperuser,
 ) -> User:
     user = await crud_user.get(session, id=user_id, raise_404_error=True)
     return await crud_user.update(session, db_obj=user, obj_in=user_in)
@@ -134,7 +134,7 @@ async def update_user(
 async def delete_user(
     user_id: uuid.UUID,
     session: DBDep,
-    _: CurrentUser,
+    _: CurrentSuperuser,
 ) -> User:
     user = await crud_user.get(session, id=user_id, raise_404_error=True)
     await session.delete(user)

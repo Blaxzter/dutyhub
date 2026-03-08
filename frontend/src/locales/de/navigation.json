@@ -5,6 +5,13 @@
     },
     "sidebar": {
         "items": {
+            "home": {
+                "label": "Startseite"
+            },
+            "eventGroups": {
+                "description": "Veranstaltungsprogramme durchsuchen",
+                "label": "Veranstaltungsgruppen"
+            },
             "events": {
                 "description": "Dienst-Veranstaltungen durchsuchen",
                 "label": "Veranstaltungen"

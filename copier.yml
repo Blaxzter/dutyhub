@@ -8,14 +8,6 @@ stack_name:
     help: The name of the stack used for Docker Compose labels (no spaces) (in .env)
     default: fastapi-project
 
-secret_key:
-    type: str
-    help: |
-        'The secret key for the project, used for security,
-        stored in .env, you can generate one with:
-        python -c "import secrets; print(secrets.token_urlsafe(32))"'
-    default: changethis
-
 smtp_host:
     type: str
     help: The SMTP server host to send emails, you can set it later in .env

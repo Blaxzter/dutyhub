@@ -1,0 +1,22 @@
+{
+    "sidebar": {
+        "section": "Administration"
+    },
+    "users": {
+        "title": "Benutzerverwaltung",
+        "subtitle": "Plattformbenutzer und deren Rollen anzeigen und verwalten.",
+        "columns": {
+            "name": "Name",
+            "email": "E-Mail",
+            "roles": "Rollen",
+            "status": "Status",
+            "actions": "Aktionen"
+        },
+        "active": "Aktiv",
+        "inactive": "Inaktiv",
+        "makeAdmin": "Admin machen",
+        "removeAdmin": "Admin entfernen",
+        "grantedAdmin": "Adminrolle an {name} vergeben.",
+        "removedAdmin": "Adminrolle von {name} entfernt."
+    }
+}

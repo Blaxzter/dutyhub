@@ -1,15 +1,19 @@
 set shell := ["bash", "-cu"]
 set windows-shell := ["C:/Program Files/Git/bin/bash.exe", "-cu"]
 
+# Dev mode: "docker" (full stack via Docker Compose watch) or "local" (direct processes).
+# Change this value to switch the default for all dev/test recipes.
+dev_mode := "local"
+
 # Default: list available recipes
 default:
     @just --list
 
 # ── Development ───────────────────────────────────────────────
 
-# Start all services with Docker Compose watch mode
-dev:
-    docker compose watch
+# Start dev environment (respects DEV_MODE env var, default: "docker")
+dev mode=dev_mode:
+    if [ "{{mode}}" = "docker" ]; then docker compose watch; elif [ "{{mode}}" = "local" ]; then docker compose up db adminer -d && echo "" && echo "DB + Adminer started. Open two terminals and run:" && echo "  just dev-backend" && echo "  just dev-frontend"; else echo "Unknown mode '{{mode}}'. Use 'docker' or 'local'." && exit 1; fi
 
 # Start backend dev server directly (no Docker)
 dev-backend:
@@ -53,9 +57,10 @@ test-backend:
 type-check:
     cd frontend && pnpm type-check
 
-# Run Playwright e2e tests in Docker
-test-e2e:
-    docker compose run --rm playwright npx playwright test
+# Run Playwright e2e tests. Extra playwright flags are passed through.
+# e.g.: just test-e2e --headed --project=chromium
+test-e2e *args:
+    if [ "{{dev_mode}}" = "docker" ]; then docker compose run --rm playwright npx playwright test {{args}}; else cd frontend && pnpm exec playwright test {{args}}; fi
 
 # ── Database ──────────────────────────────────────────────────
 
@@ -99,6 +104,13 @@ build-frontend:
 # Build Docker images
 build tag="latest":
     TAG={{tag}} FRONTEND_ENV=production docker compose -f docker-compose.yml build
+
+
+# ── Auth0 ─────────────────────────────────────────────────────
+
+# Interactively create all Auth0 resources and write values to .env files
+setup-auth0:
+    python scripts/setup_auth0.py
 
 # ── Pre-commit ────────────────────────────────────────────────
 

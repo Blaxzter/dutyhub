@@ -10,7 +10,9 @@ from .base import Base  # Import the Base model for common fields and functional
 from .booking import Booking
 from .duty_slot import DutySlot
 from .event import Event
+from .event_group import EventGroup
 from .user import User
+from .user_availability import UserAvailability, UserAvailabilityDate
 
 __all__ = [
     "SQLModel",
@@ -18,5 +20,8 @@ __all__ = [
     "Booking",
     "DutySlot",
     "Event",
+    "EventGroup",
     "User",
+    "UserAvailability",
+    "UserAvailabilityDate",
 ]

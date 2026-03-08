@@ -50,11 +50,46 @@ const router = createRouter({
           },
         },
         {
+          path: 'event-groups',
+          name: 'event-groups',
+          component: () => import('@/views/event-groups/EventGroupsView.vue'),
+          meta: {
+            breadcrumbs: [{ title: 'Event Groups', titleKey: 'duties.eventGroups.title' }],
+          },
+        },
+        {
+          path: 'event-groups/:groupId',
+          name: 'event-group-detail',
+          component: () => import('@/views/event-groups/EventGroupDetailView.vue'),
+          meta: {
+            breadcrumbs: [
+              {
+                title: 'Event Groups',
+                titleKey: 'duties.eventGroups.title',
+                to: { name: 'event-groups' },
+              },
+              { title: 'Event Group Details', titleKey: 'duties.eventGroups.detail.title' },
+            ],
+          },
+        },
+        {
           path: 'events',
           name: 'events',
           component: () => import('@/views/events/EventsView.vue'),
           meta: {
             breadcrumbs: [{ title: 'Events', titleKey: 'duties.events.title' }],
+          },
+        },
+        {
+          path: 'events/create',
+          name: 'event-create',
+          component: () => import('@/views/events/EventCreateView.vue'),
+          meta: {
+            requiresRole: 'admin',
+            breadcrumbs: [
+              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
+              { title: 'Create Event', titleKey: 'duties.events.createView.title' },
+            ],
           },
         },
         {
@@ -84,6 +119,18 @@ const router = createRouter({
             breadcrumbs: [
               { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
               { title: 'Settings', titleKey: 'navigation.breadcrumbs.settings' },
+            ],
+          },
+        },
+        {
+          path: 'admin/users',
+          name: 'admin-users',
+          component: () => import('@/views/admin/UsersView.vue'),
+          meta: {
+            requiresRole: 'admin',
+            breadcrumbs: [
+              { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
+              { title: 'User Management', titleKey: 'admin.users.title' },
             ],
           },
         },

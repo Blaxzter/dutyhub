@@ -2,15 +2,21 @@ from fastapi import APIRouter, Query
 
 from app.api.deps import CurrentSuperuser, CurrentUser, DBDep
 from app.core.errors import raise_problem
+from app.crud.duty_slot import duty_slot as crud_duty_slot
 from app.crud.event import event as crud_event
+from app.crud.event_group import event_group as crud_event_group
+from app.logic.slot_generator import generate_duty_slots
 from app.models.event import Event
 from app.schemas.event import (
     EventCreate,
+    EventCreateWithSlots,
+    EventCreateWithSlotsResponse,
     EventListResponse,
     EventRead,
     EventStatus,
     EventUpdate,
 )
+from app.schemas.event_group import EventGroupRead
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -63,6 +69,73 @@ async def create_event(
 ) -> Event:
     event_in.created_by_id = current_user.id
     return await crud_event.create(session, obj_in=event_in)
+
+
+@router.post("/with-slots", response_model=EventCreateWithSlotsResponse, status_code=201)
+async def create_event_with_slots(
+    payload: EventCreateWithSlots,
+    session: DBDep,
+    current_user: CurrentSuperuser,
+) -> EventCreateWithSlotsResponse:
+    """Create an event with auto-generated duty slots in a single transaction."""
+    # 1. Optionally create a new event group
+    event_group_read: EventGroupRead | None = None
+    event_group_id = payload.event_group_id
+
+    if payload.new_event_group:
+        payload.new_event_group.created_by_id = current_user.id
+        db_group = await crud_event_group.create(session, obj_in=payload.new_event_group)
+        event_group_id = db_group.id
+        event_group_read = EventGroupRead.model_validate(db_group)
+
+    # 2. Create the event with generation config stored
+    event_in = EventCreate(
+        name=payload.name,
+        description=payload.description,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        location=payload.location,
+        category=payload.category,
+        event_group_id=event_group_id,
+        created_by_id=current_user.id,
+    )
+    db_event = await crud_event.create(session, obj_in=event_in)
+
+    # Store generation config on the event
+    db_event.slot_duration_minutes = payload.schedule.slot_duration_minutes
+    db_event.default_start_time = payload.schedule.default_start_time
+    db_event.default_end_time = payload.schedule.default_end_time
+    db_event.people_per_slot = payload.schedule.people_per_slot
+    db_event.schedule_overrides = [o.model_dump(mode="json") for o in payload.schedule.overrides]
+    session.add(db_event)
+    await session.flush()
+
+    # 3. Generate and bulk-insert duty slots
+    slot_creates = generate_duty_slots(
+        event_id=db_event.id,
+        event_name=payload.name,
+        start_date=payload.start_date,
+        end_date=payload.end_date,
+        default_start_time=payload.schedule.default_start_time,
+        default_end_time=payload.schedule.default_end_time,
+        slot_duration_minutes=payload.schedule.slot_duration_minutes,
+        people_per_slot=payload.schedule.people_per_slot,
+        location=payload.location,
+        category=payload.category,
+        overrides=payload.schedule.overrides,
+    )
+
+    for slot_in in slot_creates:
+        await crud_duty_slot.create(session, obj_in=slot_in)
+
+    await session.flush()
+    await session.refresh(db_event)
+
+    return EventCreateWithSlotsResponse(
+        event=EventRead.model_validate(db_event),
+        duty_slots_created=len(slot_creates),
+        event_group=event_group_read,
+    )
 
 
 @router.patch("/{event_id}", response_model=EventRead)

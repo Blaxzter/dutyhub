@@ -6,3 +6,4 @@ node_modules/
 .env
 .claude/settings.local.json
 __pycache__
+.config/auth0/config.json

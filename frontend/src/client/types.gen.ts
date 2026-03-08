@@ -273,6 +273,186 @@ export type EventCreate = {
    * Created By Id
    */
   created_by_id?: string | null
+  /**
+   * Event Group Id
+   */
+  event_group_id?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+}
+
+/**
+ * EventCreateWithSlots
+ */
+export type EventCreateWithSlots = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
+   * Event Group Id
+   */
+  event_group_id?: string | null
+  new_event_group?: EventGroupCreate | null
+  schedule: SlotGenerationConfig
+}
+
+/**
+ * EventCreateWithSlotsResponse
+ */
+export type EventCreateWithSlotsResponse = {
+  event: EventRead
+  /**
+   * Duty Slots Created
+   */
+  duty_slots_created: number
+  event_group?: EventGroupRead | null
+}
+
+/**
+ * EventGroupCreate
+ */
+export type EventGroupCreate = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
+}
+
+/**
+ * EventGroupListResponse
+ */
+export type EventGroupListResponse = {
+  /**
+   * Items
+   */
+  items: Array<EventGroupRead>
+  /**
+   * Total
+   */
+  total: number
+  /**
+   * Skip
+   */
+  skip: number
+  /**
+   * Limit
+   */
+  limit: number
+}
+
+/**
+ * EventGroupRead
+ */
+export type EventGroupRead = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+}
+
+/**
+ * EventGroupUpdate
+ */
+export type EventGroupUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date?: string | null
+  /**
+   * End Date
+   */
+  end_date?: string | null
+  /**
+   * Status
+   */
+  status?: ('draft' | 'published' | 'archived') | null
 }
 
 /**
@@ -326,6 +506,18 @@ export type EventRead = {
    */
   created_by_id?: string | null
   /**
+   * Event Group Id
+   */
+  event_group_id?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
    * Id
    */
   id: string
@@ -337,6 +529,28 @@ export type EventRead = {
    * Updated At
    */
   updated_at: string
+  /**
+   * Slot Duration Minutes
+   */
+  slot_duration_minutes?: number | null
+  /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
+  /**
+   * People Per Slot
+   */
+  people_per_slot?: number | null
+  /**
+   * Schedule Overrides
+   */
+  schedule_overrides?: Array<{
+    [key: string]: unknown
+  }> | null
 }
 
 /**
@@ -363,6 +577,18 @@ export type EventUpdate = {
    * Status
    */
   status?: ('draft' | 'published' | 'archived') | null
+  /**
+   * Event Group Id
+   */
+  event_group_id?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
 }
 
 /**
@@ -382,6 +608,167 @@ export type ProfileInit = {
    * Nickname
    */
   nickname?: string | null
+}
+
+/**
+ * ScheduleOverride
+ */
+export type ScheduleOverride = {
+  /**
+   * Date
+   */
+  date: string
+  /**
+   * Start Time
+   */
+  start_time: string
+  /**
+   * End Time
+   */
+  end_time: string
+}
+
+/**
+ * SlotGenerationConfig
+ */
+export type SlotGenerationConfig = {
+  /**
+   * Default Start Time
+   */
+  default_start_time: string
+  /**
+   * Default End Time
+   */
+  default_end_time: string
+  /**
+   * Slot Duration Minutes
+   */
+  slot_duration_minutes: number
+  /**
+   * People Per Slot
+   */
+  people_per_slot?: number
+  /**
+   * Overrides
+   */
+  overrides?: Array<ScheduleOverride>
+}
+
+/**
+ * UserAvailabilityCreate
+ */
+export type UserAvailabilityCreate = {
+  /**
+   * Availability Type
+   */
+  availability_type: 'fully_available' | 'specific_dates'
+  /**
+   * Notes
+   */
+  notes?: string | null
+  /**
+   * Dates
+   */
+  dates?: Array<string>
+}
+
+/**
+ * UserAvailabilityDateRead
+ */
+export type UserAvailabilityDateRead = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Slot Date
+   */
+  slot_date: string
+}
+
+/**
+ * UserAvailabilityRead
+ */
+export type UserAvailabilityRead = {
+  /**
+   * Availability Type
+   */
+  availability_type: 'fully_available' | 'specific_dates'
+  /**
+   * Notes
+   */
+  notes?: string | null
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * User Id
+   */
+  user_id: string
+  /**
+   * Event Group Id
+   */
+  event_group_id: string
+  /**
+   * Available Dates
+   */
+  available_dates?: Array<UserAvailabilityDateRead>
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+}
+
+/**
+ * UserAvailabilityWithUser
+ * Extended read schema for admin view — includes basic user info.
+ */
+export type UserAvailabilityWithUser = {
+  /**
+   * Availability Type
+   */
+  availability_type: 'fully_available' | 'specific_dates'
+  /**
+   * Notes
+   */
+  notes?: string | null
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * User Id
+   */
+  user_id: string
+  /**
+   * Event Group Id
+   */
+  event_group_id: string
+  /**
+   * Available Dates
+   */
+  available_dates?: Array<UserAvailabilityDateRead>
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+  /**
+   * User Full Name
+   */
+  user_full_name?: string | null
+  /**
+   * User Email
+   */
+  user_email?: string | null
 }
 
 /**
@@ -1430,6 +1817,61 @@ export type EventsUpdateEventResponses = {
 
 export type EventsUpdateEventResponse = EventsUpdateEventResponses[keyof EventsUpdateEventResponses]
 
+export type EventsCreateEventWithSlotsData = {
+  body: EventCreateWithSlots
+  path?: never
+  query?: never
+  url: '/api/v1/events/with-slots'
+}
+
+export type EventsCreateEventWithSlotsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsCreateEventWithSlotsError =
+  EventsCreateEventWithSlotsErrors[keyof EventsCreateEventWithSlotsErrors]
+
+export type EventsCreateEventWithSlotsResponses = {
+  /**
+   * Successful Response
+   */
+  201: EventCreateWithSlotsResponse
+}
+
+export type EventsCreateEventWithSlotsResponse =
+  EventsCreateEventWithSlotsResponses[keyof EventsCreateEventWithSlotsResponses]
+
 export type DutySlotsListDutySlotsData = {
   body?: never
   path?: never
@@ -2041,6 +2483,563 @@ export type BookingsUpdateBookingResponses = {
 
 export type BookingsUpdateBookingResponse =
   BookingsUpdateBookingResponses[keyof BookingsUpdateBookingResponses]
+
+export type EventGroupsListEventGroupsData = {
+  body?: never
+  path?: never
+  query?: {
+    /**
+     * Skip
+     */
+    skip?: number
+    /**
+     * Limit
+     */
+    limit?: number
+    /**
+     * Search
+     */
+    search?: string | null
+    /**
+     * Status
+     */
+    status?: ('draft' | 'published' | 'archived') | null
+  }
+  url: '/api/v1/event-groups/'
+}
+
+export type EventGroupsListEventGroupsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsListEventGroupsError =
+  EventGroupsListEventGroupsErrors[keyof EventGroupsListEventGroupsErrors]
+
+export type EventGroupsListEventGroupsResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventGroupListResponse
+}
+
+export type EventGroupsListEventGroupsResponse =
+  EventGroupsListEventGroupsResponses[keyof EventGroupsListEventGroupsResponses]
+
+export type EventGroupsCreateEventGroupData = {
+  body: EventGroupCreate
+  path?: never
+  query?: never
+  url: '/api/v1/event-groups/'
+}
+
+export type EventGroupsCreateEventGroupErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsCreateEventGroupError =
+  EventGroupsCreateEventGroupErrors[keyof EventGroupsCreateEventGroupErrors]
+
+export type EventGroupsCreateEventGroupResponses = {
+  /**
+   * Successful Response
+   */
+  201: EventGroupRead
+}
+
+export type EventGroupsCreateEventGroupResponse =
+  EventGroupsCreateEventGroupResponses[keyof EventGroupsCreateEventGroupResponses]
+
+export type EventGroupsDeleteEventGroupData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}'
+}
+
+export type EventGroupsDeleteEventGroupErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsDeleteEventGroupError =
+  EventGroupsDeleteEventGroupErrors[keyof EventGroupsDeleteEventGroupErrors]
+
+export type EventGroupsDeleteEventGroupResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type EventGroupsDeleteEventGroupResponse =
+  EventGroupsDeleteEventGroupResponses[keyof EventGroupsDeleteEventGroupResponses]
+
+export type EventGroupsGetEventGroupData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}'
+}
+
+export type EventGroupsGetEventGroupErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsGetEventGroupError =
+  EventGroupsGetEventGroupErrors[keyof EventGroupsGetEventGroupErrors]
+
+export type EventGroupsGetEventGroupResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventGroupRead
+}
+
+export type EventGroupsGetEventGroupResponse =
+  EventGroupsGetEventGroupResponses[keyof EventGroupsGetEventGroupResponses]
+
+export type EventGroupsUpdateEventGroupData = {
+  body: EventGroupUpdate
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}'
+}
+
+export type EventGroupsUpdateEventGroupErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsUpdateEventGroupError =
+  EventGroupsUpdateEventGroupErrors[keyof EventGroupsUpdateEventGroupErrors]
+
+export type EventGroupsUpdateEventGroupResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventGroupRead
+}
+
+export type EventGroupsUpdateEventGroupResponse =
+  EventGroupsUpdateEventGroupResponses[keyof EventGroupsUpdateEventGroupResponses]
+
+export type EventGroupsListGroupAvailabilitiesData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: {
+    /**
+     * Skip
+     */
+    skip?: number
+    /**
+     * Limit
+     */
+    limit?: number
+  }
+  url: '/api/v1/event-groups/{group_id}/availabilities'
+}
+
+export type EventGroupsListGroupAvailabilitiesErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsListGroupAvailabilitiesError =
+  EventGroupsListGroupAvailabilitiesErrors[keyof EventGroupsListGroupAvailabilitiesErrors]
+
+export type EventGroupsListGroupAvailabilitiesResponses = {
+  /**
+   * Response Event-Groups-List Group Availabilities
+   * Successful Response
+   */
+  200: Array<UserAvailabilityWithUser>
+}
+
+export type EventGroupsListGroupAvailabilitiesResponse =
+  EventGroupsListGroupAvailabilitiesResponses[keyof EventGroupsListGroupAvailabilitiesResponses]
+
+export type EventGroupsDeleteMyAvailabilityData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/availability/me'
+}
+
+export type EventGroupsDeleteMyAvailabilityErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsDeleteMyAvailabilityError =
+  EventGroupsDeleteMyAvailabilityErrors[keyof EventGroupsDeleteMyAvailabilityErrors]
+
+export type EventGroupsDeleteMyAvailabilityResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type EventGroupsDeleteMyAvailabilityResponse =
+  EventGroupsDeleteMyAvailabilityResponses[keyof EventGroupsDeleteMyAvailabilityResponses]
+
+export type EventGroupsGetMyAvailabilityData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/availability/me'
+}
+
+export type EventGroupsGetMyAvailabilityErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsGetMyAvailabilityError =
+  EventGroupsGetMyAvailabilityErrors[keyof EventGroupsGetMyAvailabilityErrors]
+
+export type EventGroupsGetMyAvailabilityResponses = {
+  /**
+   * Successful Response
+   */
+  200: UserAvailabilityRead
+}
+
+export type EventGroupsGetMyAvailabilityResponse =
+  EventGroupsGetMyAvailabilityResponses[keyof EventGroupsGetMyAvailabilityResponses]
+
+export type EventGroupsSetMyAvailabilityData = {
+  body: UserAvailabilityCreate
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/availability'
+}
+
+export type EventGroupsSetMyAvailabilityErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsSetMyAvailabilityError =
+  EventGroupsSetMyAvailabilityErrors[keyof EventGroupsSetMyAvailabilityErrors]
+
+export type EventGroupsSetMyAvailabilityResponses = {
+  /**
+   * Successful Response
+   */
+  201: UserAvailabilityRead
+}
+
+export type EventGroupsSetMyAvailabilityResponse =
+  EventGroupsSetMyAvailabilityResponses[keyof EventGroupsSetMyAvailabilityResponses]
 
 export type ClientOptions = {
   baseURL: `${string}://${string}` | (string & {})

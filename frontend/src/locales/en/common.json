@@ -67,6 +67,11 @@
             "title": "404"
         }
     },
+    "validation": {
+        "required": "This field is required",
+        "invalidDate": "Please select a valid date",
+        "endDateBeforeStart": "End date must be after start date"
+    },
     "language": {
         "current": "Current language",
         "switch": "Switch language"

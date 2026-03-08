@@ -1,12 +1,12 @@
-FROM node:22-alpine AS build-stage
+FROM cgr.dev/chainguard/node:latest-dev AS build-stage
+
+USER root
 
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN npm install -g pnpm
-
-RUN pnpm install
+RUN corepack enable pnpm && pnpm install
 
 COPY . .
 
@@ -30,7 +30,7 @@ ENV NODE_ENV=${NODE_ENV}
 
 RUN pnpm exec vite build
 
-FROM nginx:stable-alpine AS production-stage
+FROM cgr.dev/chainguard/nginx:latest AS production-stage
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf

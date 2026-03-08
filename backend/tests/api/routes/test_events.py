@@ -100,3 +100,95 @@ class TestEventsRoutes:
         r = await async_client.get(f"/api/v1/events/{fake_id}")
 
         assert r.status_code == 404
+
+    async def test_create_event_with_slots(self, async_client: AsyncClient, as_admin):
+        """Test creating an event with auto-generated duty slots."""
+        r = await async_client.post(
+            "/api/v1/events/with-slots",
+            json={
+                "name": "Bierstand",
+                "description": "Beer stand duty",
+                "start_date": "2026-06-01",
+                "end_date": "2026-06-02",
+                "location": "Halle A",
+                "category": "Bar",
+                "schedule": {
+                    "default_start_time": "10:00:00",
+                    "default_end_time": "12:00:00",
+                    "slot_duration_minutes": 60,
+                    "people_per_slot": 3,
+                },
+            },
+        )
+
+        assert r.status_code == 201
+        data = r.json()
+        assert data["event"]["name"] == "Bierstand"
+        assert data["event"]["location"] == "Halle A"
+        assert data["event"]["slot_duration_minutes"] == 60
+        assert data["event"]["people_per_slot"] == 3
+        assert data["duty_slots_created"] == 4  # 2 days * 2 slots/day
+        assert data["event_group"] is None
+
+    async def test_create_event_with_slots_and_new_group(
+        self, async_client: AsyncClient, as_admin
+    ):
+        """Test creating an event with slots and a new event group."""
+        r = await async_client.post(
+            "/api/v1/events/with-slots",
+            json={
+                "name": "Weinstand",
+                "start_date": "2026-06-01",
+                "end_date": "2026-06-01",
+                "new_event_group": {
+                    "name": "Sommerfest 2026",
+                    "start_date": "2026-06-01",
+                    "end_date": "2026-06-03",
+                },
+                "schedule": {
+                    "default_start_time": "18:00:00",
+                    "default_end_time": "20:00:00",
+                    "slot_duration_minutes": 30,
+                    "people_per_slot": 2,
+                },
+            },
+        )
+
+        assert r.status_code == 201
+        data = r.json()
+        assert data["event"]["name"] == "Weinstand"
+        assert data["event_group"] is not None
+        assert data["event_group"]["name"] == "Sommerfest 2026"
+        assert data["event"]["event_group_id"] == data["event_group"]["id"]
+        assert data["duty_slots_created"] == 4  # 2 hours / 30 min
+
+    async def test_create_event_with_slots_and_overrides(
+        self, async_client: AsyncClient, as_admin
+    ):
+        """Test per-date schedule overrides."""
+        r = await async_client.post(
+            "/api/v1/events/with-slots",
+            json={
+                "name": "Kasse",
+                "start_date": "2026-06-01",
+                "end_date": "2026-06-02",
+                "schedule": {
+                    "default_start_time": "10:00:00",
+                    "default_end_time": "12:00:00",
+                    "slot_duration_minutes": 60,
+                    "people_per_slot": 1,
+                    "overrides": [
+                        {
+                            "date": "2026-06-02",
+                            "start_time": "14:00:00",
+                            "end_time": "18:00:00",
+                        }
+                    ],
+                },
+            },
+        )
+
+        assert r.status_code == 201
+        data = r.json()
+        # Day 1: 10-12 = 2 slots, Day 2: 14-18 = 4 slots
+        assert data["duty_slots_created"] == 6

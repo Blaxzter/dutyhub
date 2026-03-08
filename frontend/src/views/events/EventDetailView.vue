@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import type { DateValue } from '@internationalized/date'
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -15,6 +16,7 @@ import type {
 } from '@/client/types.gen'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
+import { DatePicker } from '@/components/ui/date-picker'
 import {
   Card,
   CardContent,
@@ -58,13 +60,13 @@ const showCreateSlotDialog = ref(false)
 const slotForm = ref({
   title: '',
   description: '',
-  date: '',
   start_time: '',
   end_time: '',
   location: '',
   category: '',
   max_bookings: 5,
 })
+const slotDate = ref<DateValue>()
 
 // Group slots by date
 const slotsByDate = computed(() => {
@@ -179,6 +181,7 @@ const handlePublish = async () => {
 }
 
 const handleCreateSlot = async () => {
+  if (!slotDate.value) return
   try {
     await post({
       url: '/duty-slots/',
@@ -186,7 +189,7 @@ const handleCreateSlot = async () => {
         event_id: eventId.value,
         title: slotForm.value.title,
         description: slotForm.value.description || undefined,
-        date: slotForm.value.date,
+        date: slotDate.value.toString(),
         start_time: slotForm.value.start_time || undefined,
         end_time: slotForm.value.end_time || undefined,
         location: slotForm.value.location || undefined,
@@ -198,13 +201,13 @@ const handleCreateSlot = async () => {
     slotForm.value = {
       title: '',
       description: '',
-      date: '',
       start_time: '',
       end_time: '',
       location: '',
       category: '',
       max_bookings: 5,
     }
+    slotDate.value = undefined
     toast.success(t('duties.dutySlots.create'))
     await loadDutySlots()
   } catch (error) {
@@ -410,7 +413,7 @@ onMounted(async () => {
           </div>
           <div class="space-y-2">
             <Label>{{ t('duties.dutySlots.fields.date') }}</Label>
-            <Input v-model="slotForm.date" type="date" required />
+            <DatePicker v-model="slotDate" :placeholder="t('duties.dutySlots.pickDate')" />
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">

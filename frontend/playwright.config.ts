@@ -41,92 +41,26 @@ export default defineConfig({
 
     /* Only on CI systems run the tests headless */
     headless: !!process.env.CI,
+
+    // slowMo
+    launchOptions: { slowMo: 500 },
   },
 
-  /* Configure projects for major browsers */
   projects: [
-    // Setup project
+    // Authenticate both users before any test runs
     { name: 'setup', testMatch: '**/setup/*.setup.ts' },
 
-    // Public tests (no authentication required)
-    {
-      name: 'chromium-public',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-      testMatch: '**/tests/public/**/*.spec.ts',
-    },
-    {
-      name: 'firefox-public',
-      use: {
-        ...devices['Desktop Firefox'],
-      },
-      testMatch: '**/tests/public/**/*.spec.ts',
-    },
-    {
-      name: 'webkit-public',
-      use: {
-        ...devices['Desktop Safari'],
-      },
-      testMatch: '**/tests/public/**/*.spec.ts',
-    },
+    // Public tests — no auth needed
+    { name: 'public', testMatch: '**/tests/public/**/*.spec.ts' },
 
-    // Authenticated tests
+    // All authenticated tests — admin page context by default.
+    // Tests needing a member session call browser.newContext({ storageState: 'e2e/.auth/member.json' }).
     {
-      name: 'chromium-auth',
-      use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'e2e/.auth/user.json',
-      },
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/user.json' },
       dependencies: ['setup'],
-      testMatch: '**/tests/authenticated/**/*.spec.ts',
+      testMatch: '**/tests/**/*.spec.ts',
     },
-    {
-      name: 'firefox-auth',
-      use: {
-        ...devices['Desktop Firefox'],
-        storageState: 'e2e/.auth/user.json',
-      },
-      dependencies: ['setup'],
-      testMatch: '**/tests/authenticated/**/*.spec.ts',
-    },
-    {
-      name: 'webkit-auth',
-      use: {
-        ...devices['Desktop Safari'],
-        storageState: 'e2e/.auth/user.json',
-      },
-      dependencies: ['setup'],
-      testMatch: '**/tests/authenticated/**/*.spec.ts',
-    },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: {
-    //     ...devices['Pixel 5'],
-    //   },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: {
-    //     ...devices['iPhone 12'],
-    //   },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: {
-    //     channel: 'msedge',
-    //   },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: {
-    //     channel: 'chrome',
-    //   },
-    // },
   ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */

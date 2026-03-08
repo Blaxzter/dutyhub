@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, time
 
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship
@@ -8,6 +8,9 @@ from app.models.base import Base
 
 if __name__ != "__main__":
     from app.models.duty_slot import DutySlot  # noqa: F401
+
+if __name__ != "__main__":
+    from app.models.event_group import EventGroup  # noqa: F401
 
 
 class Event(Base, table=True):
@@ -28,8 +31,38 @@ class Event(Base, table=True):
             sa.Uuid, sa.ForeignKey("users.id"), nullable=True, index=True
         ),
     )
+    event_group_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=sa.Column(
+            sa.Uuid, sa.ForeignKey("event_groups.id"), nullable=True, index=True
+        ),
+    )
+
+    # Generation config fields (stored for re-generation)
+    location: str | None = Field(
+        default=None, sa_column=sa.Column(sa.String, nullable=True)
+    )
+    category: str | None = Field(
+        default=None, sa_column=sa.Column(sa.String, nullable=True)
+    )
+    slot_duration_minutes: int | None = Field(
+        default=None, sa_column=sa.Column(sa.Integer, nullable=True)
+    )
+    default_start_time: time | None = Field(
+        default=None, sa_column=sa.Column(sa.Time, nullable=True)
+    )
+    default_end_time: time | None = Field(
+        default=None, sa_column=sa.Column(sa.Time, nullable=True)
+    )
+    people_per_slot: int | None = Field(
+        default=None, sa_column=sa.Column(sa.Integer, nullable=True)
+    )
+    schedule_overrides: dict | None = Field(
+        default=None, sa_column=sa.Column(sa.JSON, nullable=True)
+    )
 
     duty_slots: list["DutySlot"] = Relationship(
         back_populates="event",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+    event_group: "EventGroup" = Relationship(back_populates="events")

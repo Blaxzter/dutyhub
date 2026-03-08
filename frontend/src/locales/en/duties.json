@@ -1,4 +1,24 @@
 {
+    "availability": {
+        "title": "My Availability",
+        "subtitle": "Register your availability for this programme",
+        "register": "Register Availability",
+        "update": "Update Availability",
+        "remove": "Remove Availability",
+        "removeConfirm": "Are you sure you want to remove your availability?",
+        "notRegistered": "You haven't registered availability yet.",
+        "types": {
+            "fully_available": "Open to be requested",
+            "specific_dates": "Available on specific dates"
+        },
+        "fields": {
+            "type": "Availability Type",
+            "dates": "Available Dates",
+            "notes": "Notes"
+        },
+        "adminTitle": "Member Availabilities",
+        "adminEmpty": "No members have registered availability yet."
+    },
     "bookings": {
         "bookSuccess": "Slot booked successfully!",
         "cancel": "Cancel Booking",
@@ -32,19 +52,20 @@
             "title": "Title"
         },
         "full": "Fully booked",
+        "pickDate": "Pick a date",
         "title": "Duty Slot"
     },
-    "events": {
-        "create": "Create Event",
-        "delete": "Delete Event",
-        "deleteConfirm": "Are you sure you want to delete this event? All duty slots and bookings will be lost.",
+    "eventGroups": {
+        "create": "Create Event Group",
+        "delete": "Delete Event Group",
+        "deleteConfirm": "Are you sure you want to delete this event group? All related availability data will be lost.",
         "detail": {
-            "addSlot": "Add Duty Slot",
-            "slots": "Duty Slots",
-            "title": "Event Details"
+            "events": "Events in this Group",
+            "eventsEmpty": "No events assigned to this group yet.",
+            "title": "Event Group Details"
         },
-        "edit": "Edit Event",
-        "empty": "No events found.",
+        "edit": "Edit Event Group",
+        "empty": "No event groups found.",
         "fields": {
             "description": "Description",
             "endDate": "End Date",
@@ -57,7 +78,81 @@
             "draft": "Draft",
             "published": "Published"
         },
+        "pickDate": "Pick a date",
+        "subtitle": "Browse upcoming event programmes",
+        "title": "Event Groups"
+    },
+    "events": {
+        "create": "Create Event",
+        "delete": "Delete Event",
+        "deleteConfirm": "Are you sure you want to delete this event? All duty slots and bookings will be lost.",
+        "detail": {
+            "addSlot": "Add Duty Slot",
+            "slots": "Duty Slots",
+            "title": "Event Details"
+        },
+        "edit": "Edit Event",
+        "calendar": {
+            "more": "more"
+        },
+        "empty": "No events found.",
+        "fields": {
+            "description": "Description",
+            "endDate": "End Date",
+            "name": "Name",
+            "startDate": "Start Date",
+            "status": "Status",
+            "location": "Location",
+            "category": "Category"
+        },
+        "statuses": {
+            "archived": "Archived",
+            "draft": "Draft",
+            "published": "Published"
+        },
+        "pickDate": "Pick a date",
         "subtitle": "Browse upcoming duty events",
-        "title": "Events"
+        "views": {
+            "calendar": "Calendar",
+            "list": "List"
+        },
+        "title": "Events",
+        "createView": {
+            "title": "Create Event",
+            "subtitle": "Set up a new event with auto-generated duty slots",
+            "sections": {
+                "details": "Event Details",
+                "detailsDesc": "Basic information about the event",
+                "eventGroup": "Event Group",
+                "eventGroupDesc": "Optionally assign this event to a group",
+                "schedule": "Schedule & Slots",
+                "scheduleDesc": "Configure when duty slots should be created",
+                "preview": "Preview",
+                "previewDesc": "Review the slots that will be generated"
+            },
+            "eventGroupOption": {
+                "none": "No event group",
+                "existing": "Select existing",
+                "new": "Create new"
+            },
+            "schedule": {
+                "defaultStartTime": "Default Start Time",
+                "defaultEndTime": "Default End Time",
+                "slotDuration": "Slot Duration",
+                "peoplePerSlot": "People per Slot",
+                "overrides": "Date Exceptions",
+                "overridesDesc": "Override times for specific dates",
+                "addException": "Add Exception",
+                "removeException": "Remove",
+                "minutes": "{n} minutes"
+            },
+            "preview": {
+                "summary": "{slots} slots across {days} days",
+                "noSlots": "No slots will be generated with the current configuration. Please fill in the schedule section.",
+                "slotsOnDate": "{count} slots"
+            },
+            "submit": "Create Event",
+            "success": "Event created with {count} duty slots!"
+        }
     }
 }

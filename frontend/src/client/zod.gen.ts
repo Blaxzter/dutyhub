@@ -113,6 +113,56 @@ export const zEventCreate = z.object({
   end_date: z.iso.date(),
   status: z.optional(z.enum(['draft', 'published', 'archived'])),
   created_by_id: z.optional(z.union([z.uuid(), z.null()])),
+  event_group_id: z.optional(z.union([z.uuid(), z.null()])),
+  location: z.optional(z.union([z.string(), z.null()])),
+  category: z.optional(z.union([z.string(), z.null()])),
+})
+
+/**
+ * EventGroupCreate
+ */
+export const zEventGroupCreate = z.object({
+  name: z.string(),
+  description: z.optional(z.union([z.string(), z.null()])),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  status: z.optional(z.enum(['draft', 'published', 'archived'])),
+  created_by_id: z.optional(z.union([z.uuid(), z.null()])),
+})
+
+/**
+ * ScheduleOverride
+ */
+export const zScheduleOverride = z.object({
+  date: z.iso.date(),
+  start_time: z.iso.time(),
+  end_time: z.iso.time(),
+})
+
+/**
+ * SlotGenerationConfig
+ */
+export const zSlotGenerationConfig = z.object({
+  default_start_time: z.iso.time(),
+  default_end_time: z.iso.time(),
+  slot_duration_minutes: z.int(),
+  people_per_slot: z.optional(z.int()).default(1),
+  overrides: z.optional(z.array(zScheduleOverride)).default([]),
+})
+
+/**
+ * EventCreateWithSlots
+ */
+export const zEventCreateWithSlots = z.object({
+  name: z.string(),
+  description: z.optional(z.union([z.string(), z.null()])),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  location: z.optional(z.union([z.string(), z.null()])),
+  category: z.optional(z.union([z.string(), z.null()])),
+  event_group_id: z.optional(z.union([z.uuid(), z.null()])),
+  new_event_group: z.optional(z.union([zEventGroupCreate, z.null()])),
+  schedule: zSlotGenerationConfig,
 })
 
 /**
@@ -125,9 +175,62 @@ export const zEventRead = z.object({
   end_date: z.iso.date(),
   status: z.optional(z.enum(['draft', 'published', 'archived'])),
   created_by_id: z.optional(z.union([z.uuid(), z.null()])),
+  event_group_id: z.optional(z.union([z.uuid(), z.null()])),
+  location: z.optional(z.union([z.string(), z.null()])),
+  category: z.optional(z.union([z.string(), z.null()])),
   id: z.uuid(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
+  slot_duration_minutes: z.optional(z.union([z.int(), z.null()])),
+  default_start_time: z.optional(z.union([z.iso.time(), z.null()])),
+  default_end_time: z.optional(z.union([z.iso.time(), z.null()])),
+  people_per_slot: z.optional(z.union([z.int(), z.null()])),
+  schedule_overrides: z.optional(z.union([z.array(z.object({})), z.null()])),
+})
+
+/**
+ * EventGroupRead
+ */
+export const zEventGroupRead = z.object({
+  name: z.string(),
+  description: z.optional(z.union([z.string(), z.null()])),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  status: z.optional(z.enum(['draft', 'published', 'archived'])),
+  id: z.uuid(),
+  created_by_id: z.optional(z.union([z.uuid(), z.null()])),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+})
+
+/**
+ * EventCreateWithSlotsResponse
+ */
+export const zEventCreateWithSlotsResponse = z.object({
+  event: zEventRead,
+  duty_slots_created: z.int(),
+  event_group: z.optional(z.union([zEventGroupRead, z.null()])),
+})
+
+/**
+ * EventGroupListResponse
+ */
+export const zEventGroupListResponse = z.object({
+  items: z.array(zEventGroupRead),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
+ * EventGroupUpdate
+ */
+export const zEventGroupUpdate = z.object({
+  name: z.optional(z.union([z.string(), z.null()])),
+  description: z.optional(z.union([z.string(), z.null()])),
+  start_date: z.optional(z.union([z.iso.date(), z.null()])),
+  end_date: z.optional(z.union([z.iso.date(), z.null()])),
+  status: z.optional(z.union([z.enum(['draft', 'published', 'archived']), z.null()])),
 })
 
 /**
@@ -149,6 +252,9 @@ export const zEventUpdate = z.object({
   start_date: z.optional(z.union([z.iso.date(), z.null()])),
   end_date: z.optional(z.union([z.iso.date(), z.null()])),
   status: z.optional(z.union([z.enum(['draft', 'published', 'archived']), z.null()])),
+  event_group_id: z.optional(z.union([z.uuid(), z.null()])),
+  location: z.optional(z.union([z.string(), z.null()])),
+  category: z.optional(z.union([z.string(), z.null()])),
 })
 
 /**
@@ -163,6 +269,58 @@ export const zProfileInit = z
   })
   .register(z.globalRegistry, {
     description: 'Profile data from Auth0 ID token for user initialization.',
+  })
+
+/**
+ * UserAvailabilityCreate
+ */
+export const zUserAvailabilityCreate = z.object({
+  availability_type: z.enum(['fully_available', 'specific_dates']),
+  notes: z.optional(z.union([z.string(), z.null()])),
+  dates: z.optional(z.array(z.iso.date())).default([]),
+})
+
+/**
+ * UserAvailabilityDateRead
+ */
+export const zUserAvailabilityDateRead = z.object({
+  id: z.uuid(),
+  slot_date: z.iso.date(),
+})
+
+/**
+ * UserAvailabilityRead
+ */
+export const zUserAvailabilityRead = z.object({
+  availability_type: z.enum(['fully_available', 'specific_dates']),
+  notes: z.optional(z.union([z.string(), z.null()])),
+  id: z.uuid(),
+  user_id: z.uuid(),
+  event_group_id: z.uuid(),
+  available_dates: z.optional(z.array(zUserAvailabilityDateRead)).default([]),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+})
+
+/**
+ * UserAvailabilityWithUser
+ * Extended read schema for admin view — includes basic user info.
+ */
+export const zUserAvailabilityWithUser = z
+  .object({
+    availability_type: z.enum(['fully_available', 'specific_dates']),
+    notes: z.optional(z.union([z.string(), z.null()])),
+    id: z.uuid(),
+    user_id: z.uuid(),
+    event_group_id: z.uuid(),
+    available_dates: z.optional(z.array(zUserAvailabilityDateRead)).default([]),
+    created_at: z.iso.datetime(),
+    updated_at: z.iso.datetime(),
+    user_full_name: z.optional(z.union([z.string(), z.null()])),
+    user_email: z.optional(z.union([z.string(), z.null()])),
+  })
+  .register(z.globalRegistry, {
+    description: 'Extended read schema for admin view — includes basic user info.',
   })
 
 /**
@@ -457,6 +615,17 @@ export const zEventsUpdateEventData = z.object({
  */
 export const zEventsUpdateEventResponse = zEventRead
 
+export const zEventsCreateEventWithSlotsData = z.object({
+  body: zEventCreateWithSlots,
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsCreateEventWithSlotsResponse = zEventCreateWithSlotsResponse
+
 export const zDutySlotsListDutySlotsData = z.object({
   body: z.optional(z.never()),
   path: z.optional(z.never()),
@@ -594,3 +763,137 @@ export const zBookingsUpdateBookingData = z.object({
  * Successful Response
  */
 export const zBookingsUpdateBookingResponse = zBookingRead
+
+export const zEventGroupsListEventGroupsData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(
+    z.object({
+      skip: z.optional(z.int().gte(0)).default(0),
+      limit: z.optional(z.int().gte(1).lte(200)).default(100),
+      search: z.optional(z.union([z.string(), z.null()])),
+      status: z.optional(z.union([z.enum(['draft', 'published', 'archived']), z.null()])),
+    }),
+  ),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsListEventGroupsResponse = zEventGroupListResponse
+
+export const zEventGroupsCreateEventGroupData = z.object({
+  body: zEventGroupCreate,
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsCreateEventGroupResponse = zEventGroupRead
+
+export const zEventGroupsDeleteEventGroupData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsDeleteEventGroupResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zEventGroupsGetEventGroupData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsGetEventGroupResponse = zEventGroupRead
+
+export const zEventGroupsUpdateEventGroupData = z.object({
+  body: zEventGroupUpdate,
+  path: z.object({
+    group_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsUpdateEventGroupResponse = zEventGroupRead
+
+export const zEventGroupsListGroupAvailabilitiesData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.string(),
+  }),
+  query: z.optional(
+    z.object({
+      skip: z.optional(z.int().gte(0)).default(0),
+      limit: z.optional(z.int().gte(1).lte(500)).default(200),
+    }),
+  ),
+})
+
+/**
+ * Response Event-Groups-List Group Availabilities
+ * Successful Response
+ */
+export const zEventGroupsListGroupAvailabilitiesResponse = z
+  .array(zUserAvailabilityWithUser)
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
+
+export const zEventGroupsDeleteMyAvailabilityData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsDeleteMyAvailabilityResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zEventGroupsGetMyAvailabilityData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsGetMyAvailabilityResponse = zUserAvailabilityRead
+
+export const zEventGroupsSetMyAvailabilityData = z.object({
+  body: zUserAvailabilityCreate,
+  path: z.object({
+    group_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsSetMyAvailabilityResponse = zUserAvailabilityRead
