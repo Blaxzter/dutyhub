@@ -2,28 +2,34 @@
 import { computed, onMounted, ref } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
-import { ArrowLeft, Check, ChevronDown, Pencil, Plus, Trash2 } from 'lucide-vue-next'
+import {
+  ArrowLeft,
+  CalendarCheck,
+  CalendarPlus,
+  Check,
+  ChevronDown,
+  Info,
+  MapPin,
+  Pencil,
+  Plus,
+  Tag,
+  Trash2,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import type {
-  BookingListResponse,
-  BookingRead,
-  DutySlotListResponse,
-  DutySlotRead,
-  EventRead,
-} from '@/client/types.gen'
+import { useAuthStore } from '@/stores/auth'
+import { useBreadcrumbStore } from '@/stores/breadcrumb'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { useDialog } from '@/composables/useDialog'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
+import { Card, CardContent } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -41,15 +47,21 @@ import {
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import Separator from '@/components/ui/separator/Separator.vue'
-import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
-import { useDialog } from '@/composables/useDialog'
+import { Textarea } from '@/components/ui/textarea'
+
+import type {
+  BookingRead,
+  DutySlotListResponse,
+  DutySlotRead,
+  EventRead,
+  MyBookingsListResponse,
+  SlotBatchRead,
+} from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 import { formatDate } from '@/lib/format'
 import { statusVariant } from '@/lib/status'
-import { useAuthStore } from '@/stores/auth'
-import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
@@ -62,6 +74,7 @@ const event = ref<EventRead | null>(null)
 const statuses = ['draft', 'published', 'archived'] as const
 const dutySlots = ref<DutySlotRead[]>([])
 const myBookings = ref<BookingRead[]>([])
+const batches = ref<SlotBatchRead[]>([])
 const loading = ref(false)
 const showCreateSlotDialog = ref(false)
 
@@ -77,34 +90,222 @@ const slotForm = ref({
 })
 const slotDate = ref<DateValue>()
 
-// Group slots by date
-const slotsByDate = computed(() => {
-  const groups: Record<string, DutySlotRead[]> = {}
+// --- Batch grouping ---
+const hasBatches = computed(() => batches.value.length > 1)
+
+interface BatchGroup {
+  batch: SlotBatchRead | null
+  slots: DutySlotRead[]
+}
+
+const slotsByBatch = computed<BatchGroup[]>(() => {
+  if (!hasBatches.value) {
+    // No batches — return all slots as a single group
+    return [{ batch: null, slots: dutySlots.value }]
+  }
+
+  const batchMap = new Map<string, DutySlotRead[]>()
+  const unbatched: DutySlotRead[] = []
+
   for (const slot of dutySlots.value) {
+    if (slot.batch_id) {
+      if (!batchMap.has(slot.batch_id)) batchMap.set(slot.batch_id, [])
+      batchMap.get(slot.batch_id)!.push(slot)
+    } else {
+      unbatched.push(slot)
+    }
+  }
+
+  const groups: BatchGroup[] = []
+
+  // Add batch groups in order
+  for (const batch of batches.value) {
+    const slots = batchMap.get(batch.id) ?? []
+    if (slots.length > 0) {
+      groups.push({ batch, slots })
+    }
+  }
+
+  // Add unbatched slots if any
+  if (unbatched.length > 0) {
+    groups.push({ batch: null, slots: unbatched })
+  }
+
+  return groups
+})
+
+// --- Filters ---
+const filterLocation = ref<string | null>(null)
+const filterCategory = ref<string | null>(null)
+
+// --- Unique values for filters (only shown when > 1 distinct value) ---
+const uniqueLocations = computed(() => {
+  const vals = new Set<string>()
+  for (const slot of dutySlots.value) {
+    if (slot.location) vals.add(slot.location)
+  }
+  return [...vals].sort()
+})
+
+const uniqueCategories = computed(() => {
+  const vals = new Set<string>()
+  for (const slot of dutySlots.value) {
+    if (slot.category) vals.add(slot.category)
+  }
+  return [...vals].sort()
+})
+
+const hasMultipleLocations = computed(() => uniqueLocations.value.length > 1)
+const hasMultipleCategories = computed(() => uniqueCategories.value.length > 1)
+const hasFilters = computed(() => hasMultipleLocations.value || hasMultipleCategories.value)
+const isFilterActive = computed(
+  () => filterLocation.value !== null || filterCategory.value !== null,
+)
+
+// Visible batch groups (groups with at least one slot matching the filter)
+const visibleBatchGroups = computed(() => {
+  return slotsByBatch.value.filter((group) => filterSlots(group.slots).length > 0)
+})
+
+// Count of slots hidden by the active filter
+const hiddenSlotsCount = computed(() => {
+  if (!isFilterActive.value) return 0
+  return (
+    dutySlots.value.length -
+    dutySlots.value.filter((slot) => {
+      if (filterLocation.value && slot.location !== filterLocation.value) return false
+      if (filterCategory.value && slot.category !== filterCategory.value) return false
+      return true
+    }).length
+  )
+})
+
+// Shared properties (same across all slots — shown once in header)
+const sharedLocation = computed(() => {
+  if (uniqueLocations.value.length === 1) return uniqueLocations.value[0]
+  return null
+})
+const sharedCategory = computed(() => {
+  if (uniqueCategories.value.length === 1) return uniqueCategories.value[0]
+  return null
+})
+
+// Filter slots within a group
+const filterSlots = (slots: DutySlotRead[]) => {
+  return slots.filter((slot) => {
+    if (filterLocation.value && slot.location !== filterLocation.value) return false
+    if (filterCategory.value && slot.category !== filterCategory.value) return false
+    return true
+  })
+}
+
+// Group slots by date (for rendering within a batch group)
+const groupByDate = (slots: DutySlotRead[]) => {
+  const groups: Record<string, DutySlotRead[]> = {}
+  for (const slot of slots) {
     const date = slot.date
     if (!groups[date]) groups[date] = []
     groups[date].push(slot)
   }
-  // Sort by date
+  for (const dateSlots of Object.values(groups)) {
+    dateSlots.sort(
+      (a, b) =>
+        (a.start_time ?? '').localeCompare(b.start_time ?? '') ||
+        (a.end_time ?? '').localeCompare(b.end_time ?? ''),
+    )
+  }
   return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-})
+}
 
 const myBookedSlotIds = computed(() => {
   return new Set(
-    myBookings.value
-      .filter((b) => b.status === 'confirmed')
-      .map((b) => b.duty_slot_id),
+    myBookings.value.filter((b) => b.status === 'confirmed').map((b) => b.duty_slot_id),
   )
 })
 
 const getBookingForSlot = (slotId: string) => {
-  return myBookings.value.find(
-    (b) => b.duty_slot_id === slotId && b.status === 'confirmed',
-  )
+  return myBookings.value.find((b) => b.duty_slot_id === slotId && b.status === 'confirmed')
 }
 
 const isSlotFull = (slot: DutySlotRead) => {
   return (slot.current_bookings ?? 0) >= (slot.max_bookings ?? 1)
+}
+
+// My booked slots with full slot details (for summary)
+const myBookedSlotsForEvent = computed(() => {
+  return dutySlots.value
+    .filter((s) => myBookedSlotIds.value.has(s.id))
+    .sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) || (a.start_time ?? '').localeCompare(b.start_time ?? ''),
+    )
+})
+
+const busySlotId = ref<string | null>(null)
+
+// --- Delete confirmation dialog with optional reason ---
+const showDeleteDialog = ref(false)
+const deleteReason = ref('')
+const deleteBookingCount = ref(0)
+const deleteAction = ref<(() => Promise<void>) | null>(null)
+const deleteMessage = ref('')
+
+const openDeleteDialog = (message: string, bookingCount: number, action: () => Promise<void>) => {
+  deleteMessage.value = message
+  deleteBookingCount.value = bookingCount
+  deleteReason.value = ''
+  deleteAction.value = action
+  showDeleteDialog.value = true
+}
+
+const confirmDelete = async () => {
+  if (deleteAction.value) {
+    showDeleteDialog.value = false
+    await deleteAction.value()
+  }
+}
+
+const countConfirmedBookings = (slots: DutySlotRead[]) => {
+  return slots.reduce((sum, s) => sum + (s.current_bookings ?? 0), 0)
+}
+
+const handleSlotClick = async (slot: DutySlotRead) => {
+  if (busySlotId.value) return
+  busySlotId.value = slot.id
+
+  try {
+    if (myBookedSlotIds.value.has(slot.id)) {
+      const booking = getBookingForSlot(slot.id)
+      if (!booking) return
+      const confirmed = await confirmDestructive(t('duties.bookings.cancelConfirm'))
+      if (!confirmed) return
+      await del({ url: `/bookings/${booking.id}` })
+      toast.success(t('duties.bookings.cancelSuccess'))
+    } else {
+      if (isSlotFull(slot)) return
+      await post({ url: '/bookings/', body: { duty_slot_id: slot.id } })
+      toast.success(t('duties.bookings.bookSuccess'))
+    }
+    await Promise.all([loadDutySlots(), loadMyBookings()])
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    busySlotId.value = null
+  }
+}
+
+const formatTime = (time: string | null | undefined): string => {
+  if (!time) return ''
+  return time.substring(0, 5)
+}
+
+const formatDateLabel = (dateStr: string) => {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString(locale.value, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+const batchLabel = (batch: SlotBatchRead) => {
+  return batch.label || `${formatDate(batch.start_date)} – ${formatDate(batch.end_date)}`
 }
 
 const loadEvent = async () => {
@@ -138,7 +339,7 @@ const loadDutySlots = async () => {
   try {
     const response = await get<{ data: DutySlotListResponse }>({
       url: '/duty-slots/',
-      query: { event_id: eventId.value, limit: 100 },
+      query: { event_id: eventId.value, limit: 200 },
     })
     dutySlots.value = response.data.items
   } catch (error) {
@@ -148,13 +349,24 @@ const loadDutySlots = async () => {
 
 const loadMyBookings = async () => {
   try {
-    const response = await get<{ data: BookingListResponse }>({
+    const response = await get<{ data: MyBookingsListResponse }>({
       url: '/bookings/me',
       query: { limit: 200 },
     })
     myBookings.value = response.data.items
   } catch (error) {
     toastApiError(error)
+  }
+}
+
+const loadBatches = async () => {
+  try {
+    const response = await get<{ data: SlotBatchRead[] }>({
+      url: `/events/${eventId.value}/batches`,
+    })
+    batches.value = response.data
+  } catch {
+    // Non-critical — older events may not have batches
   }
 }
 
@@ -172,17 +384,35 @@ const handleStatusChange = async (status: 'draft' | 'published' | 'archived') =>
   }
 }
 
-const handleDeleteEvent = async () => {
-  const confirmed = await confirmDestructive(t('duties.events.deleteConfirm'))
-  if (!confirmed) return
+const handleDeleteEvent = () => {
+  const bookingCount = countConfirmedBookings(dutySlots.value)
+  openDeleteDialog(t('duties.events.deleteConfirm'), bookingCount, async () => {
+    try {
+      const query: Record<string, string> = {}
+      if (deleteReason.value.trim()) query.cancellation_reason = deleteReason.value.trim()
+      await del({ url: `/events/${eventId.value}`, query })
+      toast.success(t('duties.events.delete'))
+      router.push({ name: 'events' })
+    } catch (error) {
+      toastApiError(error)
+    }
+  })
+}
 
-  try {
-    await del({ url: `/events/${eventId.value}` })
-    toast.success(t('duties.events.delete'))
-    router.push({ name: 'events' })
-  } catch (error) {
-    toastApiError(error)
-  }
+const handleDeleteBatch = (batch: SlotBatchRead) => {
+  const batchSlots = dutySlots.value.filter((s) => s.batch_id === batch.id)
+  const bookingCount = countConfirmedBookings(batchSlots)
+  openDeleteDialog(t('duties.events.detail.deleteBatchConfirm'), bookingCount, async () => {
+    try {
+      const query: Record<string, string> = {}
+      if (deleteReason.value.trim()) query.cancellation_reason = deleteReason.value.trim()
+      await del({ url: `/events/${eventId.value}/batches/${batch.id}`, query })
+      toast.success(t('duties.events.detail.deleteBatchSuccess'))
+      await Promise.all([loadDutySlots(), loadBatches()])
+    } catch (error) {
+      toastApiError(error)
+    }
+  })
 }
 
 const handleCreateSlot = async () => {
@@ -220,48 +450,24 @@ const handleCreateSlot = async () => {
   }
 }
 
-const handleDeleteSlot = async (slot: DutySlotRead) => {
-  const confirmed = await confirmDestructive(t('duties.dutySlots.deleteConfirm'))
-  if (!confirmed) return
-
-  try {
-    await del({ url: `/duty-slots/${slot.id}` })
-    toast.success(t('duties.dutySlots.delete'))
-    await loadDutySlots()
-  } catch (error) {
-    toastApiError(error)
-  }
-}
-
-const handleBookSlot = async (slot: DutySlotRead) => {
-  try {
-    await post({ url: '/bookings/', body: { duty_slot_id: slot.id } })
-    toast.success(t('duties.bookings.bookSuccess'))
-    await Promise.all([loadDutySlots(), loadMyBookings()])
-  } catch (error) {
-    toastApiError(error)
-  }
-}
-
-const handleCancelBooking = async (slot: DutySlotRead) => {
-  const booking = getBookingForSlot(slot.id)
-  if (!booking) return
-
-  const confirmed = await confirmDestructive(t('duties.bookings.cancelConfirm'))
-  if (!confirmed) return
-
-  try {
-    await del({ url: `/bookings/${booking.id}` })
-    toast.success(t('duties.bookings.cancelSuccess'))
-    await Promise.all([loadDutySlots(), loadMyBookings()])
-  } catch (error) {
-    toastApiError(error)
-  }
+const handleDeleteSlot = (slot: DutySlotRead) => {
+  const bookingCount = slot.current_bookings ?? 0
+  openDeleteDialog(t('duties.dutySlots.deleteConfirm'), bookingCount, async () => {
+    try {
+      const query: Record<string, string> = {}
+      if (deleteReason.value.trim()) query.cancellation_reason = deleteReason.value.trim()
+      await del({ url: `/duty-slots/${slot.id}`, query })
+      toast.success(t('duties.dutySlots.delete'))
+      await loadDutySlots()
+    } catch (error) {
+      toastApiError(error)
+    }
+  })
 }
 
 onMounted(async () => {
   await loadEvent()
-  await Promise.all([loadDutySlots(), loadMyBookings()])
+  await Promise.all([loadDutySlots(), loadMyBookings(), loadBatches()])
 })
 </script>
 
@@ -279,6 +485,14 @@ onMounted(async () => {
           <ArrowLeft class="mr-2 h-4 w-4" />
           {{ t('common.actions.back') }}
         </Button>
+
+        <!-- Draft banner -->
+        <Alert v-if="event.status === 'draft'" variant="default" class="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-500/30">
+          <Info class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription>
+            {{ t('duties.events.draftBanner') }}
+          </AlertDescription>
+        </Alert>
 
         <div class="flex items-start justify-between">
           <div class="space-y-2">
@@ -313,22 +527,49 @@ onMounted(async () => {
             <p v-if="event.description" class="text-muted-foreground">
               {{ event.description }}
             </p>
-            <p class="text-sm text-muted-foreground">
-              {{ formatDate(event.start_date) }} - {{ formatDate(event.end_date) }}
-            </p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <span>{{ formatDate(event.start_date) }} - {{ formatDate(event.end_date) }}</span>
+              <span v-if="sharedLocation" class="flex items-center gap-1">
+                <MapPin class="h-3.5 w-3.5" />
+                {{ sharedLocation }}
+              </span>
+              <span v-if="sharedCategory" class="flex items-center gap-1">
+                <Tag class="h-3.5 w-3.5" />
+                {{ sharedCategory }}
+              </span>
+            </div>
           </div>
           <div v-if="authStore.isAdmin" class="flex gap-2">
+            <!-- Only show event-level edit when no batches (legacy) -->
             <Button
+              v-if="!hasBatches"
               variant="outline"
               @click="router.push({ name: 'event-edit', params: { eventId: event.id } })"
             >
               <Pencil class="mr-2 h-4 w-4" />
               {{ t('duties.events.edit') }}
             </Button>
-            <Button @click="showCreateSlotDialog = true">
-              <Plus class="mr-2 h-4 w-4" />
-              {{ t('duties.events.detail.addSlot') }}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button>
+                  <CalendarPlus class="mr-2 h-4 w-4" />
+                  {{ t('duties.events.detail.addSlots') }}
+                  <ChevronDown class="ml-1 h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  @click="router.push({ name: 'event-add-slots', params: { eventId: event.id } })"
+                >
+                  <CalendarPlus class="mr-2 h-4 w-4" />
+                  {{ t('duties.events.detail.addSlotBatch') }}
+                </DropdownMenuItem>
+                <DropdownMenuItem @click="showCreateSlotDialog = true">
+                  <Plus class="mr-2 h-4 w-4" />
+                  {{ t('duties.events.detail.addSingleSlot') }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="destructive" size="icon" @click="handleDeleteEvent">
               <Trash2 class="h-4 w-4" />
             </Button>
@@ -338,92 +579,336 @@ onMounted(async () => {
 
       <Separator />
 
+      <!-- My Bookings Summary -->
+      <Transition
+        enter-active-class="grid transition-[grid-template-rows,opacity] duration-300 ease-out"
+        enter-from-class="grid-rows-[0fr] opacity-0"
+        enter-to-class="grid-rows-[1fr] opacity-100"
+        leave-active-class="grid transition-[grid-template-rows,opacity] duration-200 ease-in"
+        leave-from-class="grid-rows-[1fr] opacity-100"
+        leave-to-class="grid-rows-[0fr] opacity-0"
+      >
+        <div v-if="myBookedSlotsForEvent.length > 0">
+          <div class="overflow-hidden space-y-3">
+            <div class="flex items-center gap-2">
+              <CalendarCheck class="h-5 w-5 text-primary" />
+              <h2 class="text-lg font-semibold">{{ t('duties.events.detail.myBookings') }}</h2>
+              <Badge variant="default">
+                {{
+                  t('duties.events.detail.myBookingsCount', { count: myBookedSlotsForEvent.length })
+                }}
+              </Badge>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <Badge
+                v-for="slot in myBookedSlotsForEvent"
+                :key="slot.id"
+                variant="secondary"
+                class="cursor-pointer px-3 py-1.5 text-sm hover:bg-destructive/10 hover:text-destructive transition-colors"
+                @click="handleSlotClick(slot)"
+              >
+                {{ formatDateLabel(slot.date) }}
+                <template v-if="slot.start_time">
+                  &middot; {{ formatTime(slot.start_time)
+                  }}<template v-if="slot.end_time"> - {{ formatTime(slot.end_time) }}</template>
+                </template>
+                <template v-if="hasMultipleLocations && slot.location">
+                  &middot; {{ slot.location }}</template
+                >
+                <template v-if="hasMultipleCategories && slot.category">
+                  &middot; {{ slot.category }}</template
+                >
+              </Badge>
+            </div>
+            <Separator />
+          </div>
+        </div>
+      </Transition>
+
       <!-- Duty Slots -->
       <div class="space-y-4">
         <h2 class="text-xl font-semibold">{{ t('duties.events.detail.slots') }}</h2>
 
-        <div
-          v-if="dutySlots.length === 0"
-          class="text-center py-8 text-muted-foreground"
+        <!-- Filters (only shown when multiple distinct values exist) -->
+        <div v-if="hasFilters" class="flex flex-wrap gap-3">
+          <!-- Location filter -->
+          <div v-if="hasMultipleLocations" class="flex flex-wrap items-center gap-1.5">
+            <MapPin class="h-4 w-4 text-muted-foreground" />
+            <button
+              class="rounded-full border px-3 py-1 text-sm transition-colors"
+              :class="
+                filterLocation === null
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'hover:bg-muted'
+              "
+              @click="filterLocation = null"
+            >
+              {{ t('duties.events.detail.allLocations') }}
+            </button>
+            <button
+              v-for="loc in uniqueLocations"
+              :key="loc"
+              class="rounded-full border px-3 py-1 text-sm transition-colors"
+              :class="
+                filterLocation === loc
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'hover:bg-muted'
+              "
+              @click="filterLocation = loc"
+            >
+              {{ loc }}
+            </button>
+          </div>
+
+          <!-- Category filter -->
+          <div v-if="hasMultipleCategories" class="flex flex-wrap items-center gap-1.5">
+            <Tag class="h-4 w-4 text-muted-foreground" />
+            <button
+              class="rounded-full border px-3 py-1 text-sm transition-colors"
+              :class="
+                filterCategory === null
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'hover:bg-muted'
+              "
+              @click="filterCategory = null"
+            >
+              {{ t('duties.events.detail.allCategories') }}
+            </button>
+            <button
+              v-for="cat in uniqueCategories"
+              :key="cat"
+              class="rounded-full border px-3 py-1 text-sm transition-colors"
+              :class="
+                filterCategory === cat
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'hover:bg-muted'
+              "
+              @click="filterCategory = cat"
+            >
+              {{ cat }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Hint for users with no bookings -->
+        <p
+          v-if="myBookedSlotsForEvent.length === 0 && dutySlots.length > 0"
+          class="text-sm text-muted-foreground"
         >
+          {{ t('duties.events.detail.noBookingsYet') }}
+        </p>
+
+        <div v-if="dutySlots.length === 0" class="text-center py-8 text-muted-foreground">
           {{ t('duties.dutySlots.empty') }}
         </div>
 
+        <!-- Batch-grouped slots -->
         <div v-else class="space-y-6">
-          <div v-for="[date, slots] in slotsByDate" :key="date" class="space-y-3">
-            <h3 class="text-lg font-medium text-muted-foreground">
-              {{ formatDate(date) }}
-            </h3>
-            <div class="grid gap-3 md:grid-cols-2">
-              <Card v-for="slot in slots" :key="slot.id">
-                <CardHeader class="pb-3">
-                  <div class="flex items-start justify-between">
-                    <CardTitle class="text-base">{{ slot.title }}</CardTitle>
-                    <div class="flex items-center gap-2">
-                      <Badge v-if="slot.category" variant="outline">
-                        {{ slot.category }}
-                      </Badge>
-                      <Badge
-                        :variant="isSlotFull(slot) ? 'destructive' : 'default'"
-                      >
-                        {{
-                          isSlotFull(slot)
-                            ? t('duties.dutySlots.full')
-                            : t('duties.dutySlots.availability', {
-                                current: slot.current_bookings ?? 0,
-                                max: slot.max_bookings ?? 1,
-                              })
-                        }}
-                      </Badge>
-                    </div>
-                  </div>
-                  <CardDescription v-if="slot.description">
-                    {{ slot.description }}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div class="flex items-center justify-between">
-                    <div class="space-y-1 text-sm text-muted-foreground">
-                      <div v-if="slot.start_time || slot.end_time">
-                        {{ slot.start_time ?? '' }}{{ slot.start_time && slot.end_time ? ' - ' : '' }}{{ slot.end_time ?? '' }}
+          <template
+            v-for="(group, groupIdx) in visibleBatchGroups"
+            :key="group.batch?.id ?? 'unbatched'"
+          >
+            <div class="space-y-3">
+              <!-- Batch header (only when there are multiple batches) -->
+              <div v-if="hasBatches" class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-semibold text-lg">
+                    {{
+                      group.batch
+                        ? batchLabel(group.batch)
+                        : t('duties.events.detail.unbatchedSlots')
+                    }}
+                  </h3>
+                  <Badge variant="outline">
+                    {{
+                      t('duties.events.detail.slotsCount', {
+                        count: filterSlots(group.slots).length,
+                      })
+                    }}
+                  </Badge>
+                  <template v-if="group.batch">
+                    <Badge v-if="group.batch.location" variant="secondary" class="text-xs">
+                      <MapPin class="mr-1 h-3 w-3" />
+                      {{ group.batch.location }}
+                    </Badge>
+                    <Badge v-if="group.batch.category" variant="outline" class="text-xs">
+                      <Tag class="mr-1 h-3 w-3" />
+                      {{ group.batch.category }}
+                    </Badge>
+                  </template>
+                </div>
+                <div v-if="authStore.isAdmin && group.batch" class="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    @click="
+                      router.push({
+                        name: 'event-edit',
+                        params: { eventId: event!.id },
+                        query: { batchId: group.batch!.id },
+                      })
+                    "
+                  >
+                    <Pencil class="mr-1.5 h-3.5 w-3.5" />
+                    {{ t('duties.events.edit') }}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="text-destructive hover:text-destructive"
+                    @click="handleDeleteBatch(group.batch!)"
+                  >
+                    <Trash2 class="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+
+              <!-- Slots grouped by date within this batch -->
+              <div
+                v-for="[date, slots] in groupByDate(filterSlots(group.slots))"
+                :key="date"
+                class="space-y-2"
+              >
+                <div class="flex items-center gap-2">
+                  <h3 class="font-medium">{{ formatDateLabel(date) }}</h3>
+                  <Badge variant="outline">
+                    {{ t('duties.events.detail.slotsCount', { count: slots.length }) }}
+                  </Badge>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+                  <Card
+                    v-for="slot in slots"
+                    :key="slot.id"
+                    class="relative cursor-pointer select-none transition-all"
+                    :class="[
+                      myBookedSlotIds.has(slot.id)
+                        ? 'ring-2 ring-primary bg-primary/5'
+                        : isSlotFull(slot)
+                          ? 'opacity-40 cursor-not-allowed'
+                          : 'hover:ring-1 hover:ring-primary/40',
+                      busySlotId === slot.id ? 'opacity-60 pointer-events-none' : '',
+                    ]"
+                    @click="handleSlotClick(slot)"
+                  >
+                    <CardContent class="px-3 py-2">
+                      <!-- Booked checkmark -->
+                      <div v-if="myBookedSlotIds.has(slot.id)" class="absolute top-1.5 right-1.5">
+                        <Check class="h-4 w-4 text-primary" />
                       </div>
-                      <div v-if="slot.location">{{ slot.location }}</div>
-                    </div>
-                    <div class="flex gap-2">
-                      <Button
-                        v-if="myBookedSlotIds.has(slot.id)"
-                        variant="outline"
-                        size="sm"
-                        @click="handleCancelBooking(slot)"
+
+                      <!-- Time -->
+                      <p class="text-center text-lg font-mono font-semibold">
+                        <template v-if="slot.start_time || slot.end_time">
+                          {{ formatTime(slot.start_time)
+                          }}{{ slot.start_time && slot.end_time ? ' - ' : ''
+                          }}{{ formatTime(slot.end_time) }}
+                        </template>
+                        <template v-else>
+                          {{ slot.title }}
+                        </template>
+                      </p>
+
+                      <!-- Category / Location badges (only when not in batch header and multiple values exist) -->
+                      <div
+                        v-if="
+                          !hasBatches &&
+                          ((hasMultipleLocations && slot.location) ||
+                            (hasMultipleCategories && slot.category))
+                        "
+                        class="mt-1 flex flex-wrap justify-center gap-1"
                       >
-                        {{ t('duties.bookings.cancel') }}
-                      </Button>
-                      <Button
-                        v-else
-                        size="sm"
-                        :disabled="isSlotFull(slot)"
-                        @click="handleBookSlot(slot)"
+                        <Badge
+                          v-if="hasMultipleCategories && slot.category"
+                          variant="outline"
+                          class="text-sm px-2 py-0"
+                        >
+                          {{ slot.category }}
+                        </Badge>
+                        <Badge
+                          v-if="hasMultipleLocations && slot.location"
+                          variant="secondary"
+                          class="text-sm px-2 py-0"
+                        >
+                          {{ slot.location }}
+                        </Badge>
+                      </div>
+
+                      <!-- Availability -->
+                      <p
+                        class="mt-1 text-center text-sm text-muted-foreground"
+                        :class="isSlotFull(slot) ? 'text-destructive' : ''"
                       >
-                        {{ t('duties.dutySlots.book') }}
-                      </Button>
+                        {{ slot.current_bookings ?? 0 }}/{{ slot.max_bookings ?? 1 }}
+                      </p>
+
+                      <!-- Admin delete (stop propagation so it doesn't trigger booking) -->
                       <Button
                         v-if="authStore.isAdmin"
                         variant="ghost"
                         size="icon"
-                        class="h-8 w-8"
-                        @click="handleDeleteSlot(slot)"
+                        class="absolute bottom-0.5 right-0.5 h-5 w-5"
+                        @click.stop="handleDeleteSlot(slot)"
                       >
-                        <Trash2 class="h-4 w-4 text-destructive" />
+                        <Trash2 class="h-3 w-3 text-destructive" />
                       </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              <!-- Separator between batch groups -->
+              <Separator v-if="hasBatches && groupIdx < visibleBatchGroups.length - 1" />
             </div>
-          </div>
+          </template>
+
+          <!-- Hidden slots info -->
+          <p v-if="hiddenSlotsCount > 0" class="text-sm text-muted-foreground text-center py-2">
+            {{ t('duties.events.detail.hiddenSlots', { count: hiddenSlotsCount }) }}
+          </p>
         </div>
       </div>
     </template>
+
+    <!-- Delete Confirmation Dialog -->
+    <Dialog v-model:open="showDeleteDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle class="flex items-center gap-2">
+            <Trash2 class="h-5 w-5 text-destructive" />
+            {{ t('common.dialog.confirm.title') }}
+          </DialogTitle>
+          <DialogDescription class="text-left">
+            {{ deleteMessage }}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div v-if="deleteBookingCount > 0" class="space-y-3">
+          <p class="text-sm font-medium text-destructive">
+            {{ t('duties.deleteDialog.activeBookings', { count: deleteBookingCount }) }}
+          </p>
+          <div class="space-y-2">
+            <Label>{{ t('duties.deleteDialog.reasonLabel') }}</Label>
+            <Textarea
+              v-model="deleteReason"
+              :placeholder="t('duties.deleteDialog.reasonPlaceholder')"
+              rows="3"
+            />
+            <p class="text-xs text-muted-foreground">
+              {{ t('duties.deleteDialog.reasonHint') }}
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter class="sm:justify-start">
+          <Button variant="outline" @click="showDeleteDialog = false">
+            {{ t('common.dialog.confirm.cancelText') }}
+          </Button>
+          <Button variant="destructive" @click="confirmDelete">
+            {{ t('common.dialog.confirm.confirmText') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Create Slot Dialog -->
     <Dialog v-model:open="showCreateSlotDialog">

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { ArrowLeft, Clock, Info, Plus, RefreshCw, Trash2 } from 'lucide-vue-next'
+import { ArrowLeft, Clock, Info, Plus, RefreshCw, Trash2, Users } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import type { EventRead } from '@/client/types.gen'
+import type { DutySlotRead, EventRead, SlotBatchRead } from '@/client/types.gen'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import {
@@ -43,7 +43,7 @@ import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
-import { type RemainderMode, type ScheduleConfig, useSlotPreview } from '@/composables/useSlotPreview'
+import { type RemainderMode, type ScheduleConfig, slotKey, useSlotPreview } from '@/composables/useSlotPreview'
 import { toastApiError } from '@/lib/api-errors'
 import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
@@ -54,9 +54,12 @@ const breadcrumbStore = useBreadcrumbStore()
 const { get, post, patch } = useAuthenticatedClient()
 
 const eventId = computed(() => route.params.eventId as string)
+const batchId = computed(() => (route.query.batchId as string) || null)
+const isBatchMode = computed(() => !!batchId.value)
 const loading = ref(true)
 const submitting = ref(false)
 const event = ref<EventRead | null>(null)
+const batch = ref<SlotBatchRead | null>(null)
 
 // --- Form state ---
 const name = ref('')
@@ -85,6 +88,7 @@ interface ScheduleSnapshot {
   overrides: string // JSON-serialized for easy comparison
 }
 const originalSchedule = ref<ScheduleSnapshot | null>(null)
+const originalExcludedSlots = ref<Set<string>>(new Set())
 
 const currentScheduleSnapshot = computed<ScheduleSnapshot | null>(() => {
   if (!startDate.value || !endDate.value) return null
@@ -97,19 +101,6 @@ const currentScheduleSnapshot = computed<ScheduleSnapshot | null>(() => {
     peoplePerSlot: peoplePerSlot.value,
     overrides: JSON.stringify(overrides.value),
   }
-})
-
-const scheduleChanged = computed(() => {
-  if (!originalSchedule.value || !currentScheduleSnapshot.value) return true
-  const orig = originalSchedule.value
-  const curr = currentScheduleSnapshot.value
-  return orig.startDate !== curr.startDate
-    || orig.endDate !== curr.endDate
-    || orig.defaultStartTime !== curr.defaultStartTime
-    || orig.defaultEndTime !== curr.defaultEndTime
-    || orig.slotDurationMinutes !== curr.slotDurationMinutes
-    || orig.peoplePerSlot !== curr.peoplePerSlot
-    || orig.overrides !== curr.overrides
 })
 
 // Duration options
@@ -137,6 +128,14 @@ interface RegenerationResult {
 
 const pendingPreview = ref<RegenerationResult | null>(null)
 
+// --- Existing slot bookings (fetched from backend) ---
+const existingBookings = ref(new Map<string, number>())
+
+const getSlotBookingCount = (slot: { date: string; startTime: string; endTime: string }): number => {
+  const key = `${slot.date}|${slot.startTime}|${slot.endTime}`
+  return existingBookings.value.get(key) ?? 0
+}
+
 // --- Slot preview ---
 const scheduleConfig = computed<ScheduleConfig>(() => ({
   eventName: name.value || 'Event',
@@ -150,10 +149,35 @@ const scheduleConfig = computed<ScheduleConfig>(() => ({
   overrides: overrides.value,
 }))
 
-const { totalSlots, totalDays, slotsByDate, hasRemainder, excludedSlots, toggleSlotExclusion, isSlotExcluded } = useSlotPreview(scheduleConfig)
+const { previewSlots, totalSlots, totalDays, slotsByDate, hasRemainder, excludedSlots, toggleSlotExclusion, isSlotExcluded } = useSlotPreview(scheduleConfig)
+
+const excludedSlotsChanged = computed(() => {
+  const orig = originalExcludedSlots.value
+  const curr = excludedSlots.value
+  if (orig.size !== curr.size) return true
+  for (const key of orig) {
+    if (!curr.has(key)) return true
+  }
+  return false
+})
+
+const scheduleChanged = computed(() => {
+  if (excludedSlotsChanged.value) return true
+  if (!originalSchedule.value || !currentScheduleSnapshot.value) return true
+  const orig = originalSchedule.value
+  const curr = currentScheduleSnapshot.value
+  return orig.startDate !== curr.startDate
+    || orig.endDate !== curr.endDate
+    || orig.defaultStartTime !== curr.defaultStartTime
+    || orig.defaultEndTime !== curr.defaultEndTime
+    || orig.slotDurationMinutes !== curr.slotDurationMinutes
+    || orig.peoplePerSlot !== curr.peoplePerSlot
+    || orig.overrides !== curr.overrides
+})
 
 const isValid = computed(() => {
-  return !!name.value.trim() && !!startDate.value && !!endDate.value
+  const hasName = isBatchMode.value || !!name.value.trim()
+  return hasName && !!startDate.value && !!endDate.value
     && !!defaultStartTime.value && !!defaultEndTime.value
     && slotDurationMinutes.value >= 1 && totalSlots.value > 0
 })
@@ -219,31 +243,62 @@ const loadEvent = async () => {
     event.value = response.data
     const ev = response.data
 
-    // Populate form
+    // Populate form — use batch config if in batch mode
     name.value = ev.name
     description.value = ev.description ?? ''
-    location.value = ev.location ?? ''
-    category.value = ev.category ?? ''
-    startDate.value = parseDate(ev.start_date)
-    endDate.value = parseDate(ev.end_date)
 
-    // Schedule config (from stored generation config)
-    if (ev.default_start_time) defaultStartTime.value = formatTime(ev.default_start_time)
-    if (ev.default_end_time) defaultEndTime.value = formatTime(ev.default_end_time)
-    if (ev.slot_duration_minutes) slotDurationMinutes.value = ev.slot_duration_minutes
-    if (ev.people_per_slot) peoplePerSlot.value = ev.people_per_slot
-    if (ev.schedule_overrides) {
-      overrides.value = (ev.schedule_overrides as Array<{ date: string; start_time: string; end_time: string }>).map((o) => ({
-        date: o.date,
-        startTime: formatTime(o.start_time),
-        endTime: formatTime(o.end_time),
-      }))
+    if (batchId.value) {
+      // Load batch and use its config
+      try {
+        const batchRes = await get<{ data: SlotBatchRead[] }>({
+          url: `/events/${eventId.value}/batches`,
+        })
+        batch.value = batchRes.data.find((b: SlotBatchRead) => b.id === batchId.value) ?? null
+      } catch {
+        // Fall through to event-level config
+      }
+    }
+
+    const src = batch.value
+    if (src) {
+      location.value = src.location ?? ''
+      category.value = src.category ?? ''
+      startDate.value = parseDate(src.start_date)
+      endDate.value = parseDate(src.end_date)
+      if (src.default_start_time) defaultStartTime.value = formatTime(src.default_start_time)
+      if (src.default_end_time) defaultEndTime.value = formatTime(src.default_end_time)
+      if (src.slot_duration_minutes) slotDurationMinutes.value = src.slot_duration_minutes
+      if (src.people_per_slot) peoplePerSlot.value = src.people_per_slot
+      if (src.remainder_mode) remainderMode.value = src.remainder_mode as RemainderMode
+      if (src.schedule_overrides) {
+        overrides.value = (src.schedule_overrides as Array<{ date: string; start_time: string; end_time: string }>).map((o) => ({
+          date: o.date,
+          startTime: formatTime(o.start_time),
+          endTime: formatTime(o.end_time),
+        }))
+      }
+    } else {
+      location.value = ev.location ?? ''
+      category.value = ev.category ?? ''
+      startDate.value = parseDate(ev.start_date)
+      endDate.value = parseDate(ev.end_date)
+      if (ev.default_start_time) defaultStartTime.value = formatTime(ev.default_start_time)
+      if (ev.default_end_time) defaultEndTime.value = formatTime(ev.default_end_time)
+      if (ev.slot_duration_minutes) slotDurationMinutes.value = ev.slot_duration_minutes
+      if (ev.people_per_slot) peoplePerSlot.value = ev.people_per_slot
+      if (ev.schedule_overrides) {
+        overrides.value = (ev.schedule_overrides as Array<{ date: string; start_time: string; end_time: string }>).map((o) => ({
+          date: o.date,
+          startTime: formatTime(o.start_time),
+          endTime: formatTime(o.end_time),
+        }))
+      }
     }
 
     // Snapshot original schedule for change detection
     originalSchedule.value = {
-      startDate: ev.start_date,
-      endDate: ev.end_date,
+      startDate: startDate.value!.toString(),
+      endDate: endDate.value!.toString(),
       defaultStartTime: defaultStartTime.value,
       defaultEndTime: defaultEndTime.value,
       slotDurationMinutes: slotDurationMinutes.value,
@@ -251,11 +306,51 @@ const loadEvent = async () => {
       overrides: JSON.stringify(overrides.value),
     }
 
+    // Fetch existing slots with booking counts (scoped to batch if applicable)
+    try {
+      const slotsRes = await get<{ data: { items: DutySlotRead[] } }>({
+        url: '/duty-slots/',
+        query: { event_id: eventId.value, limit: 200 },
+      })
+      // Filter to batch slots only when in batch mode
+      const relevantSlots = batchId.value
+        ? slotsRes.data.items.filter((s: DutySlotRead) => s.batch_id === batchId.value)
+        : slotsRes.data.items
+      const bookingMap = new Map<string, number>()
+      const existingKeys = new Set<string>()
+      for (const slot of relevantSlots) {
+        const st = formatTime(slot.start_time)
+        const et = formatTime(slot.end_time)
+        const key = `${slot.date}|${st}|${et}`
+        existingKeys.add(key)
+        if (slot.current_bookings > 0) {
+          bookingMap.set(key, slot.current_bookings)
+        }
+      }
+      existingBookings.value = bookingMap
+
+      // Pre-exclude preview slots that were manually deleted from the backend
+      const toExclude = new Set<string>()
+      for (const previewSlot of previewSlots.value) {
+        const key = slotKey(previewSlot)
+        if (!existingKeys.has(key)) {
+          toExclude.add(key)
+        }
+      }
+      if (toExclude.size > 0) {
+        excludedSlots.value = new Set(toExclude)
+      }
+      // Snapshot the initial excluded state for change detection
+      originalExcludedSlots.value = new Set(excludedSlots.value)
+    } catch {
+      // Non-critical — preview just won't show booking counts
+    }
+
     // Set breadcrumbs
     breadcrumbStore.setBreadcrumbs([
       { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
       { title: ev.name, to: { name: 'event-detail', params: { eventId: ev.id } } },
-      { title: t('duties.events.editView.title') },
+      { title: isBatchMode.value ? t('duties.events.editView.editBatch') : t('duties.events.editView.title') },
     ])
   } catch (error) {
     toastApiError(error)
@@ -301,7 +396,7 @@ const handleSubmit = async () => {
   submitting.value = true
 
   try {
-    if (!scheduleChanged.value) {
+    if (!scheduleChanged.value && !isBatchMode.value) {
       // Only details changed — simple PATCH, no slot regeneration
       await patch<{ data: EventRead }>({
         url: `/events/${eventId.value}`,
@@ -318,9 +413,12 @@ const handleSubmit = async () => {
     }
 
     // Schedule changed — dry run first to check for affected bookings
+    const regenQuery: Record<string, unknown> = { dry_run: true }
+    if (batchId.value) regenQuery.batch_id = batchId.value
+
     const preview = await post<{ data: RegenerationResult }>({
       url: `/events/${eventId.value}/regenerate-slots`,
-      query: { dry_run: true },
+      query: regenQuery,
       body: buildPayload(),
     })
 
@@ -343,8 +441,12 @@ const handleSubmit = async () => {
 const executeRegeneration = async () => {
   submitting.value = true
   try {
+    const regenQuery: Record<string, unknown> = {}
+    if (batchId.value) regenQuery.batch_id = batchId.value
+
     await post<{ data: RegenerationResult }>({
       url: `/events/${eventId.value}/regenerate-slots`,
+      query: regenQuery,
       body: buildPayload(),
     })
 
@@ -380,12 +482,16 @@ onMounted(loadEvent)
           <ArrowLeft class="mr-1.5 h-4 w-4" />
           {{ t('common.actions.back') }}
         </Button>
-        <h1 class="text-3xl font-bold">{{ t('duties.events.editView.title') }}</h1>
-        <p class="text-muted-foreground">{{ t('duties.events.editView.subtitle') }}</p>
+        <h1 class="text-3xl font-bold">
+          {{ isBatchMode ? t('duties.events.editView.editBatch') : t('duties.events.editView.title') }}
+        </h1>
+        <p class="text-muted-foreground">
+          {{ isBatchMode ? t('duties.events.editView.editBatchSubtitle') : t('duties.events.editView.subtitle') }}
+        </p>
       </div>
 
-      <!-- Event Details -->
-      <Card>
+      <!-- Event Details (hidden in batch mode) -->
+      <Card v-if="!isBatchMode">
         <CardHeader>
           <CardTitle>{{ t('duties.events.createView.sections.details') }}</CardTitle>
           <CardDescription>{{ t('duties.events.createView.sections.detailsDesc') }}</CardDescription>
@@ -399,6 +505,26 @@ onMounted(loadEvent)
             <Label>{{ t('duties.events.fields.description') }}</Label>
             <Textarea v-model="description" :rows="3" />
           </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>{{ t('duties.events.fields.location') }}</Label>
+              <Input v-model="location" />
+            </div>
+            <div class="space-y-2">
+              <Label>{{ t('duties.events.fields.category') }}</Label>
+              <Input v-model="category" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Batch Details (only in batch mode) -->
+      <Card v-if="isBatchMode">
+        <CardHeader>
+          <CardTitle>{{ t('duties.events.addSlotsView.sections.batch') }}</CardTitle>
+          <CardDescription>{{ t('duties.events.addSlotsView.sections.batchDesc') }}</CardDescription>
+        </CardHeader>
+        <CardContent>
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
               <Label>{{ t('duties.events.fields.location') }}</Label>
@@ -595,12 +721,15 @@ onMounted(loadEvent)
                   {{ t('duties.events.createView.preview.slotsOnDate', { count: slots.filter(s => !isSlotExcluded(s)).length }) }}
                 </Badge>
               </div>
-              <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+              <div class="grid grid-cols-2 items-center gap-2 sm:grid-cols-3 md:grid-cols-4">
                 <Card
                   v-for="slot in slots"
                   :key="slot.startTime"
                   class="cursor-pointer p-2 transition-opacity"
-                  :class="isSlotExcluded(slot) ? 'opacity-30' : 'hover:ring-1 hover:ring-destructive/40'"
+                  :class="[
+                    isSlotExcluded(slot) ? 'opacity-30' : 'hover:ring-1 hover:ring-destructive/40',
+                    getSlotBookingCount(slot) > 0 && !isSlotExcluded(slot) ? 'ring-1 ring-primary/30' : '',
+                  ]"
                   @click="toggleSlotExclusion(slot)"
                 >
                   <CardContent class="p-0">
@@ -609,6 +738,14 @@ onMounted(loadEvent)
                       :class="isSlotExcluded(slot) ? 'line-through text-muted-foreground' : ''"
                     >
                       {{ slot.startTime }} - {{ slot.endTime }}
+                    </p>
+                    <p
+                      v-if="getSlotBookingCount(slot) > 0"
+                      class="mt-0.5 flex items-center justify-center gap-1 text-xs"
+                      :class="isSlotExcluded(slot) ? 'text-destructive line-through' : 'text-primary'"
+                    >
+                      <Users class="h-3 w-3" />
+                      {{ t('duties.events.editView.preview.booked', { count: getSlotBookingCount(slot) }) }}
                     </p>
                   </CardContent>
                 </Card>

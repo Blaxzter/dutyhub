@@ -2,30 +2,33 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { useLocalStorage } from '@vueuse/core'
-
 import { BookCheck, CalendarDays, ClipboardList, SlidersHorizontal } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import type {
-  BookingListResponse,
-  DutySlotRead,
-  EventGroupListResponse,
-  EventGroupRead,
-  EventListResponse,
-  EventRead,
-} from '@/client'
-import { DutyCalendar } from '@/components/events/duty-calendar'
-import type { BookingCalendarItem } from '@/components/events/duty-calendar'
+import { useAuthStore } from '@/stores/auth'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Label from '@/components/ui/label/Label.vue'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+
+import { DutyCalendar } from '@/components/events/duty-calendar'
+import type { BookingCalendarItem } from '@/components/events/duty-calendar'
+
+import type {
+  DutySlotRead,
+  EventGroupListResponse,
+  EventGroupRead,
+  EventListResponse,
+  EventRead,
+  MyBookingsListResponse,
+} from '@/client'
 import { toastApiError } from '@/lib/api-errors'
-import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -44,8 +47,8 @@ const showEvents = useLocalStorage('dutyhub-calendar-show-events', true)
 const showGroups = useLocalStorage('dutyhub-calendar-show-groups', true)
 const showBookings = useLocalStorage('dutyhub-calendar-show-bookings', true)
 
-const hiddenFilterCount = computed(() =>
-  [showEvents, showGroups, showBookings].filter((f) => !f.value).length,
+const hiddenFilterCount = computed(
+  () => [showEvents, showGroups, showBookings].filter((f) => !f.value).length,
 )
 
 async function loadStats() {
@@ -54,7 +57,7 @@ async function loadStats() {
     const [eventsRes, groupsRes, bookingsRes] = await Promise.all([
       get<{ data: EventListResponse }>({ url: '/events/', query: { limit: 100 } }),
       get<{ data: EventGroupListResponse }>({ url: '/event-groups/', query: { limit: 100 } }),
-      get<{ data: BookingListResponse }>({
+      get<{ data: MyBookingsListResponse }>({
         url: '/bookings/me',
         query: { status: 'confirmed', limit: 200 },
       }),
@@ -125,12 +128,16 @@ onMounted(loadStats)
         @click="router.push({ name: 'events' })"
       >
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{ t('dashboard.home.stats.events.title') }}</CardTitle>
+          <CardTitle class="text-sm font-medium">{{
+            t('dashboard.home.stats.events.title')
+          }}</CardTitle>
           <CalendarDays class="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-bold">{{ eventCount }}</div>
-          <p class="text-xs text-muted-foreground">{{ t('dashboard.home.stats.events.description') }}</p>
+          <p class="text-xs text-muted-foreground">
+            {{ t('dashboard.home.stats.events.description') }}
+          </p>
         </CardContent>
       </Card>
 
@@ -139,22 +146,30 @@ onMounted(loadStats)
         @click="router.push({ name: 'my-bookings' })"
       >
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{ t('dashboard.home.stats.bookings.title') }}</CardTitle>
+          <CardTitle class="text-sm font-medium">{{
+            t('dashboard.home.stats.bookings.title')
+          }}</CardTitle>
           <BookCheck class="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-bold">{{ myBookingCount }}</div>
-          <p class="text-xs text-muted-foreground">{{ t('dashboard.home.stats.bookings.description') }}</p>
+          <p class="text-xs text-muted-foreground">
+            {{ t('dashboard.home.stats.bookings.description') }}
+          </p>
         </CardContent>
       </Card>
 
       <Card v-if="authStore.isAdmin">
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{ t('dashboard.home.stats.admin.title') }}</CardTitle>
+          <CardTitle class="text-sm font-medium">{{
+            t('dashboard.home.stats.admin.title')
+          }}</CardTitle>
           <ClipboardList class="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <p class="text-xs text-muted-foreground">{{ t('dashboard.home.stats.admin.description') }}</p>
+          <p class="text-xs text-muted-foreground">
+            {{ t('dashboard.home.stats.admin.description') }}
+          </p>
           <Button size="sm" class="mt-2" @click="router.push({ name: 'events' })">
             {{ t('dashboard.home.stats.admin.action') }}
           </Button>
@@ -185,19 +200,34 @@ onMounted(loadStats)
                 <PopoverContent align="end" class="w-56">
                   <div class="space-y-4">
                     <div class="flex items-center justify-between">
-                      <Label for="filter-events">{{ t('dashboard.home.calendar.filters.events') }}</Label>
+                      <Label for="filter-events">{{
+                        t('dashboard.home.calendar.filters.events')
+                      }}</Label>
                       <Switch id="filter-events" v-model="showEvents" />
                     </div>
                     <div class="flex items-center justify-between">
-                      <Label for="filter-groups">{{ t('dashboard.home.calendar.filters.groups') }}</Label>
+                      <Label for="filter-groups">{{
+                        t('dashboard.home.calendar.filters.groups')
+                      }}</Label>
                       <Switch id="filter-groups" v-model="showGroups" />
                     </div>
                     <div class="flex items-center justify-between">
-                      <Label for="filter-bookings">{{ t('dashboard.home.calendar.filters.bookings') }}</Label>
+                      <Label for="filter-bookings">{{
+                        t('dashboard.home.calendar.filters.bookings')
+                      }}</Label>
                       <Switch id="filter-bookings" v-model="showBookings" />
                     </div>
-                    <p v-if="hiddenFilterCount > 0" class="text-xs text-muted-foreground border-t pt-3">
-                      {{ t('dashboard.home.calendar.hiddenCount', { count: hiddenFilterCount }, hiddenFilterCount) }}
+                    <p
+                      v-if="hiddenFilterCount > 0"
+                      class="text-xs text-muted-foreground border-t pt-3"
+                    >
+                      {{
+                        t(
+                          'dashboard.home.calendar.hiddenCount',
+                          { count: hiddenFilterCount },
+                          hiddenFilterCount,
+                        )
+                      }}
                     </p>
                   </div>
                 </PopoverContent>
@@ -205,7 +235,13 @@ onMounted(loadStats)
             </TooltipTrigger>
             <TooltipContent side="bottom">
               <p v-if="hiddenFilterCount > 0">
-                {{ t('dashboard.home.calendar.filterTooltip', { count: hiddenFilterCount }, hiddenFilterCount) }}
+                {{
+                  t(
+                    'dashboard.home.calendar.filterTooltip',
+                    { count: hiddenFilterCount },
+                    hiddenFilterCount,
+                  )
+                }}
               </p>
               <p v-else>
                 {{ t('dashboard.home.calendar.filterTooltipNone') }}

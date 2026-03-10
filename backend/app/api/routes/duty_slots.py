@@ -59,10 +59,13 @@ async def list_duty_slots(
 
 @router.get("/{slot_id}", response_model=DutySlotRead)
 async def get_duty_slot(
-    slot_id: str,
+    slot_id: str | None,
     session: DBDep,
     _current_user: CurrentUser,
 ) -> DutySlotRead:
+    if slot_id is None:
+        raise_problem(400, code="invalid_request", detail="slot_id is required")
+
     slot = await crud_duty_slot.get(session, slot_id, raise_404_error=True)
     return await _enrich_slot(session, slot)
 
@@ -95,7 +98,20 @@ async def delete_duty_slot(
     slot_id: str,
     session: DBDep,
     _current_user: CurrentSuperuser,
+    cancellation_reason: str | None = Query(default=None),
 ) -> None:
     slot = await crud_duty_slot.get(session, slot_id, raise_404_error=True)
+
+    # Get event name for snapshot
+    db_event = await crud_event.get(session, str(slot.event_id), raise_404_error=True)
+
+    # Cancel confirmed bookings with snapshot before deleting the slot
+    await crud_booking.cancel_bookings_for_slots(
+        session,
+        slot_ids=[slot.id],
+        event_name=db_event.name,
+        cancellation_reason=cancellation_reason,
+    )
+
     await session.delete(slot)
     await session.commit()

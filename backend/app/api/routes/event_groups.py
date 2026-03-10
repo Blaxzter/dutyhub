@@ -129,12 +129,12 @@ async def list_group_availabilities(
     return [
         UserAvailabilityWithUser(
             **UserAvailabilityRead.model_validate(avail).model_dump(),
-            user_full_name=users_map[avail.user_id].name
-            if avail.user_id in users_map
-            else None,
-            user_email=users_map[avail.user_id].email
-            if avail.user_id in users_map
-            else None,
+            user_full_name=(
+                users_map[avail.user_id].name if avail.user_id in users_map else None
+            ),
+            user_email=(
+                users_map[avail.user_id].email if avail.user_id in users_map else None
+            ),
         )
         for avail in availabilities
     ]
@@ -178,8 +178,8 @@ async def set_my_availability(
         event_group_id=uuid.UUID(group_id),
         obj_in=avail_in,
     )
-    await session.commit()
-    # Re-fetch after commit to get eagerly-loaded available_dates
+    await session.flush()
+    # Re-fetch after flush to get eagerly-loaded available_dates
     avail = await crud_availability.get_by_user_and_group(
         session,
         user_id=current_user.id,

@@ -14,6 +14,7 @@ class DutySlotBase(BaseModel):
     location: str | None = None
     category: str | None = None
     max_bookings: int = 1
+    batch_id: uuid.UUID | None = None
 
 
 class DutySlotCreate(DutySlotBase):

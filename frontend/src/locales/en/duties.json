@@ -40,7 +40,37 @@
             "confirmed": "Confirmed"
         },
         "subtitle": "Your duty slot reservations",
-        "title": "My Bookings"
+        "title": "My Bookings",
+        "cancellationReason": "Reason for cancellation",
+        "slotDeleted": "This slot was removed by an administrator.",
+        "unknownSlot": "Unknown slot",
+        "dismiss": "Dismiss",
+        "dismissSuccess": "Booking removed from your list.",
+        "filters": {
+            "upcoming": "Upcoming",
+            "thisMonth": "This Month",
+            "all": "All",
+            "showCancelled": "Cancelled"
+        },
+        "groupBy": {
+            "none": "No grouping",
+            "date": "Group by date",
+            "event": "Group by event",
+            "location": "Group by location"
+        },
+        "noDate": "No date",
+        "noEvent": "No event",
+        "noLocation": "No location",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "yesterday": "Yesterday"
+    },
+    "deleteDialog": {
+        "activeBookings": "This will cancel {count} active booking(s). Affected users will see the cancellation in their bookings.",
+        "activeBookingsWarning": "If there are any active bookings, they will be cancelled. Affected users will see the cancellation in their bookings.",
+        "reasonLabel": "Cancellation reason (optional)",
+        "reasonPlaceholder": "e.g. Event rescheduled, no longer needed...",
+        "reasonHint": "This reason will be visible to users whose bookings are cancelled."
     },
     "dutySlots": {
         "availability": "{current} / {max} booked",
@@ -88,6 +118,7 @@
             "draft": "Draft",
             "published": "Published"
         },
+        "draftBanner": "This event group is a draft and is not visible to regular users. Change the status to \"Published\" to make it available.",
         "pickDate": "Pick a date",
         "subtitle": "Browse upcoming event programmes",
         "title": "Event Groups"
@@ -99,7 +130,22 @@
         "detail": {
             "addSlot": "Add Duty Slot",
             "slots": "Duty Slots",
-            "title": "Event Details"
+            "title": "Event Details",
+            "allLocations": "All locations",
+            "allCategories": "All categories",
+            "booked": "Booked",
+            "slotsCount": "{count} slots",
+            "noSlotsMatch": "No slots match the current filters.",
+            "myBookings": "My Bookings",
+            "myBookingsCount": "{count} booked",
+            "noBookingsYet": "Click on a slot to book it.",
+            "addSlots": "Add Slots",
+            "addSingleSlot": "Add single slot",
+            "addSlotBatch": "Generate slot batch",
+            "unbatchedSlots": "Other Slots",
+            "deleteBatchConfirm": "Are you sure you want to delete this batch? All its duty slots and bookings will be removed.",
+            "deleteBatchSuccess": "Batch deleted successfully.",
+            "hiddenSlots": "{count} slots hidden by filter"
         },
         "edit": "Edit Event",
         "calendar": {
@@ -113,6 +159,7 @@
             "allDay": "All day",
             "noItems": "Nothing scheduled for this day."
         },
+        "myBookingsFilter": "My bookings only",
         "empty": "No events found.",
         "fields": {
             "description": "Description",
@@ -128,6 +175,7 @@
             "draft": "Draft",
             "published": "Published"
         },
+        "draftBanner": "This event is a draft and is not visible to regular users. Change the status to \"Published\" to make it available.",
         "pickDate": "Pick a date",
         "subtitle": "Browse upcoming duty events",
         "views": {
@@ -138,13 +186,16 @@
         "editView": {
             "title": "Edit Event",
             "subtitle": "Modify event details and regenerate duty slots",
+            "editBatch": "Edit Batch",
+            "editBatchSubtitle": "Modify batch schedule and regenerate its duty slots",
             "regenerate": "Regenerate Slots",
             "saving": "Saving...",
             "saveSuccess": "Event updated successfully!",
             "preview": {
                 "added": "{count} new",
                 "removed": "{count} removed",
-                "kept": "{count} unchanged"
+                "kept": "{count} unchanged",
+                "booked": "{count} booked"
             },
             "affectedBookings": {
                 "title": "Affected Bookings",
@@ -154,6 +205,16 @@
                 "confirm": "Proceed anyway",
                 "cancel": "Cancel"
             }
+        },
+        "addSlotsView": {
+            "title": "Add Slots",
+            "subtitle": "Add a new batch of duty slots to this event",
+            "sections": {
+                "batch": "Batch Details",
+                "batchDesc": "Optional location and category for this batch of slots"
+            },
+            "submit": "Add Slots",
+            "success": "{count} duty slots added!"
         },
         "createView": {
             "title": "Create Event",
@@ -204,7 +265,8 @@
             "preview": {
                 "summary": "{slots} slots across {days} days",
                 "noSlots": "No slots will be generated with the current configuration. Please fill in the schedule section.",
-                "slotsOnDate": "{count} slots"
+                "slotsOnDate": "{count} slots",
+                "clickToExclude": "Click on any slot to exclude it from being created."
             },
             "submit": "Create Event",
             "success": "Event created with {count} duty slots!"

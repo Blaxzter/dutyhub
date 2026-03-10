@@ -169,6 +169,28 @@ class EventUpdateWithSlots(BaseModel):
     schedule: SlotGenerationConfig
 
 
+class AddSlotsToEvent(BaseModel):
+    start_date: dt.date
+    end_date: dt.date
+    location: str | None = None
+    category: str | None = None
+    schedule: SlotGenerationConfig
+
+    @field_validator("end_date")
+    @classmethod
+    def end_date_after_start(cls, v: dt.date, info: Any) -> dt.date:
+        start = info.data.get("start_date")
+        if start and v < start:
+            msg = "end_date must be on or after start_date"
+            raise ValueError(msg)
+        return v
+
+
+class AddSlotsResponse(BaseModel):
+    event: EventRead
+    slots_added: int
+
+
 class AffectedBookingInfo(BaseModel):
     booking_id: uuid.UUID
     user_id: uuid.UUID

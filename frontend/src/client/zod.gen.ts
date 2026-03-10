@@ -2,6 +2,91 @@
 import { z } from 'zod'
 
 /**
+ * EventRead
+ */
+export const zEventRead = z.object({
+  name: z.string(),
+  description: z.optional(z.union([z.string(), z.null()])),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  status: z.optional(z.enum(['draft', 'published', 'archived'])),
+  created_by_id: z.optional(z.union([z.uuid(), z.null()])),
+  event_group_id: z.optional(z.union([z.uuid(), z.null()])),
+  location: z.optional(z.union([z.string(), z.null()])),
+  category: z.optional(z.union([z.string(), z.null()])),
+  id: z.uuid(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+  slot_duration_minutes: z.optional(z.union([z.int(), z.null()])),
+  default_start_time: z.optional(z.union([z.iso.time(), z.null()])),
+  default_end_time: z.optional(z.union([z.iso.time(), z.null()])),
+  people_per_slot: z.optional(z.union([z.int(), z.null()])),
+  schedule_overrides: z.optional(z.union([z.array(z.object({})), z.null()])),
+})
+
+/**
+ * AddSlotsResponse
+ */
+export const zAddSlotsResponse = z.object({
+  event: zEventRead,
+  slots_added: z.int(),
+})
+
+/**
+ * ScheduleOverride
+ */
+export const zScheduleOverride = z.object({
+  date: z.iso.date(),
+  start_time: z.iso.time(),
+  end_time: z.iso.time(),
+})
+
+/**
+ * ExcludedSlot
+ */
+export const zExcludedSlot = z.object({
+  date: z.iso.date(),
+  start_time: z.iso.time(),
+  end_time: z.iso.time(),
+})
+
+/**
+ * SlotGenerationConfig
+ */
+export const zSlotGenerationConfig = z.object({
+  default_start_time: z.iso.time(),
+  default_end_time: z.iso.time(),
+  slot_duration_minutes: z.int(),
+  people_per_slot: z.optional(z.int()).default(1),
+  remainder_mode: z.optional(z.enum(['drop', 'short', 'extend'])),
+  overrides: z.optional(z.array(zScheduleOverride)).default([]),
+  excluded_slots: z.optional(z.array(zExcludedSlot)).default([]),
+})
+
+/**
+ * AddSlotsToEvent
+ */
+export const zAddSlotsToEvent = z.object({
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  location: z.optional(z.union([z.string(), z.null()])),
+  category: z.optional(z.union([z.string(), z.null()])),
+  schedule: zSlotGenerationConfig,
+})
+
+/**
+ * AffectedBookingInfo
+ */
+export const zAffectedBookingInfo = z.object({
+  booking_id: z.uuid(),
+  user_id: z.uuid(),
+  slot_title: z.string(),
+  slot_date: z.iso.date(),
+  slot_start_time: z.optional(z.union([z.iso.time(), z.null()])),
+  slot_end_time: z.optional(z.union([z.iso.time(), z.null()])),
+})
+
+/**
  * BookingCreate
  * User only provides the slot and optional notes. user_id is set server-side.
  */
@@ -18,24 +103,65 @@ export const zBookingCreate = z
  * BookingRead
  */
 export const zBookingRead = z.object({
-  duty_slot_id: z.uuid(),
+  duty_slot_id: z.optional(z.union([z.uuid(), z.null()])),
   user_id: z.uuid(),
   status: z.optional(z.enum(['confirmed', 'cancelled'])),
   notes: z.optional(z.union([z.string(), z.null()])),
   id: z.uuid(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
+  cancellation_reason: z.optional(z.union([z.string(), z.null()])),
+  cancelled_slot_title: z.optional(z.union([z.string(), z.null()])),
+  cancelled_slot_date: z.optional(z.union([z.iso.date(), z.null()])),
+  cancelled_slot_start_time: z.optional(z.union([z.iso.time(), z.null()])),
+  cancelled_slot_end_time: z.optional(z.union([z.iso.time(), z.null()])),
+  cancelled_event_name: z.optional(z.union([z.string(), z.null()])),
 })
 
 /**
- * BookingListResponse
+ * DutySlotSummary
+ * Lightweight slot info nested inside a booking response.
  */
-export const zBookingListResponse = z.object({
-  items: z.array(zBookingRead),
-  total: z.int(),
-  skip: z.int(),
-  limit: z.int(),
-})
+export const zDutySlotSummary = z
+  .object({
+    id: z.uuid(),
+    event_id: z.uuid(),
+    title: z.string(),
+    date: z.iso.date(),
+    start_time: z.optional(z.union([z.iso.time(), z.null()])),
+    end_time: z.optional(z.union([z.iso.time(), z.null()])),
+    location: z.optional(z.union([z.string(), z.null()])),
+    category: z.optional(z.union([z.string(), z.null()])),
+    event_name: z.optional(z.union([z.string(), z.null()])),
+  })
+  .register(z.globalRegistry, {
+    description: 'Lightweight slot info nested inside a booking response.',
+  })
+
+/**
+ * BookingReadWithSlot
+ * BookingRead enriched with nested slot + event name (for /me endpoint).
+ */
+export const zBookingReadWithSlot = z
+  .object({
+    duty_slot_id: z.optional(z.union([z.uuid(), z.null()])),
+    user_id: z.uuid(),
+    status: z.optional(z.enum(['confirmed', 'cancelled'])),
+    notes: z.optional(z.union([z.string(), z.null()])),
+    id: z.uuid(),
+    created_at: z.iso.datetime(),
+    updated_at: z.iso.datetime(),
+    cancellation_reason: z.optional(z.union([z.string(), z.null()])),
+    cancelled_slot_title: z.optional(z.union([z.string(), z.null()])),
+    cancelled_slot_date: z.optional(z.union([z.iso.date(), z.null()])),
+    cancelled_slot_start_time: z.optional(z.union([z.iso.time(), z.null()])),
+    cancelled_slot_end_time: z.optional(z.union([z.iso.time(), z.null()])),
+    cancelled_event_name: z.optional(z.union([z.string(), z.null()])),
+    duty_slot: z.optional(z.union([zDutySlotSummary, z.null()])),
+  })
+  .register(z.globalRegistry, {
+    description: 'BookingRead enriched with nested slot + event name (for /me endpoint).',
+  })
 
 /**
  * BookingUpdate
@@ -43,6 +169,7 @@ export const zBookingListResponse = z.object({
 export const zBookingUpdate = z.object({
   status: z.optional(z.union([z.enum(['confirmed', 'cancelled']), z.null()])),
   notes: z.optional(z.union([z.string(), z.null()])),
+  cancellation_reason: z.optional(z.union([z.string(), z.null()])),
 })
 
 /**
@@ -58,6 +185,7 @@ export const zDutySlotCreate = z.object({
   location: z.optional(z.union([z.string(), z.null()])),
   category: z.optional(z.union([z.string(), z.null()])),
   max_bookings: z.optional(z.int()).default(1),
+  batch_id: z.optional(z.union([z.uuid(), z.null()])),
 })
 
 /**
@@ -73,6 +201,7 @@ export const zDutySlotRead = z.object({
   location: z.optional(z.union([z.string(), z.null()])),
   category: z.optional(z.union([z.string(), z.null()])),
   max_bookings: z.optional(z.int()).default(1),
+  batch_id: z.optional(z.union([z.uuid(), z.null()])),
   id: z.uuid(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
@@ -131,26 +260,6 @@ export const zEventGroupCreate = z.object({
 })
 
 /**
- * ScheduleOverride
- */
-export const zScheduleOverride = z.object({
-  date: z.iso.date(),
-  start_time: z.iso.time(),
-  end_time: z.iso.time(),
-})
-
-/**
- * SlotGenerationConfig
- */
-export const zSlotGenerationConfig = z.object({
-  default_start_time: z.iso.time(),
-  default_end_time: z.iso.time(),
-  slot_duration_minutes: z.int(),
-  people_per_slot: z.optional(z.int()).default(1),
-  overrides: z.optional(z.array(zScheduleOverride)).default([]),
-})
-
-/**
  * EventCreateWithSlots
  */
 export const zEventCreateWithSlots = z.object({
@@ -163,29 +272,6 @@ export const zEventCreateWithSlots = z.object({
   event_group_id: z.optional(z.union([z.uuid(), z.null()])),
   new_event_group: z.optional(z.union([zEventGroupCreate, z.null()])),
   schedule: zSlotGenerationConfig,
-})
-
-/**
- * EventRead
- */
-export const zEventRead = z.object({
-  name: z.string(),
-  description: z.optional(z.union([z.string(), z.null()])),
-  start_date: z.iso.date(),
-  end_date: z.iso.date(),
-  status: z.optional(z.enum(['draft', 'published', 'archived'])),
-  created_by_id: z.optional(z.union([z.uuid(), z.null()])),
-  event_group_id: z.optional(z.union([z.uuid(), z.null()])),
-  location: z.optional(z.union([z.string(), z.null()])),
-  category: z.optional(z.union([z.string(), z.null()])),
-  id: z.uuid(),
-  created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
-  slot_duration_minutes: z.optional(z.union([z.int(), z.null()])),
-  default_start_time: z.optional(z.union([z.iso.time(), z.null()])),
-  default_end_time: z.optional(z.union([z.iso.time(), z.null()])),
-  people_per_slot: z.optional(z.union([z.int(), z.null()])),
-  schedule_overrides: z.optional(z.union([z.array(z.object({})), z.null()])),
 })
 
 /**
@@ -258,6 +344,29 @@ export const zEventUpdate = z.object({
 })
 
 /**
+ * EventUpdateWithSlots
+ */
+export const zEventUpdateWithSlots = z.object({
+  name: z.optional(z.union([z.string(), z.null()])),
+  description: z.optional(z.union([z.string(), z.null()])),
+  start_date: z.optional(z.union([z.iso.date(), z.null()])),
+  end_date: z.optional(z.union([z.iso.date(), z.null()])),
+  location: z.optional(z.union([z.string(), z.null()])),
+  category: z.optional(z.union([z.string(), z.null()])),
+  schedule: zSlotGenerationConfig,
+})
+
+/**
+ * MyBookingsListResponse
+ */
+export const zMyBookingsListResponse = z.object({
+  items: z.array(zBookingReadWithSlot),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
  * ProfileInit
  * Profile data from Auth0 ID token for user initialization.
  */
@@ -270,6 +379,38 @@ export const zProfileInit = z
   .register(z.globalRegistry, {
     description: 'Profile data from Auth0 ID token for user initialization.',
   })
+
+/**
+ * SlotBatchRead
+ */
+export const zSlotBatchRead = z.object({
+  event_id: z.uuid(),
+  label: z.optional(z.union([z.string(), z.null()])),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  location: z.optional(z.union([z.string(), z.null()])),
+  category: z.optional(z.union([z.string(), z.null()])),
+  default_start_time: z.optional(z.union([z.iso.time(), z.null()])),
+  default_end_time: z.optional(z.union([z.iso.time(), z.null()])),
+  slot_duration_minutes: z.optional(z.union([z.int(), z.null()])),
+  people_per_slot: z.optional(z.union([z.int(), z.null()])),
+  remainder_mode: z.optional(z.union([z.enum(['drop', 'short', 'extend']), z.null()])),
+  schedule_overrides: z.optional(z.union([z.array(z.object({})), z.null()])),
+  id: z.uuid(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+})
+
+/**
+ * SlotRegenerationResult
+ */
+export const zSlotRegenerationResult = z.object({
+  event: zEventRead,
+  slots_added: z.int(),
+  slots_removed: z.int(),
+  slots_kept: z.int(),
+  affected_bookings: z.array(zAffectedBookingInfo),
+})
 
 /**
  * UserAvailabilityDateInput
@@ -571,6 +712,7 @@ export const zEventsListEventsData = z.object({
       limit: z.optional(z.int().gte(1).lte(200)).default(100),
       search: z.optional(z.union([z.string(), z.null()])),
       status: z.optional(z.union([z.enum(['draft', 'published', 'archived']), z.null()])),
+      my_bookings: z.optional(z.boolean()).default(false),
     }),
   ),
 })
@@ -596,7 +738,11 @@ export const zEventsDeleteEventData = z.object({
   path: z.object({
     event_id: z.string(),
   }),
-  query: z.optional(z.never()),
+  query: z.optional(
+    z.object({
+      cancellation_reason: z.optional(z.union([z.string(), z.null()])),
+    }),
+  ),
 })
 
 /**
@@ -643,6 +789,73 @@ export const zEventsCreateEventWithSlotsData = z.object({
  */
 export const zEventsCreateEventWithSlotsResponse = zEventCreateWithSlotsResponse
 
+export const zEventsAddSlotsToEventData = z.object({
+  body: zAddSlotsToEvent,
+  path: z.object({
+    event_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsAddSlotsToEventResponse = zAddSlotsResponse
+
+export const zEventsRegenerateEventSlotsData = z.object({
+  body: zEventUpdateWithSlots,
+  path: z.object({
+    event_id: z.string(),
+  }),
+  query: z.optional(
+    z.object({
+      dry_run: z.optional(z.boolean()).default(false),
+      batch_id: z.optional(z.union([z.string(), z.null()])),
+    }),
+  ),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsRegenerateEventSlotsResponse = zSlotRegenerationResult
+
+export const zEventsListBatchesData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    event_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Events-List Batches
+ * Successful Response
+ */
+export const zEventsListBatchesResponse = z.array(zSlotBatchRead).register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zEventsDeleteBatchData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    event_id: z.string(),
+    batch_id: z.string(),
+  }),
+  query: z.optional(
+    z.object({
+      cancellation_reason: z.optional(z.union([z.string(), z.null()])),
+    }),
+  ),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsDeleteBatchResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
 export const zDutySlotsListDutySlotsData = z.object({
   body: z.optional(z.never()),
   path: z.optional(z.never()),
@@ -678,7 +891,11 @@ export const zDutySlotsDeleteDutySlotData = z.object({
   path: z.object({
     slot_id: z.string(),
   }),
-  query: z.optional(z.never()),
+  query: z.optional(
+    z.object({
+      cancellation_reason: z.optional(z.union([z.string(), z.null()])),
+    }),
+  ),
 })
 
 /**
@@ -691,7 +908,7 @@ export const zDutySlotsDeleteDutySlotResponse = z.void().register(z.globalRegist
 export const zDutySlotsGetDutySlotData = z.object({
   body: z.optional(z.never()),
   path: z.object({
-    slot_id: z.string(),
+    slot_id: z.union([z.string(), z.null()]),
   }),
   query: z.optional(z.never()),
 })
@@ -722,6 +939,8 @@ export const zBookingsListMyBookingsData = z.object({
       skip: z.optional(z.int().gte(0)).default(0),
       limit: z.optional(z.int().gte(1).lte(200)).default(100),
       status: z.optional(z.union([z.string(), z.null()])),
+      date_from: z.optional(z.union([z.iso.date(), z.null()])),
+      date_to: z.optional(z.union([z.iso.date(), z.null()])),
     }),
   ),
 })
@@ -729,7 +948,7 @@ export const zBookingsListMyBookingsData = z.object({
 /**
  * Successful Response
  */
-export const zBookingsListMyBookingsResponse = zBookingListResponse
+export const zBookingsListMyBookingsResponse = zMyBookingsListResponse
 
 export const zBookingsCreateBookingData = z.object({
   body: zBookingCreate,
@@ -780,6 +999,21 @@ export const zBookingsUpdateBookingData = z.object({
  * Successful Response
  */
 export const zBookingsUpdateBookingResponse = zBookingRead
+
+export const zBookingsDismissBookingData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    booking_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zBookingsDismissBookingResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
 
 export const zEventGroupsListEventGroupsData = z.object({
   body: z.optional(z.never()),

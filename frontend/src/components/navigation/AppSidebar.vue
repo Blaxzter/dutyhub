@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { useColorMode } from '@vueuse/core'
 import { BookCheck, CalendarDays, CalendarRange, House, Users } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 
-import dutyhubLogo from '@/assets/logo/dutyhub.svg'
+import dutyhubDarkLogo from '@/assets/logo/dutyhub-dark.svg'
+import dutyhubLightLogo from '@/assets/logo/dutyhub-light.svg'
 
 import { useAuthStore } from '@/stores/auth'
 
@@ -19,6 +21,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar'
 
 import NavMain from '@/components/navigation/NavMain.vue'
@@ -35,6 +38,16 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+const { isMobile, setOpenMobile } = useSidebar()
+const router = useRouter()
+const mode = useColorMode()
+const currentLogo = computed(() => (mode.value === 'light' ? dutyhubDarkLogo : dutyhubLightLogo))
+
+router.afterEach(() => {
+  if (isMobile.value) {
+    setOpenMobile(false)
+  }
+})
 
 const navMain = [
   {
@@ -72,13 +85,18 @@ const navAdmin = computed(() =>
 </script>
 
 <template>
-  <Sidebar v-bind="props">
+  <Sidebar
+    :side="props.side"
+    :variant="props.variant"
+    :collapsible="props.collapsible"
+    :class="props.class"
+  >
     <SidebarHeader>
       <RouterLink
         :to="{ name: 'home' }"
         class="flex items-center gap-2 px-2 py-3 hover:opacity-80 transition-opacity"
       >
-        <img :src="dutyhubLogo" alt="DutyHub" class="w-auto" />
+        <img :src="currentLogo" alt="DutyHub" class="w-auto" />
       </RouterLink>
     </SidebarHeader>
     <SidebarContent>

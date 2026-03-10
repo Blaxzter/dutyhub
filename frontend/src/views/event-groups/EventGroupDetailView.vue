@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { ArrowLeft, CalendarDays, Check, ChevronDown, Pencil, Trash2, UserCheck, Users } from 'lucide-vue-next'
+import { ArrowLeft, CalendarDays, Check, ChevronDown, Info, Pencil, Plus, Trash2, UserCheck, Users } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -15,6 +15,7 @@ import type {
 } from '@/client/types.gen'
 import AvailabilityDialog from '@/components/events/AvailabilityDialog.vue'
 import AvailabilityDisplay from '@/components/events/AvailabilityDisplay.vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import {
@@ -183,6 +184,14 @@ onMounted(loadGroup)
     </div>
 
     <template v-else-if="group">
+      <!-- Draft banner -->
+      <Alert v-if="group.status === 'draft'" variant="default" class="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-500/30">
+        <Info class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+        <AlertDescription>
+          {{ t('duties.eventGroups.draftBanner') }}
+        </AlertDescription>
+      </Alert>
+
       <!-- Group Header -->
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div class="space-y-1">
@@ -261,7 +270,17 @@ onMounted(loadGroup)
 
       <!-- Events in group -->
       <div class="space-y-3">
-        <h2 class="text-xl font-semibold">{{ t('duties.eventGroups.detail.events') }}</h2>
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold">{{ t('duties.eventGroups.detail.events') }}</h2>
+          <Button
+            v-if="authStore.isAdmin"
+            size="sm"
+            @click="router.push({ name: 'event-create', query: { groupId: groupId } })"
+          >
+            <Plus class="mr-1.5 h-4 w-4" />
+            {{ t('duties.events.create') }}
+          </Button>
+        </div>
         <p v-if="groupEvents.length === 0" class="text-sm text-muted-foreground">
           {{ t('duties.eventGroups.detail.eventsEmpty') }}
         </p>

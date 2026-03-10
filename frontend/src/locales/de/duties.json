@@ -1,213 +1,275 @@
 {
-    "availability": {
-        "title": "Meine Verfügbarkeit",
-        "subtitle": "Verfügbarkeit für dieses Programm registrieren",
-        "register": "Verfügbarkeit registrieren",
-        "update": "Verfügbarkeit aktualisieren",
-        "remove": "Verfügbarkeit entfernen",
-        "removeConfirm": "Möchten Sie Ihre Verfügbarkeit wirklich entfernen?",
-        "notRegistered": "Sie haben noch keine Verfügbarkeit registriert.",
-        "types": {
-            "fully_available": "Voll verfügbar",
-            "time_range": "Täglicher Zeitraum",
-            "specific_dates": "Bestimmte Termine"
-        },
-        "fields": {
-            "type": "Verfügbarkeitstyp",
-            "dates": "Verfügbare Termine",
-            "datesWithRange": "Verfügbare Termine ({start} – {end})",
-            "startTime": "Von",
-            "endTime": "Bis",
-            "fullDay": "Ganztägig",
-            "setTimes": "Uhrzeiten angeben",
-            "timeRange": "Zeitraum",
-            "timeRangeHint": "Tägliches Zeitfenster festlegen. Leer lassen für offen (z.B. nur 'Von' = ab dieser Uhrzeit).",
-            "afterTime": "ab {time}",
-            "beforeTime": "vor {time}",
-            "notes": "Anmerkungen"
-        },
-        "adminTitle": "Verfügbarkeiten der Mitglieder",
-        "adminEmpty": "Noch keine Mitglieder haben Verfügbarkeit registriert."
+  "availability": {
+    "title": "Meine Verfügbarkeit",
+    "subtitle": "Verfügbarkeit für dieses Programm registrieren",
+    "register": "Verfügbarkeit registrieren",
+    "update": "Verfügbarkeit aktualisieren",
+    "remove": "Verfügbarkeit entfernen",
+    "removeConfirm": "Möchten Sie Ihre Verfügbarkeit wirklich entfernen?",
+    "notRegistered": "Sie haben noch keine Verfügbarkeit registriert.",
+    "types": {
+      "fully_available": "Voll verfügbar",
+      "time_range": "Täglicher Zeitraum",
+      "specific_dates": "Bestimmte Termine"
     },
-    "bookings": {
-        "bookSuccess": "Dienstschicht erfolgreich gebucht!",
-        "cancel": "Buchung stornieren",
-        "cancelConfirm": "Sind Sie sicher, dass Sie diese Buchung stornieren möchten?",
-        "cancelSuccess": "Buchung storniert.",
-        "empty": "Sie haben noch keine Buchungen.",
-        "statuses": {
-            "cancelled": "Storniert",
-            "confirmed": "Bestätigt"
-        },
-        "subtitle": "Ihre Dienstschicht-Reservierungen",
-        "title": "Meine Buchungen"
+    "fields": {
+      "type": "Verfügbarkeitstyp",
+      "dates": "Verfügbare Termine",
+      "datesWithRange": "Verfügbare Termine ({start} – {end})",
+      "startTime": "Von",
+      "endTime": "Bis",
+      "fullDay": "Ganztägig",
+      "setTimes": "Uhrzeiten angeben",
+      "timeRange": "Zeitraum",
+      "timeRangeHint": "Tägliches Zeitfenster festlegen. Leer lassen für offen (z.B. nur 'Von' = ab dieser Uhrzeit).",
+      "afterTime": "ab {time}",
+      "beforeTime": "vor {time}",
+      "notes": "Anmerkungen"
     },
-    "dutySlots": {
-        "availability": "{current} / {max} gebucht",
-        "available": "Verfügbar",
-        "book": "Dienstschicht buchen",
-        "create": "Dienstschicht erstellen",
-        "delete": "Dienstschicht löschen",
-        "deleteConfirm": "Sind Sie sicher, dass Sie diese Dienstschicht löschen möchten?",
-        "edit": "Dienstschicht bearbeiten",
-        "empty": "Noch keine Dienstschichten für diese Veranstaltung.",
-        "fields": {
-            "category": "Kategorie",
-            "date": "Datum",
-            "description": "Beschreibung",
-            "endTime": "Endzeit",
-            "location": "Ort",
-            "maxBookings": "Max. Buchungen",
-            "startTime": "Startzeit",
-            "title": "Titel"
-        },
-        "full": "Ausgebucht",
-        "pickDate": "Datum auswählen",
-        "title": "Dienstschicht"
+    "adminTitle": "Verfügbarkeiten der Mitglieder",
+    "adminEmpty": "Noch keine Mitglieder haben Verfügbarkeit registriert."
+  },
+  "bookings": {
+    "bookSuccess": "Dienstschicht erfolgreich gebucht!",
+    "cancel": "Buchung stornieren",
+    "cancelConfirm": "Sind Sie sicher, dass Sie diese Buchung stornieren möchten?",
+    "cancelSuccess": "Buchung storniert.",
+    "empty": "Sie haben noch keine Buchungen.",
+    "statuses": {
+      "cancelled": "Storniert",
+      "confirmed": "Bestätigt"
     },
-    "eventGroups": {
-        "create": "Veranstaltungsgruppe erstellen",
-        "delete": "Veranstaltungsgruppe löschen",
-        "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",
-        "detail": {
-            "events": "Veranstaltungen in dieser Gruppe",
-            "eventsEmpty": "Noch keine Veranstaltungen dieser Gruppe zugeordnet.",
-            "title": "Veranstaltungsgruppendetails"
-        },
-        "edit": "Veranstaltungsgruppe bearbeiten",
-        "empty": "Keine Veranstaltungsgruppen gefunden.",
-        "fields": {
-            "description": "Beschreibung",
-            "endDate": "Enddatum",
-            "name": "Name",
-            "startDate": "Startdatum",
-            "status": "Status"
-        },
-        "statuses": {
-            "archived": "Archiviert",
-            "draft": "Entwurf",
-            "published": "Veröffentlicht"
-        },
-        "pickDate": "Datum auswählen",
-        "subtitle": "Anstehende Veranstaltungsprogramme durchsuchen",
-        "title": "Veranstaltungsgruppen"
+    "subtitle": "Ihre Dienstschicht-Reservierungen",
+    "title": "Meine Buchungen",
+    "cancellationReason": "Grund der Stornierung",
+    "slotDeleted": "Diese Schicht wurde von einem Administrator entfernt.",
+    "unknownSlot": "Unbekannte Schicht",
+    "dismiss": "Entfernen",
+    "dismissSuccess": "Buchung aus Ihrer Liste entfernt.",
+    "filters": {
+      "upcoming": "Bevorstehend",
+      "thisMonth": "Dieser Monat",
+      "all": "Alle",
+      "showCancelled": "Storniert"
     },
-    "events": {
-        "create": "Veranstaltung erstellen",
-        "delete": "Veranstaltung löschen",
-        "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltung löschen möchten? Alle Dienstschichten und Buchungen gehen verloren.",
-        "detail": {
-            "addSlot": "Dienstschicht hinzufügen",
-            "slots": "Dienstschichten",
-            "title": "Veranstaltungsdetails"
+    "groupBy": {
+      "none": "Keine Gruppierung",
+      "date": "Nach Datum",
+      "event": "Nach Veranstaltung",
+      "location": "Nach Ort"
+    },
+    "noDate": "Kein Datum",
+    "noEvent": "Keine Veranstaltung",
+    "noLocation": "Kein Ort",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "yesterday": "Gestern"
+  },
+  "deleteDialog": {
+    "activeBookings": "Dies storniert {count} aktive Buchung(en). Betroffene Benutzer sehen die Stornierung in ihren Buchungen.",
+    "activeBookingsWarning": "Falls aktive Buchungen vorhanden sind, werden diese storniert. Betroffene Benutzer sehen die Stornierung in ihren Buchungen.",
+    "reasonLabel": "Stornierungsgrund (optional)",
+    "reasonPlaceholder": "z.B. Veranstaltung verschoben, nicht mehr benötigt...",
+    "reasonHint": "Dieser Grund wird den Benutzern angezeigt, deren Buchungen storniert werden."
+  },
+  "dutySlots": {
+    "availability": "{current} / {max} gebucht",
+    "available": "Verfügbar",
+    "book": "Dienstschicht buchen",
+    "create": "Dienstschicht erstellen",
+    "delete": "Dienstschicht löschen",
+    "deleteConfirm": "Sind Sie sicher, dass Sie diese Dienstschicht löschen möchten?",
+    "edit": "Dienstschicht bearbeiten",
+    "empty": "Noch keine Dienstschichten für diese Veranstaltung.",
+    "fields": {
+      "category": "Kategorie",
+      "date": "Datum",
+      "description": "Beschreibung",
+      "endTime": "Endzeit",
+      "location": "Ort",
+      "maxBookings": "Max. Buchungen",
+      "startTime": "Startzeit",
+      "title": "Titel"
+    },
+    "full": "Ausgebucht",
+    "pickDate": "Datum auswählen",
+    "title": "Dienstschicht"
+  },
+  "eventGroups": {
+    "create": "Veranstaltungsgruppe erstellen",
+    "delete": "Veranstaltungsgruppe löschen",
+    "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",
+    "detail": {
+      "events": "Veranstaltungen in dieser Gruppe",
+      "eventsEmpty": "Noch keine Veranstaltungen dieser Gruppe zugeordnet.",
+      "title": "Veranstaltungsgruppendetails"
+    },
+    "edit": "Veranstaltungsgruppe bearbeiten",
+    "empty": "Keine Veranstaltungsgruppen gefunden.",
+    "fields": {
+      "description": "Beschreibung",
+      "endDate": "Enddatum",
+      "name": "Name",
+      "startDate": "Startdatum",
+      "status": "Status"
+    },
+    "statuses": {
+      "archived": "Archiviert",
+      "draft": "Entwurf",
+      "published": "Veröffentlicht"
+    },
+    "draftBanner": "Diese Veranstaltungsgruppe ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
+    "pickDate": "Datum auswählen",
+    "subtitle": "Anstehende Veranstaltungsprogramme durchsuchen",
+    "title": "Veranstaltungsgruppen"
+  },
+  "events": {
+    "create": "Veranstaltung erstellen",
+    "delete": "Veranstaltung löschen",
+    "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltung löschen möchten? Alle Dienstschichten und Buchungen gehen verloren.",
+    "detail": {
+      "addSlot": "Dienstschicht hinzufügen",
+      "slots": "Dienstschichten",
+      "title": "Veranstaltungsdetails",
+      "allLocations": "Alle Orte",
+      "allCategories": "Alle Kategorien",
+      "booked": "Gebucht",
+      "slotsCount": "{count} Schichten",
+      "noSlotsMatch": "Keine Schichten entsprechen den aktuellen Filtern.",
+      "myBookings": "Meine Buchungen",
+      "myBookingsCount": "{count} gebucht",
+      "noBookingsYet": "Klicken Sie auf eine Schicht, um sie zu buchen.",
+      "addSlots": "Schichten hinzufügen",
+      "addSingleSlot": "Einzelne Schicht hinzufügen",
+      "addSlotBatch": "Schicht-Batch generieren",
+      "unbatchedSlots": "Weitere Schichten",
+      "deleteBatchConfirm": "Sind Sie sicher, dass Sie diesen Batch löschen möchten? Alle zugehörigen Schichten und Buchungen werden entfernt.",
+      "deleteBatchSuccess": "Batch erfolgreich gelöscht.",
+      "hiddenSlots": "{count} Schichten durch Filter ausgeblendet"
+    },
+    "edit": "Veranstaltung bearbeiten",
+    "calendar": {
+      "more": "weitere",
+      "views": {
+        "month": "Monat",
+        "week": "Woche",
+        "day": "Tag"
+      },
+      "today": "Heute",
+      "allDay": "Ganztägig",
+      "noItems": "Keine Termine für diesen Tag."
+    },
+    "myBookingsFilter": "Nur meine Buchungen",
+    "empty": "Keine Veranstaltungen gefunden.",
+    "fields": {
+      "description": "Beschreibung",
+      "endDate": "Enddatum",
+      "name": "Name",
+      "startDate": "Startdatum",
+      "status": "Status",
+      "location": "Ort",
+      "category": "Kategorie"
+    },
+    "statuses": {
+      "archived": "Archiviert",
+      "draft": "Entwurf",
+      "published": "Veröffentlicht"
+    },
+    "draftBanner": "Diese Veranstaltung ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
+    "pickDate": "Datum auswählen",
+    "subtitle": "Anstehende Dienst-Veranstaltungen durchsuchen",
+    "views": {
+      "calendar": "Kalender",
+      "list": "Liste"
+    },
+    "title": "Veranstaltungen",
+    "editView": {
+      "title": "Veranstaltung bearbeiten",
+      "subtitle": "Veranstaltungsdetails ändern und Dienstschichten neu generieren",
+      "editBatch": "Batch bearbeiten",
+      "editBatchSubtitle": "Batch-Zeitplan ändern und Schichten neu generieren",
+      "regenerate": "Schichten neu generieren",
+      "saving": "Wird gespeichert...",
+      "saveSuccess": "Veranstaltung erfolgreich aktualisiert!",
+      "preview": {
+        "added": "{count} neu",
+        "removed": "{count} entfernt",
+        "kept": "{count} unverändert",
+        "booked": "{count} gebucht"
+      },
+      "affectedBookings": {
+        "title": "Betroffene Buchungen",
+        "description": "Die folgenden bestätigten Buchungen werden storniert, da ihre Schichten nach der Neugenerierung nicht mehr existieren. Die Benutzer wurden noch nicht benachrichtigt — dies ist derzeit ein manueller Prozess.",
+        "slot": "Schicht",
+        "user": "Benutzer",
+        "confirm": "Trotzdem fortfahren",
+        "cancel": "Abbrechen"
+      }
+    },
+    "addSlotsView": {
+      "title": "Schichten hinzufügen",
+      "subtitle": "Neue Dienstschichten zu dieser Veranstaltung hinzufügen",
+      "sections": {
+        "batch": "Batch-Details",
+        "batchDesc": "Optionaler Ort und Kategorie für diese Schichten"
+      },
+      "submit": "Schichten hinzufügen",
+      "success": "{count} Dienstschichten hinzugefügt!"
+    },
+    "createView": {
+      "title": "Veranstaltung erstellen",
+      "subtitle": "Neue Veranstaltung mit automatisch generierten Dienstschichten einrichten",
+      "sections": {
+        "details": "Veranstaltungsdetails",
+        "detailsDesc": "Grundlegende Informationen zur Veranstaltung",
+        "eventGroup": "Veranstaltungsgruppe",
+        "eventGroupDesc": "Diese Veranstaltung optional einer Gruppe zuordnen",
+        "dates": "Veranstaltungstermine",
+        "datesDesc": "Wählen Sie, wann die Veranstaltung stattfindet",
+        "schedule": "Zeitplan & Schichten",
+        "scheduleDesc": "Konfigurieren, wann Dienstschichten erstellt werden sollen",
+        "preview": "Vorschau",
+        "previewDesc": "Überprüfen Sie die Schichten, die generiert werden"
+      },
+      "dateMode": {
+        "single": "Ein Tag",
+        "range": "Zeitraum",
+        "specific": "Bestimmte Tage"
+      },
+      "addDate": "Datum hinzufügen",
+      "noDatesSelected": "Noch keine Termine ausgewählt",
+      "groupDateHint": "Termine sind auf die Veranstaltungsgruppe beschränkt ({start} – {end})",
+      "eventGroupOption": {
+        "none": "Keine Veranstaltungsgruppe",
+        "existing": "Bestehende auswählen",
+        "new": "Neue erstellen"
+      },
+      "schedule": {
+        "defaultStartTime": "Standard-Startzeit",
+        "defaultEndTime": "Standard-Endzeit",
+        "slotDuration": "Schichtdauer",
+        "peoplePerSlot": "Personen pro Schicht",
+        "remainder": "Restzeit",
+        "remainderDesc": "Wie mit übrig gebliebener Zeit umgegangen wird, wenn Schichten nicht gleichmäßig aufgehen",
+        "remainderMode": {
+          "drop": "Restzeit ignorieren",
+          "short": "Kürzere letzte Schicht erstellen",
+          "extend": "Letzte Schicht verlängern"
         },
-        "edit": "Veranstaltung bearbeiten",
-        "calendar": {
-            "more": "weitere",
-            "views": {
-                "month": "Monat",
-                "week": "Woche",
-                "day": "Tag"
-            },
-            "today": "Heute",
-            "allDay": "Ganztägig",
-            "noItems": "Keine Termine für diesen Tag."
-        },
-        "empty": "Keine Veranstaltungen gefunden.",
-        "fields": {
-            "description": "Beschreibung",
-            "endDate": "Enddatum",
-            "name": "Name",
-            "startDate": "Startdatum",
-            "status": "Status",
-            "location": "Ort",
-            "category": "Kategorie"
-        },
-        "statuses": {
-            "archived": "Archiviert",
-            "draft": "Entwurf",
-            "published": "Veröffentlicht"
-        },
-        "pickDate": "Datum auswählen",
-        "subtitle": "Anstehende Dienst-Veranstaltungen durchsuchen",
-        "views": {
-            "calendar": "Kalender",
-            "list": "Liste"
-        },
-        "title": "Veranstaltungen",
-        "editView": {
-            "title": "Veranstaltung bearbeiten",
-            "subtitle": "Veranstaltungsdetails ändern und Dienstschichten neu generieren",
-            "regenerate": "Schichten neu generieren",
-            "saving": "Wird gespeichert...",
-            "saveSuccess": "Veranstaltung erfolgreich aktualisiert!",
-            "preview": {
-                "added": "{count} neu",
-                "removed": "{count} entfernt",
-                "kept": "{count} unverändert"
-            },
-            "affectedBookings": {
-                "title": "Betroffene Buchungen",
-                "description": "Die folgenden bestätigten Buchungen werden storniert, da ihre Schichten nach der Neugenerierung nicht mehr existieren. Die Benutzer wurden noch nicht benachrichtigt — dies ist derzeit ein manueller Prozess.",
-                "slot": "Schicht",
-                "user": "Benutzer",
-                "confirm": "Trotzdem fortfahren",
-                "cancel": "Abbrechen"
-            }
-        },
-        "createView": {
-            "title": "Veranstaltung erstellen",
-            "subtitle": "Neue Veranstaltung mit automatisch generierten Dienstschichten einrichten",
-            "sections": {
-                "details": "Veranstaltungsdetails",
-                "detailsDesc": "Grundlegende Informationen zur Veranstaltung",
-                "eventGroup": "Veranstaltungsgruppe",
-                "eventGroupDesc": "Diese Veranstaltung optional einer Gruppe zuordnen",
-                "dates": "Veranstaltungstermine",
-                "datesDesc": "Wählen Sie, wann die Veranstaltung stattfindet",
-                "schedule": "Zeitplan & Schichten",
-                "scheduleDesc": "Konfigurieren, wann Dienstschichten erstellt werden sollen",
-                "preview": "Vorschau",
-                "previewDesc": "Überprüfen Sie die Schichten, die generiert werden"
-            },
-            "dateMode": {
-                "single": "Ein Tag",
-                "range": "Zeitraum",
-                "specific": "Bestimmte Tage"
-            },
-            "addDate": "Datum hinzufügen",
-            "noDatesSelected": "Noch keine Termine ausgewählt",
-            "groupDateHint": "Termine sind auf die Veranstaltungsgruppe beschränkt ({start} – {end})",
-            "eventGroupOption": {
-                "none": "Keine Veranstaltungsgruppe",
-                "existing": "Bestehende auswählen",
-                "new": "Neue erstellen"
-            },
-            "schedule": {
-                "defaultStartTime": "Standard-Startzeit",
-                "defaultEndTime": "Standard-Endzeit",
-                "slotDuration": "Schichtdauer",
-                "peoplePerSlot": "Personen pro Schicht",
-                "remainder": "Restzeit",
-                "remainderDesc": "Wie mit übrig gebliebener Zeit umgegangen wird, wenn Schichten nicht gleichmäßig aufgehen",
-                "remainderMode": {
-                    "drop": "Restzeit ignorieren",
-                    "short": "Kürzere letzte Schicht erstellen",
-                    "extend": "Letzte Schicht verlängern"
-                },
-                "overrides": "Datumsausnahmen",
-                "overridesDesc": "Zeiten für bestimmte Tage anpassen",
-                "addException": "Ausnahme hinzufügen",
-                "removeException": "Entfernen",
-                "minutes": "{n} Minuten"
-            },
-            "preview": {
-                "summary": "{slots} Schichten über {days} Tage",
-                "noSlots": "Mit der aktuellen Konfiguration werden keine Schichten generiert. Bitte füllen Sie den Zeitplan aus.",
-                "slotsOnDate": "{count} Schichten"
-            },
-            "submit": "Veranstaltung erstellen",
-            "success": "Veranstaltung mit {count} Dienstschichten erstellt!"
-        }
+        "overrides": "Datumsausnahmen",
+        "overridesDesc": "Zeiten für bestimmte Tage anpassen",
+        "addException": "Ausnahme hinzufügen",
+        "removeException": "Entfernen",
+        "minutes": "{n} Minuten"
+      },
+      "preview": {
+        "summary": "{slots} Schichten über {days} Tage",
+        "noSlots": "Mit der aktuellen Konfiguration werden keine Schichten generiert. Bitte füllen Sie den Zeitplan aus.",
+        "slotsOnDate": "{count} Schichten",
+        "clickToExclude": "Klicken Sie auf eine Schicht, um sie von der Erstellung auszuschließen."
+      },
+      "submit": "Veranstaltung erstellen",
+      "success": "Veranstaltung mit {count} Dienstschichten erstellt!"
     }
+  }
 }

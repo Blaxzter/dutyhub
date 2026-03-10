@@ -5,7 +5,7 @@ import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
 import { ArrowLeft, CalendarDays, CalendarPlus, Clock, Plus, Trash2, Users, X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
@@ -39,8 +39,12 @@ import type { EventGroupListResponse, EventGroupRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t, locale } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const { get, post } = useAuthenticatedClient()
+
+// Prefill event group from query param (e.g. when creating from EventGroupDetailView)
+const prefillGroupId = route.query.groupId as string | undefined
 
 // --- Form state ---
 const name = ref('')
@@ -246,6 +250,12 @@ const loadEventGroups = async () => {
       query: { limit: 100 },
     })
     eventGroups.value = response.data.items
+
+    // Prefill event group selection if groupId query param is present
+    if (prefillGroupId && eventGroups.value.some((g) => g.id === prefillGroupId)) {
+      eventGroupMode.value = 'existing'
+      selectedEventGroupId.value = prefillGroupId
+    }
   } catch {
     // Non-critical, just won't have groups to select from
   }
@@ -789,6 +799,9 @@ const formatDateLabel = (dateStr: string) => {
                 })
               }}
             </p>
+            <p class="text-sm text-muted-foreground">
+              {{ t('duties.events.createView.preview.clickToExclude') }}
+            </p>
             <div v-for="[dateStr, slots] in slotsByDate" :key="dateStr" class="space-y-2">
               <div class="flex items-center gap-2">
                 <p class="font-medium">{{ formatDateLabel(dateStr) }}</p>
@@ -796,7 +809,7 @@ const formatDateLabel = (dateStr: string) => {
                   {{ t('duties.events.createView.preview.slotsOnDate', { count: slots.filter(s => !isSlotExcluded(s)).length }) }}
                 </Badge>
               </div>
-              <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+              <div class="grid grid-cols-2 items-center gap-2 sm:grid-cols-3 md:grid-cols-4">
                 <Card
                   v-for="slot in slots"
                   :key="slot.startTime"

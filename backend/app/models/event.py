@@ -12,6 +12,9 @@ if __name__ != "__main__":
 if __name__ != "__main__":
     from app.models.event_group import EventGroup  # noqa: F401
 
+if __name__ != "__main__":
+    from app.models.slot_batch import SlotBatch  # noqa: F401
+
 
 class Event(Base, table=True):
     __tablename__ = "events"
@@ -62,6 +65,10 @@ class Event(Base, table=True):
     )
 
     duty_slots: list["DutySlot"] = Relationship(
+        back_populates="event",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+    slot_batches: list["SlotBatch"] = Relationship(
         back_populates="event",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )

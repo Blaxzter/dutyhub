@@ -105,6 +105,18 @@ const router = createRouter({
           },
         },
         {
+          path: 'events/:eventId/add-slots',
+          name: 'event-add-slots',
+          component: () => import('@/views/events/EventAddSlotsView.vue'),
+          meta: {
+            requiresRole: 'admin',
+            breadcrumbs: [
+              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
+              { title: 'Add Slots', titleKey: 'duties.events.addSlotsView.title' },
+            ],
+          },
+        },
+        {
           path: 'events/:eventId',
           name: 'event-detail',
           component: () => import('@/views/events/EventDetailView.vue'),

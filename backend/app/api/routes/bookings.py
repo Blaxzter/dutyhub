@@ -1,3 +1,5 @@
+import datetime as dt
+
 from fastapi import APIRouter, Query
 
 from app.api.deps import CurrentUser, DBDep
@@ -8,31 +10,55 @@ from app.models.booking import Booking
 from app.schemas.booking import (
     BookingBase,
     BookingCreate,
-    BookingListResponse,
     BookingRead,
+    BookingReadWithSlot,
     BookingUpdate,
+    DutySlotSummary,
+    MyBookingsListResponse,
 )
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
-@router.get("/me", response_model=BookingListResponse)
+@router.get("/me", response_model=MyBookingsListResponse)
 async def list_my_bookings(
     session: DBDep,
     current_user: CurrentUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=200),
     status: str | None = None,
-) -> BookingListResponse:
-    """List the current user's bookings."""
+    date_from: dt.date | None = None,
+    date_to: dt.date | None = None,
+) -> MyBookingsListResponse:
+    """List the current user's bookings with joined slot + event data."""
     items = await crud_booking.get_multi_by_user(
-        session, user_id=current_user.id, skip=skip, limit=limit, status=status
+        session,
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        status=status,
+        with_slot=True,
+        date_from=date_from,
+        date_to=date_to,
     )
     total = await crud_booking.count_by_user(
-        session, user_id=current_user.id, status=status
+        session, user_id=current_user.id, status=status,
+        date_from=date_from, date_to=date_to,
     )
-    return BookingListResponse(
-        items=[BookingRead.model_validate(i) for i in items],
+
+    enriched: list[BookingReadWithSlot] = []
+    for b in items:
+        bws = BookingReadWithSlot.model_validate(b)
+        if b.duty_slot is not None:
+            slot_summary = DutySlotSummary.model_validate(b.duty_slot)
+            slot_summary.event_name = (
+                b.duty_slot.event.name if b.duty_slot.event else None
+            )
+            bws.duty_slot = slot_summary
+        enriched.append(bws)
+
+    return MyBookingsListResponse(
+        items=enriched,
         total=total,
         skip=skip,
         limit=limit,
@@ -133,3 +159,27 @@ async def cancel_booking(
     return await crud_booking.update(
         session, db_obj=db_booking, obj_in=BookingUpdate(status="cancelled")
     )
+
+
+@router.delete("/{booking_id}/dismiss", status_code=204)
+async def dismiss_booking(
+    booking_id: str,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> None:
+    """Permanently delete a cancelled booking from the user's list."""
+    db_booking = await crud_booking.get(session, booking_id, raise_404_error=True)
+    if not current_user.is_admin and db_booking.user_id != current_user.id:
+        raise_problem(
+            403,
+            code="booking.forbidden",
+            detail="You can only dismiss your own bookings",
+        )
+    if db_booking.status != "cancelled":
+        raise_problem(
+            400,
+            code="booking.not_cancelled",
+            detail="Only cancelled bookings can be dismissed",
+        )
+    await session.delete(db_booking)
+    await session.commit()
