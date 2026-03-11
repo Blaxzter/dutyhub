@@ -202,7 +202,14 @@
         "subtitle": "Browse upcoming duty events",
         "views": {
             "calendar": "Calendar",
-            "list": "List"
+            "list": "List",
+            "box": "Cards"
+        },
+        "quickView": {
+            "availableSlots": "{count} available",
+            "showMore": "Show {count} more",
+            "showLess": "Show less",
+            "noMore": "No more events"
         },
         "title": "Events",
         "editView": {

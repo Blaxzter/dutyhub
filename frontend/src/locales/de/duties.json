@@ -202,7 +202,14 @@
     "subtitle": "Anstehende Dienst-Veranstaltungen durchsuchen",
     "views": {
       "calendar": "Kalender",
-      "list": "Liste"
+      "list": "Liste",
+      "box": "Karten"
+    },
+    "quickView": {
+      "availableSlots": "{count} verfügbar",
+      "showMore": "{count} weitere anzeigen",
+      "showLess": "Weniger anzeigen",
+      "noMore": "Keine weiteren Veranstaltungen"
     },
     "title": "Veranstaltungen",
     "editView": {

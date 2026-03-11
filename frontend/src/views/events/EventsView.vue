@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { Calendar, List, Plus, Search, Trash2 } from 'lucide-vue-next'
+import { Calendar, Grid2x2, List, Plus, Search, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 import EventCalendarView from '@/components/events/EventCalendarView.vue'
 import EventListView from '@/components/events/EventListView.vue'
+import { EventQuickView } from '@/components/events/quick-view'
 
 import type {
   EventGroupListResponse,
@@ -44,7 +45,7 @@ const events = ref<EventRead[]>([])
 const eventGroups = ref<EventGroupRead[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
-const viewMode = ref<'list' | 'calendar'>('list')
+const viewMode = ref<'list' | 'box' | 'calendar'>('list')
 const myBookingsOnly = ref(false)
 
 // Delete dialog state
@@ -101,6 +102,10 @@ const confirmDeleteEvent = async () => {
   }
 }
 
+const handleClickSlot = (_slotId: string, event: EventRead) => {
+  router.push({ name: 'event-detail', params: { eventId: event.id } })
+}
+
 const navigateToEvent = (event: EventRead) => {
   router.push({ name: 'event-detail', params: { eventId: event.id } })
 }
@@ -131,6 +136,15 @@ onMounted(loadEvents)
           >
             <List class="mr-1.5 h-4 w-4" />
             <span class="hidden sm:inline">{{ t('duties.events.views.list') }}</span>
+          </Button>
+          <Button
+            :variant="viewMode === 'box' ? 'default' : 'ghost'"
+            size="sm"
+            class="rounded-none border-0 border-l"
+            @click="viewMode = 'box'"
+          >
+            <Grid2x2 class="mr-1.5 h-4 w-4" />
+            <span class="hidden sm:inline">{{ t('duties.events.views.box') }}</span>
           </Button>
           <Button
             :variant="viewMode === 'calendar' ? 'default' : 'ghost'"
@@ -170,8 +184,15 @@ onMounted(loadEvents)
     </div>
 
     <template v-else>
-      <EventListView
+      <EventQuickView
         v-if="viewMode === 'list'"
+        :events="filteredEvents"
+        @navigate="navigateToEvent"
+        @delete="handleDelete"
+        @click-slot="handleClickSlot"
+      />
+      <EventListView
+        v-else-if="viewMode === 'box'"
         :events="filteredEvents"
         @navigate="navigateToEvent"
         @delete="handleDelete"
