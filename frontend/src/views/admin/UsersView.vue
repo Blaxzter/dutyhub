@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import { Shield, ShieldOff } from 'lucide-vue-next'
+import { Shield, ShieldOff, UserCheck, UserX } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -59,6 +59,27 @@ const toggleAdmin = async (user: UserRead) => {
   }
 }
 
+const toggleActive = async (user: UserRead) => {
+  updatingId.value = user.id
+  try {
+    const response = await patch<{ data: UserRead }>({
+      url: `/users/${user.id}`,
+      body: { is_active: !user.is_active },
+    })
+    const idx = users.value.findIndex((u) => u.id === user.id)
+    if (idx !== -1) users.value[idx] = response.data
+    toast.success(
+      user.is_active
+        ? t('admin.users.deactivated', { name: user.name ?? user.email })
+        : t('admin.users.activated', { name: user.name ?? user.email }),
+    )
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    updatingId.value = null
+  }
+}
+
 onMounted(loadUsers)
 </script>
 
@@ -97,21 +118,33 @@ onMounted(loadUsers)
               </div>
             </TableCell>
             <TableCell>
-              <Badge :variant="user.is_active ? 'default' : 'outline'">
-                {{ user.is_active ? t('admin.users.active') : t('admin.users.inactive') }}
+              <Badge :variant="user.is_active ? 'default' : 'destructive'">
+                {{ user.is_active ? t('admin.users.active') : t('admin.users.pending') }}
               </Badge>
             </TableCell>
             <TableCell class="text-right">
-              <Button
-                variant="ghost"
-                size="sm"
-                :disabled="updatingId === user.id"
-                @click="toggleAdmin(user)"
-              >
-                <ShieldOff v-if="user.roles.includes('admin')" class="mr-1.5 h-4 w-4 text-destructive" />
-                <Shield v-else class="mr-1.5 h-4 w-4 text-primary" />
-                {{ user.roles.includes('admin') ? t('admin.users.removeAdmin') : t('admin.users.makeAdmin') }}
-              </Button>
+              <div class="flex items-center justify-end gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  :disabled="updatingId === user.id"
+                  @click="toggleActive(user)"
+                >
+                  <UserX v-if="user.is_active" class="mr-1.5 h-4 w-4 text-destructive" />
+                  <UserCheck v-else class="mr-1.5 h-4 w-4 text-primary" />
+                  {{ user.is_active ? t('admin.users.deactivate') : t('admin.users.activate') }}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  :disabled="updatingId === user.id"
+                  @click="toggleAdmin(user)"
+                >
+                  <ShieldOff v-if="user.roles.includes('admin')" class="mr-1.5 h-4 w-4 text-destructive" />
+                  <Shield v-else class="mr-1.5 h-4 w-4 text-primary" />
+                  {{ user.roles.includes('admin') ? t('admin.users.removeAdmin') : t('admin.users.makeAdmin') }}
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         </TableBody>

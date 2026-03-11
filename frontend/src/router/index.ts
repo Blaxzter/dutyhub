@@ -171,6 +171,11 @@ const router = createRouter({
           name: 'not-found',
           component: () => import('@/views/NotFoundView.vue'),
         },
+        {
+          path: 'pending-approval',
+          name: 'pending-approval',
+          component: () => import('@/views/PendingApprovalView.vue'),
+        },
       ],
     },
 
@@ -207,6 +212,15 @@ router.beforeEach(async (to) => {
       if (to.meta.requiresRole) {
         return { name: 'home' }
       }
+    }
+
+    // Redirect inactive users to pending approval page
+    if (!authStore.isActive && to.name !== 'pending-approval') {
+      return { name: 'pending-approval' }
+    }
+    // Don't let active users visit the pending page
+    if (authStore.isActive && to.name === 'pending-approval') {
+      return { name: 'home' }
     }
   }
 

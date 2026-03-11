@@ -79,7 +79,7 @@ const { t } = useI18n()
           <template v-if="day.date">
             <!-- Day number (clickable → day view) -->
             <button
-              class="mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium hover:bg-muted transition-colors"
+              class="mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium hover:bg-muted transition-colors cursor-pointer"
               :class="
                 isToday(day.date)
                   ? 'bg-primary text-primary-foreground hover:bg-primary/80'
@@ -102,7 +102,7 @@ const { t } = useI18n()
               <div
                 v-for="group in day.groups.slice(0, 2)"
                 :key="'mg-' + group.id"
-                class="flex items-center sm:hidden"
+                class="flex items-center sm:hidden cursor-pointer"
                 @click="emit('navigateGroup', group)"
               >
                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
@@ -112,33 +112,60 @@ const { t } = useI18n()
             <!-- Day items (single-day events only on desktop; all events on mobile) -->
             <div class="space-y-0.5">
               <template v-for="event in day.events.slice(0, 3)" :key="'e-' + event.id">
-                <div class="flex items-center sm:hidden" @click="emit('navigateEvent', event)">
-                  <span class="h-1.5 w-1.5 rounded-full" :class="event.status === 'published' ? 'bg-primary' : 'bg-muted-foreground'" />
+                <div
+                  class="flex items-center sm:hidden cursor-pointer"
+                  @click="emit('navigateEvent', event)"
+                >
+                  <span
+                    class="h-1.5 w-1.5 rounded-full"
+                    :class="event.status === 'published' ? 'bg-primary' : 'bg-muted-foreground'"
+                  />
                 </div>
                 <button
                   v-if="!isMultiDayEvent(event)"
-                  class="hidden w-full truncate rounded px-1 py-0.5 text-left text-xs font-medium transition-opacity hover:opacity-75 sm:block"
-                  :class="event.status === 'published' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'"
+                  class="hidden w-full truncate rounded px-1 py-0.5 text-left text-xs font-medium transition-opacity hover:opacity-75 sm:block cursor-pointer"
+                  :class="
+                    event.status === 'published'
+                      ? 'bg-primary/15 text-primary'
+                      : 'bg-muted text-muted-foreground'
+                  "
                   @click="emit('navigateEvent', event)"
                 >
                   {{ event.name }}
                 </button>
               </template>
 
-              <template v-for="booking in day.bookings.slice(0, Math.max(1, 3 - day.events.filter(e => !isMultiDayEvent(e)).length))" :key="'b-' + booking.id">
-                <div class="flex items-center sm:hidden" @click="emit('navigateBooking', booking)">
+              <template
+                v-for="booking in day.bookings.slice(
+                  0,
+                  Math.max(1, 3 - day.events.filter((e) => !isMultiDayEvent(e)).length),
+                )"
+                :key="'b-' + booking.id"
+              >
+                <div
+                  class="flex items-center sm:hidden cursor-pointer"
+                  @click="emit('navigateBooking', booking)"
+                >
                   <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 </div>
                 <button
-                  class="hidden w-full truncate rounded px-1 py-0.5 text-left text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 transition-opacity hover:opacity-75 sm:block"
+                  class="hidden w-full truncate rounded px-1 py-0.5 text-left text-xs font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 transition-opacity hover:opacity-75 sm:block cursor-pointer"
                   @click="emit('navigateBooking', booking)"
                 >
                   {{ booking.title }}
                 </button>
               </template>
 
-              <div v-if="day.events.filter(e => !isMultiDayEvent(e)).length + day.bookings.length > 3" class="px-1 text-xs text-muted-foreground">
-                +{{ day.events.filter(e => !isMultiDayEvent(e)).length + day.bookings.length - 3 }} {{ t('duties.events.calendar.more') }}
+              <div
+                v-if="
+                  day.events.filter((e) => !isMultiDayEvent(e)).length + day.bookings.length > 3
+                "
+                class="px-1 text-xs text-muted-foreground cursor-pointer"
+              >
+                +{{
+                  day.events.filter((e) => !isMultiDayEvent(e)).length + day.bookings.length - 3
+                }}
+                {{ t('duties.events.calendar.more') }}
               </div>
             </div>
           </template>

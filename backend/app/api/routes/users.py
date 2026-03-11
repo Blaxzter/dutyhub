@@ -4,7 +4,13 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.deps import CurrentSuperuser, CurrentUser, DBDep, auth0, current_user
+from app.api.deps import (
+    CurrentSuperuser,
+    CurrentUser,
+    DBDep,
+    _get_or_create_user,
+    auth0,
+)
 from app.core.config import settings
 from app.crud.user import user as crud_user
 from app.logic.auth0.auth0_service import update_auth0_user
@@ -27,17 +33,18 @@ async def get_current_user_profile(
     Accepts optional profile data from frontend for user initialization.
     This allows the frontend to send email/name from Auth0 ID token
     when the user first logs in.
+
+    Note: This endpoint does NOT check is_active, so even pending users
+    can retrieve their profile status after registering.
     """
-    # Pass profile data to current_user dependency for potential user creation
     profile_dict = profile_init.model_dump() if profile_init else None
-    user_dep = current_user(profile_data=profile_dict)
-    current_user_obj = await user_dep(session, claims)
+    user = await _get_or_create_user(session, claims, profile_data=profile_dict)
 
     return UserProfile(
         **claims,
-        roles=current_user_obj.roles,
-        is_admin=current_user_obj.is_admin,
-        is_active=current_user_obj.is_active,
+        roles=user.roles,
+        is_admin=user.is_admin,
+        is_active=user.is_active,
     )
 
 

@@ -25,6 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
   const profile = ref<UserProfile | null>(null)
   const roles = computed(() => profile.value?.roles ?? [])
   const isAdmin = computed(() => profile.value?.is_admin ?? false)
+  const isActive = computed(() => profile.value?.is_active ?? true)
 
   let profilePromise: Promise<UserProfile | null> | null = null
 
@@ -126,6 +127,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     profile,
     roles,
+    isActive,
     isAdmin,
     loading,
     profileLoading,

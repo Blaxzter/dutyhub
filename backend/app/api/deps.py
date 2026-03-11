@@ -100,6 +100,7 @@ async def _get_or_create_user(
         name=name,
         picture=picture,
         roles=["admin"] if is_superadmin else [],
+        is_active=is_superadmin,
     )
     new_user = await crud_user.create(session, obj_in=user_in)
     return new_user

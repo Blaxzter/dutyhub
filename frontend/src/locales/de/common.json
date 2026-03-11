@@ -76,6 +76,12 @@
         "current": "Aktuelle Sprache",
         "switch": "Sprache wechseln"
     },
+    "pendingApproval": {
+        "title": "Konto wartet auf Freigabe",
+        "description": "Ihr Konto wurde erstellt, muss aber von einem Administrator freigegeben werden, bevor Sie auf die Plattform zugreifen können.",
+        "hint": "Sie können sich anmelden, sobald Ihr Konto bestätigt wurde.",
+        "logout": "Abmelden"
+    },
     "states": {
         "error": "Fehler",
         "info": "Info",
