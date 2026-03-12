@@ -236,7 +236,9 @@ def find_existing_action(name: str) -> dict[str, Any] | None:
     try:
         data: dict[str, Any] | list[dict[str, Any]] = json.loads(result.stdout)
         # Auth0 CLI may return a list or {"actions": [...]}
-        actions: list[dict[str, Any]] = data if isinstance(data, list) else data.get("actions", [])
+        actions: list[dict[str, Any]] = (
+            data if isinstance(data, list) else data.get("actions", [])
+        )
         return next((a for a in actions if a.get("name") == name), None)
     except (json.JSONDecodeError, TypeError):
         return None
@@ -248,7 +250,9 @@ def find_existing_grant(client_id: str, audience: str) -> dict[str, Any] | None:
         return None
     try:
         data: dict[str, Any] | list[dict[str, Any]] = json.loads(result.stdout)
-        grants: list[dict[str, Any]] = data if isinstance(data, list) else data.get("client_grants", [])
+        grants: list[dict[str, Any]] = (
+            data if isinstance(data, list) else data.get("client_grants", [])
+        )
         return next(
             (
                 g

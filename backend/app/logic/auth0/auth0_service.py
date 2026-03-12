@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 import httpx
@@ -5,6 +6,34 @@ import httpx
 from app.core.auth import get_management_api_token
 from app.core.config import settings
 from app.schemas.users import UserProfileUpdate
+
+logger = logging.getLogger(__name__)
+
+
+async def delete_auth0_user(auth0_sub: str) -> bool:
+    """Delete a user from Auth0 using the Management API."""
+    try:
+        token = await get_management_api_token()
+        url = f"https://{settings.AUTH0_DOMAIN}/api/v2/users/{auth0_sub}"
+        headers = {
+            "Authorization": f"Bearer {token}",
+        }
+
+        async with httpx.AsyncClient() as client:
+            response = await client.delete(url, headers=headers)
+            if response.status_code == 204:
+                return True
+            logger.error(
+                "Failed to delete Auth0 user %s: %s %s",
+                auth0_sub,
+                response.status_code,
+                response.text,
+            )
+            return False
+
+    except Exception:
+        logger.exception("Error deleting Auth0 user %s", auth0_sub)
+        return False
 
 
 async def update_auth0_user(user_id: str, update_data: UserProfileUpdate) -> bool:

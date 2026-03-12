@@ -13,13 +13,17 @@ Use `just <command>` (see `justfile`) for most tasks.
 
 ### Development
 
-```bash
-docker compose watch          # Full stack (recommended)
+Two modes, controlled by `dev_mode` at the top of `justfile` (default: `"local"`):
 
-# Or locally:
-cd backend && uv sync && fastapi dev app/main.py
-cd frontend && pnpm install && pnpm dev
+```bash
+just dev               # Uses dev_mode default
+just dev docker        # Full stack via Docker Compose watch (hot reload)
+just dev local         # Starts DB+Adminer in Docker; run backend/frontend manually:
+just dev-backend       #   terminal 1
+just dev-frontend      #   terminal 2
 ```
+
+`just test-e2e` also respects `dev_mode`: docker runs Playwright in a container, local runs `pnpm test:e2e` directly.
 
 Local URLs: frontend `http://localhost:5173`, backend `http://localhost:8000`, OpenAPI docs `http://localhost:8000/docs`
 

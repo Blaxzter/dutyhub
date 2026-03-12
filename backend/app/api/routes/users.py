@@ -1,3 +1,4 @@
+import logging
 import uuid
 from collections.abc import Sequence
 from typing import Any
@@ -13,10 +14,12 @@ from app.api.deps import (
 )
 from app.core.config import settings
 from app.crud.user import user as crud_user
-from app.logic.auth0.auth0_service import update_auth0_user
+from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
 from app.models.user import User
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.schemas.users import ProfileInit, UserProfile, UserProfileUpdate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -139,13 +142,48 @@ async def update_user(
     return await crud_user.update(session, db_obj=user, obj_in=user_in)
 
 
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_current_user(
+    session: DBDep,
+    current_user: CurrentUser,
+    claims: dict[str, Any] = Depends(auth0.require_auth()),  # type: ignore[assignment]
+) -> None:
+    """Delete the currently authenticated user's account.
+
+    This will:
+    1. Delete all user data (projects, tasks) from the database
+    2. Delete the user record from the database
+    3. Delete the user from Auth0
+    """
+    auth0_sub: str | None = claims.get("sub")
+    if not auth0_sub:
+        raise HTTPException(status_code=400, detail="User ID not found in token")
+
+    # Delete user from Auth0 first — if this fails, we abort to keep things consistent
+    auth0_deleted = await delete_auth0_user(auth0_sub)
+    if not auth0_deleted:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete account from authentication provider",
+        )
+
+    # Delete user from DB (cascades to projects → tasks)
+    await session.delete(current_user)
+    await session.commit()
+
+    logger.info("User account deleted: %s", auth0_sub)
+
+
 @router.delete("/{user_id}", response_model=UserRead)
 async def delete_user(
     user_id: uuid.UUID,
     session: DBDep,
     _: CurrentSuperuser,
 ) -> User:
+    """Admin-only: delete a user by ID from the database."""
     user = await crud_user.get(session, id=user_id, raise_404_error=True)
+    # Also delete from Auth0
+    await delete_auth0_user(user.auth0_sub)
     await session.delete(user)
     await session.commit()
     return user

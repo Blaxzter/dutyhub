@@ -28,6 +28,9 @@ def upgrade():
         sa.Column("auth0_sub", sa.String(), nullable=True),
         sa.Column("email", sa.String(), nullable=True),
         sa.Column("name", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("picture", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("bio", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
+        sa.Column("email_verified", sa.Boolean(), nullable=True),
         sa.Column(
             "roles",
             postgresql.JSONB(astext_type=sa.Text()),

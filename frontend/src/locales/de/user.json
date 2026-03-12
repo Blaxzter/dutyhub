@@ -1,5 +1,20 @@
 {
     "settings": {
+        "deleteAccount": {
+            "button": "Mein Konto löschen",
+            "cancelButton": "Abbrechen",
+            "confirmButton": "Ja, mein Konto löschen",
+            "confirmDescription": "Dadurch werden Ihr Konto, alle Ihre Projekte, Aufgaben und Ihre Authentifizierung dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+            "confirmTitle": "Sind Sie absolut sicher?",
+            "confirmWord": "LÖSCHEN",
+            "deleting": "Wird gelöscht...",
+            "error": "Fehler beim Löschen des Kontos. Bitte versuchen Sie es später erneut.",
+            "subtitle": "Löschen Sie Ihr Konto und alle zugehörigen Daten dauerhaft.",
+            "success": "Ihr Konto wurde erfolgreich gelöscht.",
+            "title": "Konto löschen",
+            "typeToConfirm": "Geben Sie {confirmWord} ein, um zu bestätigen",
+            "warning": "Diese Aktion ist unwiderruflich. Alle Ihre Projekte, Aufgaben und Profildaten werden dauerhaft gelöscht."
+        },
         "language": {
             "current": "Aktuelle Sprache",
             "currentDescription": "Wählen Sie Ihre bevorzugte Sprache für die Anwendungsoberfläche.",

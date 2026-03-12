@@ -1,5 +1,20 @@
 {
     "settings": {
+        "deleteAccount": {
+            "button": "Delete My Account",
+            "cancelButton": "Cancel",
+            "confirmButton": "Yes, delete my account",
+            "confirmDescription": "This will permanently delete your account, all your projects, tasks, and remove your authentication. This action cannot be undone.",
+            "confirmTitle": "Are you absolutely sure?",
+            "confirmWord": "DELETE",
+            "deleting": "Deleting...",
+            "error": "Failed to delete account. Please try again later.",
+            "subtitle": "Permanently delete your account and all associated data.",
+            "success": "Your account has been deleted successfully.",
+            "title": "Delete Account",
+            "typeToConfirm": "Type {confirmWord} to confirm",
+            "warning": "This action is irreversible. All your projects, tasks, and profile data will be permanently deleted."
+        },
         "language": {
             "current": "Current Language",
             "currentDescription": "Select your preferred language for the application interface.",

@@ -47,7 +47,7 @@ const handleGetStarted = () => {
   >
     <!-- Header for unauthenticated users -->
     <header :class="useFixedHeader ? 'border-b flex-shrink-0' : 'border-b'">
-      <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="max-w-7xl w-full mx-auto px-4 py-3 flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <button
             @click="navigateToLanding"
@@ -122,7 +122,7 @@ const handleGetStarted = () => {
 
     <!-- Main content area for unauthenticated views -->
     <main :class="useFixedHeader ? 'flex-1 overflow-auto flex flex-col' : 'flex-1 flex flex-col'">
-      <div class="container mx-auto px-4 py-8 flex-1">
+      <div class="max-w-7xl w-full mx-auto px-4 py-8 flex-1">
         <ErrorBoundary>
           <RouterView />
         </ErrorBoundary>
@@ -130,7 +130,7 @@ const handleGetStarted = () => {
 
       <!-- Footer for unauthenticated users -->
       <footer class="border-t mt-auto flex-shrink-0">
-        <div class="container mx-auto px-4 py-6 text-center text-muted-foreground">
+        <div class="max-w-7xl w-full mx-auto px-4 py-6 text-center text-muted-foreground">
           <p>{{ $t('preauth.layout.footer.copyright') }}</p>
         </div>
       </footer>
