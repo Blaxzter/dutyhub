@@ -41,7 +41,6 @@ import { computed } from 'vue'
 
 import { useI18n } from 'vue-i18n'
 
-import type { User } from '@auth0/auth0-vue'
 import { useAuthStore } from '@/stores/auth'
 
 import CurrentProfileCard from '@/components/account/user/CurrentProfileCard.vue'
@@ -66,7 +65,7 @@ const authProvider = useAuthProvider(user.value)
 const canEditProfilePicture = computed(() => authProvider.value.isAuth0)
 
 // Handle profile updated event
-const handleProfileUpdated = async (values: Partial<User>) => {
+const handleProfileUpdated = async (values: Record<string, unknown>) => {
   // Optionally refresh user data from Auth0
   authStore.updateUser({
     ...authStore.user,

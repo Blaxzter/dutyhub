@@ -78,11 +78,6 @@ async function clearAvailability(page: Page, groupId: string): Promise<void> {
   await api(page, 'DELETE', `/event-groups/${groupId}/availability/me`)
 }
 
-// Seed once per test file — we need the page to be authenticated first
-// so we use test.beforeEach with a lazy-init guard.
-const sharedGroup: EventGroupRead | null = null
-const groupCreatedByTest = false
-
 // ── navigation ────────────────────────────────────────────────────────────────
 
 test.describe('Event Groups – navigation', () => {

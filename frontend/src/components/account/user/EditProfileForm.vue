@@ -148,7 +148,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'profile-updated', values: Partial<User>): void
+  (e: 'profile-updated', values: UserProfileUpdate): void
 }
 
 const props = defineProps<Props>()

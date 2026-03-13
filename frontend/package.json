@@ -10,7 +10,7 @@
     "test:e2e": "node --env-file-if-exists=.env ./node_modules/@playwright/test/cli.js test",
     "test:e2e:debug": "node --env-file-if-exists=.env ./node_modules/@playwright/test/cli.js test --debug",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build",
+    "type-check": "vue-tsc --noEmit --project tsconfig.app.json",
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
     "generate-client": "openapi-ts -s"

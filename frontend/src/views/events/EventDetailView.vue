@@ -477,6 +477,8 @@ const handleDeleteSlot = (slot: DutySlotRead) => {
   })
 }
 
+const reloadSlotsAndBookings = () => Promise.all([loadDutySlots(), loadMyBookings()])
+
 onMounted(async () => {
   await loadEvent()
   await Promise.all([loadDutySlots(), loadMyBookings(), loadBatches()])
@@ -996,7 +998,7 @@ onMounted(async () => {
       :event-name="event?.name"
       :show-event-link="false"
       :my-booking="selectedSlot ? (getBookingForSlot(selectedSlot.id) ?? null) : null"
-      @booking-updated="Promise.all([loadDutySlots(), loadMyBookings()])"
+      @booking-updated="reloadSlotsAndBookings"
     />
   </div>
 </template>

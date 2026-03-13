@@ -74,7 +74,7 @@ const startDate = computed((): DateValue | undefined => {
   if (dateMode.value === 'single') return singleDate.value
   if (dateMode.value === 'range') return rangeStartDate.value
   if (dateMode.value === 'specific' && specificDates.value.length > 0) {
-    const raw = specificDates.value.map((d) => toRaw(d))
+    const raw = specificDates.value.map((d) => toRaw(d) as DateValue)
     let min = raw[0]
     for (const d of raw) {
       if (d.compare(min) < 0) min = d
@@ -88,7 +88,7 @@ const endDate = computed((): DateValue | undefined => {
   if (dateMode.value === 'single') return singleDate.value
   if (dateMode.value === 'range') return rangeEndDate.value
   if (dateMode.value === 'specific' && specificDates.value.length > 0) {
-    const raw = specificDates.value.map((d) => toRaw(d))
+    const raw = specificDates.value.map((d) => toRaw(d) as DateValue)
     let max = raw[0]
     for (const d of raw) {
       if (d.compare(max) > 0) max = d

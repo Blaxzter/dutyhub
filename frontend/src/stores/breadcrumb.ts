@@ -1,13 +1,13 @@
 import { computed, ref, watch } from 'vue'
 
 import { defineStore } from 'pinia'
-import type { RouteLocationNormalized } from 'vue-router'
+import type { RouteLocationNormalized, RouteParamsRawGeneric } from 'vue-router'
 import { useRoute } from 'vue-router'
 
 export interface BreadcrumbItem {
   title: string
   titleKey?: string
-  to?: string | { name: string; params?: Record<string, unknown> }
+  to?: string | { name: string; params?: RouteParamsRawGeneric }
   disabled?: boolean
 }
 

@@ -62,8 +62,8 @@ const form = ref({
 })
 const dateEntries = ref<DateEntry[]>([])
 
-const groupMinDate = computed(() => parseDate(props.group.start_date))
-const groupMaxDate = computed(() => parseDate(props.group.end_date))
+const groupMinDate = computed((): DateValue => parseDate(props.group.start_date))
+const groupMaxDate = computed((): DateValue => parseDate(props.group.end_date))
 
 const dateRangeLabel = computed(() =>
   t('duties.availability.fields.datesWithRange', {
@@ -233,7 +233,7 @@ defineExpose({ resetForm })
               <div class="flex items-center gap-2">
                 <div class="flex-1 min-w-0">
                   <DatePicker
-                    :model-value="entry.date"
+                    :model-value="(entry.date as DateValue | undefined)"
                     :placeholder="t('duties.eventGroups.pickDate')"
                     :min-value="groupMinDate"
                     :max-value="groupMaxDate"

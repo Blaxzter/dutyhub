@@ -348,8 +348,8 @@ const loadEvent = async () => {
         const et = formatTime(slot.end_time)
         const key = `${slot.date}|${st}|${et}`
         existingKeys.add(key)
-        if (slot.current_bookings > 0) {
-          bookingMap.set(key, slot.current_bookings)
+        if ((slot.current_bookings ?? 0) > 0) {
+          bookingMap.set(key, slot.current_bookings!)
         }
       }
       existingBookings.value = bookingMap
