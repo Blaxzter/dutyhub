@@ -5,6 +5,7 @@ import { useColorMode } from '@vueuse/core'
 import {
   BadgeCheck,
   ChevronsUpDown,
+  Globe,
   LogOut,
   Moon,
   Sun,
@@ -128,7 +129,10 @@ const initials = computed(() => {
               <BadgeCheck />
               {{ $t('navigation.user.actions.account') }}
             </DropdownMenuItem>
-
+            <DropdownMenuItem @click="$router.push({ name: 'landing' })">
+              <Globe />
+              {{ $t('navigation.user.actions.landingPage') }}
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem @click="authStore.logout">

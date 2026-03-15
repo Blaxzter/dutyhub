@@ -133,6 +133,11 @@ services:
         networks:
             - traefik-net
             - default
+        healthcheck:
+            test: ["CMD", "nginx", "-t"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
         build:
             context: ./frontend
             args:

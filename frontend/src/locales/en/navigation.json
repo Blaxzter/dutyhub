@@ -28,6 +28,7 @@
     "user": {
         "actions": {
             "account": "Account",
+            "landingPage": "Landing Page",
             "logout": "Log out",
             "switchToDark": "Switch to Dark",
             "switchToLight": "Switch to Light"

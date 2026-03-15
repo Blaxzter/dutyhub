@@ -704,7 +704,7 @@ def main() -> None:
             "VITE_AUTH0_DOMAIN": tenant_domain,
             "VITE_AUTH0_CLIENT_ID": spa_client_id,
             "VITE_AUTH0_API_AUDIENCE": api_identifier,
-            "VITE_AUTH0_CALLBACK_URL": "http://localhost:5173",
+            "VITE_AUTH0_CALLBACK_URL": "http://localhost:5173/app/home",
         },
     )
 

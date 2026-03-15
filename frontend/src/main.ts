@@ -24,7 +24,7 @@ app.use(
     cacheLocation: 'localstorage',
     authorizationParams: {
       audience: import.meta.env.VITE_AUTH0_API_AUDIENCE,
-      redirect_uri: import.meta.env.VITE_AUTH0_CALLBACK_URL || window.location.origin,
+      redirect_uri: import.meta.env.VITE_AUTH0_CALLBACK_URL || `${window.location.origin}/app/home`,
     },
   }),
 )
