@@ -7,6 +7,8 @@ from app.crud.notification_subscription import (
 )
 from app.models.notification import NotificationSubscription
 from app.schemas.notification import (
+    GlobalChannelSettingsRead,
+    GlobalChannelSettingsUpdate,
     NotificationPreferencesBulkUpdate,
     NotificationSubscriptionCreate,
     NotificationSubscriptionRead,
@@ -89,3 +91,35 @@ async def delete_preference(
     if existing.user_id != current_user.id:
         raise_problem(403, code="preference.forbidden", detail="Not your preference")
     await session.delete(existing)
+
+
+@router.get("/channel-settings", response_model=GlobalChannelSettingsRead)
+async def get_channel_settings(
+    current_user: CurrentUser,
+) -> GlobalChannelSettingsRead:
+    """Get the user's global channel kill switches."""
+    return GlobalChannelSettingsRead(
+        notify_email=current_user.notify_email,
+        notify_push=current_user.notify_push,
+        notify_telegram=current_user.notify_telegram,
+    )
+
+
+@router.patch("/channel-settings", response_model=GlobalChannelSettingsRead)
+async def update_channel_settings(
+    body: GlobalChannelSettingsUpdate,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> GlobalChannelSettingsRead:
+    """Update the user's global channel kill switches."""
+    update_data = body.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(current_user, field, value)
+    session.add(current_user)
+    await session.flush()
+    await session.refresh(current_user)
+    return GlobalChannelSettingsRead(
+        notify_email=current_user.notify_email,
+        notify_push=current_user.notify_push,
+        notify_telegram=current_user.notify_telegram,
+    )

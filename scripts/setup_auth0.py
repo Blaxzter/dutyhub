@@ -430,9 +430,13 @@ def main() -> None:
     base_domain = prompt("Base domain (e.g. wirksam.dev or fabraham.dev)")
     domain_root = base_domain.split(".")[0]
     if domain_root == slug:
+        default_prod_domain = base_domain
         default_api_id = f"https://api.{base_domain}"
     else:
+        default_prod_domain = f"{slug}.{base_domain}"
         default_api_id = f"https://{slug}-api.{base_domain}"
+
+    prod_domain = prompt("Production domain", default=default_prod_domain)
 
     api_identifier = prompt("API identifier / audience URL", default=default_api_id)
 
@@ -504,11 +508,11 @@ def main() -> None:
             "--type",
             "spa",
             "--callbacks",
-            "http://localhost:5173,http://localhost:5173/app/home",
+            f"http://localhost:5173,http://localhost:5173/app/home,https://{prod_domain}/app/home",
             "--logout-urls",
-            "http://localhost:5173",
+            f"http://localhost:5173,https://{prod_domain}",
             "--web-origins",
-            "http://localhost:5173",
+            f"http://localhost:5173,https://{prod_domain}",
             "--no-input",
         )
         spa_client_id = spa_data.get("client_id", "")

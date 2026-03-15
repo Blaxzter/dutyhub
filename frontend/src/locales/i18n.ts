@@ -38,9 +38,18 @@ function createMessagesFromModules(modules: ModuleMap): Messages {
 const enMessages: Messages = createMessagesFromModules(enModules)
 const deMessages: Messages = createMessagesFromModules(deModules)
 
+const supportedLocales = ['en', 'de']
+
+function detectLocale(): string {
+  const stored = localStorage.getItem('locale')
+  if (stored) return stored
+  const browserLang = navigator.language.split('-')[0]
+  return supportedLocales.includes(browserLang) ? browserLang : 'en'
+}
+
 const i18n = createI18n({
   legacy: false,
-  locale: localStorage.getItem('locale') || 'en',
+  locale: detectLocale(),
   fallbackLocale: 'en',
   messages: {
     en: enMessages,

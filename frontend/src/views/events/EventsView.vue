@@ -303,6 +303,7 @@ onMounted(loadEvents)
       :event-name="selectedSlotEventName"
       :open="showSlotDialog"
       @update:open="showSlotDialog = $event"
+      @booking-updated="loadEvents"
     />
 
     <!-- Delete Event Dialog -->

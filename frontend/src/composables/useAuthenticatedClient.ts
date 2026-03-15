@@ -59,7 +59,7 @@ export function useAuthenticatedClient() {
 
   /**
    * HTTP method shortcuts with proper generic type support
-   * Usage: await get<UserProfile[]>({ url: '/api/v1/users/' })
+   * Usage: await get<{ data: UserProfile[] }>({ url: '/users/' })
    */
   const get = async <T>(options: Parameters<typeof client.get>[0]): Promise<T> =>
     makeAuthenticatedRequest<T>('get', options)

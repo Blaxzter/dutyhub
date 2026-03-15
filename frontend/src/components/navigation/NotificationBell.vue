@@ -115,7 +115,7 @@ onUnmounted(() => {
         <Bell class="h-5 w-5" />
         <span
           v-if="hasUnread"
-          class="bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+          class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-700 px-0.5 text-[10px] font-bold text-white"
         >
           {{ displayCount }}
         </span>

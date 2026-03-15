@@ -8,6 +8,7 @@ from sqlmodel import col
 
 from app.crud.base import CRUDBase
 from app.models.notification import NotificationSubscription, NotificationType
+from app.models.user import User
 from app.schemas.notification import (
     NotificationSubscriptionCreate,
     NotificationSubscriptionUpdate,
@@ -52,6 +53,12 @@ class CRUDNotificationSubscription(
 
         If no subscription is found, returns None (caller should use defaults).
         """
+        # Load user's global channel settings
+        user_result = await db.execute(
+            select(User).where(col(User.id) == user_id)
+        )
+        user = user_result.scalar_one_or_none()
+
         # Get the notification type ID
         type_query = select(NotificationType).where(
             col(NotificationType.code) == type_code
@@ -86,19 +93,27 @@ class CRUDNotificationSubscription(
             if sub is not None:
                 if sub.is_muted:
                     return None  # Explicitly muted
-                return {
+                channels = {
                     "email": sub.email_enabled,
                     "push": sub.push_enabled,
                     "telegram": sub.telegram_enabled,
                 }
+                break
+        else:
+            # No subscription found — use default channels from the type
+            channels = {
+                "email": "email" in notif_type.default_channels,
+                "push": "push" in notif_type.default_channels,
+                "telegram": "telegram" in notif_type.default_channels,
+            }
 
-        # No subscription found — return default channels from the type
-        defaults = {
-            "email": "email" in notif_type.default_channels,
-            "push": "push" in notif_type.default_channels,
-            "telegram": "telegram" in notif_type.default_channels,
-        }
-        return defaults
+        # Apply user-level global channel kill switches
+        if user:
+            channels["email"] = channels["email"] and user.notify_email
+            channels["push"] = channels["push"] and user.notify_push
+            channels["telegram"] = channels["telegram"] and user.notify_telegram
+
+        return channels
 
     async def bulk_upsert(
         self,

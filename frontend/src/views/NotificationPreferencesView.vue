@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import type { NotificationSubscription, NotificationType } from '@/stores/notification'
@@ -26,6 +27,17 @@ const loading = ref(true)
 const saving = ref(false)
 const types = ref<NotificationType[]>([])
 const preferences = ref<Map<string, { email: boolean; push: boolean; telegram: boolean }>>(new Map())
+
+// Global channel toggles (backed by user-level settings on the server)
+const globalChannelSettings = computed(() => notificationStore.globalChannelSettings)
+
+async function toggleGlobalChannel(field: 'notify_email' | 'notify_push' | 'notify_telegram', enabled: boolean) {
+  try {
+    await notificationStore.updateGlobalChannelSettings({ [field]: enabled })
+  } catch {
+    toast.error(t('notifications.preferences.saveFailed'))
+  }
+}
 
 // Group types by category
 const groupedTypes = computed(() => {
@@ -175,6 +187,7 @@ onMounted(async () => {
       notificationStore.fetchNotificationTypes(),
       notificationStore.fetchPreferences(),
       notificationStore.fetchTelegramBinding(),
+      notificationStore.fetchGlobalChannelSettings(),
     ])
 
     types.value = typesData
@@ -291,6 +304,53 @@ onMounted(async () => {
             <Button variant="outline" :disabled="bindingTelegram" @click="startTelegramBinding">
               {{ t('notifications.telegram.connect') }}
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <!-- Global channel toggles -->
+      <Card>
+        <CardHeader>
+          <CardTitle class="flex items-center gap-2">
+            <Bell class="h-5 w-5" />
+            {{ t('notifications.globalToggle.title') }}
+          </CardTitle>
+          <CardDescription>
+            {{ t('notifications.globalToggle.description') }}
+          </CardDescription>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="space-y-0.5">
+              <Label class="text-sm font-medium">{{ t('notifications.globalToggle.emailLabel') }}</Label>
+              <p class="text-muted-foreground text-xs">{{ t('notifications.globalToggle.emailDescription') }}</p>
+            </div>
+            <Switch
+              :model-value="globalChannelSettings.notify_email"
+              @update:model-value="(v: boolean) => toggleGlobalChannel('notify_email', v)"
+            />
+          </div>
+          <Separator />
+          <div class="flex items-center justify-between">
+            <div class="space-y-0.5">
+              <Label class="text-sm font-medium">{{ t('notifications.globalToggle.pushLabel') }}</Label>
+              <p class="text-muted-foreground text-xs">{{ t('notifications.globalToggle.pushDescription') }}</p>
+            </div>
+            <Switch
+              :model-value="globalChannelSettings.notify_push"
+              @update:model-value="(v: boolean) => toggleGlobalChannel('notify_push', v)"
+            />
+          </div>
+          <Separator />
+          <div class="flex items-center justify-between">
+            <div class="space-y-0.5">
+              <Label class="text-sm font-medium">{{ t('notifications.globalToggle.telegramLabel') }}</Label>
+              <p class="text-muted-foreground text-xs">{{ t('notifications.globalToggle.telegramDescription') }}</p>
+            </div>
+            <Switch
+              :model-value="globalChannelSettings.notify_telegram"
+              @update:model-value="(v: boolean) => toggleGlobalChannel('notify_telegram', v)"
+            />
           </div>
         </CardContent>
       </Card>

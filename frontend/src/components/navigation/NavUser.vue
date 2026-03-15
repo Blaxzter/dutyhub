@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { useColorMode } from '@vueuse/core'
 import {
   BadgeCheck,
+  Bell,
   ChevronsUpDown,
   Globe,
   LogOut,
@@ -128,6 +129,10 @@ const initials = computed(() => {
             <DropdownMenuItem @click="$router.push({ name: 'settings' })">
               <BadgeCheck />
               {{ $t('navigation.user.actions.account') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="$router.push({ name: 'notification-preferences' })">
+              <Bell />
+              {{ $t('navigation.user.actions.notifications') }}
             </DropdownMenuItem>
             <DropdownMenuItem @click="$router.push({ name: 'landing' })">
               <Globe />

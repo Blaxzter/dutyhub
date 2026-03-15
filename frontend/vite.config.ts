@@ -11,9 +11,9 @@ export default defineConfig(async ({ mode }) => ({
   plugins: [
     vue(),
     tailwindcss(),
-    ...(mode === 'development'
-      ? [(await import('vite-plugin-vue-devtools')).default({ launchEditor: 'code' })]
-      : []),
+    // ...(mode === 'development'
+    //   ? [(await import('vite-plugin-vue-devtools')).default({ launchEditor: 'code' })]
+    //   : []),
   ],
   resolve: {
     alias: {

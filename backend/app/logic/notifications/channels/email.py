@@ -36,37 +36,29 @@ class EmailChannel(NotificationChannel):
             return False
 
         try:
-            from fastapi_mail import (
-                ConnectionConfig,
-                FastMail,
-                MessageSchema,
-                MessageType,
-            )
+            import aiosmtplib
+            from email.message import EmailMessage
 
-            conf = ConnectionConfig(
-                MAIL_USERNAME=settings.SMTP_USER or "",
-                MAIL_PASSWORD=settings.SMTP_PASSWORD or "",  # type: ignore[arg-type]
-                MAIL_FROM=settings.EMAILS_FROM_EMAIL or "noreply@example.com",
-                MAIL_FROM_NAME=settings.EMAILS_FROM_NAME or settings.PROJECT_NAME,
-                MAIL_PORT=settings.SMTP_PORT,
-                MAIL_SERVER=settings.SMTP_HOST or "localhost",
-                MAIL_STARTTLS=settings.SMTP_TLS,
-                MAIL_SSL_TLS=settings.SMTP_SSL,
-                USE_CREDENTIALS=bool(settings.SMTP_USER),
-            )
-
-            # Build HTML body
             html_body = _build_html(title=title, body=body, data=data)
+            from_name = settings.EMAILS_FROM_NAME or settings.PROJECT_NAME
+            from_email = settings.EMAILS_FROM_EMAIL or "noreply@example.com"
 
-            message = MessageSchema(
-                subject=f"[{settings.PROJECT_NAME}] {title}",
-                recipients=[recipient.email],  # type: ignore[arg-type]
-                body=html_body,
-                subtype=MessageType.html,
+            msg = EmailMessage()
+            msg["Subject"] = f"[{settings.PROJECT_NAME}] {title}"
+            msg["From"] = f"{from_name} <{from_email}>"
+            msg["To"] = recipient.email
+            msg.set_content(body)
+            msg.add_alternative(html_body, subtype="html")
+
+            await aiosmtplib.send(
+                msg,
+                hostname=settings.SMTP_HOST or "localhost",
+                port=settings.SMTP_PORT,
+                username=settings.SMTP_USER or None,
+                password=settings.SMTP_PASSWORD or None,  # type: ignore[arg-type]
+                start_tls=settings.SMTP_TLS,
+                use_tls=settings.SMTP_SSL,
             )
-
-            fm = FastMail(conf)
-            await fm.send_message(message)
             logger.info(f"Email sent to {recipient.email}: {title}")
             return True
 
@@ -92,32 +84,59 @@ def _build_html(*, title: str, body: str, data: NotificationData | None = None) 
     action_html = ""
     if action_link:
         action_html = f"""
-        <p style="margin-top: 20px;">
+        <div style="text-align: center;">
             <a href="{action_link}"
-               style="background-color: #3b82f6; color: white; padding: 10px 20px;
-                      text-decoration: none; border-radius: 6px; display: inline-block;">
+               style="background-color: #1f2937; color: #ffffff; padding: 12px 28px;
+                      text-decoration: none; border-radius: 8px; display: inline-block;
+                      font-size: 14px; font-weight: 600;">
                 View Details
             </a>
-        </p>
+        </div>
         """
+
+    logo_url = f"{frontend_url}/icon.svg"
+    preferences_url = f"{frontend_url}/app/settings/notifications"
 
     return f"""
     <!DOCTYPE html>
     <html>
     <head><meta charset="utf-8"></head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                 max-width: 600px; margin: 0 auto; padding: 20px; color: #1f2937;">
-        <div style="border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px;">
-            <h2 style="margin: 0; color: #1f2937;">{settings.PROJECT_NAME}</h2>
+                 margin: 0; padding: 0; background-color: #f3f4f6; color: #1f2937;">
+        <div style="max-width: 560px; margin: 0 auto; padding: 40px 20px;">
+            <!-- Card -->
+            <div style="background-color: #ffffff; border-radius: 12px; overflow: hidden;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <!-- Header -->
+                <div style="background-color: #1f2937; padding: 24px; text-align: center;">
+                    <img src="{logo_url}" alt="{settings.PROJECT_NAME}"
+                         style="height: 40px; width: 40px; margin-bottom: 8px;" />
+                    <div style="color: #ffffff; font-size: 18px; font-weight: 600;">
+                        {settings.PROJECT_NAME}
+                    </div>
+                </div>
+                <!-- Body -->
+                <div style="padding: 32px 24px;">
+                    <h2 style="margin: 0 0 12px; font-size: 20px; color: #1f2937;">{title}</h2>
+                    <p style="margin: 0 0 24px; color: #4b5563; font-size: 15px; line-height: 1.6;">
+                        {body}
+                    </p>
+                    {action_html}
+                </div>
+                <!-- Footer -->
+                <div style="border-top: 1px solid #e5e7eb; padding: 16px 24px;
+                            background-color: #f9fafb; text-align: center;">
+                    <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
+                        You received this because of your notification settings.
+                        <br />
+                        <a href="{preferences_url}"
+                           style="color: #6b7280; text-decoration: underline;">
+                            Manage preferences
+                        </a>
+                    </p>
+                </div>
+            </div>
         </div>
-        <h3 style="color: #1f2937;">{title}</h3>
-        <p style="color: #4b5563; line-height: 1.6;">{body}</p>
-        {action_html}
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin-top: 32px;">
-        <p style="font-size: 12px; color: #9ca3af;">
-            This is an automated notification from {settings.PROJECT_NAME}.
-            You can manage your notification preferences in the app settings.
-        </p>
     </body>
     </html>
     """

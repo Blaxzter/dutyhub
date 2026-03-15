@@ -42,6 +42,20 @@ class User(Base, table=True):
         description="Reason for account rejection",
     )
 
+    # Global notification channel kill switches
+    notify_email: bool = Field(
+        default=True,
+        description="Global toggle: allow email notifications",
+    )
+    notify_push: bool = Field(
+        default=True,
+        description="Global toggle: allow push notifications",
+    )
+    notify_telegram: bool = Field(
+        default=True,
+        description="Global toggle: allow Telegram notifications",
+    )
+
     @property
     def is_admin(self) -> bool:
         """Check if user has admin role."""

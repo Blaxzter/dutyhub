@@ -217,6 +217,7 @@ const navigateToAbout = () => {
                     :src="slide.image"
                     :alt="$t(`preauth.landing.showcase.slides.${slide.key}.title`)"
                     class="w-full h-auto"
+                    loading="lazy"
                   />
                 </div>
                 <div class="text-center space-y-2 pb-2">

@@ -171,7 +171,8 @@ const getInitials = (user: UserRead) => {
   if (user.name) {
     return user.name
       .split(' ')
-      .map((w) => w[0])
+      .map((w) => w.replace(/[^a-zA-Z]/g, '')[0])
+      .filter(Boolean)
       .join('')
       .toUpperCase()
       .slice(0, 2)

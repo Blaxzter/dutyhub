@@ -51,6 +51,12 @@ export interface TelegramBinding {
   created_at: string
 }
 
+export interface GlobalChannelSettings {
+  notify_email: boolean
+  notify_push: boolean
+  notify_telegram: boolean
+}
+
 export interface PushSubscriptionInfo {
   id: string
   endpoint: string
@@ -67,6 +73,11 @@ export const useNotificationStore = defineStore('notification', () => {
   const preferences = ref<NotificationSubscription[]>([])
   const telegramBinding = ref<TelegramBinding | null>(null)
   const pushSubscriptions = ref<PushSubscriptionInfo[]>([])
+  const globalChannelSettings = ref<GlobalChannelSettings>({
+    notify_email: true,
+    notify_push: true,
+    notify_telegram: true,
+  })
   const loading = ref(false)
 
   let pollInterval: ReturnType<typeof setInterval> | null = null
@@ -77,10 +88,10 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function fetchUnreadCount() {
     try {
-      const res = await get<{ unread_count: number }>({
+      const res = await get<{ data: { unread_count: number } }>({
         url: '/notifications/unread-count',
       })
-      unreadCount.value = res.unread_count
+      unreadCount.value = res.data.unread_count
     } catch (error) {
       console.error('Failed to fetch unread count:', error)
     }
@@ -94,19 +105,19 @@ export const useNotificationStore = defineStore('notification', () => {
       if (options?.skip) params.skip = options.skip
       if (options?.limit) params.limit = options.limit
 
-      const res = await get<{
+      const res = await get<{ data: {
         items: NotificationItem[]
         total: number
         unread_count: number
         skip: number
         limit: number
-      }>({
+      } }>({
         url: '/notifications/',
         query: params,
       })
-      notifications.value = res.items
-      unreadCount.value = res.unread_count
-      return res
+      notifications.value = res.data.items
+      unreadCount.value = res.data.unread_count
+      return res.data
     } catch (error) {
       console.error('Failed to fetch notifications:', error)
       throw error
@@ -117,15 +128,15 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function markAsRead(notificationId: string) {
     try {
-      const res = await patch<NotificationItem>({
+      const res = await patch<{ data: NotificationItem }>({
         url: `/notifications/${notificationId}/read`,
       })
       const idx = notifications.value.findIndex((n) => n.id === notificationId)
       if (idx !== -1) {
-        notifications.value[idx] = res
+        notifications.value[idx] = res.data
       }
       unreadCount.value = Math.max(0, unreadCount.value - 1)
-      return res
+      return res.data
     } catch (error) {
       console.error('Failed to mark notification as read:', error)
       throw error
@@ -159,11 +170,11 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function fetchNotificationTypes() {
     try {
-      const res = await get<NotificationType[]>({
+      const res = await get<{ data: NotificationType[] }>({
         url: '/notifications/types',
       })
-      notificationTypes.value = res
-      return res
+      notificationTypes.value = res.data
+      return res.data
     } catch (error) {
       console.error('Failed to fetch notification types:', error)
       throw error
@@ -174,11 +185,11 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function fetchPreferences() {
     try {
-      const res = await get<NotificationSubscription[]>({
+      const res = await get<{ data: NotificationSubscription[] }>({
         url: '/notifications/preferences',
       })
-      preferences.value = res
-      return res
+      preferences.value = res.data
+      return res.data
     } catch (error) {
       console.error('Failed to fetch preferences:', error)
       throw error
@@ -197,14 +208,43 @@ export const useNotificationStore = defineStore('notification', () => {
     }>,
   ) {
     try {
-      const res = await put<NotificationSubscription[]>({
+      const res = await put<{ data: NotificationSubscription[] }>({
         url: '/notifications/preferences',
         body: { preferences: prefs },
       })
-      preferences.value = res
-      return res
+      preferences.value = res.data
+      return res.data
     } catch (error) {
       console.error('Failed to update preferences:', error)
+      throw error
+    }
+  }
+
+  // ── Global channel settings ──────────────────────────────────
+
+  async function fetchGlobalChannelSettings() {
+    try {
+      const res = await get<{ data: GlobalChannelSettings }>({
+        url: '/notifications/channel-settings',
+      })
+      globalChannelSettings.value = res.data
+      return res.data
+    } catch (error) {
+      console.error('Failed to fetch global channel settings:', error)
+      throw error
+    }
+  }
+
+  async function updateGlobalChannelSettings(settings: Partial<GlobalChannelSettings>) {
+    try {
+      const res = await patch<{ data: GlobalChannelSettings }>({
+        url: '/notifications/channel-settings',
+        body: settings,
+      })
+      globalChannelSettings.value = res.data
+      return res.data
+    } catch (error) {
+      console.error('Failed to update global channel settings:', error)
       throw error
     }
   }
@@ -213,10 +253,10 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function fetchVapidPublicKey(): Promise<string | null> {
     try {
-      const res = await get<{ vapid_public_key: string }>({
+      const res = await get<{ data: { vapid_public_key: string } }>({
         url: '/notifications/vapid-public-key',
       })
-      return res.vapid_public_key
+      return res.data.vapid_public_key
     } catch {
       return null
     }
@@ -242,11 +282,11 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function fetchPushSubscriptions() {
     try {
-      const res = await get<PushSubscriptionInfo[]>({
+      const res = await get<{ data: PushSubscriptionInfo[] }>({
         url: '/notifications/push-subscriptions',
       })
-      pushSubscriptions.value = res
-      return res
+      pushSubscriptions.value = res.data
+      return res.data
     } catch (error) {
       console.error('Failed to fetch push subscriptions:', error)
       throw error
@@ -257,11 +297,11 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function fetchTelegramBinding() {
     try {
-      const res = await get<TelegramBinding | null>({
+      const res = await get<{ data: TelegramBinding | null }>({
         url: '/notifications/telegram',
       })
-      telegramBinding.value = res
-      return res
+      telegramBinding.value = res.data
+      return res.data
     } catch {
       telegramBinding.value = null
       return null
@@ -270,14 +310,14 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function startTelegramBinding() {
     try {
-      const res = await post<{
+      const res = await post<{ data: {
         verification_code: string
         bot_username: string | null
         expires_at: string
-      }>({
+      } }>({
         url: '/notifications/telegram/bind',
       })
-      return res
+      return res.data
     } catch (error) {
       console.error('Failed to start Telegram binding:', error)
       throw error
@@ -286,7 +326,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function verifyTelegramBinding(code: string, chatId: string, username?: string) {
     try {
-      const res = await post<TelegramBinding>({
+      const res = await post<{ data: TelegramBinding }>({
         url: '/notifications/telegram/verify',
         body: {
           verification_code: code,
@@ -294,8 +334,8 @@ export const useNotificationStore = defineStore('notification', () => {
           telegram_username: username,
         },
       })
-      telegramBinding.value = res
-      return res
+      telegramBinding.value = res.data
+      return res.data
     } catch (error) {
       console.error('Failed to verify Telegram binding:', error)
       throw error
@@ -335,6 +375,7 @@ export const useNotificationStore = defineStore('notification', () => {
     preferences,
     telegramBinding,
     pushSubscriptions,
+    globalChannelSettings,
     loading,
     hasUnread,
 
@@ -351,6 +392,10 @@ export const useNotificationStore = defineStore('notification', () => {
     // Preferences
     fetchPreferences,
     updatePreferences,
+
+    // Global channel settings
+    fetchGlobalChannelSettings,
+    updateGlobalChannelSettings,
 
     // Push
     fetchVapidPublicKey,

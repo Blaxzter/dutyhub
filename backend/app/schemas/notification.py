@@ -143,6 +143,21 @@ class TelegramVerifyRequest(BaseModel):
     telegram_username: str | None = None
 
 
+# ── Global channel settings (user-level kill switches) ───────────
+
+
+class GlobalChannelSettingsRead(BaseModel):
+    notify_email: bool
+    notify_push: bool
+    notify_telegram: bool
+
+
+class GlobalChannelSettingsUpdate(BaseModel):
+    notify_email: bool | None = None
+    notify_push: bool | None = None
+    notify_telegram: bool | None = None
+
+
 # ── Telegram Webhook (incoming bot update) ───────────────────────
 
 

@@ -11,6 +11,7 @@ import { toast } from 'vue-sonner'
 import ScheduleConfigForm from '@/components/events/ScheduleConfigForm.vue'
 import SlotPreviewGrid from '@/components/events/SlotPreviewGrid.vue'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { useFormatters } from '@/composables/useFormatters'
 import { type RemainderMode, type ScheduleConfig, useSlotPreview } from '@/composables/useSlotPreview'
 
 import {
@@ -311,7 +312,7 @@ const handleSubmit = async () => {
             start_time: o.startTime + ':00',
             end_time: o.endTime + ':00',
           })),
-        excluded_slots: [...excludedSlots.value].map((key) => {
+        excluded_slots: Array.from(excludedSlots.value).map((key) => {
           const [date, start_time, end_time] = key.split('|')
           return { date, start_time: start_time + ':00', end_time: end_time + ':00' }
         }),

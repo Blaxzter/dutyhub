@@ -28,6 +28,7 @@
     "user": {
         "actions": {
             "account": "Konto",
+            "notifications": "Benachrichtigungen",
             "landingPage": "Startseite",
             "logout": "Abmelden",
             "switchToDark": "Zu Dunkel wechseln",

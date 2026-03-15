@@ -28,6 +28,17 @@
     "saveFailed": "Fehler beim Speichern der Benachrichtigungseinstellungen"
   },
 
+  "globalToggle": {
+    "title": "Globale Kanaleinstellungen",
+    "description": "Deaktiviere einen Kanal vollstaendig, um alle Benachrichtigungen darueber zu stoppen, unabhaengig von den individuellen Einstellungen unten.",
+    "emailLabel": "E-Mail-Benachrichtigungen",
+    "emailDescription": "Benachrichtigungen per E-Mail erhalten",
+    "pushLabel": "Push-Benachrichtigungen",
+    "pushDescription": "Push-Benachrichtigungen im Browser erhalten",
+    "telegramLabel": "Telegram-Benachrichtigungen",
+    "telegramDescription": "Benachrichtigungen ueber Telegram erhalten"
+  },
+
   "channels": {
     "email": "E-Mail",
     "push": "Push",

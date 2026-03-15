@@ -28,6 +28,17 @@
     "saveFailed": "Failed to save notification preferences"
   },
 
+  "globalToggle": {
+    "title": "Global Channel Settings",
+    "description": "Disable a channel entirely to stop all notifications through it, regardless of individual preferences below.",
+    "emailLabel": "Email notifications",
+    "emailDescription": "Receive notifications via email",
+    "pushLabel": "Push notifications",
+    "pushDescription": "Receive push notifications in your browser",
+    "telegramLabel": "Telegram notifications",
+    "telegramDescription": "Receive notifications via Telegram"
+  },
+
   "channels": {
     "email": "Email",
     "push": "Push",

@@ -63,7 +63,8 @@ const PAGES: Array<{
     name: 'event-detail',
     path: '/app/events',
     action: async (page: import('@playwright/test').Page) => {
-      await page.getByText('[DEMO] Holiday Coverage').first().click()
+      // Click the first event card heading (works regardless of demo data content)
+      await page.locator('main h3').first().click()
       await page.waitForURL(/\/app\/events\//)
       await page.waitForTimeout(1000)
     },
