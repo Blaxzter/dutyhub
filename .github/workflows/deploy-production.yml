@@ -93,7 +93,8 @@ jobs:
             # Mark deploy path as safe (owner may differ from SSH user)
             git config --global --add safe.directory "$DEPLOY_PATH"
 
-            # Pull latest compose and config files
+            # Pull latest compose and config files (use HTTPS to avoid SSH host key issues)
+            git remote set-url origin "https://github.com/${{ github.repository }}.git"
             git pull --ff-only
 
             # Log in to GHCR
