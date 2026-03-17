@@ -131,9 +131,8 @@ release version:
     echo "{{version}}" > VERSION
     git add VERSION
     git commit -m "release: v{{version}}"
-    git tag "v{{version}}"
-    git push origin main --tags
-    gh release create "v{{version}}" --generate-notes --title "v{{version}}"
+    git push origin main
+    gh release create "v{{version}}" --generate-notes --title "v{{version}}" --target main
 
 # ── Pre-commit ────────────────────────────────────────────────
 
