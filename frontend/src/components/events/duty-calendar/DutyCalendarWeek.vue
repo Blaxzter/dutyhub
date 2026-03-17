@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import type { EventGroupRead, EventRead } from '@/client/types.gen'
-
 import EventBars from './EventBars.vue'
 import GroupBars from './GroupBars.vue'
-import type { BookingCalendarItem, CalendarDay, CalendarWeek } from './types'
+import type { BookingCalendarItem, CalendarDay, CalendarEvent, CalendarEventGroup, CalendarWeek } from './types'
 import { formatTimeRange, isMultiDayEvent, isToday } from './types'
 
 defineProps<{
@@ -14,8 +12,8 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  navigateEvent: [event: EventRead]
-  navigateGroup: [group: EventGroupRead]
+  navigateEvent: [event: CalendarEvent]
+  navigateGroup: [group: CalendarEventGroup]
   navigateBooking: [booking: BookingCalendarItem]
   hoverGroup: [groupId: string | null]
   hoverEvent: [eventId: string | null]

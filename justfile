@@ -122,6 +122,32 @@ setup-auth0:
 teardown-auth0:
     python scripts/setup_auth0.py --teardown
 
+# ── Release ────────────────────────────────────────────────────
+
+# Create a new release: updates version files, commits, tags, and creates a GitHub release
+# Usage: just release 1.2.3
+release version:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Validate semver format
+    if ! echo "{{version}}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
+        echo "Error: '{{version}}' is not a valid semver (expected: X.Y.Z or X.Y.Z-pre.1)"
+        exit 1
+    fi
+    # Update VERSION file
+    echo "{{version}}" > VERSION
+    # Update backend/pyproject.toml
+    sed -i 's/^version = ".*"/version = "{{version}}"/' backend/pyproject.toml
+    # Update frontend/package.json
+    cd frontend && npm pkg set version="{{version}}" && cd ..
+    # Commit, tag, and push
+    git add VERSION backend/pyproject.toml frontend/package.json
+    git commit -m "release: v{{version}}"
+    git tag "v{{version}}"
+    git push origin main --tags
+    # Create GitHub release (requires gh CLI)
+    gh release create "v{{version}}" --generate-notes --title "v{{version}}"
+
 # ── Pre-commit ────────────────────────────────────────────────
 
 # Run all pre-commit hooks

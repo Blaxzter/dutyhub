@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
 from app.core.logger import get_logger
+from app.core.sse import sse_manager
 from app.crud.notification import notification as crud_notification
 from app.crud.notification_subscription import (
     notification_subscription as crud_subscription,
@@ -121,6 +122,14 @@ class NotificationService:
             await self.db.flush()
 
             notifications.append(notif)
+
+            # Push updated unread count to any open SSE connections
+            new_count = await crud_notification.get_unread_count(
+                self.db, user_id=recipient_id
+            )
+            await sse_manager.broadcast(
+                recipient_id, "unread_count", {"unread_count": new_count}
+            )
 
         return notifications
 

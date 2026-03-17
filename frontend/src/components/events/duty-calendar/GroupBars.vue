@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import type { EventGroupRead } from '@/client/types.gen'
-
-import type { GroupBar } from './types'
+import type { CalendarEventGroup, GroupBar } from './types'
 
 defineProps<{
   bars: GroupBar[]
@@ -10,7 +8,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  navigateGroup: [group: EventGroupRead]
+  navigateGroup: [group: CalendarEventGroup]
   hover: [groupId: string | null]
 }>()
 </script>

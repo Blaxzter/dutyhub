@@ -65,10 +65,12 @@ export interface PushSubscriptionInfo {
 }
 
 export const useNotificationStore = defineStore('notification', () => {
-  const { get, post, put, patch, delete: del } = useAuthenticatedClient()
+  const { get, post, put, patch, delete: del, getAuthToken } = useAuthenticatedClient()
 
   const notifications = ref<NotificationItem[]>([])
   const unreadCount = ref(0)
+  const total = ref(0)
+  const hasMore = computed(() => notifications.value.length < total.value)
   const notificationTypes = ref<NotificationType[]>([])
   const preferences = ref<NotificationSubscription[]>([])
   const telegramBinding = ref<TelegramBinding | null>(null)
@@ -80,7 +82,10 @@ export const useNotificationStore = defineStore('notification', () => {
   })
   const loading = ref(false)
 
+  let eventSource: EventSource | null = null
   let pollInterval: ReturnType<typeof setInterval> | null = null
+  let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+  let reconnectDelay = 1000 // starts at 1s, doubles on each failure
 
   const hasUnread = computed(() => unreadCount.value > 0)
 
@@ -97,12 +102,12 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
-  async function fetchNotifications(options?: { unreadOnly?: boolean; skip?: number; limit?: number }) {
+  async function fetchNotifications(options?: { unreadOnly?: boolean; skip?: number; limit?: number; append?: boolean }) {
     loading.value = true
     try {
       const params: Record<string, unknown> = {}
       if (options?.unreadOnly) params.unread_only = true
-      if (options?.skip) params.skip = options.skip
+      if (options?.skip !== undefined) params.skip = options.skip
       if (options?.limit) params.limit = options.limit
 
       const res = await get<{ data: {
@@ -115,7 +120,12 @@ export const useNotificationStore = defineStore('notification', () => {
         url: '/notifications/',
         query: params,
       })
-      notifications.value = res.data.items
+      if (options?.append) {
+        notifications.value = [...notifications.value, ...res.data.items]
+      } else {
+        notifications.value = res.data.items
+      }
+      total.value = res.data.total
       unreadCount.value = res.data.unread_count
       return res.data
     } catch (error) {
@@ -124,6 +134,11 @@ export const useNotificationStore = defineStore('notification', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  async function loadMoreNotifications() {
+    if (!hasMore.value || loading.value) return
+    await fetchNotifications({ skip: notifications.value.length, limit: 20, append: true })
   }
 
   async function markAsRead(notificationId: string) {
@@ -352,15 +367,77 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
-  // ── Polling ────────────────────────────────────────────────────
+  // ── SSE stream (with polling fallback) ────────────────────────
 
-  function startPolling(intervalMs = 30000) {
-    stopPolling()
-    fetchUnreadCount()
-    pollInterval = setInterval(fetchUnreadCount, intervalMs)
+  async function startStream() {
+    stopStream()
+
+    let token: string
+    try {
+      token = await getAuthToken()
+    } catch {
+      // Not authenticated yet — fall back to polling
+      startPollingFallback()
+      return
+    }
+
+    const baseUrl = import.meta.env.VITE_API_URL
+    const url = `${baseUrl}/notifications/stream?token=${encodeURIComponent(token)}`
+
+    eventSource = new EventSource(url)
+
+    eventSource.addEventListener('unread_count', (e: MessageEvent) => {
+      try {
+        const payload = JSON.parse(e.data) as { unread_count: number }
+        unreadCount.value = payload.unread_count
+      } catch {
+        console.error('Failed to parse SSE unread_count event')
+      }
+    })
+
+    eventSource.onopen = () => {
+      // Connection established — reset backoff and stop any polling fallback
+      reconnectDelay = 1000
+      stopPollingFallback()
+    }
+
+    eventSource.onerror = () => {
+      // Close broken connection and schedule reconnect with backoff
+      stopEventSource()
+      startPollingFallback()
+
+      reconnectTimeout = setTimeout(() => {
+        reconnectTimeout = null
+        startStream()
+      }, reconnectDelay)
+      reconnectDelay = Math.min(reconnectDelay * 2, 30000)
+    }
   }
 
-  function stopPolling() {
+  function stopStream() {
+    stopEventSource()
+    stopPollingFallback()
+    if (reconnectTimeout) {
+      clearTimeout(reconnectTimeout)
+      reconnectTimeout = null
+    }
+    reconnectDelay = 1000
+  }
+
+  function stopEventSource() {
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
+    }
+  }
+
+  function startPollingFallback() {
+    if (pollInterval) return // already polling
+    fetchUnreadCount()
+    pollInterval = setInterval(fetchUnreadCount, 30000)
+  }
+
+  function stopPollingFallback() {
     if (pollInterval) {
       clearInterval(pollInterval)
       pollInterval = null
@@ -371,6 +448,8 @@ export const useNotificationStore = defineStore('notification', () => {
     // State
     notifications,
     unreadCount,
+    total,
+    hasMore,
     notificationTypes,
     preferences,
     telegramBinding,
@@ -382,6 +461,7 @@ export const useNotificationStore = defineStore('notification', () => {
     // Feed
     fetchUnreadCount,
     fetchNotifications,
+    loadMoreNotifications,
     markAsRead,
     markAllAsRead,
     dismissNotification,
@@ -408,8 +488,8 @@ export const useNotificationStore = defineStore('notification', () => {
     verifyTelegramBinding,
     unbindTelegram,
 
-    // Polling
-    startPolling,
-    stopPolling,
+    // Real-time updates
+    startStream,
+    stopStream,
   }
 })

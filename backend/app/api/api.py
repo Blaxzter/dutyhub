@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     bookings,
+    dashboard,
     demo_data,
     duty_slots,
     event_groups,
@@ -23,6 +24,7 @@ api_router.include_router(duty_slots.router)
 api_router.include_router(bookings.router)
 api_router.include_router(event_groups.router)
 api_router.include_router(notifications.router)
+api_router.include_router(dashboard.router)
 api_router.include_router(demo_data.router)
 
 if settings.ENVIRONMENT != "production":

@@ -2,10 +2,9 @@
 import { Clock } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
-import type { EventGroupRead, EventRead } from '@/client/types.gen'
 import Badge from '@/components/ui/badge/Badge.vue'
 
-import type { BookingCalendarItem, CalendarDay } from './types'
+import type { BookingCalendarItem, CalendarDay, CalendarEvent, CalendarEventGroup } from './types'
 import { formatTimeRange, statusVariant } from './types'
 
 defineProps<{
@@ -13,8 +12,8 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  navigateEvent: [event: EventRead]
-  navigateGroup: [group: EventGroupRead]
+  navigateEvent: [event: CalendarEvent]
+  navigateGroup: [group: CalendarEventGroup]
   navigateBooking: [booking: BookingCalendarItem]
 }>()
 

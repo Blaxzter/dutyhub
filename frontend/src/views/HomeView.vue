@@ -21,15 +21,7 @@ import type { BookingCalendarItem } from '@/components/events/duty-calendar'
 
 import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
 
-import type {
-  BookingRead,
-  DutySlotRead,
-  EventGroupListResponse,
-  EventGroupRead,
-  EventListResponse,
-  EventRead,
-  MyBookingsListResponse,
-} from '@/client'
+import type { DashboardEvent, DashboardEventGroup, DashboardFeedResponse } from '@/client'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -42,23 +34,21 @@ const eventCount = ref(0)
 const myBookingCount = ref(0)
 const loading = ref(true)
 
-const events = ref<EventRead[]>([])
-const eventGroups = ref<EventGroupRead[]>([])
+const events = ref<DashboardEvent[]>([])
+const eventGroups = ref<DashboardEventGroup[]>([])
 const bookings = ref<BookingCalendarItem[]>([])
 
 // Slot detail dialog
 const showSlotDetail = ref(false)
 const detailSlotId = ref<string | null>(null)
-const detailBooking = ref<BookingRead | null>(null)
 
-// Map booking ID → raw booking for dialog
-const bookingMap = ref<Map<string, { slotId: string; booking: BookingRead }>>(new Map())
+// Map booking ID → slot ID for dialog
+const bookingSlotMap = ref<Map<string, string>>(new Map())
 
 const openBookingDetail = (calendarItem: BookingCalendarItem) => {
-  const entry = bookingMap.value.get(calendarItem.id)
-  if (!entry) return
-  detailSlotId.value = entry.slotId
-  detailBooking.value = entry.booking
+  const slotId = bookingSlotMap.value.get(calendarItem.id)
+  if (!slotId) return
+  detailSlotId.value = slotId
   showSlotDetail.value = true
 }
 
@@ -73,46 +63,33 @@ const hiddenFilterCount = computed(
 async function loadStats() {
   loading.value = true
   try {
-    const [eventsRes, groupsRes, bookingsRes] = await Promise.all([
-      get<{ data: EventListResponse }>({ url: '/events/', query: { limit: 100 } }),
-      get<{ data: EventGroupListResponse }>({ url: '/event-groups/', query: { limit: 100 } }),
-      get<{ data: MyBookingsListResponse }>({
-        url: '/bookings/me',
-        query: { status: 'confirmed', limit: 200 },
-      }),
-    ])
-    events.value = eventsRes.data.items
-    eventCount.value = eventsRes.data.total
-    eventGroups.value = groupsRes.data.items
-    myBookingCount.value = bookingsRes.data.total
+    const res = await get<{ data: DashboardFeedResponse }>({ url: '/dashboard/feed' })
+    const feed = res.data
 
-    // Enrich bookings with slot details for calendar display
-    const rawBookings = bookingsRes.data.items
-    const newMap = new Map<string, { slotId: string; booking: BookingRead }>()
-    const settled = await Promise.all(
-      rawBookings.map(async (booking): Promise<BookingCalendarItem | null> => {
-        try {
-          const slotRes = await get<{ data: DutySlotRead }>({
-            url: `/duty-slots/${booking.duty_slot_id}`,
-          })
-          const slot = slotRes.data
-          newMap.set(booking.id, { slotId: slot.id, booking })
-          return {
-            id: booking.id,
-            slotId: slot.id,
-            date: slot.date,
-            title: slot.title,
-            startTime: slot.start_time,
-            endTime: slot.end_time,
-          }
-        } catch {
-          return null
-        }
-      }),
-    )
-    const enriched = settled.filter((b): b is BookingCalendarItem => b !== null)
-    bookingMap.value = newMap
-    bookings.value = enriched
+    events.value = feed.events
+    eventCount.value = feed.event_count
+    eventGroups.value = feed.event_groups
+    myBookingCount.value = feed.booking_count
+
+    // Update pending user count for admin badge
+    if (feed.pending_user_count !== null) {
+      authStore.pendingUserCount = feed.pending_user_count
+    }
+
+    // Map feed bookings to calendar items
+    const newMap = new Map<string, string>()
+    bookings.value = feed.bookings.map((b) => {
+      newMap.set(b.id, b.slot_id)
+      return {
+        id: b.id,
+        slotId: b.slot_id,
+        date: b.date,
+        title: b.title,
+        startTime: b.start_time,
+        endTime: b.end_time,
+      }
+    })
+    bookingSlotMap.value = newMap
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -120,11 +97,11 @@ async function loadStats() {
   }
 }
 
-const navigateToEvent = (event: EventRead) => {
+const navigateToEvent = (event: { id: string }) => {
   router.push({ name: 'event-detail', params: { eventId: event.id } })
 }
 
-const navigateToGroup = (group: EventGroupRead) => {
+const navigateToGroup = (group: { id: string }) => {
   router.push({ name: 'event-group-detail', params: { groupId: group.id } })
 }
 
@@ -312,7 +289,6 @@ onMounted(loadStats)
     <SlotDetailDialog
       v-model:open="showSlotDetail"
       :slot-id="detailSlotId"
-      :my-booking="detailBooking"
       @booking-updated="loadStats"
     />
   </div>

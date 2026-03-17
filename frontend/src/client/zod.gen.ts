@@ -173,6 +173,68 @@ export const zBookingUpdate = z.object({
 })
 
 /**
+ * DashboardBookingItem
+ * Booking with inline slot info for calendar display — avoids N+1.
+ */
+export const zDashboardBookingItem = z
+  .object({
+    id: z.uuid(),
+    slot_id: z.uuid(),
+    date: z.iso.date(),
+    title: z.string(),
+    start_time: z.optional(z.union([z.iso.time(), z.null()])),
+    end_time: z.optional(z.union([z.iso.time(), z.null()])),
+  })
+  .register(z.globalRegistry, {
+    description: 'Booking with inline slot info for calendar display — avoids N+1.',
+  })
+
+/**
+ * DashboardEvent
+ * Slim event for the dashboard calendar.
+ */
+export const zDashboardEvent = z
+  .object({
+    id: z.uuid(),
+    name: z.string(),
+    status: z.string(),
+    description: z.optional(z.union([z.string(), z.null()])),
+    location: z.optional(z.union([z.string(), z.null()])),
+    start_date: z.iso.date(),
+    end_date: z.iso.date(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Slim event for the dashboard calendar.',
+  })
+
+/**
+ * DashboardEventGroup
+ * Slim event group for the dashboard calendar.
+ */
+export const zDashboardEventGroup = z
+  .object({
+    id: z.uuid(),
+    name: z.string(),
+    start_date: z.iso.date(),
+    end_date: z.iso.date(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Slim event group for the dashboard calendar.',
+  })
+
+/**
+ * DashboardFeedResponse
+ */
+export const zDashboardFeedResponse = z.object({
+  events: z.array(zDashboardEvent),
+  event_count: z.int(),
+  event_groups: z.array(zDashboardEventGroup),
+  bookings: z.array(zDashboardBookingItem),
+  booking_count: z.int(),
+  pending_user_count: z.optional(z.union([z.int(), z.null()])),
+})
+
+/**
  * DemoDataCreatedResponse
  */
 export const zDemoDataCreatedResponse = z.object({
@@ -333,6 +395,66 @@ export const zEventCreateWithSlotsResponse = z.object({
 })
 
 /**
+ * FeedSlotEntry
+ * Lightweight slot for the feed — no title/description, just booking info.
+ */
+export const zFeedSlotEntry = z
+  .object({
+    id: z.uuid(),
+    date: z.iso.date(),
+    start_time: z.optional(z.union([z.iso.time(), z.null()])),
+    end_time: z.optional(z.union([z.iso.time(), z.null()])),
+    max_bookings: z.optional(z.int()).default(1),
+    current_bookings: z.optional(z.int()).default(0),
+    is_booked_by_me: z.optional(z.boolean()).default(false),
+  })
+  .register(z.globalRegistry, {
+    description: 'Lightweight slot for the feed — no title/description, just booking info.',
+  })
+
+/**
+ * FeedEventItem
+ * Event with view-dependent embedded data.
+ */
+export const zFeedEventItem = z
+  .object({
+    name: z.string(),
+    description: z.optional(z.union([z.string(), z.null()])),
+    start_date: z.iso.date(),
+    end_date: z.iso.date(),
+    status: z.optional(z.enum(['draft', 'published', 'archived'])),
+    created_by_id: z.optional(z.union([z.uuid(), z.null()])),
+    event_group_id: z.optional(z.union([z.uuid(), z.null()])),
+    location: z.optional(z.union([z.string(), z.null()])),
+    category: z.optional(z.union([z.string(), z.null()])),
+    id: z.uuid(),
+    created_at: z.iso.datetime(),
+    updated_at: z.iso.datetime(),
+    slot_duration_minutes: z.optional(z.union([z.int(), z.null()])),
+    default_start_time: z.optional(z.union([z.iso.time(), z.null()])),
+    default_end_time: z.optional(z.union([z.iso.time(), z.null()])),
+    people_per_slot: z.optional(z.union([z.int(), z.null()])),
+    schedule_overrides: z.optional(z.union([z.array(z.object({})), z.null()])),
+    slots: z.optional(z.union([z.array(zFeedSlotEntry), z.null()])),
+    slot_window_start: z.optional(z.union([z.iso.date(), z.null()])),
+    total_slots: z.optional(z.union([z.int(), z.null()])),
+    available_slots: z.optional(z.union([z.int(), z.null()])),
+  })
+  .register(z.globalRegistry, {
+    description: 'Event with view-dependent embedded data.',
+  })
+
+/**
+ * EventFeedResponse
+ */
+export const zEventFeedResponse = z.object({
+  items: z.array(zFeedEventItem),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
  * EventGroupListResponse
  */
 export const zEventGroupListResponse = z.object({
@@ -388,6 +510,24 @@ export const zEventUpdateWithSlots = z.object({
   location: z.optional(z.union([z.string(), z.null()])),
   category: z.optional(z.union([z.string(), z.null()])),
   schedule: zSlotGenerationConfig,
+})
+
+/**
+ * GlobalChannelSettingsRead
+ */
+export const zGlobalChannelSettingsRead = z.object({
+  notify_email: z.boolean(),
+  notify_push: z.boolean(),
+  notify_telegram: z.boolean(),
+})
+
+/**
+ * GlobalChannelSettingsUpdate
+ */
+export const zGlobalChannelSettingsUpdate = z.object({
+  notify_email: z.optional(z.union([z.boolean(), z.null()])),
+  notify_push: z.optional(z.union([z.boolean(), z.null()])),
+  notify_telegram: z.optional(z.union([z.boolean(), z.null()])),
 })
 
 /**
@@ -610,6 +750,20 @@ export const zSlotRegenerationResult = z.object({
 })
 
 /**
+ * SlotWindowResponse
+ * Response for the slot-window endpoint (next/prev day navigation).
+ */
+export const zSlotWindowResponse = z
+  .object({
+    slots: z.array(zFeedSlotEntry),
+    start_date: z.iso.date(),
+    days: z.int(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Response for the slot-window endpoint (next/prev day navigation).',
+  })
+
+/**
  * TelegramBindResponse
  */
 export const zTelegramBindResponse = z.object({
@@ -630,6 +784,22 @@ export const zTelegramBindingRead = z.object({
 })
 
 /**
+ * TelegramChat
+ */
+export const zTelegramChat = z.object({
+  id: z.int(),
+  username: z.optional(z.union([z.string(), z.null()])),
+})
+
+/**
+ * TelegramMessage
+ */
+export const zTelegramMessage = z.object({
+  text: z.optional(z.union([z.string(), z.null()])),
+  chat: z.optional(z.union([zTelegramChat, z.null()])),
+})
+
+/**
  * TelegramVerifyRequest
  */
 export const zTelegramVerifyRequest = z.object({
@@ -637,6 +807,18 @@ export const zTelegramVerifyRequest = z.object({
   telegram_chat_id: z.string(),
   telegram_username: z.optional(z.union([z.string(), z.null()])),
 })
+
+/**
+ * TelegramWebhookUpdate
+ * Subset of the Telegram Bot API Update object we actually use.
+ */
+export const zTelegramWebhookUpdate = z
+  .object({
+    message: z.optional(z.union([zTelegramMessage, z.null()])),
+  })
+  .register(z.globalRegistry, {
+    description: 'Subset of the Telegram Bot API Update object we actually use.',
+  })
 
 /**
  * UnreadCountResponse
@@ -1008,6 +1190,45 @@ export const zSettingsUpdateSiteSettingsData = z.object({
  */
 export const zSettingsUpdateSiteSettingsResponse = zSiteSettingsRead
 
+export const zEventsEventFeedData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(
+    z.object({
+      view: z.optional(z.enum(['list', 'cards', 'calendar'])),
+      focus_mode: z.optional(z.enum(['today', 'first_available'])),
+      search: z.optional(z.union([z.string(), z.null()])),
+      skip: z.optional(z.int().gte(0)).default(0),
+      limit: z.optional(z.int().gte(1).lte(200)).default(100),
+      date_from: z.optional(z.union([z.iso.date(), z.null()])),
+      date_to: z.optional(z.union([z.iso.date(), z.null()])),
+      my_bookings: z.optional(z.boolean()).default(false),
+      days: z.optional(z.int().gte(1).lte(31)).default(5),
+    }),
+  ),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsEventFeedResponse = zEventFeedResponse
+
+export const zEventsGetSlotWindowData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    event_id: z.string(),
+  }),
+  query: z.object({
+    start_date: z.iso.date(),
+    days: z.optional(z.int().gte(1).lte(31)).default(5),
+  }),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsGetSlotWindowResponse = zSlotWindowResponse
+
 export const zEventsListEventsData = z.object({
   body: z.optional(z.never()),
   path: z.optional(z.never()),
@@ -1370,7 +1591,7 @@ export const zEventGroupsCreateEventGroupResponse = zEventGroupRead
 export const zEventGroupsDeleteEventGroupData = z.object({
   body: z.optional(z.never()),
   path: z.object({
-    group_id: z.string(),
+    group_id: z.uuid(),
   }),
   query: z.optional(z.never()),
 })
@@ -1385,7 +1606,7 @@ export const zEventGroupsDeleteEventGroupResponse = z.void().register(z.globalRe
 export const zEventGroupsGetEventGroupData = z.object({
   body: z.optional(z.never()),
   path: z.object({
-    group_id: z.string(),
+    group_id: z.uuid(),
   }),
   query: z.optional(z.never()),
 })
@@ -1398,7 +1619,7 @@ export const zEventGroupsGetEventGroupResponse = zEventGroupRead
 export const zEventGroupsUpdateEventGroupData = z.object({
   body: zEventGroupUpdate,
   path: z.object({
-    group_id: z.string(),
+    group_id: z.uuid(),
   }),
   query: z.optional(z.never()),
 })
@@ -1411,7 +1632,7 @@ export const zEventGroupsUpdateEventGroupResponse = zEventGroupRead
 export const zEventGroupsListGroupAvailabilitiesData = z.object({
   body: z.optional(z.never()),
   path: z.object({
-    group_id: z.string(),
+    group_id: z.uuid(),
   }),
   query: z.optional(
     z.object({
@@ -1434,7 +1655,7 @@ export const zEventGroupsListGroupAvailabilitiesResponse = z
 export const zEventGroupsDeleteMyAvailabilityData = z.object({
   body: z.optional(z.never()),
   path: z.object({
-    group_id: z.string(),
+    group_id: z.uuid(),
   }),
   query: z.optional(z.never()),
 })
@@ -1449,7 +1670,7 @@ export const zEventGroupsDeleteMyAvailabilityResponse = z.void().register(z.glob
 export const zEventGroupsGetMyAvailabilityData = z.object({
   body: z.optional(z.never()),
   path: z.object({
-    group_id: z.string(),
+    group_id: z.uuid(),
   }),
   query: z.optional(z.never()),
 })
@@ -1462,7 +1683,7 @@ export const zEventGroupsGetMyAvailabilityResponse = zUserAvailabilityRead
 export const zEventGroupsSetMyAvailabilityData = z.object({
   body: zUserAvailabilityCreate,
   path: z.object({
-    group_id: z.string(),
+    group_id: z.uuid(),
   }),
   query: z.optional(z.never()),
 })
@@ -1631,6 +1852,28 @@ export const zNotificationsUpdatePreferenceData = z.object({
  */
 export const zNotificationsUpdatePreferenceResponse = zNotificationSubscriptionRead
 
+export const zNotificationsGetChannelSettingsData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zNotificationsGetChannelSettingsResponse = zGlobalChannelSettingsRead
+
+export const zNotificationsUpdateChannelSettingsData = z.object({
+  body: zGlobalChannelSettingsUpdate,
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zNotificationsUpdateChannelSettingsResponse = zGlobalChannelSettingsRead
+
 export const zNotificationsListPushSubscriptionsData = z.object({
   body: z.optional(z.never()),
   path: z.optional(z.never()),
@@ -1670,6 +1913,20 @@ export const zNotificationsRemovePushSubscriptionData = z.object({
  * Successful Response
  */
 export const zNotificationsRemovePushSubscriptionResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zNotificationsGetVapidPublicKeyData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Notifications-Get Vapid Public Key
+ * Successful Response
+ */
+export const zNotificationsGetVapidPublicKeyResponse = z.object({}).register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
@@ -1721,7 +1978,7 @@ export const zNotificationsVerifyTelegramBindingData = z.object({
 export const zNotificationsVerifyTelegramBindingResponse = zTelegramBindingRead
 
 export const zNotificationsTelegramWebhookData = z.object({
-  body: z.object({}),
+  body: zTelegramWebhookUpdate,
   path: z.optional(z.never()),
   query: z.optional(z.never()),
 })
@@ -1734,19 +1991,16 @@ export const zNotificationsTelegramWebhookResponse = z.object({}).register(z.glo
   description: 'Successful Response',
 })
 
-export const zNotificationsGetVapidPublicKeyData = z.object({
+export const zDashboardDashboardFeedData = z.object({
   body: z.optional(z.never()),
   path: z.optional(z.never()),
   query: z.optional(z.never()),
 })
 
 /**
- * Response Notifications-Get Vapid Public Key
  * Successful Response
  */
-export const zNotificationsGetVapidPublicKeyResponse = z.object({}).register(z.globalRegistry, {
-  description: 'Successful Response',
-})
+export const zDashboardDashboardFeedResponse = zDashboardFeedResponse
 
 export const zDemoDataDeleteDemoDataData = z.object({
   body: z.optional(z.never()),
@@ -1769,3 +2023,31 @@ export const zDemoDataCreateDemoDataData = z.object({
  * Successful Response
  */
 export const zDemoDataCreateDemoDataResponse = zDemoDataCreatedResponse
+
+export const zDebugStartLogCaptureData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Debug-Start Log Capture
+ * Successful Response
+ */
+export const zDebugStartLogCaptureResponse = z.object({}).register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zDebugStopLogCaptureData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Debug-Stop Log Capture
+ * Successful Response
+ */
+export const zDebugStopLogCaptureResponse = z.object({}).register(z.globalRegistry, {
+  description: 'Successful Response',
+})

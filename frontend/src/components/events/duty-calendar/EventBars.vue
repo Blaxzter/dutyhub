@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import type { EventRead } from '@/client/types.gen'
-
-import type { EventBar } from './types'
+import type { CalendarEvent, EventBar } from './types'
 
 defineProps<{
   bars: EventBar[]
@@ -10,7 +8,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  navigateEvent: [event: EventRead]
+  navigateEvent: [event: CalendarEvent]
   hover: [eventId: string | null]
 }>()
 </script>

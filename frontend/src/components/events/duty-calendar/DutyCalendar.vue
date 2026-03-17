@@ -4,19 +4,18 @@ import { computed, ref } from 'vue'
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, List } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
-import type { EventGroupRead, EventRead } from '@/client/types.gen'
 import Button from '@/components/ui/button/Button.vue'
 
 import DutyCalendarDay from './DutyCalendarDay.vue'
 import DutyCalendarMonth from './DutyCalendarMonth.vue'
 import DutyCalendarWeek from './DutyCalendarWeek.vue'
-import type { BookingCalendarItem, CalendarDay as CalendarDayType, CalendarWeek, ViewMode } from './types'
+import type { BookingCalendarItem, CalendarDay as CalendarDayType, CalendarEvent, CalendarEventGroup, CalendarWeek, ViewMode } from './types'
 import { computeEventBars, computeGroupBars, dateToStr, EMPTY_DAY } from './types'
 
 const props = withDefaults(
   defineProps<{
-    events?: EventRead[]
-    eventGroups?: EventGroupRead[]
+    events?: CalendarEvent[]
+    eventGroups?: CalendarEventGroup[]
     bookings?: BookingCalendarItem[]
     showEvents?: boolean
     showGroups?: boolean
@@ -35,8 +34,8 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  navigateEvent: [event: EventRead]
-  navigateGroup: [group: EventGroupRead]
+  navigateEvent: [event: CalendarEvent]
+  navigateGroup: [group: CalendarEventGroup]
   navigateBooking: [booking: BookingCalendarItem]
 }>()
 

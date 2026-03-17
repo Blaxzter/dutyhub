@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 
 import {
   Bookmark,
@@ -36,10 +36,10 @@ import { EventQuickView } from '@/components/events/quick-view'
 import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
 
 import type {
+  EventFeedResponse,
   EventGroupListResponse,
   EventGroupRead,
-  EventListResponse,
-  EventRead,
+  FeedEventItem,
 } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
@@ -48,7 +48,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { get, delete: del } = useAuthenticatedClient()
 
-const events = ref<EventRead[]>([])
+const feedItems = ref<FeedEventItem[]>([])
 const eventGroups = ref<EventGroupRead[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
@@ -65,28 +65,43 @@ const selectedSlotEventName = ref<string | null>(null)
 // Delete dialog state
 const showDeleteDialog = ref(false)
 const deleteReason = ref('')
-const deleteTarget = ref<EventRead | null>(null)
+const deleteTarget = ref<FeedEventItem | null>(null)
 
-const filteredEvents = computed(() => {
-  if (!searchQuery.value) return events.value
-  const query = searchQuery.value.toLowerCase()
-  return events.value.filter(
-    (e) => e.name.toLowerCase().includes(query) || e.description?.toLowerCase().includes(query),
-  )
-})
+// Map frontend view names to backend feed view param
+function feedView(): 'list' | 'cards' | 'calendar' {
+  if (viewMode.value === 'box') return 'cards'
+  return viewMode.value
+}
 
 const loadEvents = async () => {
   loading.value = true
   try {
-    const query: Record<string, unknown> = { limit: 100 }
+    const query: Record<string, unknown> = {
+      view: feedView(),
+      focus_mode: focusMode.value === 'first-available' ? 'first_available' : 'today',
+      limit: 100,
+    }
     if (myBookingsOnly.value) query.my_bookings = true
+    if (searchQuery.value.trim()) query.search = searchQuery.value.trim()
 
-    const [eventsRes, groupsRes] = await Promise.all([
-      get<{ data: EventListResponse }>({ url: '/events/', query }),
-      get<{ data: EventGroupListResponse }>({ url: '/event-groups/', query: { limit: 100 } }),
-    ])
-    events.value = eventsRes.data.items
-    eventGroups.value = groupsRes.data.items
+    const requests: Promise<unknown>[] = [
+      get<{ data: EventFeedResponse }>({ url: '/events/feed', query }),
+    ]
+    // Event groups are only needed for calendar view
+    if (viewMode.value === 'calendar') {
+      requests.push(
+        get<{ data: EventGroupListResponse }>({ url: '/event-groups/', query: { limit: 100 } }),
+      )
+    }
+
+    const results = await Promise.all(requests)
+    const feedRes = results[0] as { data: EventFeedResponse }
+    feedItems.value = feedRes.data.items
+
+    if (viewMode.value === 'calendar' && results[1]) {
+      const groupsRes = results[1] as { data: EventGroupListResponse }
+      eventGroups.value = groupsRes.data.items
+    }
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -94,9 +109,17 @@ const loadEvents = async () => {
   }
 }
 
-watch(myBookingsOnly, () => loadEvents())
+// Debounced search
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchQuery, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => loadEvents(), 300)
+})
 
-const handleDelete = (event: EventRead) => {
+// Re-fetch when these change
+watch([myBookingsOnly, viewMode, focusMode], () => loadEvents())
+
+const handleDelete = (event: FeedEventItem) => {
   deleteTarget.value = event
   deleteReason.value = ''
   showDeleteDialog.value = true
@@ -116,13 +139,13 @@ const confirmDeleteEvent = async () => {
   }
 }
 
-const handleClickSlot = (slotId: string, event: EventRead) => {
+const handleClickSlot = (slotId: string, event: FeedEventItem) => {
   selectedSlotId.value = slotId
   selectedSlotEventName.value = event.name
   showSlotDialog.value = true
 }
 
-const navigateToEvent = (event: EventRead) => {
+const navigateToEvent = (event: FeedEventItem) => {
   router.push({ name: 'event-detail', params: { eventId: event.id } })
 }
 
@@ -275,7 +298,7 @@ onMounted(loadEvents)
     <template v-else>
       <EventQuickView
         v-if="viewMode === 'list'"
-        :events="filteredEvents"
+        :events="feedItems"
         :focus-mode="focusMode"
         :hide-full-slots="hideFullSlots"
         @navigate="navigateToEvent"
@@ -284,13 +307,13 @@ onMounted(loadEvents)
       />
       <EventListView
         v-else-if="viewMode === 'box'"
-        :events="filteredEvents"
+        :events="feedItems"
         @navigate="navigateToEvent"
         @delete="handleDelete"
       />
       <EventCalendarView
         v-else
-        :events="filteredEvents"
+        :events="feedItems"
         :event-groups="eventGroups"
         @navigate="navigateToEvent"
         @navigate-group="navigateToGroup"

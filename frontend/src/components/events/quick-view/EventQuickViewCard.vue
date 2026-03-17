@@ -1,55 +1,73 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { MapPin, Tag, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 
-import type { DutySlotRead, EventRead } from '@/client/types.gen'
+import type { FeedEventItem, FeedSlotEntry, SlotWindowResponse } from '@/client/types.gen'
+import { toastApiError } from '@/lib/api-errors'
 import { statusVariant } from '@/lib/status'
 
 import WeekDayColumns from './WeekDayColumns.vue'
 import type { DayColumn, DaySlotEntry } from './WeekDayColumns.vue'
 
 const props = defineProps<{
-  event: EventRead
-  slots: DutySlotRead[]
-  initialStartDate: Date
+  event: FeedEventItem
   visibleDays?: number
   hideFullSlots?: boolean
 }>()
 
 const emit = defineEmits<{
-  navigate: [event: EventRead]
-  delete: [event: EventRead]
-  clickSlot: [slotId: string, event: EventRead]
+  navigate: [event: FeedEventItem]
+  delete: [event: FeedEventItem]
+  clickSlot: [slotId: string, event: FeedEventItem]
 }>()
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+const { get } = useAuthenticatedClient()
 
 const numDays = computed(() => props.visibleDays ?? 5)
 const weekOffset = ref(0)
 const expanded = ref(false)
+const loadingWindow = ref(false)
+
+// Cache of fetched slot windows keyed by "YYYY-MM-DD" start date
+const slotCache = ref<Map<string, FeedSlotEntry[]>>(new Map())
+
+// Window start date from feed (initial window)
+const initialWindowStart = computed(() => {
+  if (props.event.slot_window_start) {
+    const [y, m, d] = props.event.slot_window_start.split('-').map(Number)
+    return new Date(y, m - 1, d)
+  }
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return today
+})
 
 const startDate = computed(() => {
-  const d = new Date(props.initialStartDate)
+  const d = new Date(initialWindowStart.value)
   d.setDate(d.getDate() + weekOffset.value * numDays.value)
   return d
 })
 
-const days = computed<DayColumn[]>(() => {
-  const result: DayColumn[] = []
-  const slotsByDate = new Map<string, DaySlotEntry[]>()
+function dateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
-  for (const slot of props.slots) {
-    const dateStr = slot.date
-    if (!slotsByDate.has(dateStr)) slotsByDate.set(dateStr, [])
-    slotsByDate.get(dateStr)!.push({
+function feedSlotsToDay(slots: FeedSlotEntry[]): Map<string, DaySlotEntry[]> {
+  const map = new Map<string, DaySlotEntry[]>()
+  for (const slot of slots) {
+    const key = slot.date
+    if (!map.has(key)) map.set(key, [])
+    map.get(key)!.push({
       slotId: slot.id,
       startTime: slot.start_time,
       endTime: slot.end_time,
@@ -58,25 +76,85 @@ const days = computed<DayColumn[]>(() => {
       isBookedByMe: slot.is_booked_by_me,
     })
   }
+  return map
+}
+
+// Get the active slots for the current window (from cache or initial feed)
+const activeSlots = computed<FeedSlotEntry[]>(() => {
+  const key = dateStr(startDate.value)
+  // Check cache first
+  if (slotCache.value.has(key)) {
+    return slotCache.value.get(key)!
+  }
+  // If offset is 0, use the initial feed data
+  if (weekOffset.value === 0) {
+    return props.event.slots ?? []
+  }
+  // No data yet for this window
+  return []
+})
+
+const days = computed<DayColumn[]>(() => {
+  const slotsByDate = feedSlotsToDay(activeSlots.value)
+  const result: DayColumn[] = []
 
   for (let i = 0; i < numDays.value; i++) {
     const date = new Date(startDate.value)
     date.setDate(date.getDate() + i)
-    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-    const daySlots = slotsByDate.get(dateStr) ?? []
+    const ds = dateStr(date)
+    const daySlots = slotsByDate.get(ds) ?? []
     daySlots.sort((a, b) => (a.startTime ?? '').localeCompare(b.startTime ?? ''))
-    result.push({ date, dateStr, slots: daySlots })
+    result.push({ date, dateStr: ds, slots: daySlots })
   }
 
   return result
 })
 
 const totalAvailableSlots = computed(() => {
-  return props.slots.filter((s) => {
+  const slots = props.event.slots ?? []
+  return slots.filter((s) => {
     if (!s.max_bookings) return true
     return (s.current_bookings ?? 0) < s.max_bookings
   }).length
 })
+
+// Fetch a slot window for a given start date
+async function fetchSlotWindow(start: Date) {
+  const key = dateStr(start)
+  if (slotCache.value.has(key)) return
+  loadingWindow.value = true
+  try {
+    const res = await get<{ data: SlotWindowResponse }>({
+      url: `/events/${props.event.id}/slot-window`,
+      query: { start_date: key, days: numDays.value },
+    })
+    const newCache = new Map(slotCache.value)
+    newCache.set(key, res.data.slots)
+    slotCache.value = newCache
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    loadingWindow.value = false
+  }
+}
+
+// When weekOffset changes and we don't have data, fetch
+watch(weekOffset, () => {
+  if (weekOffset.value === 0) return // initial data from feed
+  const key = dateStr(startDate.value)
+  if (!slotCache.value.has(key)) {
+    fetchSlotWindow(startDate.value)
+  }
+})
+
+// Reset cache when the event changes (e.g. feed re-fetched)
+watch(
+  () => props.event.id,
+  () => {
+    slotCache.value = new Map()
+    weekOffset.value = 0
+  },
+)
 </script>
 
 <template>

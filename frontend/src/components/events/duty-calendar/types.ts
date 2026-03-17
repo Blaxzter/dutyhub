@@ -1,4 +1,21 @@
-import type { EventGroupRead, EventRead } from '@/client/types.gen'
+/** Minimal event shape used by the calendar — works with both CalendarEvent and DashboardEvent. */
+export interface CalendarEvent {
+  id: string
+  name: string
+  status?: string
+  description?: string | null
+  location?: string | null
+  start_date: string
+  end_date: string
+}
+
+/** Minimal event group shape used by the calendar. */
+export interface CalendarEventGroup {
+  id: string
+  name: string
+  start_date: string
+  end_date: string
+}
 
 export interface BookingCalendarItem {
   id: string
@@ -12,13 +29,13 @@ export interface BookingCalendarItem {
 export interface CalendarDay {
   date: Date | null
   dateStr: string | null
-  events: EventRead[]
-  groups: EventGroupRead[]
+  events: CalendarEvent[]
+  groups: CalendarEventGroup[]
   bookings: BookingCalendarItem[]
 }
 
 export interface GroupBar {
-  group: EventGroupRead
+  group: CalendarEventGroup
   startCol: number
   span: number
   lane: number
@@ -27,7 +44,7 @@ export interface GroupBar {
 }
 
 export interface EventBar {
-  event: EventRead
+  event: CalendarEvent
   startCol: number
   span: number
   lane: number
@@ -46,8 +63,8 @@ export interface CalendarWeek {
 export type ViewMode = 'month' | 'week' | 'day'
 
 export interface DutyCalendarEmits {
-  navigateEvent: [event: EventRead]
-  navigateGroup: [group: EventGroupRead]
+  navigateEvent: [event: CalendarEvent]
+  navigateGroup: [group: CalendarEventGroup]
   navigateBooking: [booking: BookingCalendarItem]
 }
 
@@ -61,7 +78,7 @@ export const EMPTY_DAY: CalendarDay = {
 
 export function computeGroupBars(weekDays: CalendarDay[]): GroupBar[] {
   const seen = new Set<string>()
-  const groupsInWeek: EventGroupRead[] = []
+  const groupsInWeek: CalendarEventGroup[] = []
   for (const day of weekDays) {
     for (const g of day.groups) {
       if (!seen.has(g.id)) {
@@ -92,7 +109,7 @@ export function computeGroupBars(weekDays: CalendarDay[]): GroupBar[] {
 
 export function computeEventBars(weekDays: CalendarDay[]): EventBar[] {
   const seen = new Set<string>()
-  const multiDayEvents: EventRead[] = []
+  const multiDayEvents: CalendarEvent[] = []
   for (const day of weekDays) {
     for (const e of day.events) {
       if (!seen.has(e.id) && e.start_date !== e.end_date) {
@@ -122,7 +139,7 @@ export function computeEventBars(weekDays: CalendarDay[]): EventBar[] {
 }
 
 /** Check if an event spans multiple days */
-export function isMultiDayEvent(event: EventRead): boolean {
+export function isMultiDayEvent(event: CalendarEvent): boolean {
   return event.start_date !== event.end_date
 }
 

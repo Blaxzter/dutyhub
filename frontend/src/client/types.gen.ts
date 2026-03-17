@@ -216,6 +216,125 @@ export type BookingUpdate = {
 }
 
 /**
+ * DashboardBookingItem
+ * Booking with inline slot info for calendar display — avoids N+1.
+ */
+export type DashboardBookingItem = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Slot Id
+   */
+  slot_id: string
+  /**
+   * Date
+   */
+  date: string
+  /**
+   * Title
+   */
+  title: string
+  /**
+   * Start Time
+   */
+  start_time?: string | null
+  /**
+   * End Time
+   */
+  end_time?: string | null
+}
+
+/**
+ * DashboardEvent
+ * Slim event for the dashboard calendar.
+ */
+export type DashboardEvent = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Status
+   */
+  status: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+}
+
+/**
+ * DashboardEventGroup
+ * Slim event group for the dashboard calendar.
+ */
+export type DashboardEventGroup = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+}
+
+/**
+ * DashboardFeedResponse
+ */
+export type DashboardFeedResponse = {
+  /**
+   * Events
+   */
+  events: Array<DashboardEvent>
+  /**
+   * Event Count
+   */
+  event_count: number
+  /**
+   * Event Groups
+   */
+  event_groups: Array<DashboardEventGroup>
+  /**
+   * Bookings
+   */
+  bookings: Array<DashboardBookingItem>
+  /**
+   * Booking Count
+   */
+  booking_count: number
+  /**
+   * Pending User Count
+   */
+  pending_user_count?: number | null
+}
+
+/**
  * DemoDataCreatedResponse
  */
 export type DemoDataCreatedResponse = {
@@ -599,6 +718,28 @@ export type EventCreateWithSlotsResponse = {
 }
 
 /**
+ * EventFeedResponse
+ */
+export type EventFeedResponse = {
+  /**
+   * Items
+   */
+  items: Array<FeedEventItem>
+  /**
+   * Total
+   */
+  total: number
+  /**
+   * Skip
+   */
+  skip: number
+  /**
+   * Limit
+   */
+  limit: number
+}
+
+/**
  * EventGroupCreate
  */
 export type EventGroupCreate = {
@@ -904,6 +1045,170 @@ export type ExcludedSlot = {
 }
 
 /**
+ * FeedEventItem
+ * Event with view-dependent embedded data.
+ */
+export type FeedEventItem = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
+  /**
+   * Event Group Id
+   */
+  event_group_id?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+  /**
+   * Slot Duration Minutes
+   */
+  slot_duration_minutes?: number | null
+  /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
+  /**
+   * People Per Slot
+   */
+  people_per_slot?: number | null
+  /**
+   * Schedule Overrides
+   */
+  schedule_overrides?: Array<{
+    [key: string]: unknown
+  }> | null
+  /**
+   * Slots
+   */
+  slots?: Array<FeedSlotEntry> | null
+  /**
+   * Slot Window Start
+   */
+  slot_window_start?: string | null
+  /**
+   * Total Slots
+   */
+  total_slots?: number | null
+  /**
+   * Available Slots
+   */
+  available_slots?: number | null
+}
+
+/**
+ * FeedSlotEntry
+ * Lightweight slot for the feed — no title/description, just booking info.
+ */
+export type FeedSlotEntry = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Date
+   */
+  date: string
+  /**
+   * Start Time
+   */
+  start_time?: string | null
+  /**
+   * End Time
+   */
+  end_time?: string | null
+  /**
+   * Max Bookings
+   */
+  max_bookings?: number
+  /**
+   * Current Bookings
+   */
+  current_bookings?: number
+  /**
+   * Is Booked By Me
+   */
+  is_booked_by_me?: boolean
+}
+
+/**
+ * GlobalChannelSettingsRead
+ */
+export type GlobalChannelSettingsRead = {
+  /**
+   * Notify Email
+   */
+  notify_email: boolean
+  /**
+   * Notify Push
+   */
+  notify_push: boolean
+  /**
+   * Notify Telegram
+   */
+  notify_telegram: boolean
+}
+
+/**
+ * GlobalChannelSettingsUpdate
+ */
+export type GlobalChannelSettingsUpdate = {
+  /**
+   * Notify Email
+   */
+  notify_email?: boolean | null
+  /**
+   * Notify Push
+   */
+  notify_push?: boolean | null
+  /**
+   * Notify Telegram
+   */
+  notify_telegram?: boolean | null
+}
+
+/**
  * MyBookingsListResponse
  */
 export type MyBookingsListResponse = {
@@ -990,7 +1295,7 @@ export type NotificationRead = {
    * Data
    */
   data?: {
-    [key: string]: unknown
+    [key: string]: string | number | null
   } | null
   /**
    * Is Read
@@ -1441,6 +1746,25 @@ export type SlotRegenerationResult = {
 }
 
 /**
+ * SlotWindowResponse
+ * Response for the slot-window endpoint (next/prev day navigation).
+ */
+export type SlotWindowResponse = {
+  /**
+   * Slots
+   */
+  slots: Array<FeedSlotEntry>
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * Days
+   */
+  days: number
+}
+
+/**
  * TelegramBindResponse
  */
 export type TelegramBindResponse = {
@@ -1485,6 +1809,31 @@ export type TelegramBindingRead = {
 }
 
 /**
+ * TelegramChat
+ */
+export type TelegramChat = {
+  /**
+   * Id
+   */
+  id: number
+  /**
+   * Username
+   */
+  username?: string | null
+}
+
+/**
+ * TelegramMessage
+ */
+export type TelegramMessage = {
+  /**
+   * Text
+   */
+  text?: string | null
+  chat?: TelegramChat | null
+}
+
+/**
  * TelegramVerifyRequest
  */
 export type TelegramVerifyRequest = {
@@ -1500,6 +1849,14 @@ export type TelegramVerifyRequest = {
    * Telegram Username
    */
   telegram_username?: string | null
+}
+
+/**
+ * TelegramWebhookUpdate
+ * Subset of the Telegram Bot API Update object we actually use.
+ */
+export type TelegramWebhookUpdate = {
+  message?: TelegramMessage | null
 }
 
 /**
@@ -2731,6 +3088,164 @@ export type SettingsUpdateSiteSettingsResponses = {
 
 export type SettingsUpdateSiteSettingsResponse =
   SettingsUpdateSiteSettingsResponses[keyof SettingsUpdateSiteSettingsResponses]
+
+export type EventsEventFeedData = {
+  body?: never
+  path?: never
+  query?: {
+    /**
+     * View
+     */
+    view?: 'list' | 'cards' | 'calendar'
+    /**
+     * Focus Mode
+     */
+    focus_mode?: 'today' | 'first_available'
+    /**
+     * Search
+     */
+    search?: string | null
+    /**
+     * Skip
+     */
+    skip?: number
+    /**
+     * Limit
+     */
+    limit?: number
+    /**
+     * Date From
+     */
+    date_from?: string | null
+    /**
+     * Date To
+     */
+    date_to?: string | null
+    /**
+     * My Bookings
+     */
+    my_bookings?: boolean
+    /**
+     * Days
+     */
+    days?: number
+  }
+  url: '/api/v1/events/feed'
+}
+
+export type EventsEventFeedErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsEventFeedError = EventsEventFeedErrors[keyof EventsEventFeedErrors]
+
+export type EventsEventFeedResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventFeedResponse
+}
+
+export type EventsEventFeedResponse = EventsEventFeedResponses[keyof EventsEventFeedResponses]
+
+export type EventsGetSlotWindowData = {
+  body?: never
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query: {
+    /**
+     * Start Date
+     */
+    start_date: string
+    /**
+     * Days
+     */
+    days?: number
+  }
+  url: '/api/v1/events/{event_id}/slot-window'
+}
+
+export type EventsGetSlotWindowErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsGetSlotWindowError = EventsGetSlotWindowErrors[keyof EventsGetSlotWindowErrors]
+
+export type EventsGetSlotWindowResponses = {
+  /**
+   * Successful Response
+   */
+  200: SlotWindowResponse
+}
+
+export type EventsGetSlotWindowResponse =
+  EventsGetSlotWindowResponses[keyof EventsGetSlotWindowResponses]
 
 export type EventsListEventsData = {
   body?: never
@@ -4941,7 +5456,7 @@ export type NotificationsMarkAllNotificationsReadResponses = {
    * Successful Response
    */
   200: {
-    [key: string]: unknown
+    [key: string]: number
   }
 }
 
@@ -5295,6 +5810,116 @@ export type NotificationsUpdatePreferenceResponses = {
 export type NotificationsUpdatePreferenceResponse =
   NotificationsUpdatePreferenceResponses[keyof NotificationsUpdatePreferenceResponses]
 
+export type NotificationsGetChannelSettingsData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/channel-settings'
+}
+
+export type NotificationsGetChannelSettingsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsGetChannelSettingsError =
+  NotificationsGetChannelSettingsErrors[keyof NotificationsGetChannelSettingsErrors]
+
+export type NotificationsGetChannelSettingsResponses = {
+  /**
+   * Successful Response
+   */
+  200: GlobalChannelSettingsRead
+}
+
+export type NotificationsGetChannelSettingsResponse =
+  NotificationsGetChannelSettingsResponses[keyof NotificationsGetChannelSettingsResponses]
+
+export type NotificationsUpdateChannelSettingsData = {
+  body: GlobalChannelSettingsUpdate
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/channel-settings'
+}
+
+export type NotificationsUpdateChannelSettingsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsUpdateChannelSettingsError =
+  NotificationsUpdateChannelSettingsErrors[keyof NotificationsUpdateChannelSettingsErrors]
+
+export type NotificationsUpdateChannelSettingsResponses = {
+  /**
+   * Successful Response
+   */
+  200: GlobalChannelSettingsRead
+}
+
+export type NotificationsUpdateChannelSettingsResponse =
+  NotificationsUpdateChannelSettingsResponses[keyof NotificationsUpdateChannelSettingsResponses]
+
 export type NotificationsListPushSubscriptionsData = {
   body?: never
   path?: never
@@ -5465,6 +6090,64 @@ export type NotificationsRemovePushSubscriptionResponses = {
 
 export type NotificationsRemovePushSubscriptionResponse =
   NotificationsRemovePushSubscriptionResponses[keyof NotificationsRemovePushSubscriptionResponses]
+
+export type NotificationsGetVapidPublicKeyData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/vapid-public-key'
+}
+
+export type NotificationsGetVapidPublicKeyErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsGetVapidPublicKeyError =
+  NotificationsGetVapidPublicKeyErrors[keyof NotificationsGetVapidPublicKeyErrors]
+
+export type NotificationsGetVapidPublicKeyResponses = {
+  /**
+   * Response Notifications-Get Vapid Public Key
+   * Successful Response
+   */
+  200: {
+    [key: string]: string
+  }
+}
+
+export type NotificationsGetVapidPublicKeyResponse =
+  NotificationsGetVapidPublicKeyResponses[keyof NotificationsGetVapidPublicKeyResponses]
 
 export type NotificationsUnbindTelegramData = {
   body?: never
@@ -5688,12 +6371,7 @@ export type NotificationsVerifyTelegramBindingResponse =
   NotificationsVerifyTelegramBindingResponses[keyof NotificationsVerifyTelegramBindingResponses]
 
 export type NotificationsTelegramWebhookData = {
-  /**
-   * Body
-   */
-  body: {
-    [key: string]: unknown
-  }
+  body: TelegramWebhookUpdate
   path?: never
   query?: never
   url: '/api/v1/notifications/telegram/webhook'
@@ -5743,21 +6421,21 @@ export type NotificationsTelegramWebhookResponses = {
    * Successful Response
    */
   200: {
-    [key: string]: unknown
+    [key: string]: boolean
   }
 }
 
 export type NotificationsTelegramWebhookResponse =
   NotificationsTelegramWebhookResponses[keyof NotificationsTelegramWebhookResponses]
 
-export type NotificationsGetVapidPublicKeyData = {
+export type DashboardDashboardFeedData = {
   body?: never
   path?: never
   query?: never
-  url: '/api/v1/notifications/vapid-public-key'
+  url: '/api/v1/dashboard/feed'
 }
 
-export type NotificationsGetVapidPublicKeyErrors = {
+export type DashboardDashboardFeedErrors = {
   /**
    * Bad Request
    */
@@ -5792,21 +6470,18 @@ export type NotificationsGetVapidPublicKeyErrors = {
   500: ProblemDetails
 }
 
-export type NotificationsGetVapidPublicKeyError =
-  NotificationsGetVapidPublicKeyErrors[keyof NotificationsGetVapidPublicKeyErrors]
+export type DashboardDashboardFeedError =
+  DashboardDashboardFeedErrors[keyof DashboardDashboardFeedErrors]
 
-export type NotificationsGetVapidPublicKeyResponses = {
+export type DashboardDashboardFeedResponses = {
   /**
-   * Response Notifications-Get Vapid Public Key
    * Successful Response
    */
-  200: {
-    [key: string]: unknown
-  }
+  200: DashboardFeedResponse
 }
 
-export type NotificationsGetVapidPublicKeyResponse =
-  NotificationsGetVapidPublicKeyResponses[keyof NotificationsGetVapidPublicKeyResponses]
+export type DashboardDashboardFeedResponse =
+  DashboardDashboardFeedResponses[keyof DashboardDashboardFeedResponses]
 
 export type DemoDataDeleteDemoDataData = {
   body?: never
@@ -5917,6 +6592,120 @@ export type DemoDataCreateDemoDataResponses = {
 
 export type DemoDataCreateDemoDataResponse =
   DemoDataCreateDemoDataResponses[keyof DemoDataCreateDemoDataResponses]
+
+export type DebugStartLogCaptureData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/debug/start-log-capture'
+}
+
+export type DebugStartLogCaptureErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type DebugStartLogCaptureError = DebugStartLogCaptureErrors[keyof DebugStartLogCaptureErrors]
+
+export type DebugStartLogCaptureResponses = {
+  /**
+   * Response Debug-Start Log Capture
+   * Successful Response
+   */
+  200: {
+    [key: string]: string
+  }
+}
+
+export type DebugStartLogCaptureResponse =
+  DebugStartLogCaptureResponses[keyof DebugStartLogCaptureResponses]
+
+export type DebugStopLogCaptureData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/debug/stop-log-capture'
+}
+
+export type DebugStopLogCaptureErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type DebugStopLogCaptureError = DebugStopLogCaptureErrors[keyof DebugStopLogCaptureErrors]
+
+export type DebugStopLogCaptureResponses = {
+  /**
+   * Response Debug-Stop Log Capture
+   * Successful Response
+   */
+  200: {
+    [key: string]: string
+  }
+}
+
+export type DebugStopLogCaptureResponse =
+  DebugStopLogCaptureResponses[keyof DebugStopLogCaptureResponses]
 
 export type ClientOptions = {
   baseURL: `${string}://${string}` | (string & {})
