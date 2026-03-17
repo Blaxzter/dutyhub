@@ -127,21 +127,12 @@ teardown-auth0:
 # Create a new release: updates version files, commits, tags, and creates a GitHub release
 # Usage: just release 1.2.3
 release version:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    # Validate semver format
-    if ! echo "{{version}}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
-        echo "Error: '{{version}}' is not a valid semver (expected: X.Y.Z or X.Y.Z-pre.1)"
-        exit 1
-    fi
-    # Update VERSION file
+    echo "{{version}}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$' || (echo "Error: '{{version}}' is not valid semver (expected: X.Y.Z or X.Y.Z-pre.1)" && exit 1)
     echo "{{version}}" > VERSION
-    # Commit, tag, and push
     git add VERSION
     git commit -m "release: v{{version}}"
     git tag "v{{version}}"
     git push origin main --tags
-    # Create GitHub release (requires gh CLI)
     gh release create "v{{version}}" --generate-notes --title "v{{version}}"
 
 # ── Pre-commit ────────────────────────────────────────────────
