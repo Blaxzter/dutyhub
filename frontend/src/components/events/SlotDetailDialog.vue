@@ -9,6 +9,7 @@ import { toast } from 'vue-sonner'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
 import { useFormatters } from '@/composables/useFormatters'
+import { useAuthStore } from '@/stores/auth'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
@@ -48,6 +49,7 @@ const { formatTime, formatDateLabel } = useFormatters()
 const router = useRouter()
 const { get, post, patch, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
+const authStore = useAuthStore()
 
 const fetchedSlot = ref<DutySlotRead | null>(null)
 const slotBookings = ref<SlotBookingEntry[]>([])
@@ -60,11 +62,11 @@ const notesValue = ref('')
 const savingNotes = ref(false)
 
 const saveNotes = async () => {
-  if (!props.myBooking) return
+  if (!resolvedMyBooking.value) return
   savingNotes.value = true
   try {
     await patch({
-      url: `/bookings/${props.myBooking.id}`,
+      url: `/bookings/${resolvedMyBooking.value.id}`,
       body: { notes: notesValue.value || null },
     })
     editingNotes.value = false
@@ -93,6 +95,16 @@ const dialogOpen = computed({
 /** The resolved slot — either from props or fetched by ID */
 const resolvedSlot = computed(() => props.dutySlot ?? fetchedSlot.value)
 
+/** The resolved booking — from props, or auto-detected from fetched slot bookings */
+const resolvedMyBooking = computed(() => {
+  if (props.myBooking) return props.myBooking
+  const email = authStore.user?.email
+  if (!email || slotBookings.value.length === 0) return null
+  const entry = slotBookings.value.find((b) => b.user_email === email)
+  if (!entry) return null
+  return { id: entry.id, notes: entry.notes ?? null } as { id: string; notes: string | null }
+})
+
 // Load data when dialog opens
 watch(
   () => props.open,
@@ -105,7 +117,7 @@ watch(
     }
 
     // Initialize notes from booking
-    notesValue.value = props.myBooking?.notes ?? ''
+    notesValue.value = resolvedMyBooking.value?.notes ?? ''
 
     // If we only have a slotId, fetch the full slot
     const slotId = props.dutySlot?.id ?? props.slotId
@@ -140,6 +152,13 @@ watch(
   },
 )
 
+// Initialize notes when booking becomes available (e.g., after slotBookings are fetched)
+watch(resolvedMyBooking, (booking) => {
+  if (booking && !editingNotes.value) {
+    notesValue.value = booking.notes ?? ''
+  }
+})
+
 const timeDisplay = computed(() => {
   const s = resolvedSlot.value
   if (!s) return null
@@ -156,7 +175,7 @@ const isSlotFull = computed(() => {
 })
 
 const canBook = computed(() => {
-  return !props.myBooking && !isSlotFull.value
+  return !resolvedMyBooking.value && !isSlotFull.value
 })
 
 const bookingInProgress = ref(false)
@@ -178,12 +197,12 @@ const handleBook = async () => {
 }
 
 const handleCancelBooking = async () => {
-  if (!props.myBooking) return
+  if (!resolvedMyBooking.value) return
   const confirmed = await confirmDestructive(t('duties.bookings.cancelConfirm'))
   if (!confirmed) return
   bookingInProgress.value = true
   try {
-    await del({ url: `/bookings/${props.myBooking.id}` })
+    await del({ url: `/bookings/${resolvedMyBooking.value.id}` })
     toast.success(t('duties.bookings.cancelSuccess'))
     emit('booking-updated')
     dialogOpen.value = false
@@ -300,7 +319,7 @@ const navigateToEvent = () => {
           </div>
 
           <!-- My notes (when user has a booking) -->
-          <div v-if="myBooking">
+          <div v-if="resolvedMyBooking">
             <div class="flex items-center justify-between mb-1.5">
               <p class="text-xs text-muted-foreground">
                 {{ t('duties.dutySlots.detail.myNotes') }}
@@ -329,7 +348,7 @@ const navigateToEvent = () => {
                   @click="
                     () => {
                       editingNotes = false
-                      notesValue = myBooking?.notes ?? ''
+                      notesValue = resolvedMyBooking?.notes ?? ''
                     }
                   "
                 >
@@ -341,7 +360,7 @@ const navigateToEvent = () => {
               </div>
             </div>
             <p v-else class="text-sm">
-              {{ myBooking.notes || t('duties.dutySlots.detail.noNotes') }}
+              {{ resolvedMyBooking?.notes || t('duties.dutySlots.detail.noNotes') }}
             </p>
           </div>
 
@@ -387,7 +406,7 @@ const navigateToEvent = () => {
               {{ t('duties.dutySlots.book') }}
             </Button>
             <Button
-              v-if="myBooking"
+              v-if="resolvedMyBooking"
               variant="destructive"
               size="sm"
               class="w-full sm:w-auto"
