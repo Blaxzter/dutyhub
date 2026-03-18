@@ -37,6 +37,21 @@ const router = createRouter({
           name: 'how-it-works',
           component: () => import('@/views/preauth/HowItWorksView.vue'),
         },
+        {
+          path: 'privacy',
+          name: 'privacy',
+          component: () => import('@/views/preauth/PrivacyView.vue'),
+        },
+        {
+          path: 'terms',
+          name: 'terms',
+          component: () => import('@/views/preauth/TermsView.vue'),
+        },
+        {
+          path: 'impressum',
+          name: 'impressum',
+          component: () => import('@/views/preauth/ImpressumView.vue'),
+        },
       ],
     },
     {

@@ -1,5 +1,13 @@
 {
     "settings": {
+        "dataExport": {
+            "title": "Meine Daten herunterladen",
+            "subtitle": "Exportieren Sie Ihre persönlichen Daten als JSON-Datei.",
+            "description": "Laden Sie eine Kopie aller persönlichen Daten herunter, die wir über Sie speichern, einschließlich Ihres Profils, Ihrer Buchungen, Verfügbarkeiten und Benachrichtigungseinstellungen. Dies ist Ihr Recht gemäß DSGVO Art. 20 (Datenübertragbarkeit).",
+            "button": "Daten herunterladen",
+            "exporting": "Wird exportiert...",
+            "error": "Fehler beim Exportieren der Daten. Bitte versuchen Sie es später erneut."
+        },
         "deleteAccount": {
             "button": "Mein Konto löschen",
             "cancelButton": "Abbrechen",

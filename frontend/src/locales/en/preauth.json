@@ -159,10 +159,168 @@
             }
         }
     },
+    "privacy": {
+        "title": "Privacy Policy",
+        "lastUpdated": "Last updated: March 2026",
+        "backToHome": "Back to Home",
+        "intro": "We take the protection of your personal data seriously. This privacy policy explains what data we collect when you use WirkSam, how we use it, and what rights you have.",
+        "controller": {
+            "title": "Data Controller"
+        },
+        "dataCollected": {
+            "title": "Data We Collect",
+            "intro": "When you create an account and use WirkSam, we process the following personal data:",
+            "items": {
+                "name": "Name (as provided by your Auth0 login)",
+                "email": "Email address",
+                "picture": "Profile picture (if provided by your login provider)",
+                "bookings": "Booking data (which duty slots you signed up for)"
+            }
+        },
+        "purpose": {
+            "title": "How We Use Your Data",
+            "items": {
+                "account": "To create and manage your user account",
+                "scheduling": "To enable duty scheduling and slot booking",
+                "notifications": "To send you notifications about your bookings and events (email, push, or Telegram if configured)",
+                "security": "To ensure the security and proper operation of the platform"
+            }
+        },
+        "legalBasis": {
+            "title": "Legal Basis",
+            "description": "We process your data based on Art. 6(1)(b) GDPR (performance of a contract) for core account and booking functionality, and Art. 6(1)(f) GDPR (legitimate interest) for security and platform operation. Where we send optional notifications, we rely on your consent (Art. 6(1)(a) GDPR), which you can withdraw at any time in your notification settings."
+        },
+        "thirdParty": {
+            "title": "Third-Party Services",
+            "auth0": {
+                "title": "Auth0 (Okta, Inc.)",
+                "description": "We use Auth0 for authentication and login. When you sign in, Auth0 processes your email, name, and profile picture. Auth0 may transfer data to the United States. For details, see the Auth0 privacy policy at auth0.com/privacy."
+            },
+            "email": {
+                "title": "Proton Mail (Proton AG)",
+                "description": "We use Proton Mail to send transactional emails such as booking confirmations and notifications. Proton AG is based in Switzerland and subject to Swiss data protection law. Only your email address and the message content are processed."
+            }
+        },
+        "retention": {
+            "title": "Data Retention",
+            "description": "Your personal data is stored as long as your account is active. If you request account deletion, we will erase your personal data without undue delay, unless we are legally required to retain it."
+        },
+        "rights": {
+            "title": "Your Rights",
+            "intro": "Under the GDPR, you have the following rights:",
+            "items": {
+                "access": "Right of access — request a copy of your personal data",
+                "rectification": "Right to rectification — correct inaccurate data",
+                "erasure": "Right to erasure — request deletion of your data",
+                "restriction": "Right to restriction — limit how we process your data",
+                "portability": "Right to data portability — receive your data in a structured format",
+                "objection": "Right to object — object to processing based on legitimate interest"
+            },
+            "contact": "To exercise any of these rights, contact us at the email address listed above. You also have the right to lodge a complaint with a supervisory authority."
+        },
+        "cookies": {
+            "title": "Cookies",
+            "description": "WirkSam uses only technically necessary cookies for authentication and session management. We do not use tracking cookies or third-party analytics."
+        },
+        "changes": {
+            "title": "Changes to This Policy",
+            "description": "We may update this privacy policy from time to time. The current version is always available on this page. We encourage you to review it periodically."
+        }
+    },
+    "impressum": {
+        "title": "Legal Notice",
+        "subtitle": "Information according to § 5 TMG (German Telemedia Act)",
+        "backToHome": "Back to Home",
+        "responsible": {
+            "title": "Responsible Person"
+        },
+        "contact": {
+            "title": "Contact",
+            "emailLabel": "Email",
+            "phoneLabel": "Phone"
+        },
+        "country": "Germany",
+        "disclaimer": {
+            "title": "Disclaimer",
+            "content": "This is a private, non-commercial project for coordinating volunteer duty schedules at church events and community service. It is operated by a private individual."
+        },
+        "liability": {
+            "title": "Liability for Content",
+            "content": "The contents of this website have been created with the greatest possible care. However, we cannot guarantee the accuracy, completeness, or timeliness of the content. As a service provider, we are responsible for our own content on these pages under general law (§ 7(1) TMG). However, we are not obligated to monitor transmitted or stored third-party information or to investigate circumstances that indicate illegal activity."
+        },
+        "links": {
+            "title": "Liability for Links",
+            "content": "Our website may contain links to external third-party websites over whose content we have no influence. We therefore cannot accept any liability for this third-party content. The respective provider or operator of the linked pages is always responsible for the content of those pages."
+        },
+        "copyright": {
+            "title": "Copyright",
+            "content": "The content and works on this website are subject to copyright law. Any use beyond the limits of copyright law requires the written consent of the respective author or creator."
+        }
+    },
+    "terms": {
+        "title": "Terms of Service",
+        "lastUpdated": "Last updated: March 2026",
+        "backToHome": "Back to Home",
+        "scope": {
+            "title": "Scope of Service",
+            "description": "WirkSam is a free, non-commercial platform for coordinating volunteer duty schedules at church events and community service. By creating an account and using the platform, you agree to these terms."
+        },
+        "account": {
+            "title": "Your Account",
+            "items": {
+                "registration": "You need to create an account via Auth0 to use WirkSam.",
+                "accuracy": "You are responsible for keeping your account information accurate and up to date.",
+                "security": "You are responsible for the security of your account credentials.",
+                "approval": "Account access may require approval by an administrator. We reserve the right to reject or deactivate accounts."
+            }
+        },
+        "usage": {
+            "title": "Acceptable Use",
+            "intro": "When using WirkSam, you agree to:",
+            "items": {
+                "lawful": "Use the platform only for its intended purpose of volunteer duty scheduling.",
+                "respectful": "Be respectful to other users and organizers.",
+                "reliable": "Honor your booked duty slots or cancel in a timely manner if you cannot attend.",
+                "noAbuse": "Not attempt to manipulate, overload, or exploit the platform."
+            }
+        },
+        "bookings": {
+            "title": "Bookings & Cancellations",
+            "description": "When you book a duty slot, you commit to being available at the scheduled time and place. If you can no longer attend, please cancel your booking as early as possible so the slot can be filled by someone else. Organizers and administrators may cancel or reassign bookings if necessary."
+        },
+        "availability": {
+            "title": "Service Availability",
+            "description": "WirkSam is provided as-is, without guarantees of uninterrupted availability. We strive to keep the platform running reliably, but maintenance windows, outages, or changes may occur. We will try to communicate planned downtime in advance."
+        },
+        "liability": {
+            "title": "Limitation of Liability",
+            "description": "WirkSam is a free, volunteer-run project. We are not liable for any damages arising from the use of the platform, including but not limited to missed shifts, scheduling conflicts, or data loss. Use the platform at your own discretion."
+        },
+        "termination": {
+            "title": "Account Termination",
+            "description": "You can delete your account at any time from your settings page. All your personal data and bookings will be permanently removed. We reserve the right to deactivate or remove accounts that violate these terms."
+        },
+        "changes": {
+            "title": "Changes to These Terms",
+            "description": "We may update these terms from time to time. The current version is always available on this page. Continued use of WirkSam after changes constitutes acceptance of the updated terms."
+        },
+        "law": {
+            "title": "Governing Law",
+            "description": "These terms are governed by the laws of the Federal Republic of Germany."
+        }
+    },
+    "cookieNotice": {
+        "message": "This site uses only essential cookies for authentication and session management. No tracking or analytics cookies are used.",
+        "learnMore": "Learn more",
+        "dismiss": "OK"
+    },
     "layout": {
         "appName": "WirkSam",
         "footer": {
-            "copyright": "© 2026 WirkSam. Effective together."
+            "copyright": "© 2026 WirkSam. Effective together.",
+            "privacy": "Privacy Policy",
+            "terms": "Terms of Service",
+            "impressum": "Legal Notice"
         },
         "navigation": {
             "about": "About",

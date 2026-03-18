@@ -20,6 +20,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 
+import CookieNotice from '@/components/CookieNotice.vue'
 import ErrorBoundary from '@/components/utils/ErrorBoundary.vue'
 import LanguageSwitch from '@/components/utils/LanguageSwitch.vue'
 
@@ -220,11 +221,35 @@ function mobileNavigate(name: string) {
 
       <!-- Footer for unauthenticated users -->
       <footer class="border-t mt-auto flex-shrink-0">
-        <div class="max-w-7xl w-full mx-auto px-4 py-6 text-center text-muted-foreground">
+        <div
+          class="max-w-7xl w-full mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground"
+        >
           <p>{{ $t('preauth.layout.footer.copyright') }}</p>
+          <nav class="flex items-center gap-4">
+            <router-link
+              :to="{ name: 'privacy' }"
+              class="hover:text-foreground transition-colors"
+            >
+              {{ $t('preauth.layout.footer.privacy') }}
+            </router-link>
+            <router-link
+              :to="{ name: 'terms' }"
+              class="hover:text-foreground transition-colors"
+            >
+              {{ $t('preauth.layout.footer.terms') }}
+            </router-link>
+            <router-link
+              :to="{ name: 'impressum' }"
+              class="hover:text-foreground transition-colors"
+            >
+              {{ $t('preauth.layout.footer.impressum') }}
+            </router-link>
+          </nav>
         </div>
       </footer>
     </main>
+
+    <CookieNotice />
   </div>
 </template>
 

@@ -1,23 +1,28 @@
 import logging
 import uuid
 from collections.abc import Sequence
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from sqlmodel import select
 
 from app.api.deps import (
     CurrentSuperuser,
     CurrentUser,
     DBDep,
-    get_or_create_user,
     auth0,
+    get_or_create_user,
 )
 from app.core.config import settings
 from app.core.security import verify_password
 from app.crud.site_settings import site_settings as crud_site_settings
 from app.crud.user import user as crud_user
 from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
+from app.models.booking import Booking
+from app.models.notification import NotificationSubscription
 from app.models.user import User
+from app.models.user_availability import UserAvailability, UserAvailabilityDate
 from app.schemas.site_settings import SelfApproveRequest
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.schemas.users import ProfileInit, UserProfile, UserProfileUpdate
@@ -236,6 +241,92 @@ async def update_user(
         )
 
     return updated
+
+
+@router.get("/me/export")
+async def export_user_data(
+    session: DBDep,
+    current_user: CurrentUser,
+) -> dict[str, Any]:
+    """Export all personal data for the current user (GDPR Art. 20)."""
+    user_id = current_user.id
+
+    # Bookings
+    bookings_result = await session.exec(
+        select(Booking).where(Booking.user_id == user_id)
+    )
+    bookings = [
+        {
+            "id": str(b.id),
+            "status": b.status,
+            "notes": b.notes,
+            "cancellation_reason": b.cancellation_reason,
+            "cancelled_slot_title": b.cancelled_slot_title,
+            "cancelled_slot_date": str(b.cancelled_slot_date) if b.cancelled_slot_date else None,
+            "cancelled_event_name": b.cancelled_event_name,
+            "created_at": b.created_at.isoformat(),
+        }
+        for b in bookings_result.all()
+    ]
+
+    # Notification preferences
+    subs_result = await session.exec(
+        select(NotificationSubscription).where(
+            NotificationSubscription.user_id == user_id
+        )
+    )
+    notification_preferences = [
+        {
+            "scope_type": s.scope_type,
+            "email_enabled": s.email_enabled,
+            "push_enabled": s.push_enabled,
+            "telegram_enabled": s.telegram_enabled,
+            "is_muted": s.is_muted,
+        }
+        for s in subs_result.all()
+    ]
+
+    # Availability
+    avail_result = await session.exec(
+        select(UserAvailability).where(UserAvailability.user_id == user_id)
+    )
+    availabilities = []
+    for a in avail_result.all():
+        dates_result = await session.exec(
+            select(UserAvailabilityDate).where(
+                UserAvailabilityDate.availability_id == a.id
+            )
+        )
+        availabilities.append(
+            {
+                "availability_type": a.availability_type,
+                "notes": a.notes,
+                "dates": [
+                    {
+                        "date": str(d.slot_date),
+                        "start_time": str(d.start_time) if d.start_time else None,
+                        "end_time": str(d.end_time) if d.end_time else None,
+                    }
+                    for d in dates_result.all()
+                ],
+            }
+        )
+
+    return {
+        "profile": {
+            "name": current_user.name,
+            "email": current_user.email,
+            "picture": current_user.picture,
+            "email_verified": current_user.email_verified,
+            "roles": current_user.roles,
+            "is_active": current_user.is_active,
+            "created_at": current_user.created_at.isoformat(),
+        },
+        "bookings": bookings,
+        "notification_preferences": notification_preferences,
+        "availabilities": availabilities,
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)

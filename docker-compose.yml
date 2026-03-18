@@ -130,6 +130,12 @@ services:
     frontend:
         image: "${DOCKER_IMAGE_FRONTEND?Variable not set}:${TAG-latest}"
         restart: always
+        environment:
+            - LEGAL_NAME=${LEGAL_NAME:-}
+            - LEGAL_ADDRESS=${LEGAL_ADDRESS:-}
+            - LEGAL_CITY=${LEGAL_CITY:-}
+            - LEGAL_EMAIL=${LEGAL_EMAIL:-}
+            - LEGAL_PHONE=${LEGAL_PHONE:-}
         networks:
             - traefik-net
             - default

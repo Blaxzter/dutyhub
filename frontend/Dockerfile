@@ -30,11 +30,12 @@ ENV NODE_ENV=${NODE_ENV}
 
 RUN pnpm exec vite build
 
-FROM cgr.dev/chainguard/nginx:latest AS production-stage
+FROM cgr.dev/chainguard/nginx:latest-dev AS production-stage
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY docker-entrypoint.sh /docker-entrypoint.sh
 
 EXPOSE 80
 
-CMD ["-g", "daemon off;"]
+ENTRYPOINT ["/bin/sh", "/docker-entrypoint.sh"]

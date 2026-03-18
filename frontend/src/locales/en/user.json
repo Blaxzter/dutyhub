@@ -1,5 +1,13 @@
 {
     "settings": {
+        "dataExport": {
+            "title": "Download My Data",
+            "subtitle": "Export your personal data as a JSON file.",
+            "description": "Download a copy of all personal data we store about you, including your profile, bookings, availability, and notification preferences. This is your right under GDPR Art. 20 (data portability).",
+            "button": "Download Data",
+            "exporting": "Exporting...",
+            "error": "Failed to export data. Please try again later."
+        },
         "deleteAccount": {
             "button": "Delete My Account",
             "cancelButton": "Cancel",

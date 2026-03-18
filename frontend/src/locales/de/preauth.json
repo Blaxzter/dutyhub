@@ -159,10 +159,168 @@
             }
         }
     },
+    "privacy": {
+        "title": "Datenschutzerklärung",
+        "lastUpdated": "Letzte Aktualisierung: März 2026",
+        "backToHome": "Zurück zur Startseite",
+        "intro": "Wir nehmen den Schutz Ihrer persönlichen Daten ernst. Diese Datenschutzerklärung erläutert, welche Daten wir bei der Nutzung von WirkSam erheben, wie wir sie verwenden und welche Rechte Ihnen zustehen.",
+        "controller": {
+            "title": "Verantwortlicher"
+        },
+        "dataCollected": {
+            "title": "Welche Daten wir erheben",
+            "intro": "Wenn Sie ein Konto erstellen und WirkSam nutzen, verarbeiten wir folgende personenbezogene Daten:",
+            "items": {
+                "name": "Name (wie von Ihrem Auth0-Login bereitgestellt)",
+                "email": "E-Mail-Adresse",
+                "picture": "Profilbild (sofern von Ihrem Login-Anbieter bereitgestellt)",
+                "bookings": "Buchungsdaten (welche Dienstschichten Sie gebucht haben)"
+            }
+        },
+        "purpose": {
+            "title": "Wie wir Ihre Daten verwenden",
+            "items": {
+                "account": "Zur Erstellung und Verwaltung Ihres Benutzerkontos",
+                "scheduling": "Zur Ermöglichung der Dienstplanung und Schichtbuchung",
+                "notifications": "Um Ihnen Benachrichtigungen über Ihre Buchungen und Veranstaltungen zu senden (per E-Mail, Push oder Telegram, sofern konfiguriert)",
+                "security": "Zur Gewährleistung der Sicherheit und des ordnungsgemäßen Betriebs der Plattform"
+            }
+        },
+        "legalBasis": {
+            "title": "Rechtsgrundlage",
+            "description": "Wir verarbeiten Ihre Daten auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) für die Konto- und Buchungsfunktionen sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse) für Sicherheit und Plattformbetrieb. Für optionale Benachrichtigungen stützen wir uns auf Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO), die Sie jederzeit in Ihren Benachrichtigungseinstellungen widerrufen können."
+        },
+        "thirdParty": {
+            "title": "Drittanbieter",
+            "auth0": {
+                "title": "Auth0 (Okta, Inc.)",
+                "description": "Wir verwenden Auth0 zur Authentifizierung und Anmeldung. Beim Login verarbeitet Auth0 Ihre E-Mail-Adresse, Ihren Namen und Ihr Profilbild. Auth0 kann Daten in die Vereinigten Staaten übertragen. Details finden Sie in der Auth0-Datenschutzerklärung unter auth0.com/privacy."
+            },
+            "email": {
+                "title": "Proton Mail (Proton AG)",
+                "description": "Wir verwenden Proton Mail zum Versand von Transaktions-E-Mails wie Buchungsbestätigungen und Benachrichtigungen. Die Proton AG hat ihren Sitz in der Schweiz und unterliegt dem Schweizer Datenschutzgesetz. Es werden nur Ihre E-Mail-Adresse und der Nachrichteninhalt verarbeitet."
+            }
+        },
+        "retention": {
+            "title": "Datenspeicherung",
+            "description": "Ihre personenbezogenen Daten werden gespeichert, solange Ihr Konto aktiv ist. Wenn Sie die Löschung Ihres Kontos beantragen, löschen wir Ihre personenbezogenen Daten unverzüglich, sofern wir nicht gesetzlich zur Aufbewahrung verpflichtet sind."
+        },
+        "rights": {
+            "title": "Ihre Rechte",
+            "intro": "Nach der DSGVO stehen Ihnen folgende Rechte zu:",
+            "items": {
+                "access": "Auskunftsrecht — Kopie Ihrer personenbezogenen Daten anfordern",
+                "rectification": "Recht auf Berichtigung — unrichtige Daten korrigieren lassen",
+                "erasure": "Recht auf Löschung — Löschung Ihrer Daten verlangen",
+                "restriction": "Recht auf Einschränkung — die Verarbeitung Ihrer Daten einschränken",
+                "portability": "Recht auf Datenübertragbarkeit — Ihre Daten in strukturiertem Format erhalten",
+                "objection": "Widerspruchsrecht — der Verarbeitung aufgrund berechtigter Interessen widersprechen"
+            },
+            "contact": "Um eines dieser Rechte auszuüben, kontaktieren Sie uns unter der oben genannten E-Mail-Adresse. Sie haben außerdem das Recht, eine Beschwerde bei einer Aufsichtsbehörde einzureichen."
+        },
+        "cookies": {
+            "title": "Cookies",
+            "description": "WirkSam verwendet ausschließlich technisch notwendige Cookies für Authentifizierung und Sitzungsverwaltung. Wir verwenden keine Tracking-Cookies oder Analysedienste Dritter."
+        },
+        "changes": {
+            "title": "Änderungen dieser Erklärung",
+            "description": "Wir können diese Datenschutzerklärung von Zeit zu Zeit aktualisieren. Die aktuelle Fassung ist stets auf dieser Seite verfügbar. Wir empfehlen Ihnen, sie regelmäßig zu überprüfen."
+        }
+    },
+    "impressum": {
+        "title": "Impressum",
+        "subtitle": "Angaben gemäß § 5 TMG",
+        "backToHome": "Zurück zur Startseite",
+        "responsible": {
+            "title": "Verantwortlich"
+        },
+        "contact": {
+            "title": "Kontakt",
+            "emailLabel": "E-Mail",
+            "phoneLabel": "Telefon"
+        },
+        "country": "Deutschland",
+        "disclaimer": {
+            "title": "Haftungsausschluss",
+            "content": "Dies ist ein privates, nicht-kommerzielles Projekt zur Koordination ehrenamtlicher Dienstpläne bei kirchlichen Veranstaltungen und Gemeindearbeit. Es wird von einer Privatperson betrieben."
+        },
+        "liability": {
+            "title": "Haftung für Inhalte",
+            "content": "Die Inhalte dieser Website wurden mit größtmöglicher Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen. Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Wir sind jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen."
+        },
+        "links": {
+            "title": "Haftung für Links",
+            "content": "Unsere Website kann Links zu externen Webseiten Dritter enthalten, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber verantwortlich."
+        },
+        "copyright": {
+            "title": "Urheberrecht",
+            "content": "Die Inhalte und Werke auf dieser Website unterliegen dem Urheberrecht. Jede Verwertung außerhalb der Grenzen des Urheberrechts bedarf der schriftlichen Zustimmung des jeweiligen Autors oder Erstellers."
+        }
+    },
+    "terms": {
+        "title": "Nutzungsbedingungen",
+        "lastUpdated": "Letzte Aktualisierung: März 2026",
+        "backToHome": "Zurück zur Startseite",
+        "scope": {
+            "title": "Geltungsbereich",
+            "description": "WirkSam ist eine kostenlose, nicht-kommerzielle Plattform zur Koordination ehrenamtlicher Dienstpläne bei kirchlichen Veranstaltungen und Gemeindearbeit. Mit der Erstellung eines Kontos und der Nutzung der Plattform stimmen Sie diesen Bedingungen zu."
+        },
+        "account": {
+            "title": "Ihr Konto",
+            "items": {
+                "registration": "Sie müssen ein Konto über Auth0 erstellen, um WirkSam zu nutzen.",
+                "accuracy": "Sie sind dafür verantwortlich, Ihre Kontoinformationen korrekt und aktuell zu halten.",
+                "security": "Sie sind für die Sicherheit Ihrer Zugangsdaten verantwortlich.",
+                "approval": "Der Kontozugang kann eine Genehmigung durch einen Administrator erfordern. Wir behalten uns das Recht vor, Konten abzulehnen oder zu deaktivieren."
+            }
+        },
+        "usage": {
+            "title": "Zulässige Nutzung",
+            "intro": "Bei der Nutzung von WirkSam verpflichten Sie sich:",
+            "items": {
+                "lawful": "Die Plattform nur für ihren vorgesehenen Zweck der ehrenamtlichen Dienstplanung zu nutzen.",
+                "respectful": "Respektvoll gegenüber anderen Nutzern und Organisatoren zu sein.",
+                "reliable": "Gebuchte Dienstschichten einzuhalten oder rechtzeitig abzusagen, wenn Sie nicht teilnehmen können.",
+                "noAbuse": "Nicht zu versuchen, die Plattform zu manipulieren, zu überlasten oder auszunutzen."
+            }
+        },
+        "bookings": {
+            "title": "Buchungen & Stornierungen",
+            "description": "Wenn Sie eine Dienstschicht buchen, verpflichten Sie sich, zur geplanten Zeit am geplanten Ort verfügbar zu sein. Falls Sie nicht mehr teilnehmen können, stornieren Sie Ihre Buchung bitte so früh wie möglich, damit die Schicht anderweitig besetzt werden kann. Organisatoren und Administratoren können Buchungen bei Bedarf stornieren oder neu zuweisen."
+        },
+        "availability": {
+            "title": "Verfügbarkeit des Dienstes",
+            "description": "WirkSam wird ohne Garantie einer ununterbrochenen Verfügbarkeit bereitgestellt. Wir bemühen uns, die Plattform zuverlässig zu betreiben, aber Wartungsfenster, Ausfälle oder Änderungen können auftreten. Geplante Ausfallzeiten werden wir nach Möglichkeit im Voraus kommunizieren."
+        },
+        "liability": {
+            "title": "Haftungsbeschränkung",
+            "description": "WirkSam ist ein kostenloses, ehrenamtlich betriebenes Projekt. Wir haften nicht für Schäden, die aus der Nutzung der Plattform entstehen, einschließlich, aber nicht beschränkt auf verpasste Schichten, Terminplanungskonflikte oder Datenverlust. Die Nutzung der Plattform erfolgt auf eigene Verantwortung."
+        },
+        "termination": {
+            "title": "Kontobeendigung",
+            "description": "Sie können Ihr Konto jederzeit über Ihre Einstellungsseite löschen. Alle Ihre persönlichen Daten und Buchungen werden dauerhaft entfernt. Wir behalten uns das Recht vor, Konten zu deaktivieren oder zu entfernen, die gegen diese Bedingungen verstoßen."
+        },
+        "changes": {
+            "title": "Änderungen dieser Bedingungen",
+            "description": "Wir können diese Bedingungen von Zeit zu Zeit aktualisieren. Die aktuelle Fassung ist stets auf dieser Seite verfügbar. Die weitere Nutzung von WirkSam nach Änderungen gilt als Zustimmung zu den aktualisierten Bedingungen."
+        },
+        "law": {
+            "title": "Anwendbares Recht",
+            "description": "Diese Bedingungen unterliegen dem Recht der Bundesrepublik Deutschland."
+        }
+    },
+    "cookieNotice": {
+        "message": "Diese Seite verwendet ausschließlich technisch notwendige Cookies für Authentifizierung und Sitzungsverwaltung. Es werden keine Tracking- oder Analyse-Cookies verwendet.",
+        "learnMore": "Mehr erfahren",
+        "dismiss": "OK"
+    },
     "layout": {
         "appName": "WirkSam",
         "footer": {
-            "copyright": "© 2026 WirkSam. Wirksam gemeinsam."
+            "copyright": "© 2026 WirkSam. Wirksam gemeinsam.",
+            "privacy": "Datenschutz",
+            "terms": "Nutzungsbedingungen",
+            "impressum": "Impressum"
         },
         "navigation": {
             "about": "Über uns",
