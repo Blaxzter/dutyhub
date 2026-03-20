@@ -31,6 +31,9 @@ const mode = useColorMode()
 
 const mobileMenuOpen = ref(false)
 
+const appVersion = __APP_VERSION__
+const appVersionDate = __APP_VERSION_DATE__
+
 // Toggle between fixed header with scrollable content vs full-height layout
 const useFixedHeader = ref(true)
 
@@ -224,7 +227,12 @@ function mobileNavigate(name: string) {
         <div
           class="max-w-7xl w-full mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground"
         >
-          <p>{{ $t('preauth.layout.footer.copyright') }}</p>
+          <div class="flex flex-col items-center sm:items-start gap-1">
+            <p>{{ $t('preauth.layout.footer.copyright') }}</p>
+            <p class="text-xs">
+              {{ $t('preauth.layout.footer.version', { version: appVersion, date: appVersionDate }) }}
+            </p>
+          </div>
           <nav class="flex items-center gap-4">
             <router-link
               :to="{ name: 'privacy' }"

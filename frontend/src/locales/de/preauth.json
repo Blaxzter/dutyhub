@@ -318,6 +318,7 @@
         "appName": "WirkSam",
         "footer": {
             "copyright": "© 2026 WirkSam. Wirksam gemeinsam.",
+            "version": "Version {version} · Aktualisiert {date}",
             "privacy": "Datenschutz",
             "terms": "Nutzungsbedingungen",
             "impressum": "Impressum"
