@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { Plus, Search, Trash2 } from 'lucide-vue-next'
@@ -11,6 +11,7 @@ import type { EventGroupListResponse, EventGroupRead } from '@/client/types.gen'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { DatePicker } from '@/components/ui/date-picker'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
 import {
   Card,
   CardContent,
@@ -47,6 +48,23 @@ const loading = ref(false)
 const searchQuery = ref('')
 const showCreateDialog = ref(false)
 
+// Date filter
+const dateFrom = ref<string | null>(null)
+const dateTo = ref<string | null>(null)
+const markedDays = ref<Set<string>>(new Set())
+
+async function handleVisibleMonth(range: { from: string; to: string }) {
+  try {
+    const res = await get<{ data: string[] }>({
+      url: '/events/active-dates',
+      query: { date_from: range.from, date_to: range.to },
+    })
+    markedDays.value = new Set(res.data)
+  } catch {
+    // Non-critical
+  }
+}
+
 const createForm = ref({ name: '', description: '' })
 const startDate = ref<DateValue>()
 const endDate = ref<DateValue>()
@@ -62,9 +80,13 @@ const filteredGroups = computed(() => {
 const loadGroups = async () => {
   loading.value = true
   try {
+    const query: Record<string, unknown> = { limit: 100 }
+    query.date_from = dateFrom.value ?? new Date().toISOString().slice(0, 10)
+    if (dateTo.value) query.date_to = dateTo.value
+
     const response = await get<{ data: EventGroupListResponse }>({
       url: '/event-groups/',
-      query: { limit: 100 },
+      query,
     })
     groups.value = response.data.items
   } catch (error) {
@@ -73,6 +95,8 @@ const loadGroups = async () => {
     loading.value = false
   }
 }
+
+watch([dateFrom, dateTo], () => loadGroups())
 
 const handleCreate = async () => {
   if (!startDate.value || !endDate.value) return
@@ -131,10 +155,20 @@ onMounted(loadGroups)
       </Button>
     </div>
 
-    <!-- Search -->
-    <div class="relative">
-      <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-      <Input v-model="searchQuery" :placeholder="t('common.actions.search')" class="pl-10" />
+    <!-- Search & Filter -->
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="relative flex-1">
+        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input v-model="searchQuery" :placeholder="t('common.actions.search')" class="pl-10" />
+      </div>
+      <DateRangePicker
+        :date-from="dateFrom"
+        :date-to="dateTo"
+        :marked-days="markedDays"
+        @update:date-from="dateFrom = $event"
+        @update:date-to="dateTo = $event"
+        @update:visible-month="handleVisibleMonth"
+      />
     </div>
 
     <!-- Loading -->

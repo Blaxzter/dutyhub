@@ -1267,6 +1267,23 @@ export const zEventsEventFeedData = z.object({
  */
 export const zEventsEventFeedResponse = zEventFeedResponse
 
+export const zEventsEventActiveDatesData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.object({
+    date_from: z.iso.date(),
+    date_to: z.iso.date(),
+  }),
+})
+
+/**
+ * Response Events-Event Active Dates
+ * Successful Response
+ */
+export const zEventsEventActiveDatesResponse = z.array(z.iso.date()).register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
 export const zEventsGetSlotWindowData = z.object({
   body: z.optional(z.never()),
   path: z.object({
@@ -1548,6 +1565,25 @@ export const zBookingsListMyBookingsData = z.object({
  */
 export const zBookingsListMyBookingsResponse = zMyBookingsListResponse
 
+export const zBookingsMyBookingActiveDatesData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.object({
+    date_from: z.iso.date(),
+    date_to: z.iso.date(),
+  }),
+})
+
+/**
+ * Response Bookings-My Booking Active Dates
+ * Successful Response
+ */
+export const zBookingsMyBookingActiveDatesResponse = z
+  .array(z.iso.date())
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
+
 export const zBookingsCreateBookingData = z.object({
   body: zBookingCreate,
   path: z.optional(z.never()),
@@ -1622,6 +1658,8 @@ export const zEventGroupsListEventGroupsData = z.object({
       limit: z.optional(z.int().gte(1).lte(200)).default(100),
       search: z.optional(z.union([z.string(), z.null()])),
       status: z.optional(z.union([z.enum(['draft', 'published', 'archived']), z.null()])),
+      date_from: z.optional(z.union([z.iso.date(), z.null()])),
+      date_to: z.optional(z.union([z.iso.date(), z.null()])),
     }),
   ),
 })

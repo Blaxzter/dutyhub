@@ -297,9 +297,13 @@ async def event_feed(
     effective_status = None if current_user.is_admin else "published"
     booked_by_user_id = str(current_user.id) if my_bookings else None
 
-    # For calendar view, also filter events by date overlap
-    ev_date_from = date_from if view == "calendar" else None
+    today = dt.date.today()
+    now = dt.datetime.now()
+    ev_date_from = date_from if date_from else today
     ev_date_to = date_to if view == "calendar" else None
+    # Only enforce future-slot filter when no explicit date_from is provided
+    # (i.e. user hasn't picked a custom date range to look at past events)
+    future_slots_cutoff = now if (not date_from and view != "calendar") else None
 
     events = await crud_event.get_multi_filtered(
         session,
@@ -310,6 +314,7 @@ async def event_feed(
         booked_by_user_id=booked_by_user_id,
         date_from=ev_date_from,
         date_to=ev_date_to,
+        has_future_slots=future_slots_cutoff,
     )
     total = await crud_event.get_count_filtered(
         session,
@@ -318,6 +323,7 @@ async def event_feed(
         booked_by_user_id=booked_by_user_id,
         date_from=ev_date_from,
         date_to=ev_date_to,
+        has_future_slots=future_slots_cutoff,
     )
 
     if not events:
@@ -336,6 +342,32 @@ async def event_feed(
         )
 
     return EventFeedResponse(items=items, total=total, skip=skip, limit=limit)
+
+
+@router.get("/active-dates", response_model=list[dt.date])
+async def event_active_dates(
+    session: DBDep,
+    current_user: CurrentUser,
+    date_from: dt.date = Query(...),
+    date_to: dt.date = Query(...),
+) -> list[dt.date]:
+    """Return distinct slot dates within a range where published events have slots."""
+    effective_status = None if current_user.is_admin else "published"
+
+    query = (
+        select(func.distinct(col(DutySlot.date)))
+        .join(Event, col(DutySlot.event_id) == col(Event.id))
+        .where(
+            col(DutySlot.date) >= date_from,
+            col(DutySlot.date) <= date_to,
+        )
+        .order_by(col(DutySlot.date))
+    )
+    if effective_status:
+        query = query.where(col(Event.status) == effective_status)
+
+    result = await session.execute(query)
+    return [row[0] for row in result.all()]
 
 
 @router.get("/{event_id}/slot-window", response_model=SlotWindowResponse)

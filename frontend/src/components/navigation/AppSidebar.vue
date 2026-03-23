@@ -72,7 +72,7 @@ function eventBadge(
 
   const label = `${openSlots}`
   const tooltip = t('navigation.sidebar.badges.openSlots', { count: openSlots })
-  if (!nextDate) return { text: label, tooltip, variant: 'secondary' }
+  if (!nextDate) return { text: label, tooltip, variant: 'outline' }
 
   const now = new Date()
   const slotDateTime = nextTime
@@ -83,8 +83,7 @@ function eventBadge(
   const diffMin = diffMs / 60_000
 
   if (diffMin <= 15 && diffMin > -60) return { text: label, tooltip, variant: 'destructive' }
-  if (nextDate === now.toISOString().slice(0, 10)) return { text: label, tooltip, variant: 'default' }
-  return { text: label, tooltip, variant: 'secondary' }
+  return { text: label, tooltip, variant: 'outline' }
 }
 
 function formatBookingTitle(slotDate: string, slotTitle: string): string {

@@ -3,11 +3,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 import {
   AlertCircle,
-  CalendarDays,
   Calendar,
+  CalendarDays,
   Clock,
   Layers,
   MapPin,
+  Search,
   Trash2,
   XCircle,
 } from 'lucide-vue-next'
@@ -20,6 +21,8 @@ import { useFormatters } from '@/composables/useFormatters'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
+import Input from '@/components/ui/input/Input.vue'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Separator from '@/components/ui/separator/Separator.vue'
 import {
@@ -57,28 +60,24 @@ const openSlotDetail = (booking: BookingReadWithSlot) => {
 }
 
 // --- Filter state ---
-type FilterPreset = 'upcoming' | 'thisMonth' | 'all'
-const activeFilter = ref<FilterPreset>('upcoming')
+const dateFrom = ref<string | null>(null)
+const dateTo = ref<string | null>(null)
 const showCancelled = ref(false)
 
-const toISODate = (d: Date) => d.toISOString().slice(0, 10)
+// Marked days for the date range picker
+const markedDays = ref<Set<string>>(new Set())
 
-const filterDates = computed(() => {
-  const today = new Date()
-  switch (activeFilter.value) {
-    case 'upcoming':
-      return { date_from: toISODate(today), date_to: undefined }
-    case 'thisMonth': {
-      const start = new Date(today.getFullYear(), today.getMonth(), 1)
-      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
-      return { date_from: toISODate(start), date_to: toISODate(end) }
-    }
-    case 'all':
-      return { date_from: undefined, date_to: undefined }
-    default:
-      return { date_from: undefined, date_to: undefined }
+async function handleVisibleMonth(range: { from: string; to: string }) {
+  try {
+    const res = await get<{ data: string[] }>({
+      url: '/bookings/me/active-dates',
+      query: { date_from: range.from, date_to: range.to },
+    })
+    markedDays.value = new Set(res.data)
+  } catch {
+    // Non-critical
   }
-})
+}
 
 // --- Grouping state (persisted in localStorage) ---
 type GroupMode = 'none' | 'date' | 'event' | 'location'
@@ -106,9 +105,26 @@ interface BookingGroup {
   bookings: BookingReadWithSlot[]
 }
 
+const searchQuery = ref('')
+
 const filteredBookings = computed(() => {
-  if (showCancelled.value) return bookings.value
-  return bookings.value.filter((b) => b.status !== 'cancelled')
+  let result = bookings.value
+  if (!showCancelled.value) {
+    result = result.filter((b) => b.status !== 'cancelled')
+  }
+  const query = searchQuery.value.trim().toLowerCase()
+  if (query) {
+    result = result.filter((b) => {
+      const slot = b.duty_slot
+      if (!slot) return false
+      return (
+        slot.title?.toLowerCase().includes(query) ||
+        slot.event_name?.toLowerCase().includes(query) ||
+        slot.location?.toLowerCase().includes(query)
+      )
+    })
+  }
+  return result
 })
 
 const sortedBookings = computed(() =>
@@ -172,6 +188,8 @@ const groupedBookings = computed<BookingGroup[]>(() => {
   }))
 })
 
+const toISODate = (d: Date) => d.toISOString().slice(0, 10)
+
 const formatGroupLabel = (dateStr: string) => {
   const today = toISODate(new Date())
   const tomorrow = toISODate(new Date(Date.now() + 86400000))
@@ -206,9 +224,8 @@ const loadBookings = async () => {
   loading.value = true
   try {
     const query: Record<string, string | number> = { limit: 200 }
-    const { date_from, date_to } = filterDates.value
-    if (date_from) query.date_from = date_from
-    if (date_to) query.date_to = date_to
+    query.date_from = dateFrom.value ?? new Date().toISOString().slice(0, 10)
+    if (dateTo.value) query.date_to = dateTo.value
 
     const response = await get<{ data: MyBookingsListResponse }>({
       url: '/bookings/me',
@@ -222,7 +239,7 @@ const loadBookings = async () => {
   }
 }
 
-watch(activeFilter, () => loadBookings())
+watch([dateFrom, dateTo], () => loadBookings())
 
 const handleCancel = async (booking: BookingReadWithSlot) => {
   const confirmed = await confirmDestructive(t('duties.bookings.cancelConfirm'))
@@ -284,27 +301,51 @@ onMounted(loadBookings)
 <template>
   <div class="mx-auto max-w-7xl space-y-6">
     <!-- Header -->
-    <div class="space-y-2">
-      <h1 class="text-3xl font-bold">{{ t('duties.bookings.title') }}</h1>
-      <p class="text-muted-foreground">{{ t('duties.bookings.subtitle') }}</p>
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div class="space-y-2">
+        <h1 class="text-3xl font-bold">{{ t('duties.bookings.title') }}</h1>
+        <p class="text-muted-foreground">{{ t('duties.bookings.subtitle') }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <!-- Grouping icon tabs -->
+        <TooltipProvider :delay-duration="300">
+          <div class="flex overflow-hidden rounded-md border">
+            <Tooltip v-for="opt in groupingOptions" :key="opt.mode">
+              <TooltipTrigger as-child>
+                <Button
+                  :variant="activeGrouping === opt.mode ? 'default' : 'ghost'"
+                  size="sm"
+                  class="rounded-none border-0"
+                  @click="toggleGrouping(opt.mode)"
+                >
+                  <component :is="opt.icon" class="h-4 w-4" />
+                  <span class="hidden sm:inline">{{ opt.label }}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {{ opt.label }}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+      </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="flex flex-wrap items-center gap-2">
-      <!-- Date filter tabs -->
-      <div class="flex items-center rounded-lg border bg-muted/30 p-0.5">
-        <Button
-          v-for="preset in (['upcoming', 'thisMonth', 'all'] as const)"
-          :key="preset"
-          :variant="activeFilter === preset ? 'default' : 'ghost'"
-          size="sm"
-          @click="activeFilter = preset"
-        >
-          {{ t(`duties.bookings.filters.${preset}`) }}
-        </Button>
+    <!-- Search & Filter -->
+    <div class="flex flex-wrap items-center gap-4">
+      <div class="relative flex-1">
+        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input v-model="searchQuery" :placeholder="t('common.actions.search')" class="pl-10" />
       </div>
-
-      <!-- Show cancelled toggle -->
+      <DateRangePicker
+        :date-from="dateFrom"
+        :date-to="dateTo"
+        :marked-days="markedDays"
+        :reset-label="t('duties.bookings.filters.clearDates')"
+        @update:date-from="dateFrom = $event"
+        @update:date-to="dateTo = $event"
+        @update:visible-month="handleVisibleMonth"
+      />
       <Button
         :variant="showCancelled ? 'default' : 'outline'"
         size="sm"
@@ -313,30 +354,6 @@ onMounted(loadBookings)
         <XCircle class="h-4 w-4 mr-1.5" />
         {{ t('duties.bookings.filters.showCancelled') }}
       </Button>
-
-      <!-- Spacer -->
-      <div class="flex-1" />
-
-      <!-- Grouping icon tabs -->
-      <TooltipProvider :delay-duration="300">
-        <div class="flex items-center rounded-lg border bg-muted/30 p-0.5">
-          <Tooltip v-for="opt in groupingOptions" :key="opt.mode">
-            <TooltipTrigger as-child>
-              <Button
-                :variant="activeGrouping === opt.mode ? 'default' : 'ghost'"
-                size="icon"
-                class="h-8 w-8"
-                @click="toggleGrouping(opt.mode)"
-              >
-                <component :is="opt.icon" class="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {{ opt.label }}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
     </div>
 
     <!-- Loading -->

@@ -3324,6 +3324,71 @@ export type EventsEventFeedResponses = {
 
 export type EventsEventFeedResponse = EventsEventFeedResponses[keyof EventsEventFeedResponses]
 
+export type EventsEventActiveDatesData = {
+  body?: never
+  path?: never
+  query: {
+    /**
+     * Date From
+     */
+    date_from: string
+    /**
+     * Date To
+     */
+    date_to: string
+  }
+  url: '/api/v1/events/active-dates'
+}
+
+export type EventsEventActiveDatesErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsEventActiveDatesError =
+  EventsEventActiveDatesErrors[keyof EventsEventActiveDatesErrors]
+
+export type EventsEventActiveDatesResponses = {
+  /**
+   * Response Events-Event Active Dates
+   * Successful Response
+   */
+  200: Array<string>
+}
+
+export type EventsEventActiveDatesResponse =
+  EventsEventActiveDatesResponses[keyof EventsEventActiveDatesResponses]
+
 export type EventsGetSlotWindowData = {
   body?: never
   path: {
@@ -4460,6 +4525,71 @@ export type BookingsListMyBookingsResponses = {
 export type BookingsListMyBookingsResponse =
   BookingsListMyBookingsResponses[keyof BookingsListMyBookingsResponses]
 
+export type BookingsMyBookingActiveDatesData = {
+  body?: never
+  path?: never
+  query: {
+    /**
+     * Date From
+     */
+    date_from: string
+    /**
+     * Date To
+     */
+    date_to: string
+  }
+  url: '/api/v1/bookings/me/active-dates'
+}
+
+export type BookingsMyBookingActiveDatesErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type BookingsMyBookingActiveDatesError =
+  BookingsMyBookingActiveDatesErrors[keyof BookingsMyBookingActiveDatesErrors]
+
+export type BookingsMyBookingActiveDatesResponses = {
+  /**
+   * Response Bookings-My Booking Active Dates
+   * Successful Response
+   */
+  200: Array<string>
+}
+
+export type BookingsMyBookingActiveDatesResponse =
+  BookingsMyBookingActiveDatesResponses[keyof BookingsMyBookingActiveDatesResponses]
+
 export type BookingsCreateBookingData = {
   body: BookingCreate
   path?: never
@@ -4774,6 +4904,14 @@ export type EventGroupsListEventGroupsData = {
      * Status
      */
     status?: ('draft' | 'published' | 'archived') | null
+    /**
+     * Date From
+     */
+    date_from?: string | null
+    /**
+     * Date To
+     */
+    date_to?: string | null
   }
   url: '/api/v1/event-groups/'
 }

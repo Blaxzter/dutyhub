@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { CalendarDays, ChevronLeft, ChevronRight, Clock, List } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
@@ -9,7 +9,7 @@ import Button from '@/components/ui/button/Button.vue'
 import DutyCalendarDay from './DutyCalendarDay.vue'
 import DutyCalendarMonth from './DutyCalendarMonth.vue'
 import DutyCalendarWeek from './DutyCalendarWeek.vue'
-import type { BookingCalendarItem, CalendarDay as CalendarDayType, CalendarEvent, CalendarEventGroup, CalendarWeek, ViewMode } from './types'
+import type { BookingCalendarItem, CalendarDay as CalendarDayType, CalendarEvent, CalendarEventGroup, CalendarWeek, DateRange, ViewMode } from './types'
 import { computeEventBars, computeGroupBars, dateToStr, EMPTY_DAY } from './types'
 
 const props = withDefaults(
@@ -21,6 +21,8 @@ const props = withDefaults(
     showGroups?: boolean
     showBookings?: boolean
     defaultView?: ViewMode
+    calendarViewMode?: ViewMode
+    calendarDate?: string // YYYY-MM-DD, controls the focused date
   }>(),
   {
     events: () => [],
@@ -30,6 +32,8 @@ const props = withDefaults(
     showGroups: true,
     showBookings: true,
     defaultView: 'month',
+    calendarViewMode: undefined,
+    calendarDate: undefined,
   },
 )
 
@@ -37,12 +41,17 @@ const emit = defineEmits<{
   navigateEvent: [event: CalendarEvent]
   navigateGroup: [group: CalendarEventGroup]
   navigateBooking: [booking: BookingCalendarItem]
+  'update:dateRange': [range: DateRange]
+  'update:calendarViewMode': [mode: ViewMode]
+  'update:calendarDate': [date: string]
 }>()
 
 const { t, locale } = useI18n()
 
-const viewMode = ref<ViewMode>(props.defaultView)
-const calendarDate = ref(new Date())
+const viewMode = ref<ViewMode>(props.calendarViewMode ?? props.defaultView)
+const calendarDate = ref(
+  props.calendarDate ? new Date(props.calendarDate + 'T00:00:00') : new Date(),
+)
 const hoveredGroupId = ref<string | null>(null)
 const hoveredEventId = ref<string | null>(null)
 
@@ -174,6 +183,35 @@ const goToDay = (day: CalendarDayType) => {
   calendarDate.value = new Date(day.date)
   viewMode.value = 'day'
 }
+
+// ── Visible date range (emitted for parent to fetch data) ──
+
+const visibleRange = computed<DateRange>(() => {
+  const d = calendarDate.value
+  if (viewMode.value === 'month') {
+    const year = d.getFullYear()
+    const month = d.getMonth()
+    return {
+      from: dateToStr(new Date(year, month, 1)),
+      to: dateToStr(new Date(year, month + 1, 0)),
+    }
+  }
+  if (viewMode.value === 'week') {
+    const start = getWeekStart(d)
+    const end = new Date(start)
+    end.setDate(start.getDate() + 6)
+    return { from: dateToStr(start), to: dateToStr(end) }
+  }
+  // day
+  const ds = dateToStr(d)
+  return { from: ds, to: ds }
+})
+
+watch(visibleRange, (range) => emit('update:dateRange', range), { immediate: true })
+
+// Emit internal state changes so parent can mirror to URL
+watch(viewMode, (mode) => emit('update:calendarViewMode', mode))
+watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
 </script>
 
 <template>

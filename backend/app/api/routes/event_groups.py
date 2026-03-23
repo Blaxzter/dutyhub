@@ -1,3 +1,4 @@
+import datetime as dt
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Query
@@ -33,6 +34,8 @@ async def list_event_groups(
     limit: int = Query(default=100, ge=1, le=200),
     search: str | None = None,
     status: EventGroupStatus | None = None,
+    date_from: dt.date | None = None,
+    date_to: dt.date | None = None,
 ) -> EventGroupListResponse:
     """List published event groups (all users) or all groups (admin)."""
     effective_status = status
@@ -40,10 +43,12 @@ async def list_event_groups(
         effective_status = "published"
 
     items = await crud_event_group.get_multi_filtered(
-        session, skip=skip, limit=limit, search=search, status=effective_status
+        session, skip=skip, limit=limit, search=search, status=effective_status,
+        date_from=date_from, date_to=date_to,
     )
     total = await crud_event_group.get_count_filtered(
-        session, search=search, status=effective_status
+        session, search=search, status=effective_status,
+        date_from=date_from, date_to=date_to,
     )
     return EventGroupListResponse(
         items=[EventGroupRead.model_validate(i) for i in items],

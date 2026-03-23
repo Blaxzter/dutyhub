@@ -1,6 +1,8 @@
 import datetime as dt
 
 from fastapi import APIRouter, BackgroundTasks, Query
+from sqlalchemy import func, select
+from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
@@ -12,6 +14,7 @@ from app.logic.notifications.triggers import (
     dispatch_booking_confirmed,
 )
 from app.models.booking import Booking
+from app.models.duty_slot import DutySlot
 from app.schemas.booking import (
     BookingBase,
     BookingCreate,
@@ -68,6 +71,29 @@ async def list_my_bookings(
         skip=skip,
         limit=limit,
     )
+
+
+@router.get("/me/active-dates", response_model=list[dt.date])
+async def my_booking_active_dates(
+    session: DBDep,
+    current_user: CurrentUser,
+    date_from: dt.date = Query(...),
+    date_to: dt.date = Query(...),
+) -> list[dt.date]:
+    """Return distinct slot dates within a range where the user has confirmed bookings."""
+    query = (
+        select(func.distinct(col(DutySlot.date)))
+        .join(Booking, col(Booking.duty_slot_id) == col(DutySlot.id))
+        .where(
+            col(Booking.user_id) == current_user.id,
+            col(Booking.status) == "confirmed",
+            col(DutySlot.date) >= date_from,
+            col(DutySlot.date) <= date_to,
+        )
+        .order_by(col(DutySlot.date))
+    )
+    result = await session.execute(query)
+    return [row[0] for row in result.all()]
 
 
 @router.post("/", response_model=BookingRead, status_code=201)

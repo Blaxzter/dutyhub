@@ -50,7 +50,9 @@
       "upcoming": "Upcoming",
       "thisMonth": "This Month",
       "all": "All",
-      "showCancelled": "Cancelled"
+      "showCancelled": "Cancelled",
+      "allDates": "All dates",
+      "clearDates": "Clear dates"
     },
     "groupBy": {
       "none": "No grouping",
@@ -183,6 +185,13 @@
     },
     "myBookingsFilter": "My bookings only",
     "hideFullSlots": "Hide fully booked",
+    "filters": {
+      "title": "Filters",
+      "reset": "Reset",
+      "fromToday": "From today",
+      "fromDate": "From {date}",
+      "resetToToday": "Reset to today"
+    },
     "empty": "No events found.",
     "fields": {
       "description": "Description",

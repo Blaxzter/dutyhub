@@ -3,7 +3,7 @@
 import datetime as dt
 
 from fastapi import APIRouter
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
@@ -37,14 +37,18 @@ async def dashboard_feed(
 ) -> DashboardFeedResponse:
     """Single endpoint powering the /app/home dashboard."""
     effective_status = None if current_user.is_admin else "published"
+    now = dt.datetime.now()
+    today = now.date()
 
-    # Events + count
+    # Events + count (only current/future)
     events_list, event_count, groups_list = await _load_events_and_groups(
-        session, effective_status
+        session, effective_status, today, now
     )
 
-    # User's confirmed bookings with slot info (single query, no N+1)
-    bookings, booking_count = await _load_bookings(session, current_user.id)
+    # User's upcoming confirmed bookings with slot info (single query, no N+1)
+    bookings, booking_count = await _load_bookings(
+        session, current_user.id, today, now.time()
+    )
 
     # Pending user count (admin only)
     pending_user_count = None
@@ -61,12 +65,16 @@ async def dashboard_feed(
     )
 
 
-async def _load_events_and_groups(session, effective_status):  # noqa: ANN001, ANN202
+async def _load_events_and_groups(  # noqa: ANN001, ANN202
+    session, effective_status, today: dt.date, now: dt.datetime,
+):
     events_list = await crud_event.get_multi_filtered(
-        session, limit=100, status=effective_status
+        session, limit=100, status=effective_status, date_from=today,
+        has_future_slots=now,
     )
     event_count = await crud_event.get_count_filtered(
-        session, status=effective_status
+        session, status=effective_status, date_from=today,
+        has_future_slots=now,
     )
     groups_list = await crud_event_group.get_multi_filtered(
         session, limit=100, status=effective_status
@@ -75,9 +83,10 @@ async def _load_events_and_groups(session, effective_status):  # noqa: ANN001, A
 
 
 async def _load_bookings(
-    session, user_id,  # noqa: ANN001
+    session, user_id, today: dt.date, now_time: dt.time,  # noqa: ANN001
 ) -> tuple[list[DashboardBookingItem], int]:
-    """Fetch confirmed bookings joined with slot data in a single query."""
+    """Fetch upcoming confirmed bookings joined with slot data in a single query."""
+    future_cond = _future_slot_condition(today, now_time)
     query = (
         select(
             col(Booking.id),
@@ -91,6 +100,7 @@ async def _load_bookings(
         .where(
             col(Booking.user_id) == user_id,
             col(Booking.status) == "confirmed",
+            future_cond,
         )
         .order_by(col(DutySlot.date), col(DutySlot.start_time))
         .limit(200)
@@ -109,13 +119,15 @@ async def _load_bookings(
         for row in rows
     ]
 
-    # Count
+    # Count (also only upcoming)
     count_query = (
         select(func.count())
         .select_from(Booking)
+        .join(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
         .where(
             col(Booking.user_id) == user_id,
             col(Booking.status) == "confirmed",
+            future_cond,
         )
     )
     count_result = await session.execute(count_query)
@@ -138,6 +150,27 @@ async def _count_pending_users(session) -> int:  # noqa: ANN001
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _future_slot_condition(today: dt.date, now_time: dt.time | None = None):  # noqa: ANN202
+    """Slot is in the future: date > today, or date == today and start_time >= now."""
+    if now_time is not None:
+        return or_(
+            col(DutySlot.date) > today,
+            and_(
+                col(DutySlot.date) == today,
+                or_(
+                    col(DutySlot.start_time).is_(None),
+                    col(DutySlot.start_time) >= now_time,
+                ),
+            ),
+        )
+    return col(DutySlot.date) >= today
+
+
+# ---------------------------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------------------------
 
@@ -148,12 +181,14 @@ async def dashboard_sidebar(
     current_user: CurrentUser,
 ) -> SidebarResponse:
     """Lightweight data for sidebar quick-links."""
-    today = dt.date.today()
+    now = dt.datetime.now()
+    today = now.date()
+    now_time = now.time()
     effective_status = None if current_user.is_admin else "published"
 
     groups = await _sidebar_event_groups(session, today, effective_status)
-    events = await _sidebar_events(session, today, effective_status)
-    bookings = await _sidebar_bookings(session, current_user.id, today)
+    events = await _sidebar_events(session, today, now_time, effective_status)
+    bookings = await _sidebar_bookings(session, current_user.id, today, now_time)
 
     return SidebarResponse(
         event_groups=groups,
@@ -179,9 +214,11 @@ async def _sidebar_event_groups(  # noqa: ANN001
 
 
 async def _sidebar_events(  # noqa: ANN001
-    session, today: dt.date, status: str | None
+    session, today: dt.date, now_time: dt.time, status: str | None
 ) -> list[SidebarEvent]:
     """Published events with open-slot count and next slot date, limit 10."""
+    future_cond = _future_slot_condition(today, now_time)
+
     # Subquery: confirmed booking count per slot
     booking_count_sq = (
         select(func.count())
@@ -194,13 +231,13 @@ async def _sidebar_events(  # noqa: ANN001
         .scalar_subquery()
     )
 
-    # Subquery: count of open slots (date >= today AND has capacity)
+    # Subquery: count of open slots (future AND has capacity)
     open_slots_sq = (
         select(func.count())
         .select_from(DutySlot)
         .where(
             col(DutySlot.event_id) == col(Event.id),
-            col(DutySlot.date) >= today,
+            future_cond,
             col(DutySlot.max_bookings) > booking_count_sq,
         )
         .correlate(Event)
@@ -212,7 +249,7 @@ async def _sidebar_events(  # noqa: ANN001
         select(func.min(col(DutySlot.date)))
         .where(
             col(DutySlot.event_id) == col(Event.id),
-            col(DutySlot.date) >= today,
+            future_cond,
             col(DutySlot.max_bookings) > booking_count_sq,
         )
         .correlate(Event)
@@ -231,6 +268,15 @@ async def _sidebar_events(  # noqa: ANN001
         .scalar_subquery()
     )
 
+    # Only events that have at least one future open slot
+    has_open_slot_sq = (
+        select(col(DutySlot.event_id))
+        .where(
+            future_cond,
+            col(DutySlot.max_bookings) > booking_count_sq,
+        )
+    )
+
     query = (
         select(
             col(Event.id),
@@ -239,7 +285,10 @@ async def _sidebar_events(  # noqa: ANN001
             next_slot_date_sq.label("next_slot_date"),
             next_slot_time_sq.label("next_slot_start_time"),
         )
-        .where(col(Event.end_date) >= today)
+        .where(
+            col(Event.end_date) >= today,
+            col(Event.id).in_(has_open_slot_sq),
+        )
         .order_by(col(Event.start_date))
         .limit(10)
     )
@@ -260,9 +309,10 @@ async def _sidebar_events(  # noqa: ANN001
 
 
 async def _sidebar_bookings(  # noqa: ANN001
-    session, user_id, today: dt.date
+    session, user_id, today: dt.date, now_time: dt.time
 ) -> list[SidebarBooking]:
     """User's upcoming confirmed bookings, limit 5."""
+    future_cond = _future_slot_condition(today, now_time)
     query = (
         select(
             col(Booking.id),
@@ -276,7 +326,7 @@ async def _sidebar_bookings(  # noqa: ANN001
         .where(
             col(Booking.user_id) == user_id,
             col(Booking.status) == "confirmed",
-            col(DutySlot.date) >= today,
+            future_cond,
         )
         .order_by(col(DutySlot.date), col(DutySlot.start_time))
         .limit(5)

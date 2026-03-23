@@ -50,7 +50,9 @@
       "upcoming": "Bevorstehend",
       "thisMonth": "Dieser Monat",
       "all": "Alle",
-      "showCancelled": "Storniert"
+      "showCancelled": "Storniert",
+      "allDates": "Alle Termine",
+      "clearDates": "Datum zurücksetzen"
     },
     "groupBy": {
       "none": "Keine Gruppierung",
@@ -183,6 +185,13 @@
     },
     "myBookingsFilter": "Nur meine Buchungen",
     "hideFullSlots": "Ausgebuchte ausblenden",
+    "filters": {
+      "title": "Filter",
+      "reset": "Zurücksetzen",
+      "fromToday": "Ab heute",
+      "fromDate": "Ab {date}",
+      "resetToToday": "Auf heute zurücksetzen"
+    },
     "empty": "Keine Veranstaltungen gefunden.",
     "fields": {
       "description": "Beschreibung",

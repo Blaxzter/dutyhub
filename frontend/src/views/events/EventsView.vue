@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import {
-  Bookmark,
   Calendar,
   CalendarClock,
   CalendarSearch,
-  EyeOff,
   Grid2x2,
   List,
   Plus,
   Search,
 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { useAuthStore } from '@/stores/auth'
+import { useEventFiltersStore } from '@/stores/eventFilters'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import DeleteConfirmationDialog from '@/components/events/DeleteConfirmationDialog.vue'
+import EventFilterMenu from '@/components/events/EventFilterMenu.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
 import {
@@ -35,6 +35,8 @@ import EventListView from '@/components/events/EventListView.vue'
 import { EventQuickView } from '@/components/events/quick-view'
 import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
 
+import type { DateRange } from '@/components/events/duty-calendar'
+
 import type {
   EventFeedResponse,
   EventGroupListResponse,
@@ -44,18 +46,72 @@ import type {
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const filters = useEventFiltersStore()
 const { get, delete: del } = useAuthenticatedClient()
+
+// ── URL ↔ filter sync ──
+
+const VIEW_MODES = ['list', 'box', 'calendar'] as const
+const FOCUS_MODES = ['today', 'first-available'] as const
+const CAL_VIEW_MODES = ['month', 'week', 'day'] as const
+type CalViewMode = typeof CAL_VIEW_MODES[number]
+
+// Calendar internal state (synced to URL)
+const calViewMode = ref<CalViewMode | undefined>(undefined)
+const calDate = ref<string | undefined>(undefined)
+
+// On mount: seed store from URL query params (URL wins over localStorage)
+function readUrlIntoStore() {
+  const q = route.query
+  if (q.view && VIEW_MODES.includes(q.view as typeof VIEW_MODES[number]))
+    filters.viewMode = q.view as typeof VIEW_MODES[number]
+  if (q.focus && FOCUS_MODES.includes(q.focus as typeof FOCUS_MODES[number]))
+    filters.focusMode = q.focus as typeof FOCUS_MODES[number]
+  if (q.search !== undefined) filters.searchQuery = String(q.search)
+  if (q.my_bookings !== undefined) filters.myBookingsOnly = q.my_bookings === 'true'
+  if (q.hide_full !== undefined) filters.hideFullSlots = q.hide_full === 'true'
+  if (q.date_from && /^\d{4}-\d{2}-\d{2}$/.test(String(q.date_from)))
+    filters.dateFrom = String(q.date_from)
+  if (q.date_to && /^\d{4}-\d{2}-\d{2}$/.test(String(q.date_to)))
+    filters.dateTo = String(q.date_to)
+  if (q.cal_view && CAL_VIEW_MODES.includes(q.cal_view as CalViewMode))
+    calViewMode.value = q.cal_view as CalViewMode
+  if (q.cal_date && /^\d{4}-\d{2}-\d{2}$/.test(String(q.cal_date)))
+    calDate.value = String(q.cal_date)
+}
+readUrlIntoStore()
+
+// Mirror store → URL (replace, not push, to avoid polluting history)
+const urlQuery = computed(() => {
+  const q: Record<string, string> = {}
+  if (filters.viewMode !== 'list') q.view = filters.viewMode
+  if (filters.focusMode !== 'today') q.focus = filters.focusMode
+  if (filters.searchQuery.trim()) q.search = filters.searchQuery.trim()
+  if (filters.myBookingsOnly) q.my_bookings = 'true'
+  if (filters.hideFullSlots) q.hide_full = 'true'
+  if (filters.dateFrom) q.date_from = filters.dateFrom
+  if (filters.dateTo) q.date_to = filters.dateTo
+  // Calendar-specific params (only when in calendar view)
+  if (filters.viewMode === 'calendar') {
+    if (calViewMode.value && calViewMode.value !== 'month') q.cal_view = calViewMode.value
+    if (calDate.value) q.cal_date = calDate.value
+  }
+  return q
+})
+
+watch(urlQuery, (q) => {
+  router.replace({ query: q })
+})
+
+// ── Data ──
 
 const feedItems = ref<FeedEventItem[]>([])
 const eventGroups = ref<EventGroupRead[]>([])
 const loading = ref(false)
-const searchQuery = ref('')
-const viewMode = ref<'list' | 'box' | 'calendar'>('list')
-const focusMode = ref<'today' | 'first-available'>('today')
-const myBookingsOnly = ref(false)
-const hideFullSlots = ref(false)
+const calendarRange = ref<DateRange | null>(null)
 
 // Slot detail dialog state
 const showSlotDialog = ref(false)
@@ -69,8 +125,8 @@ const deleteTarget = ref<FeedEventItem | null>(null)
 
 // Map frontend view names to backend feed view param
 function feedView(): 'list' | 'cards' | 'calendar' {
-  if (viewMode.value === 'box') return 'cards'
-  return viewMode.value
+  if (filters.viewMode === 'box') return 'cards'
+  return filters.viewMode
 }
 
 const loadEvents = async () => {
@@ -78,19 +134,32 @@ const loadEvents = async () => {
   try {
     const query: Record<string, unknown> = {
       view: feedView(),
-      focus_mode: focusMode.value === 'first-available' ? 'first_available' : 'today',
+      focus_mode: filters.focusMode === 'first-available' ? 'first_available' : 'today',
       limit: 100,
     }
-    if (myBookingsOnly.value) query.my_bookings = true
-    if (searchQuery.value.trim()) query.search = searchQuery.value.trim()
+    if (filters.myBookingsOnly) query.my_bookings = true
+    if (filters.dateFrom) query.date_from = filters.dateFrom
+    if (filters.dateTo) query.date_to = filters.dateTo
+    if (filters.searchQuery.trim()) query.search = filters.searchQuery.trim()
+
+    // Calendar view: scope to visible date range (overrides dateFrom)
+    if (filters.viewMode === 'calendar' && calendarRange.value) {
+      query.date_from = calendarRange.value.from
+      query.date_to = calendarRange.value.to
+    }
 
     const requests: Promise<unknown>[] = [
       get<{ data: EventFeedResponse }>({ url: '/events/feed', query }),
     ]
     // Event groups are only needed for calendar view
-    if (viewMode.value === 'calendar') {
+    if (filters.viewMode === 'calendar') {
+      const groupQuery: Record<string, unknown> = { limit: 100 }
+      if (calendarRange.value) {
+        groupQuery.date_from = calendarRange.value.from
+        groupQuery.date_to = calendarRange.value.to
+      }
       requests.push(
-        get<{ data: EventGroupListResponse }>({ url: '/event-groups/', query: { limit: 100 } }),
+        get<{ data: EventGroupListResponse }>({ url: '/event-groups/', query: groupQuery }),
       )
     }
 
@@ -98,7 +167,7 @@ const loadEvents = async () => {
     const feedRes = results[0] as { data: EventFeedResponse }
     feedItems.value = feedRes.data.items
 
-    if (viewMode.value === 'calendar' && results[1]) {
+    if (filters.viewMode === 'calendar' && results[1]) {
       const groupsRes = results[1] as { data: EventGroupListResponse }
       eventGroups.value = groupsRes.data.items
     }
@@ -111,13 +180,16 @@ const loadEvents = async () => {
 
 // Debounced search
 let searchTimer: ReturnType<typeof setTimeout> | null = null
-watch(searchQuery, () => {
+watch(() => filters.searchQuery, () => {
   if (searchTimer) clearTimeout(searchTimer)
   searchTimer = setTimeout(() => loadEvents(), 300)
 })
 
 // Re-fetch when these change
-watch([myBookingsOnly, viewMode, focusMode], () => loadEvents())
+watch(
+  () => [filters.myBookingsOnly, filters.viewMode, filters.focusMode, filters.dateFrom, filters.dateTo],
+  () => loadEvents(),
+)
 
 const handleDelete = (event: FeedEventItem) => {
   deleteTarget.value = event
@@ -153,6 +225,12 @@ const navigateToGroup = (group: { id: string }) => {
   router.push({ name: 'event-group-detail', params: { groupId: group.id } })
 }
 
+const handleCalendarDateRange = (range: DateRange) => {
+  const changed = calendarRange.value?.from !== range.from || calendarRange.value?.to !== range.to
+  calendarRange.value = range
+  if (changed && filters.viewMode === 'calendar') loadEvents()
+}
+
 onMounted(loadEvents)
 </script>
 
@@ -166,15 +244,15 @@ onMounted(loadEvents)
       </div>
       <div class="flex flex-wrap items-center gap-2">
         <!-- Focus Mode Toggle -->
-        <TooltipProvider v-if="viewMode === 'list'">
+        <TooltipProvider v-if="filters.viewMode === 'list'">
           <div class="flex overflow-hidden rounded-md border">
             <Tooltip>
               <TooltipTrigger as-child>
                 <Button
-                  :variant="focusMode === 'today' ? 'default' : 'ghost'"
+                  :variant="filters.focusMode === 'today' ? 'default' : 'ghost'"
                   size="sm"
                   class="rounded-none border-0"
-                  @click="focusMode = 'today'"
+                  @click="filters.focusMode = 'today'"
                 >
                   <CalendarClock class="h-4 w-4" />
                 </Button>
@@ -186,10 +264,10 @@ onMounted(loadEvents)
             <Tooltip>
               <TooltipTrigger as-child>
                 <Button
-                  :variant="focusMode === 'first-available' ? 'default' : 'ghost'"
+                  :variant="filters.focusMode === 'first-available' ? 'default' : 'ghost'"
                   size="sm"
                   class="rounded-none border-0 border-l"
-                  @click="focusMode = 'first-available'"
+                  @click="filters.focusMode = 'first-available'"
                 >
                   <CalendarSearch class="h-4 w-4" />
                 </Button>
@@ -204,28 +282,28 @@ onMounted(loadEvents)
         <!-- View Toggle -->
         <div class="flex overflow-hidden rounded-md border">
           <Button
-            :variant="viewMode === 'list' ? 'default' : 'ghost'"
+            :variant="filters.viewMode === 'list' ? 'default' : 'ghost'"
             size="sm"
             class="rounded-none border-0"
-            @click="viewMode = 'list'"
+            @click="filters.viewMode = 'list'"
           >
             <List class="mr-1.5 h-4 w-4" />
             <span class="hidden sm:inline">{{ t('duties.events.views.list') }}</span>
           </Button>
           <Button
-            :variant="viewMode === 'box' ? 'default' : 'ghost'"
+            :variant="filters.viewMode === 'box' ? 'default' : 'ghost'"
             size="sm"
             class="rounded-none border-0 border-l"
-            @click="viewMode = 'box'"
+            @click="filters.viewMode = 'box'"
           >
             <Grid2x2 class="mr-1.5 h-4 w-4" />
             <span class="hidden sm:inline">{{ t('duties.events.views.box') }}</span>
           </Button>
           <Button
-            :variant="viewMode === 'calendar' ? 'default' : 'ghost'"
+            :variant="filters.viewMode === 'calendar' ? 'default' : 'ghost'"
             size="sm"
             class="rounded-none border-0 border-l"
-            @click="viewMode = 'calendar'"
+            @click="filters.viewMode = 'calendar'"
           >
             <Calendar class="mr-1.5 h-4 w-4" />
             <span class="hidden sm:inline">{{ t('duties.events.views.calendar') }}</span>
@@ -248,65 +326,32 @@ onMounted(loadEvents)
       </div>
     </div>
 
-    <!-- Search & Filter -->
-    <div class="flex flex-wrap items-center gap-4">
+    <!-- Search & Filter (hidden for calendar — it has its own navigation) -->
+    <div v-if="filters.viewMode !== 'calendar'" class="flex flex-wrap items-center gap-4">
       <div class="relative flex-1">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input v-model="searchQuery" :placeholder="t('common.actions.search')" class="pl-10" />
+        <Input v-model="filters.searchQuery" :placeholder="t('common.actions.search')" class="pl-10" />
       </div>
-      <TooltipProvider>
-        <div class="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <Button
-                :variant="myBookingsOnly ? 'default' : 'outline'"
-                size="sm"
-                @click="myBookingsOnly = !myBookingsOnly"
-              >
-                <Bookmark class="h-4 w-4" />
-                <span class="hidden sm:inline">{{ t('duties.events.myBookingsFilter') }}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent class="sm:hidden">
-              {{ t('duties.events.myBookingsFilter') }}
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip v-if="viewMode === 'list'">
-            <TooltipTrigger as-child>
-              <Button
-                :variant="hideFullSlots ? 'default' : 'outline'"
-                size="sm"
-                @click="hideFullSlots = !hideFullSlots"
-              >
-                <EyeOff class="h-4 w-4" />
-                <span class="hidden sm:inline">{{ t('duties.events.hideFullSlots') }}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent class="sm:hidden">
-              {{ t('duties.events.hideFullSlots') }}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
+      <EventFilterMenu />
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="py-12 text-center text-muted-foreground">
+    <!-- Loading (only shown on initial load, not calendar refetches) -->
+    <div v-if="loading && feedItems.length === 0" class="py-12 text-center text-muted-foreground">
       {{ t('common.states.loading') }}
     </div>
 
     <template v-else>
       <EventQuickView
-        v-if="viewMode === 'list'"
+        v-if="filters.viewMode === 'list'"
         :events="feedItems"
-        :focus-mode="focusMode"
-        :hide-full-slots="hideFullSlots"
+        :focus-mode="filters.focusMode"
+        :hide-full-slots="filters.hideFullSlots"
         @navigate="navigateToEvent"
         @delete="handleDelete"
         @click-slot="handleClickSlot"
       />
       <EventListView
-        v-else-if="viewMode === 'box'"
+        v-else-if="filters.viewMode === 'box'"
         :events="feedItems"
         @navigate="navigateToEvent"
         @delete="handleDelete"
@@ -315,8 +360,13 @@ onMounted(loadEvents)
         v-else
         :events="feedItems"
         :event-groups="eventGroups"
+        :calendar-view-mode="calViewMode"
+        :calendar-date="calDate"
         @navigate="navigateToEvent"
         @navigate-group="navigateToGroup"
+        @update:date-range="handleCalendarDateRange"
+        @update:calendar-view-mode="calViewMode = $event"
+        @update:calendar-date="calDate = $event"
       />
     </template>
 
