@@ -9,8 +9,16 @@ import Button from '@/components/ui/button/Button.vue'
 import DutyCalendarDay from './DutyCalendarDay.vue'
 import DutyCalendarMonth from './DutyCalendarMonth.vue'
 import DutyCalendarWeek from './DutyCalendarWeek.vue'
-import type { BookingCalendarItem, CalendarDay as CalendarDayType, CalendarEvent, CalendarEventGroup, CalendarWeek, DateRange, ViewMode } from './types'
-import { computeEventBars, computeGroupBars, dateToStr, EMPTY_DAY } from './types'
+import type {
+  BookingCalendarItem,
+  CalendarDay as CalendarDayType,
+  CalendarEvent,
+  CalendarEventGroup,
+  CalendarWeek,
+  DateRange,
+  ViewMode,
+} from './types'
+import { EMPTY_DAY, computeEventBars, computeGroupBars, dateToStr } from './types'
 
 const props = withDefaults(
   defineProps<{
@@ -73,9 +81,7 @@ function buildDay(date: Date): CalendarDayType {
     groups: props.showGroups
       ? props.eventGroups.filter((g) => g.start_date <= dateStr && g.end_date >= dateStr)
       : [],
-    bookings: props.showBookings
-      ? props.bookings.filter((b) => b.date === dateStr)
-      : [],
+    bookings: props.showBookings ? props.bookings.filter((b) => b.date === dateStr) : [],
   }
 }
 
@@ -107,7 +113,13 @@ const calendarWeeks = computed<CalendarWeek[]>(() => {
     const days = allDays.slice(i, i + 7)
     const groupBars = computeGroupBars(days)
     const eventBars = computeEventBars(days)
-    weeks.push({ days, groupBars, eventBars, barLaneCount: groupBars.length, eventBarLaneCount: eventBars.length })
+    weeks.push({
+      days,
+      groupBars,
+      eventBars,
+      barLaneCount: groupBars.length,
+      eventBarLaneCount: eventBars.length,
+    })
   }
   return weeks
 })
@@ -124,7 +136,13 @@ const currentWeek = computed<CalendarWeek>(() => {
   }
   const groupBars = computeGroupBars(days)
   const eventBars = computeEventBars(days)
-  return { days, groupBars, eventBars, barLaneCount: groupBars.length, eventBarLaneCount: eventBars.length }
+  return {
+    days,
+    groupBars,
+    eventBars,
+    barLaneCount: groupBars.length,
+    eventBarLaneCount: eventBars.length,
+  }
 })
 
 // ── Day view data ──
@@ -143,9 +161,7 @@ const headerTitle = computed(() => {
     const end = new Date(start)
     end.setDate(start.getDate() + 6)
     const opts: Intl.DateTimeFormatOptions =
-      start.getMonth() === end.getMonth()
-        ? { day: 'numeric' }
-        : { month: 'short', day: 'numeric' }
+      start.getMonth() === end.getMonth() ? { day: 'numeric' } : { month: 'short', day: 'numeric' }
     const startStr = start.toLocaleDateString(locale.value, { month: 'short', day: 'numeric' })
     const endStr = end.toLocaleDateString(locale.value, { ...opts, year: 'numeric' })
     return `${startStr} – ${endStr}`

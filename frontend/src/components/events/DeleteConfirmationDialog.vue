@@ -43,7 +43,10 @@ const { t } = useI18n()
       </DialogHeader>
 
       <div v-if="bookingCount === undefined || bookingCount > 0" class="space-y-3">
-        <p v-if="bookingCount !== undefined && bookingCount > 0" class="text-sm font-medium text-destructive">
+        <p
+          v-if="bookingCount !== undefined && bookingCount > 0"
+          class="text-sm font-medium text-destructive"
+        >
           {{ t('duties.deleteDialog.activeBookings', { count: bookingCount }) }}
         </p>
         <p v-else-if="bookingCount === undefined" class="text-sm text-muted-foreground">

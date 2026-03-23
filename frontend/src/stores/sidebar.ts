@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+
 import type { SidebarResponse } from '@/client/types.gen'
 
 export const useSidebarStore = defineStore('sidebar', () => {

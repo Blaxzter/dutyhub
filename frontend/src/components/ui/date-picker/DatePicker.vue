@@ -9,6 +9,7 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+
 import { cn } from '@/lib/utils'
 
 const model = defineModel<DateValue>()
@@ -27,9 +28,7 @@ const open = ref(false)
 const df = computed(() => new DateFormatter(locale.value, { dateStyle: 'medium' }))
 
 const displayText = computed(() =>
-  model.value
-    ? df.value.format(model.value.toDate(getLocalTimeZone()))
-    : undefined,
+  model.value ? df.value.format(model.value.toDate(getLocalTimeZone())) : undefined,
 )
 
 function onSelect(value: DateValue | undefined) {
@@ -51,7 +50,9 @@ function onSelect(value: DateValue | undefined) {
         "
       >
         <CalendarIcon class="mr-2 h-4 w-4 shrink-0" />
-        <span class="truncate">{{ displayText ?? placeholder ?? t('duties.events.pickDate') }}</span>
+        <span class="truncate">{{
+          displayText ?? placeholder ?? t('duties.events.pickDate')
+        }}</span>
       </Button>
     </PopoverTrigger>
     <PopoverContent class="w-auto p-0">

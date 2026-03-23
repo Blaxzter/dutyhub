@@ -65,7 +65,10 @@ class NotificationSubscription(Base, table=True):
 
     user_id: uuid.UUID = Field(
         sa_column=sa.Column(
-            sa.Uuid, sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+            sa.Uuid,
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
         )
     )
     notification_type_id: uuid.UUID = Field(
@@ -117,7 +120,10 @@ class Notification(Base, table=True):
 
     recipient_id: uuid.UUID = Field(
         sa_column=sa.Column(
-            sa.Uuid, sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+            sa.Uuid,
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
         )
     )
     notification_type_code: str = Field(
@@ -157,7 +163,10 @@ class PushSubscription(Base, table=True):
 
     user_id: uuid.UUID = Field(
         sa_column=sa.Column(
-            sa.Uuid, sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+            sa.Uuid,
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+            index=True,
         )
     )
     endpoint: str = Field(

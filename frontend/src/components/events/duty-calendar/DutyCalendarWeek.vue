@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import EventBars from './EventBars.vue'
 import GroupBars from './GroupBars.vue'
-import type { BookingCalendarItem, CalendarDay, CalendarEvent, CalendarEventGroup, CalendarWeek } from './types'
+import type {
+  BookingCalendarItem,
+  CalendarDay,
+  CalendarEvent,
+  CalendarEventGroup,
+  CalendarWeek,
+} from './types'
 import { formatTimeRange, isMultiDayEvent, isToday } from './types'
 
 defineProps<{
@@ -25,11 +31,7 @@ const emit = defineEmits<{
   <div class="overflow-hidden rounded-lg border">
     <!-- Weekday headers with dates -->
     <div class="grid grid-cols-7 border-b bg-muted/50">
-      <div
-        v-for="(day, idx) in week.days"
-        :key="idx"
-        class="py-2 text-center"
-      >
+      <div v-for="(day, idx) in week.days" :key="idx" class="py-2 text-center">
         <div class="text-xs font-medium text-muted-foreground">{{ weekdayNames[idx] }}</div>
         <button
           v-if="day.date"
@@ -83,10 +85,17 @@ const emit = defineEmits<{
 
             <!-- All items (no truncation in week view; multi-day events shown as bars) -->
             <div class="space-y-1">
-              <template v-for="event in day.events.filter(e => !isMultiDayEvent(e))" :key="'we-' + event.id">
+              <template
+                v-for="event in day.events.filter((e) => !isMultiDayEvent(e))"
+                :key="'we-' + event.id"
+              >
                 <button
                   class="w-full truncate rounded px-1.5 py-1 text-left text-xs font-medium transition-opacity hover:opacity-75"
-                  :class="event.status === 'published' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'"
+                  :class="
+                    event.status === 'published'
+                      ? 'bg-primary/15 text-primary'
+                      : 'bg-muted text-muted-foreground'
+                  "
                   @click="emit('navigateEvent', event)"
                 >
                   {{ event.name }}

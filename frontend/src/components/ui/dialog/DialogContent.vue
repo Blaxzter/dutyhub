@@ -1,26 +1,25 @@
 <script setup lang="ts">
-import type { DialogContentEmits, DialogContentProps } from "reka-ui"
-import type { HTMLAttributes } from "vue"
-import { reactiveOmit } from "@vueuse/core"
-import { X } from "lucide-vue-next"
-import {
-  DialogClose,
-  DialogContent,
+import type { HTMLAttributes } from 'vue'
 
-  DialogPortal,
-  useForwardPropsEmits,
-} from "reka-ui"
-import { cn } from "@/lib/utils"
-import DialogOverlay from "./DialogOverlay.vue"
+import { reactiveOmit } from '@vueuse/core'
+import { X } from 'lucide-vue-next'
+import type { DialogContentEmits, DialogContentProps } from 'reka-ui'
+import { DialogClose, DialogContent, DialogPortal, useForwardPropsEmits } from 'reka-ui'
 
-const props = defineProps<DialogContentProps & {
-  class?: HTMLAttributes["class"]
-  /** Render at a higher z-index so this dialog stacks above other dialogs */
-  priority?: boolean
-}>()
+import { cn } from '@/lib/utils'
+
+import DialogOverlay from './DialogOverlay.vue'
+
+const props = defineProps<
+  DialogContentProps & {
+    class?: HTMLAttributes['class']
+    /** Render at a higher z-index so this dialog stacks above other dialogs */
+    priority?: boolean
+  }
+>()
 const emits = defineEmits<DialogContentEmits>()
 
-const delegatedProps = reactiveOmit(props, "class", "priority")
+const delegatedProps = reactiveOmit(props, 'class', 'priority')
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
@@ -36,7 +35,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
           'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg',
           priority && 'z-60',
           props.class,
-        )"
+        )
+      "
     >
       <slot />
 

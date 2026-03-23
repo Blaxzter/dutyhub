@@ -1,0 +1,20 @@
+{
+  "printButton": "Print",
+  "printEvent": "Print event",
+  "overview": "Print overview",
+  "allEvents": "Print all events",
+  "scanToSignUp": "Scan to sign up online",
+  "nameColumn": "Name",
+  "contactColumn": "Contact",
+  "optionsDialog": {
+    "selectAll": "Select all"
+  },
+  "toolbar": {
+    "title": "Display Options",
+    "showTitle": "Show title column",
+    "showLocation": "Show location column",
+    "repeatHeader": "Repeat header on each page",
+    "includeNames": "Show booked names",
+    "filterDates": "Filter dates"
+  }
+}

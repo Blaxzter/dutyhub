@@ -5,14 +5,11 @@ import { Bell, Check, CheckCheck, Loader2, Settings, Trash2 } from 'lucide-vue-n
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import { Button } from '@/components/ui/button'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { Separator } from '@/components/ui/separator'
 import { useNotificationStore } from '@/stores/notification'
+
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Separator } from '@/components/ui/separator'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -36,11 +33,14 @@ watch(sentinel, (el) => {
   observer?.disconnect()
   observer = null
   if (el) {
-    observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        notificationStore.loadMoreNotifications()
-      }
-    }, { threshold: 0.1 })
+    observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          notificationStore.loadMoreNotifications()
+        }
+      },
+      { threshold: 0.1 },
+    )
     observer.observe(el)
   }
 })
@@ -74,7 +74,10 @@ function handleNotificationClick(notification: (typeof notifications.value)[0]) 
     if (data.event_id) {
       router.push({ name: 'event-detail', params: { eventId: data.event_id as string } })
     } else if (data.event_group_id) {
-      router.push({ name: 'event-group-detail', params: { groupId: data.event_group_id as string } })
+      router.push({
+        name: 'event-group-detail',
+        params: { groupId: data.event_group_id as string },
+      })
     } else if (data.booking_id) {
       router.push({ name: 'my-bookings' })
     }
@@ -198,10 +201,7 @@ onUnmounted(() => {
 
           <!-- Unread dot -->
           <div class="flex flex-shrink-0 items-start pt-1">
-            <span
-              v-if="!notification.is_read"
-              class="bg-primary h-2 w-2 rounded-full"
-            />
+            <span v-if="!notification.is_read" class="bg-primary h-2 w-2 rounded-full" />
             <span v-else class="h-2 w-2" />
           </div>
 
@@ -235,7 +235,10 @@ onUnmounted(() => {
         </div>
 
         <!-- End of list -->
-        <div v-if="!hasMore && notifications.length > 0" class="text-muted-foreground py-3 text-center text-xs">
+        <div
+          v-if="!hasMore && notifications.length > 0"
+          class="text-muted-foreground py-3 text-center text-xs"
+        >
           {{ t('notifications.allLoaded') }}
         </div>
       </div>

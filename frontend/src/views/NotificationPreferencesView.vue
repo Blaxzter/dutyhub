@@ -1,24 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-import { Bell, Mail, MessageCircle, Smartphone } from 'lucide-vue-next'
+import { Bell, ExternalLink, Mail, MessageCircle, Smartphone } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
+import type { NotificationSubscription, NotificationType } from '@/stores/notification'
+import { useNotificationStore } from '@/stores/notification'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
-import type { NotificationSubscription, NotificationType } from '@/stores/notification'
-import { useNotificationStore } from '@/stores/notification'
 
 const { t } = useI18n()
 const notificationStore = useNotificationStore()
@@ -26,12 +21,17 @@ const notificationStore = useNotificationStore()
 const loading = ref(true)
 const saving = ref(false)
 const types = ref<NotificationType[]>([])
-const preferences = ref<Map<string, { email: boolean; push: boolean; telegram: boolean }>>(new Map())
+const preferences = ref<Map<string, { email: boolean; push: boolean; telegram: boolean }>>(
+  new Map(),
+)
 
 // Global channel toggles (backed by user-level settings on the server)
 const globalChannelSettings = computed(() => notificationStore.globalChannelSettings)
 
-async function toggleGlobalChannel(field: 'notify_email' | 'notify_push' | 'notify_telegram', enabled: boolean) {
+async function toggleGlobalChannel(
+  field: 'notify_email' | 'notify_push' | 'notify_telegram',
+  enabled: boolean,
+) {
   try {
     await notificationStore.updateGlobalChannelSettings({ [field]: enabled })
   } catch {
@@ -148,6 +148,31 @@ const telegramBinding = computed(() => notificationStore.telegramBinding)
 const telegramCode = ref<string | null>(null)
 const telegramBotUsername = ref<string | null>(null)
 const bindingTelegram = ref(false)
+let telegramPollTimer: ReturnType<typeof setInterval> | null = null
+
+const telegramDeepLink = computed(() => {
+  if (!telegramCode.value || !telegramBotUsername.value) return null
+  return `https://t.me/${telegramBotUsername.value}?start=${telegramCode.value}`
+})
+
+function startTelegramPolling() {
+  stopTelegramPolling()
+  telegramPollTimer = setInterval(async () => {
+    await notificationStore.fetchTelegramBinding()
+    if (telegramBinding.value?.is_verified) {
+      stopTelegramPolling()
+      telegramCode.value = null
+      toast.success(t('notifications.telegram.connected'))
+    }
+  }, 3000)
+}
+
+function stopTelegramPolling() {
+  if (telegramPollTimer) {
+    clearInterval(telegramPollTimer)
+    telegramPollTimer = null
+  }
+}
 
 async function startTelegramBinding() {
   bindingTelegram.value = true
@@ -155,6 +180,7 @@ async function startTelegramBinding() {
     const result = await notificationStore.startTelegramBinding()
     telegramCode.value = result.verification_code
     telegramBotUsername.value = result.bot_username
+    startTelegramPolling()
   } catch {
     toast.error(t('notifications.telegram.bindFailed'))
   } finally {
@@ -166,13 +192,16 @@ async function unbindTelegram() {
   try {
     await notificationStore.unbindTelegram()
     telegramCode.value = null
+    stopTelegramPolling()
     toast.success(t('notifications.telegram.unbound'))
   } catch {
     toast.error(t('notifications.telegram.unbindFailed'))
   }
 }
 
-// ── Init ─────────────────────────────────────────────────────────
+// ── Lifecycle ────────────────────────────────────────────────────
+
+onUnmounted(() => stopTelegramPolling())
 
 onMounted(async () => {
   try {
@@ -289,16 +318,26 @@ onMounted(async () => {
             </Button>
           </div>
           <div v-else-if="telegramCode" class="space-y-3">
-            <p class="text-sm">
-              {{ t('notifications.telegram.sendCode') }}
+            <Button v-if="telegramDeepLink" as="a" :href="telegramDeepLink" target="_blank">
+              <ExternalLink class="mr-2 h-4 w-4" />
+              {{ t('notifications.telegram.openInTelegram') }}
+            </Button>
+            <p class="text-muted-foreground text-sm">
+              {{ t('notifications.telegram.waitingForVerification') }}
             </p>
-            <div class="bg-muted rounded-lg p-3 text-center">
-              <code class="text-lg font-bold">{{ telegramCode }}</code>
-            </div>
-            <p v-if="telegramBotUsername" class="text-muted-foreground text-sm">
-              {{ t('notifications.telegram.sendTo') }}
-              <strong>@{{ telegramBotUsername }}</strong>
-            </p>
+            <details class="text-muted-foreground text-xs">
+              <summary class="cursor-pointer">{{ t('notifications.telegram.manualCode') }}</summary>
+              <div class="mt-2 space-y-2">
+                <p>{{ t('notifications.telegram.sendCode') }}</p>
+                <div class="bg-muted rounded-lg p-3 text-center">
+                  <code class="text-sm font-bold">{{ telegramCode }}</code>
+                </div>
+                <p v-if="telegramBotUsername">
+                  {{ t('notifications.telegram.sendTo') }}
+                  <strong>@{{ telegramBotUsername }}</strong>
+                </p>
+              </div>
+            </details>
           </div>
           <div v-else>
             <Button variant="outline" :disabled="bindingTelegram" @click="startTelegramBinding">
@@ -322,8 +361,12 @@ onMounted(async () => {
         <CardContent class="space-y-4">
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
-              <Label class="text-sm font-medium">{{ t('notifications.globalToggle.emailLabel') }}</Label>
-              <p class="text-muted-foreground text-xs">{{ t('notifications.globalToggle.emailDescription') }}</p>
+              <Label class="text-sm font-medium">{{
+                t('notifications.globalToggle.emailLabel')
+              }}</Label>
+              <p class="text-muted-foreground text-xs">
+                {{ t('notifications.globalToggle.emailDescription') }}
+              </p>
             </div>
             <Switch
               :model-value="globalChannelSettings.notify_email"
@@ -333,8 +376,12 @@ onMounted(async () => {
           <Separator />
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
-              <Label class="text-sm font-medium">{{ t('notifications.globalToggle.pushLabel') }}</Label>
-              <p class="text-muted-foreground text-xs">{{ t('notifications.globalToggle.pushDescription') }}</p>
+              <Label class="text-sm font-medium">{{
+                t('notifications.globalToggle.pushLabel')
+              }}</Label>
+              <p class="text-muted-foreground text-xs">
+                {{ t('notifications.globalToggle.pushDescription') }}
+              </p>
             </div>
             <Switch
               :model-value="globalChannelSettings.notify_push"
@@ -344,8 +391,12 @@ onMounted(async () => {
           <Separator />
           <div class="flex items-center justify-between">
             <div class="space-y-0.5">
-              <Label class="text-sm font-medium">{{ t('notifications.globalToggle.telegramLabel') }}</Label>
-              <p class="text-muted-foreground text-xs">{{ t('notifications.globalToggle.telegramDescription') }}</p>
+              <Label class="text-sm font-medium">{{
+                t('notifications.globalToggle.telegramLabel')
+              }}</Label>
+              <p class="text-muted-foreground text-xs">
+                {{ t('notifications.globalToggle.telegramDescription') }}
+              </p>
             </div>
             <Switch
               :model-value="globalChannelSettings.notify_telegram"
@@ -381,7 +432,7 @@ onMounted(async () => {
           <Separator />
 
           <div
-            v-for="type in (categoryTypes as NotificationType[])"
+            v-for="type in categoryTypes as NotificationType[]"
             :key="type.id"
             class="flex items-center gap-4 py-3"
           >

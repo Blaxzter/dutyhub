@@ -8,11 +8,13 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import ScheduleConfigForm from '@/components/events/ScheduleConfigForm.vue'
-import SlotPreviewGrid from '@/components/events/SlotPreviewGrid.vue'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useFormatters } from '@/composables/useFormatters'
-import { type RemainderMode, type ScheduleConfig, useSlotPreview } from '@/composables/useSlotPreview'
+import {
+  type RemainderMode,
+  type ScheduleConfig,
+  useSlotPreview,
+} from '@/composables/useSlotPreview'
 
 import {
   Accordion,
@@ -34,6 +36,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import Textarea from '@/components/ui/textarea/Textarea.vue'
+
+import ScheduleConfigForm from '@/components/events/ScheduleConfigForm.vue'
+import SlotPreviewGrid from '@/components/events/SlotPreviewGrid.vue'
 
 import type { EventGroupListResponse, EventGroupRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
@@ -216,9 +221,8 @@ const scheduleConfig = computed<ScheduleConfig>(() => ({
   eventName: name.value || 'Event',
   startDate: startDate.value?.toString() ?? '',
   endDate: endDate.value?.toString() ?? '',
-  specificDates: dateMode.value === 'specific'
-    ? specificDates.value.map((d) => d.toString())
-    : undefined,
+  specificDates:
+    dateMode.value === 'specific' ? specificDates.value.map((d) => d.toString()) : undefined,
   defaultStartTime: defaultStartTime.value,
   defaultEndTime: defaultEndTime.value,
   slotDurationMinutes: slotDurationMinutes.value,
@@ -227,7 +231,15 @@ const scheduleConfig = computed<ScheduleConfig>(() => ({
   overrides: overrides.value,
 }))
 
-const { totalSlots, totalDays, slotsByDate, hasRemainder, excludedSlots, toggleSlotExclusion, isSlotExcluded } = useSlotPreview(scheduleConfig)
+const {
+  totalSlots,
+  totalDays,
+  slotsByDate,
+  hasRemainder,
+  excludedSlots,
+  toggleSlotExclusion,
+  isSlotExcluded,
+} = useSlotPreview(scheduleConfig)
 
 // --- Date sync ---
 watch(rangeStartDate, (val) => {
@@ -283,7 +295,13 @@ const availableDates = computed(() => {
 
 // --- Form validation ---
 const isValid = computed(() => {
-  return isDetailsValid.value && isEventGroupValid.value && isDatesValid.value && isScheduleValid.value && totalSlots.value > 0
+  return (
+    isDetailsValid.value &&
+    isEventGroupValid.value &&
+    isDatesValid.value &&
+    isScheduleValid.value &&
+    totalSlots.value > 0
+  )
 })
 
 // --- Submit ---
@@ -345,7 +363,6 @@ const handleSubmit = async () => {
     submitting.value = false
   }
 }
-
 </script>
 
 <template>
@@ -395,7 +412,9 @@ const handleSubmit = async () => {
               </div>
             </div>
             <div class="flex justify-end pt-2">
-              <Button :disabled="!isCurrentSectionValid" @click="goToNext">{{ t('common.actions.next') }}</Button>
+              <Button :disabled="!isCurrentSectionValid" @click="goToNext">{{
+                t('common.actions.next')
+              }}</Button>
             </div>
           </div>
         </AccordionContent>
@@ -474,7 +493,9 @@ const handleSubmit = async () => {
             </div>
           </div>
           <div class="mt-4 flex justify-end">
-            <Button :disabled="!isCurrentSectionValid" @click="goToNext">{{ t('common.actions.next') }}</Button>
+            <Button :disabled="!isCurrentSectionValid" @click="goToNext">{{
+              t('common.actions.next')
+            }}</Button>
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -496,10 +517,12 @@ const handleSubmit = async () => {
           <div class="space-y-4">
             <!-- Group date constraint hint -->
             <p v-if="hasGroupDateConstraint" class="text-sm text-muted-foreground">
-              {{ t('duties.events.createView.groupDateHint', {
-                start: formatDateLabel(groupMinDate!.toString()),
-                end: formatDateLabel(groupMaxDate!.toString()),
-              }) }}
+              {{
+                t('duties.events.createView.groupDateHint', {
+                  start: formatDateLabel(groupMinDate!.toString()),
+                  end: formatDateLabel(groupMaxDate!.toString()),
+                })
+              }}
             </p>
 
             <!-- Date mode selection -->
@@ -514,7 +537,9 @@ const handleSubmit = async () => {
               </div>
               <div class="flex items-center gap-2">
                 <RadioGroupItem value="specific" id="dm-specific" />
-                <Label for="dm-specific">{{ t('duties.events.createView.dateMode.specific') }}</Label>
+                <Label for="dm-specific">{{
+                  t('duties.events.createView.dateMode.specific')
+                }}</Label>
               </div>
             </RadioGroup>
 
@@ -565,7 +590,10 @@ const handleSubmit = async () => {
                   {{ t('duties.events.createView.addDate') }}
                 </Button>
               </div>
-              <div v-if="specificDates.length === 0" class="py-4 text-center text-sm text-muted-foreground">
+              <div
+                v-if="specificDates.length === 0"
+                class="py-4 text-center text-sm text-muted-foreground"
+              >
                 {{ t('duties.events.createView.noDatesSelected') }}
               </div>
               <div v-else class="flex flex-wrap gap-2">
@@ -587,7 +615,9 @@ const handleSubmit = async () => {
             </div>
 
             <div class="flex justify-end pt-2">
-              <Button :disabled="!isCurrentSectionValid" @click="goToNext">{{ t('common.actions.next') }}</Button>
+              <Button :disabled="!isCurrentSectionValid" @click="goToNext">{{
+                t('common.actions.next')
+              }}</Button>
             </div>
           </div>
         </AccordionContent>
@@ -621,7 +651,9 @@ const handleSubmit = async () => {
             />
 
             <div class="flex justify-end pt-2">
-              <Button :disabled="!isCurrentSectionValid" @click="goToNext">{{ t('common.actions.next') }}</Button>
+              <Button :disabled="!isCurrentSectionValid" @click="goToNext">{{
+                t('common.actions.next')
+              }}</Button>
             </div>
           </div>
         </AccordionContent>

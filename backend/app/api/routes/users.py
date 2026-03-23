@@ -56,6 +56,8 @@ async def get_current_user_profile(
         name=user.name,
         email=user.email,
         picture=user.picture,
+        phone_number=user.phone_number,
+        preferred_language=user.preferred_language,
         email_verified=user.email_verified,
         roles=user.roles,
         is_admin=user.is_admin,
@@ -87,6 +89,14 @@ async def update_user_profile(
     if user_update.picture is not None:
         current_user.picture = str(user_update.picture)
 
+    # Sync phone_number to local DB
+    if user_update.phone_number is not None:
+        current_user.phone_number = user_update.phone_number
+
+    # Sync preferred_language to local DB (no Auth0 call needed)
+    if user_update.preferred_language is not None:
+        current_user.preferred_language = user_update.preferred_language
+
     return UserProfile(
         sub=claims["sub"],
         name=user_update.name if user_update.name is not None else current_user.name,
@@ -96,6 +106,8 @@ async def update_user_profile(
             if user_update.picture is not None
             else current_user.picture
         ),
+        phone_number=current_user.phone_number,
+        preferred_language=current_user.preferred_language,
         email_verified=current_user.email_verified,
         bio=user_update.bio,
         nickname=user_update.nickname,
@@ -167,6 +179,7 @@ async def self_approve(
         name=user.name,
         email=user.email,
         picture=user.picture,
+        preferred_language=user.preferred_language,
         email_verified=user.email_verified,
         roles=user.roles,
         is_admin=user.is_admin,
@@ -262,7 +275,9 @@ async def export_user_data(
             "notes": b.notes,
             "cancellation_reason": b.cancellation_reason,
             "cancelled_slot_title": b.cancelled_slot_title,
-            "cancelled_slot_date": str(b.cancelled_slot_date) if b.cancelled_slot_date else None,
+            "cancelled_slot_date": str(b.cancelled_slot_date)
+            if b.cancelled_slot_date
+            else None,
             "cancelled_event_name": b.cancelled_event_name,
             "created_at": b.created_at.isoformat(),
         }
@@ -317,6 +332,7 @@ async def export_user_data(
             "name": current_user.name,
             "email": current_user.email,
             "picture": current_user.picture,
+            "preferred_language": current_user.preferred_language,
             "email_verified": current_user.email_verified,
             "roles": current_user.roles,
             "is_active": current_user.is_active,

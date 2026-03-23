@@ -4,9 +4,9 @@ import { computed } from 'vue'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
-import Button from '@/components/ui/button/Button.vue'
-
 import { useFormatters } from '@/composables/useFormatters'
+
+import Button from '@/components/ui/button/Button.vue'
 
 export interface DaySlotEntry {
   slotId: string

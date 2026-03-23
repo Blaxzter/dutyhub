@@ -5,6 +5,7 @@ import { useLocalStorage } from '@vueuse/core'
 import { BookCheck, CalendarDays, HelpCircle, SlidersHorizontal, Users } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+
 import { useAuthStore } from '@/stores/auth'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
@@ -16,10 +17,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
+import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
 import { DutyCalendar } from '@/components/events/duty-calendar'
 import type { BookingCalendarItem } from '@/components/events/duty-calendar'
-
-import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
 
 import type { DashboardEvent, DashboardEventGroup, DashboardFeedResponse } from '@/client'
 import { toastApiError } from '@/lib/api-errors'

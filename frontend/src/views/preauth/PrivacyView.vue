@@ -4,8 +4,9 @@ import { computed } from 'vue'
 import { ArrowLeftIcon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
-import { Button } from '@/components/ui/button'
 import { useAppConfig } from '@/composables/useAppConfig'
+
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
 const config = useAppConfig()

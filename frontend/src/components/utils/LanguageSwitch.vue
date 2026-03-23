@@ -4,6 +4,10 @@ import { computed } from 'vue'
 import { ChevronDownIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
+import { useAuthStore } from '@/stores/auth'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -25,6 +29,8 @@ withDefaults(defineProps<Props>(), {
 })
 
 const { locale } = useI18n()
+const authStore = useAuthStore()
+const { patch } = useAuthenticatedClient()
 
 const languages = [
   {
@@ -45,9 +51,24 @@ const currentLanguage = computed(() => {
   return languages.find((lang) => lang.code === locale.value) || languages[0]
 })
 
-const changeLanguage = (languageCode: string) => {
+const changeLanguage = async (languageCode: string) => {
   locale.value = languageCode
   localStorage.setItem('locale', languageCode)
+
+  // Sync to backend if logged in
+  if (authStore.isAuthenticated && authStore.profile) {
+    try {
+      await patch({
+        url: '/users/me',
+        body: { preferred_language: languageCode },
+      })
+      if (authStore.profile) {
+        authStore.profile.preferred_language = languageCode
+      }
+    } catch {
+      // Non-critical: local preference is already set
+    }
+  }
 }
 </script>
 

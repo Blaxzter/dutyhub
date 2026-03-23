@@ -8,12 +8,17 @@ class UserCreate(BaseModel):
     auth0_sub: str = Field(..., description="Auth0 subject identifier")
     email: EmailStr | None = Field(default=None, description="User's email address")
     name: str | None = Field(default=None, description="User's display name")
-    picture: str | None = Field(default=None, description="URL to user's profile picture")
-    email_verified: bool = Field(default=False, description="Whether the user's email is verified")
+    picture: str | None = Field(
+        default=None, description="URL to user's profile picture"
+    )
+    email_verified: bool = Field(
+        default=False, description="Whether the user's email is verified"
+    )
     roles: list[str] = Field(
         default_factory=list, description="List of role identifiers"
     )
     is_active: bool = Field(default=True, description="Whether the user is active")
+    preferred_language: str = Field(default="en", description="Preferred language")
 
 
 class UserUpdate(BaseModel):
@@ -28,6 +33,9 @@ class UserUpdate(BaseModel):
     rejection_reason: str | None = Field(
         default=None, description="Reason for account rejection"
     )
+    preferred_language: str | None = Field(
+        default=None, description="Preferred language"
+    )
 
 
 class UserRead(BaseModel):
@@ -38,6 +46,8 @@ class UserRead(BaseModel):
     email: EmailStr | None = None
     name: str | None = None
     picture: str | None = None
+    phone_number: str | None = None
+    preferred_language: str = "en"
     roles: list[str]
     is_active: bool
     rejection_reason: str | None = None

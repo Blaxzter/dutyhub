@@ -14,7 +14,9 @@ class _PushSubUpdate:
     pass
 
 
-class CRUDPushSubscription(CRUDBase[PushSubscription, PushSubscriptionCreate, _PushSubUpdate]):  # type: ignore[type-var]
+class CRUDPushSubscription(
+    CRUDBase[PushSubscription, PushSubscriptionCreate, _PushSubUpdate]
+):  # type: ignore[type-var]
     async def get_by_user(
         self,
         db: AsyncSession,
@@ -31,7 +33,9 @@ class CRUDPushSubscription(CRUDBase[PushSubscription, PushSubscriptionCreate, _P
         *,
         endpoint: str,
     ) -> PushSubscription | None:
-        query = select(PushSubscription).where(col(PushSubscription.endpoint) == endpoint)
+        query = select(PushSubscription).where(
+            col(PushSubscription.endpoint) == endpoint
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 

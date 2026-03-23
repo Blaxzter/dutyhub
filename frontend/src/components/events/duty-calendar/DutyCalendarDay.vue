@@ -68,15 +68,19 @@ const { t } = useI18n()
         class="flex cursor-pointer items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 transition-colors hover:bg-emerald-500/10"
         @click="emit('navigateBooking', booking)"
       >
-        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+        <div
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
+        >
           <Clock class="h-4 w-4" />
         </div>
         <div class="flex-1 min-w-0">
           <div class="font-medium truncate">{{ booking.title }}</div>
           <div class="text-sm text-muted-foreground">
-            {{ booking.startTime || booking.endTime
-              ? formatTimeRange(booking.startTime, booking.endTime)
-              : t('duties.events.calendar.allDay') }}
+            {{
+              booking.startTime || booking.endTime
+                ? formatTimeRange(booking.startTime, booking.endTime)
+                : t('duties.events.calendar.allDay')
+            }}
           </div>
         </div>
       </div>

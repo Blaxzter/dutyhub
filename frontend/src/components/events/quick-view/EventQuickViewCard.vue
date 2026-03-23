@@ -5,6 +5,7 @@ import { MapPin, Tag, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
+
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import Badge from '@/components/ui/badge/Badge.vue'

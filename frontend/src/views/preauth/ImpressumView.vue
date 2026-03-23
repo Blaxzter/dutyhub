@@ -5,8 +5,9 @@ import { ArrowLeftIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import { Button } from '@/components/ui/button'
 import { useAppConfig } from '@/composables/useAppConfig'
+
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -17,15 +18,22 @@ const goBackToHome = () => {
 }
 
 const responsibleBlock = computed(() => {
-  return [config.LEGAL_NAME, config.LEGAL_ADDRESS, config.LEGAL_CITY, t('preauth.impressum.country')]
+  return [
+    config.LEGAL_NAME,
+    config.LEGAL_ADDRESS,
+    config.LEGAL_CITY,
+    t('preauth.impressum.country'),
+  ]
     .filter(Boolean)
     .join('\n')
 })
 
 const contactBlock = computed(() => {
   const lines: string[] = []
-  if (config.LEGAL_EMAIL) lines.push(`${t('preauth.impressum.contact.emailLabel')}: ${config.LEGAL_EMAIL}`)
-  if (config.LEGAL_PHONE) lines.push(`${t('preauth.impressum.contact.phoneLabel')}: ${config.LEGAL_PHONE}`)
+  if (config.LEGAL_EMAIL)
+    lines.push(`${t('preauth.impressum.contact.emailLabel')}: ${config.LEGAL_EMAIL}`)
+  if (config.LEGAL_PHONE)
+    lines.push(`${t('preauth.impressum.contact.phoneLabel')}: ${config.LEGAL_PHONE}`)
   return lines.join('\n')
 })
 </script>

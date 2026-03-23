@@ -1,4 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
+
 import { createContext } from 'reka-ui'
 
 export const SIDEBAR_COOKIE_NAME = 'sidebar_state'

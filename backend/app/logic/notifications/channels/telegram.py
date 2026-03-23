@@ -28,7 +28,12 @@ class TelegramChannel(NotificationChannel):
         data: NotificationData | None = None,
     ) -> bool:
         if not self.is_configured():
-            logger.warning("Telegram channel not configured (missing bot token), skipping")
+            logger.warning(
+                "Telegram channel not configured (missing bot token), skipping"
+            )
+            return False
+
+        if recipient.auth0_sub.startswith("demo|"):
             return False
 
         try:

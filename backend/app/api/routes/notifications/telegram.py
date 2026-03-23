@@ -115,15 +115,22 @@ async def telegram_webhook(
     if not message or not message.text or not message.chat:
         return {"ok": True}
 
-    text = message.text.strip().upper()
+    text = message.text.strip()
     chat_id = str(message.chat.id)
     username = message.chat.username
 
     if not text or not chat_id:
         return {"ok": True}
 
+    # Handle /start deep-link: Telegram sends "/start CODE" when user
+    # opens a https://t.me/bot?start=CODE link
+    if text.startswith("/start "):
+        text = text[7:]
+
+    code = text.upper()
+
     # Try to find a binding with this verification code
-    binding = await crud_telegram.get_by_verification_code(session, code=text)
+    binding = await crud_telegram.get_by_verification_code(session, code=code)
     if binding:
         if binding.verification_expires_at:
             now = datetime.now(timezone.utc).replace(tzinfo=None)

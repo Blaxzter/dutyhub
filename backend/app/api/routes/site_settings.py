@@ -15,7 +15,9 @@ async def get_site_settings(
 ) -> SiteSettingsRead:
     """Admin-only: Get current site settings."""
     settings = await crud_site_settings.get(session)
-    return SiteSettingsRead(has_approval_password=settings.approval_password is not None)
+    return SiteSettingsRead(
+        has_approval_password=settings.approval_password is not None
+    )
 
 
 @router.patch("/", response_model=SiteSettingsRead)
@@ -29,4 +31,6 @@ async def update_site_settings(
     if settings_in.approval_password is not None:
         settings_in.approval_password = hash_password(settings_in.approval_password)
     settings = await crud_site_settings.update(session, obj_in=settings_in)
-    return SiteSettingsRead(has_approval_password=settings.approval_password is not None)
+    return SiteSettingsRead(
+        has_approval_password=settings.approval_password is not None
+    )

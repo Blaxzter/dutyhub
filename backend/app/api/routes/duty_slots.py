@@ -33,7 +33,9 @@ async def _enrich_slot(
         my_booking = await crud_booking.get_by_slot_and_user(
             session, duty_slot_id=slot.id, user_id=user_id
         )
-        read.is_booked_by_me = my_booking is not None and my_booking.status == "confirmed"
+        read.is_booked_by_me = (
+            my_booking is not None and my_booking.status == "confirmed"
+        )
     return read
 
 
@@ -174,6 +176,7 @@ async def list_slot_bookings(
             user_name=b.user.name if b.user else None,
             user_email=b.user.email if b.user else None,
             user_picture=b.user.picture if b.user else None,
+            user_phone_number=b.user.phone_number if b.user else None,
             notes=b.notes,
             created_at=b.created_at,
         )

@@ -10,9 +10,8 @@ import { toast } from 'vue-sonner'
 
 import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
-import ScheduleConfigForm from '@/components/events/ScheduleConfigForm.vue'
-import SlotPreviewGrid from '@/components/events/SlotPreviewGrid.vue'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { useFormatters } from '@/composables/useFormatters'
 import {
   type RemainderMode,
   type ScheduleConfig,
@@ -36,8 +35,10 @@ import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import Textarea from '@/components/ui/textarea/Textarea.vue'
 
+import ScheduleConfigForm from '@/components/events/ScheduleConfigForm.vue'
+import SlotPreviewGrid from '@/components/events/SlotPreviewGrid.vue'
+
 import type { DutySlotRead, EventRead, SlotBatchRead } from '@/client/types.gen'
-import { useFormatters } from '@/composables/useFormatters'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()

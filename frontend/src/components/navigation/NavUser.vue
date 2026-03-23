@@ -2,15 +2,7 @@
 import { computed } from 'vue'
 
 import { useColorMode } from '@vueuse/core'
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  Globe,
-  LogOut,
-  Moon,
-  Sun,
-} from 'lucide-vue-next'
+import { BadgeCheck, Bell, ChevronsUpDown, Globe, LogOut, Moon, Sun } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'

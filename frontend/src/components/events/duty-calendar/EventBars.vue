@@ -28,21 +28,32 @@ const emit = defineEmits<{
     <button
       class="flex h-full w-full items-center truncate px-1.5 text-left text-xs font-medium transition-colors"
       :class="[
-        bar.isStart && bar.isEnd ? 'rounded' :
-        bar.isStart ? 'rounded-l' :
-        bar.isEnd ? 'rounded-r' :
-        '',
+        bar.isStart && bar.isEnd
+          ? 'rounded'
+          : bar.isStart
+            ? 'rounded-l'
+            : bar.isEnd
+              ? 'rounded-r'
+              : '',
         bar.event.status === 'published'
-          ? (hoveredEventId === bar.event.id ? 'bg-primary/25 text-primary' : 'bg-primary/15 text-primary')
-          : (hoveredEventId === bar.event.id ? 'bg-muted-foreground/25 text-muted-foreground' : 'bg-muted text-muted-foreground'),
+          ? hoveredEventId === bar.event.id
+            ? 'bg-primary/25 text-primary'
+            : 'bg-primary/15 text-primary'
+          : hoveredEventId === bar.event.id
+            ? 'bg-muted-foreground/25 text-muted-foreground'
+            : 'bg-muted text-muted-foreground',
       ]"
       :style="{
         marginLeft: bar.isStart ? '0' : '-4px',
         paddingLeft: bar.isStart ? undefined : '6px',
-        width: !bar.isStart && !bar.isEnd ? 'calc(100% + 8px)' :
-               !bar.isStart ? 'calc(100% + 4px)' :
-               !bar.isEnd ? 'calc(100% + 4px)' :
-               undefined,
+        width:
+          !bar.isStart && !bar.isEnd
+            ? 'calc(100% + 8px)'
+            : !bar.isStart
+              ? 'calc(100% + 4px)'
+              : !bar.isEnd
+                ? 'calc(100% + 4px)'
+                : undefined,
       }"
       @mouseenter="emit('hover', bar.event.id)"
       @mouseleave="emit('hover', null)"

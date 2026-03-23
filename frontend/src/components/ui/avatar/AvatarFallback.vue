@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+
 import { reactiveOmit } from '@vueuse/core'
 import { AvatarFallback, type AvatarFallbackProps } from 'reka-ui'
+
 import { cn } from '@/lib/utils'
 
 const props = defineProps<AvatarFallbackProps & { class?: HTMLAttributes['class'] }>()

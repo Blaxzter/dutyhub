@@ -5,7 +5,9 @@ import { Plus, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'
+import type { RemainderMode } from '@/composables/useSlotPreview'
 
+import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -18,9 +20,6 @@ import {
 } from '@/components/ui/select'
 import Separator from '@/components/ui/separator/Separator.vue'
 import { TimePicker } from '@/components/ui/time-picker'
-import Button from '@/components/ui/button/Button.vue'
-
-import type { RemainderMode } from '@/composables/useSlotPreview'
 
 const props = defineProps<{
   hasRemainder: boolean
@@ -113,15 +112,21 @@ watch(
           <RadioGroup v-model="remainderMode" class="flex gap-4 pt-1">
             <div class="flex items-center gap-2">
               <RadioGroupItem value="drop" id="rm-drop" />
-              <Label for="rm-drop">{{ t('duties.events.createView.schedule.remainderMode.drop') }}</Label>
+              <Label for="rm-drop">{{
+                t('duties.events.createView.schedule.remainderMode.drop')
+              }}</Label>
             </div>
             <div class="flex items-center gap-2">
               <RadioGroupItem value="short" id="rm-short" />
-              <Label for="rm-short">{{ t('duties.events.createView.schedule.remainderMode.short') }}</Label>
+              <Label for="rm-short">{{
+                t('duties.events.createView.schedule.remainderMode.short')
+              }}</Label>
             </div>
             <div class="flex items-center gap-2">
               <RadioGroupItem value="extend" id="rm-extend" />
-              <Label for="rm-extend">{{ t('duties.events.createView.schedule.remainderMode.extend') }}</Label>
+              <Label for="rm-extend">{{
+                t('duties.events.createView.schedule.remainderMode.extend')
+              }}</Label>
             </div>
           </RadioGroup>
         </div>

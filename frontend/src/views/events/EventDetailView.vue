@@ -13,6 +13,7 @@ import {
   MapPin,
   Pencil,
   Plus,
+  Printer,
   Tag,
   Trash2,
 } from 'lucide-vue-next'
@@ -23,8 +24,6 @@ import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
-import DeleteConfirmationDialog from '@/components/events/DeleteConfirmationDialog.vue'
-import StatusDropdown from '@/components/events/StatusDropdown.vue'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
 import { useFormatters } from '@/composables/useFormatters'
@@ -52,7 +51,9 @@ import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import Separator from '@/components/ui/separator/Separator.vue'
 
+import DeleteConfirmationDialog from '@/components/events/DeleteConfirmationDialog.vue'
 import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
+import StatusDropdown from '@/components/events/StatusDropdown.vue'
 
 import type {
   BookingRead,
@@ -72,7 +73,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const breadcrumbStore = useBreadcrumbStore()
 const { get, post, patch, delete: del } = useAuthenticatedClient()
-const { confirmDestructive } = useDialog()
+const { confirm, confirmDestructive } = useDialog()
 
 const eventId = computed(() => route.params.eventId as string)
 const event = ref<EventRead | null>(null)
@@ -296,6 +297,8 @@ const handleSlotClick = async (slot: DutySlotRead) => {
       toast.success(t('duties.bookings.cancelSuccess'))
     } else {
       if (isSlotFull(slot)) return
+      const confirmed = await confirm(t('duties.bookings.bookConfirm'))
+      if (!confirmed) return
       await post({ url: '/bookings/', body: { duty_slot_id: slot.id } })
       toast.success(t('duties.bookings.bookSuccess'))
     }
@@ -529,40 +532,51 @@ onMounted(async () => {
               </span>
             </div>
           </div>
-          <div v-if="authStore.isAdmin" class="flex gap-2">
+          <div class="flex gap-2">
+            <!-- Print button (visible to all users) -->
+            <Button
+              variant="outline"
+              size="icon"
+              :title="t('print.printEvent')"
+              @click="router.push({ name: 'print-event', params: { eventId: event!.id } })"
+            >
+              <Printer class="h-4 w-4" />
+            </Button>
             <!-- Only show event-level edit when no batches (legacy) -->
             <Button
-              v-if="!hasBatches"
+              v-if="authStore.isAdmin && !hasBatches"
               variant="outline"
               @click="router.push({ name: 'event-edit', params: { eventId: event.id } })"
             >
               <Pencil class="mr-2 h-4 w-4" />
               {{ t('duties.events.edit') }}
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger as-child>
-                <Button>
-                  <CalendarPlus class="mr-2 h-4 w-4" />
-                  {{ t('duties.events.detail.addSlots') }}
-                  <ChevronDown class="ml-1 h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  @click="router.push({ name: 'event-add-slots', params: { eventId: event.id } })"
-                >
-                  <CalendarPlus class="mr-2 h-4 w-4" />
-                  {{ t('duties.events.detail.addSlotBatch') }}
-                </DropdownMenuItem>
-                <DropdownMenuItem @click="showCreateSlotDialog = true">
-                  <Plus class="mr-2 h-4 w-4" />
-                  {{ t('duties.events.detail.addSingleSlot') }}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button variant="destructive" size="icon" @click="handleDeleteEvent">
-              <Trash2 class="h-4 w-4" />
-            </Button>
+            <template v-if="authStore.isAdmin">
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <Button>
+                    <CalendarPlus class="mr-2 h-4 w-4" />
+                    {{ t('duties.events.detail.addSlots') }}
+                    <ChevronDown class="ml-1 h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    @click="router.push({ name: 'event-add-slots', params: { eventId: event.id } })"
+                  >
+                    <CalendarPlus class="mr-2 h-4 w-4" />
+                    {{ t('duties.events.detail.addSlotBatch') }}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="showCreateSlotDialog = true">
+                    <Plus class="mr-2 h-4 w-4" />
+                    {{ t('duties.events.detail.addSingleSlot') }}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="destructive" size="icon" @click="handleDeleteEvent">
+                <Trash2 class="h-4 w-4" />
+              </Button>
+            </template>
           </div>
         </div>
       </div>

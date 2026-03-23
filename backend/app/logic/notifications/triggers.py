@@ -4,10 +4,12 @@ Each function opens its own DB session since BackgroundTasks run after
 the request session is closed.
 """
 
+import datetime as dt
 import uuid
 
 from app.core.db import async_session
 from app.core.logger import get_logger
+from app.logic.notifications.messages import get_message
 from app.logic.notifications.service import NotificationService
 
 logger = get_logger(__name__)
@@ -18,6 +20,11 @@ async def dispatch_booking_confirmed(
     booking_id: uuid.UUID,
     user_id: uuid.UUID,
     slot_title: str,
+    slot_date: dt.date | None = None,
+    slot_start_time: dt.time | None = None,
+    slot_end_time: dt.time | None = None,
+    slot_location: str | None = None,
+    event_name: str | None = None,
     slot_id: uuid.UUID,
     event_id: uuid.UUID,
     event_group_id: uuid.UUID | None = None,
@@ -27,11 +34,25 @@ async def dispatch_booking_confirmed(
         async with async_session() as db:
             svc = NotificationService(db)
             scope_chain = _build_scope_chain(slot_id, event_id, event_group_id)
+
+            def _factory(lang: str) -> tuple[str, str]:
+                return get_message(
+                    "booking.confirmed",
+                    lang,
+                    slot_title=slot_title,
+                    event_name=event_name or "",
+                    date=slot_date.strftime("%d.%m.%Y") if slot_date else "",
+                    start_time=slot_start_time.strftime("%H:%M")
+                    if slot_start_time
+                    else "",
+                    end_time=slot_end_time.strftime("%H:%M") if slot_end_time else "",
+                    location=slot_location or "",
+                )
+
             await svc.notify(
                 recipient_ids=[user_id],
                 type_code="booking.confirmed",
-                title="Booking Confirmed",
-                body=f'Your booking for "{slot_title}" has been confirmed.',
+                message_factory=_factory,
                 data={
                     "booking_id": str(booking_id),
                     "slot_id": str(slot_id),
@@ -64,8 +85,9 @@ async def dispatch_booking_cobooked(
             await svc.notify(
                 recipient_ids=existing_user_ids,
                 type_code="booking.slot_cobooked",
-                title="New Co-booking",
-                body=f'{name} also booked the slot "{slot_title}".',
+                message_factory=lambda lang, _name=name: get_message(
+                    "booking.slot_cobooked", lang, name=_name, slot_title=slot_title
+                ),
                 data={
                     "slot_id": str(slot_id),
                     "event_id": str(event_id),
@@ -94,8 +116,9 @@ async def dispatch_booking_cancelled_by_user(
             await svc.notify(
                 recipient_ids=[user_id],
                 type_code="booking.cancelled_by_user",
-                title="Booking Cancelled",
-                body=f'Your booking for "{slot_title}" has been cancelled.',
+                message_factory=lambda lang: get_message(
+                    "booking.cancelled_by_user", lang, slot_title=slot_title
+                ),
                 data={
                     "booking_id": str(booking_id),
                     "slot_id": str(slot_id),
@@ -123,13 +146,26 @@ async def dispatch_booking_cancelled_by_admin(
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            detail = f' (Reason: {reason})' if reason else ""
-            event_label = f' for event "{event_name}"' if event_name else ""
+
+            def _factory(lang: str) -> tuple[str, str]:
+                if lang == "de":
+                    event_label = f' für das Event „{event_name}"' if event_name else ""
+                    detail = f" (Grund: {reason})" if reason else ""
+                else:
+                    event_label = f' for event "{event_name}"' if event_name else ""
+                    detail = f" (Reason: {reason})" if reason else ""
+                return get_message(
+                    "booking.cancelled_by_admin",
+                    lang,
+                    slot_title=slot_title,
+                    event_label=event_label,
+                    detail=detail,
+                )
+
             await svc.notify(
                 recipient_ids=user_ids,
                 type_code="booking.cancelled_by_admin",
-                title="Booking Cancelled by Admin",
-                body=f'Your booking for "{slot_title}"{event_label} was cancelled by an administrator.{detail}',
+                message_factory=_factory,
                 data={
                     "event_id": str(event_id) if event_id else None,
                     "event_group_id": str(event_group_id) if event_group_id else None,
@@ -158,8 +194,9 @@ async def dispatch_slot_time_changed(
             await svc.notify(
                 recipient_ids=booked_user_ids,
                 type_code="slot.time_changed",
-                title="Slot Time Changed",
-                body=f'The time for slot "{slot_title}" has been updated. Please check the new schedule.',
+                message_factory=lambda lang: get_message(
+                    "slot.time_changed", lang, slot_title=slot_title
+                ),
                 data={
                     "slot_id": str(slot_id),
                     "event_id": str(event_id),
@@ -199,8 +236,9 @@ async def dispatch_event_published(
                 await svc.notify(
                     recipient_ids=user_ids,
                     type_code="event.published",
-                    title="New Event Published",
-                    body=f'A new event "{event_name}" has been published. Check it out!',
+                    message_factory=lambda lang: get_message(
+                        "event.published", lang, event_name=event_name
+                    ),
                     data={"event_id": str(event_id)},
                     scope_chain=scope_chain,
                 )
@@ -233,8 +271,11 @@ async def dispatch_event_group_published(
                 await svc.notify(
                     recipient_ids=user_ids,
                     type_code="event_group.published",
-                    title="New Event Group Published",
-                    body=f'Event group "{event_group_name}" has been published.',
+                    message_factory=lambda lang: get_message(
+                        "event_group.published",
+                        lang,
+                        event_group_name=event_group_name,
+                    ),
                     data={"event_group_id": str(event_group_id)},
                     scope_chain=[("event_group", event_group_id)],
                 )
@@ -256,8 +297,9 @@ async def dispatch_user_registered(
             name = user_name or user_email or "Unknown"
             await svc.notify_admins(
                 type_code="user.registered",
-                title="New User Registered",
-                body=f'A new user "{name}" has registered and is pending approval.',
+                message_factory=lambda lang, _name=name: get_message(
+                    "user.registered", lang, name=_name
+                ),
                 data={"user_id": str(user_id)},
             )
             await db.commit()
@@ -276,8 +318,7 @@ async def dispatch_user_approved(
             await svc.notify(
                 recipient_ids=[user_id],
                 type_code="user.approved",
-                title="Account Approved",
-                body="Your account has been approved! You can now access all features.",
+                message_factory=lambda lang: get_message("user.approved", lang),
             )
             await db.commit()
     except Exception:
@@ -293,12 +334,18 @@ async def dispatch_user_rejected(
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            detail = f" Reason: {reason}" if reason else ""
+
+            def _factory(lang: str) -> tuple[str, str]:
+                if lang == "de":
+                    detail = f" Grund: {reason}" if reason else ""
+                else:
+                    detail = f" Reason: {reason}" if reason else ""
+                return get_message("user.rejected", lang, detail=detail)
+
             await svc.notify(
                 recipient_ids=[user_id],
                 type_code="user.rejected",
-                title="Account Rejected",
-                body=f"Your account request has been rejected.{detail}",
+                message_factory=_factory,
             )
             await db.commit()
     except Exception:

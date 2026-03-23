@@ -1,5 +1,5 @@
 @import 'tailwindcss';
-@import "tw-animate-css";
+@import 'tw-animate-css';
 @import 'flag-icons/css/flag-icons.min.css';
 
 @custom-variant dark (&:is(.dark *));
@@ -147,6 +147,84 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Print styles */
+@media print {
+  /* Force light theme when printing */
+  :root {
+    --background: oklch(1 0 0) !important;
+    --foreground: oklch(0.145 0 0) !important;
+    --card: oklch(1 0 0) !important;
+    --card-foreground: oklch(0.145 0 0) !important;
+    --muted: oklch(0.97 0 0) !important;
+    --muted-foreground: oklch(0.556 0 0) !important;
+    --border: oklch(0.922 0 0) !important;
+    --primary: oklch(0.205 0 0) !important;
+    --primary-foreground: oklch(0.985 0 0) !important;
+    --secondary: oklch(0.97 0 0) !important;
+    --secondary-foreground: oklch(0.205 0 0) !important;
+    --accent: oklch(0.97 0 0) !important;
+    --accent-foreground: oklch(0.205 0 0) !important;
+    --input: oklch(0.922 0 0) !important;
+  }
+
+  @page {
+    margin: 10mm;
+    /* Remove browser-default header (page title) and footer (URL, page number) */
+    @top-left {
+      content: none;
+    }
+    @top-center {
+      content: none;
+    }
+    @top-right {
+      content: none;
+    }
+    @bottom-left {
+      content: none;
+    }
+    @bottom-center {
+      content: none;
+    }
+    @bottom-right {
+      content: none;
+    }
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-page {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+  }
+
+  .print-bg {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-page-break {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  .print-keep-together {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-repeat-header {
+    display: table-header-group;
   }
 }
 

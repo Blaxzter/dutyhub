@@ -28,7 +28,11 @@ const { formatDateLabel } = useFormatters()
       <div class="flex items-center gap-2">
         <p class="font-medium">{{ formatDateLabel(dateStr) }}</p>
         <Badge variant="outline">
-          {{ t('duties.events.createView.preview.slotsOnDate', { count: slots.filter(s => !isSlotExcluded(s)).length }) }}
+          {{
+            t('duties.events.createView.preview.slotsOnDate', {
+              count: slots.filter((s) => !isSlotExcluded(s)).length,
+            })
+          }}
         </Badge>
       </div>
       <div class="grid grid-cols-2 items-center gap-2 sm:grid-cols-3 md:grid-cols-4">

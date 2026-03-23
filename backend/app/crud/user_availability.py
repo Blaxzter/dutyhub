@@ -66,9 +66,7 @@ class CRUDUserAvailability(
                 start_time=day.start_time,
                 end_time=day.end_time,
             )
-        return UserAvailabilityDate(
-            availability_id=availability_id, slot_date=day
-        )
+        return UserAvailabilityDate(availability_id=availability_id, slot_date=day)
 
     async def upsert_for_user(
         self,

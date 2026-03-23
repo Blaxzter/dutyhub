@@ -55,21 +55,40 @@ async def notification_stream(
 
     queue = sse_manager.connect(user_id)
 
+    shutdown_event = sse_manager.shutdown_event
+
     async def event_generator():
         try:
             # Send initial unread count immediately
             yield _sse_format("unread_count", {"unread_count": initial_count})
 
-            while True:
+            while not shutdown_event.is_set():
                 if await request.is_disconnected():
                     break
 
                 try:
-                    message = await asyncio.wait_for(queue.get(), timeout=SSE_HEARTBEAT_SECONDS)
-                    yield _sse_format(message["event"], message["data"])
-                except asyncio.TimeoutError:
-                    # Keep-alive comment to prevent connection timeout
-                    yield ": heartbeat\n\n"
+                    # Wait for either a message or the shutdown signal
+                    queue_task = asyncio.ensure_future(queue.get())
+                    shutdown_task = asyncio.ensure_future(shutdown_event.wait())
+                    done, pending = await asyncio.wait(
+                        {queue_task, shutdown_task},
+                        timeout=SSE_HEARTBEAT_SECONDS,
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+                    for task in pending:
+                        task.cancel()
+
+                    if shutdown_task in done:
+                        break
+
+                    if queue_task in done:
+                        message = queue_task.result()
+                        yield _sse_format(message["event"], message["data"])
+                    else:
+                        # Timeout — send heartbeat
+                        yield ": heartbeat\n\n"
+                except asyncio.CancelledError:
+                    break
         finally:
             sse_manager.disconnect(user_id, queue)
 
@@ -147,8 +166,12 @@ async def mark_notification_read(
             404, code="notification.not_found", detail="Notification not found"
         )
     # Broadcast updated unread count via SSE
-    new_count = await crud_notification.get_unread_count(session, user_id=current_user.id)
-    await sse_manager.broadcast(current_user.id, "unread_count", {"unread_count": new_count})
+    new_count = await crud_notification.get_unread_count(
+        session, user_id=current_user.id
+    )
+    await sse_manager.broadcast(
+        current_user.id, "unread_count", {"unread_count": new_count}
+    )
 
     return NotificationRead.model_validate(notif)
 

@@ -42,6 +42,18 @@ class User(Base, table=True):
         description="Reason for account rejection",
     )
 
+    phone_number: str | None = Field(
+        default=None,
+        sa_column=sa.Column(sa.String, nullable=True),
+        description="User's phone number for contact purposes",
+    )
+
+    preferred_language: str = Field(
+        default="en",
+        sa_column=sa.Column(sa.String(5), nullable=False, server_default="en"),
+        description="User's preferred language for notifications (e.g., 'en', 'de')",
+    )
+
     # Global notification channel kill switches
     notify_email: bool = Field(
         default=True,

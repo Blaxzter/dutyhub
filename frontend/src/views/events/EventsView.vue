@@ -19,23 +19,17 @@ import { useEventFiltersStore } from '@/stores/eventFilters'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
-import DeleteConfirmationDialog from '@/components/events/DeleteConfirmationDialog.vue'
-import EventFilterMenu from '@/components/events/EventFilterMenu.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
+import DeleteConfirmationDialog from '@/components/events/DeleteConfirmationDialog.vue'
 import EventCalendarView from '@/components/events/EventCalendarView.vue'
+import EventFilterMenu from '@/components/events/EventFilterMenu.vue'
 import EventListView from '@/components/events/EventListView.vue'
-import { EventQuickView } from '@/components/events/quick-view'
 import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
-
 import type { DateRange } from '@/components/events/duty-calendar'
+import { EventQuickView } from '@/components/events/quick-view'
 
 import type {
   EventFeedResponse,
@@ -57,7 +51,7 @@ const { get, delete: del } = useAuthenticatedClient()
 const VIEW_MODES = ['list', 'box', 'calendar'] as const
 const FOCUS_MODES = ['today', 'first-available'] as const
 const CAL_VIEW_MODES = ['month', 'week', 'day'] as const
-type CalViewMode = typeof CAL_VIEW_MODES[number]
+type CalViewMode = (typeof CAL_VIEW_MODES)[number]
 
 // Calendar internal state (synced to URL)
 const calViewMode = ref<CalViewMode | undefined>(undefined)
@@ -66,17 +60,16 @@ const calDate = ref<string | undefined>(undefined)
 // On mount: seed store from URL query params (URL wins over localStorage)
 function readUrlIntoStore() {
   const q = route.query
-  if (q.view && VIEW_MODES.includes(q.view as typeof VIEW_MODES[number]))
-    filters.viewMode = q.view as typeof VIEW_MODES[number]
-  if (q.focus && FOCUS_MODES.includes(q.focus as typeof FOCUS_MODES[number]))
-    filters.focusMode = q.focus as typeof FOCUS_MODES[number]
+  if (q.view && VIEW_MODES.includes(q.view as (typeof VIEW_MODES)[number]))
+    filters.viewMode = q.view as (typeof VIEW_MODES)[number]
+  if (q.focus && FOCUS_MODES.includes(q.focus as (typeof FOCUS_MODES)[number]))
+    filters.focusMode = q.focus as (typeof FOCUS_MODES)[number]
   if (q.search !== undefined) filters.searchQuery = String(q.search)
   if (q.my_bookings !== undefined) filters.myBookingsOnly = q.my_bookings === 'true'
   if (q.hide_full !== undefined) filters.hideFullSlots = q.hide_full === 'true'
   if (q.date_from && /^\d{4}-\d{2}-\d{2}$/.test(String(q.date_from)))
     filters.dateFrom = String(q.date_from)
-  if (q.date_to && /^\d{4}-\d{2}-\d{2}$/.test(String(q.date_to)))
-    filters.dateTo = String(q.date_to)
+  if (q.date_to && /^\d{4}-\d{2}-\d{2}$/.test(String(q.date_to))) filters.dateTo = String(q.date_to)
   if (q.cal_view && CAL_VIEW_MODES.includes(q.cal_view as CalViewMode))
     calViewMode.value = q.cal_view as CalViewMode
   if (q.cal_date && /^\d{4}-\d{2}-\d{2}$/.test(String(q.cal_date)))
@@ -180,14 +173,23 @@ const loadEvents = async () => {
 
 // Debounced search
 let searchTimer: ReturnType<typeof setTimeout> | null = null
-watch(() => filters.searchQuery, () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => loadEvents(), 300)
-})
+watch(
+  () => filters.searchQuery,
+  () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => loadEvents(), 300)
+  },
+)
 
 // Re-fetch when these change
 watch(
-  () => [filters.myBookingsOnly, filters.viewMode, filters.focusMode, filters.dateFrom, filters.dateTo],
+  () => [
+    filters.myBookingsOnly,
+    filters.viewMode,
+    filters.focusMode,
+    filters.dateFrom,
+    filters.dateTo,
+  ],
   () => loadEvents(),
 )
 
@@ -330,7 +332,11 @@ onMounted(loadEvents)
     <div v-if="filters.viewMode !== 'calendar'" class="flex flex-wrap items-center gap-4">
       <div class="relative flex-1">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input v-model="filters.searchQuery" :placeholder="t('common.actions.search')" class="pl-10" />
+        <Input
+          v-model="filters.searchQuery"
+          :placeholder="t('common.actions.search')"
+          class="pl-10"
+        />
       </div>
       <EventFilterMenu />
     </div>

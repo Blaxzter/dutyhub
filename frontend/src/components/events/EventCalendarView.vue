@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import type { EventGroupRead, EventRead } from '@/client/types.gen'
-
 import { DutyCalendar } from '@/components/events/duty-calendar'
-import type { CalendarEvent, CalendarEventGroup, DateRange, ViewMode } from '@/components/events/duty-calendar'
+import type {
+  CalendarEvent,
+  CalendarEventGroup,
+  DateRange,
+  ViewMode,
+} from '@/components/events/duty-calendar'
+
+import type { EventGroupRead, EventRead } from '@/client/types.gen'
 
 defineProps<{
   events: EventRead[]

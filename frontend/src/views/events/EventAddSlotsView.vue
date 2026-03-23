@@ -8,15 +8,20 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import type { EventGroupRead, EventRead } from '@/client/types.gen'
+import { useBreadcrumbStore } from '@/stores/breadcrumb'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { useFormatters } from '@/composables/useFormatters'
+import {
+  type RemainderMode,
+  type ScheduleConfig,
+  useSlotPreview,
+} from '@/composables/useSlotPreview'
+
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent } from '@/components/ui/card'
-import {
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
@@ -24,11 +29,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 import ScheduleConfigForm from '@/components/events/ScheduleConfigForm.vue'
 import SlotPreviewGrid from '@/components/events/SlotPreviewGrid.vue'
-import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
-import { type RemainderMode, type ScheduleConfig, useSlotPreview } from '@/composables/useSlotPreview'
-import { useFormatters } from '@/composables/useFormatters'
+
+import type { EventGroupRead, EventRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
-import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
 const { t } = useI18n()
 const { formatTime, formatDateLabel } = useFormatters()
@@ -44,8 +47,12 @@ const event = ref<EventRead | null>(null)
 const eventGroup = ref<EventGroupRead | null>(null)
 
 // --- Event group date constraints ---
-const groupMinDate = computed(() => eventGroup.value ? parseDate(eventGroup.value.start_date) : undefined)
-const groupMaxDate = computed(() => eventGroup.value ? parseDate(eventGroup.value.end_date) : undefined)
+const groupMinDate = computed(() =>
+  eventGroup.value ? parseDate(eventGroup.value.start_date) : undefined,
+)
+const groupMaxDate = computed(() =>
+  eventGroup.value ? parseDate(eventGroup.value.end_date) : undefined,
+)
 
 // --- Batch-specific fields ---
 const location = ref('')
@@ -124,9 +131,8 @@ const scheduleConfig = computed<ScheduleConfig>(() => ({
   eventName: event.value?.name || 'Event',
   startDate: startDate.value?.toString() ?? '',
   endDate: endDate.value?.toString() ?? '',
-  specificDates: dateMode.value === 'specific'
-    ? specificDates.value.map((d) => d.toString())
-    : undefined,
+  specificDates:
+    dateMode.value === 'specific' ? specificDates.value.map((d) => d.toString()) : undefined,
   defaultStartTime: defaultStartTime.value,
   defaultEndTime: defaultEndTime.value,
   slotDurationMinutes: slotDurationMinutes.value,
@@ -135,7 +141,15 @@ const scheduleConfig = computed<ScheduleConfig>(() => ({
   overrides: overrides.value,
 }))
 
-const { totalSlots, totalDays, slotsByDate, hasRemainder, excludedSlots, toggleSlotExclusion, isSlotExcluded } = useSlotPreview(scheduleConfig)
+const {
+  totalSlots,
+  totalDays,
+  slotsByDate,
+  hasRemainder,
+  excludedSlots,
+  toggleSlotExclusion,
+  isSlotExcluded,
+} = useSlotPreview(scheduleConfig)
 
 watch(rangeStartDate, (val) => {
   if (val && rangeEndDate.value && rangeEndDate.value.compare(val) < 0) {
@@ -176,9 +190,13 @@ const isDatesValid = computed(() => {
 })
 
 const isValid = computed(() => {
-  return isDatesValid.value
-    && !!defaultStartTime.value && !!defaultEndTime.value
-    && slotDurationMinutes.value >= 1 && totalSlots.value > 0
+  return (
+    isDatesValid.value &&
+    !!defaultStartTime.value &&
+    !!defaultEndTime.value &&
+    slotDurationMinutes.value >= 1 &&
+    totalSlots.value > 0
+  )
 })
 
 // --- Load event ---
@@ -280,7 +298,12 @@ onMounted(loadEvent)
     <template v-else-if="event">
       <!-- Header -->
       <div class="space-y-2">
-        <Button variant="ghost" size="sm" class="-ml-2" @click="router.push({ name: 'event-detail', params: { eventId: eventId } })">
+        <Button
+          variant="ghost"
+          size="sm"
+          class="-ml-2"
+          @click="router.push({ name: 'event-detail', params: { eventId: eventId } })"
+        >
           <ArrowLeft class="mr-1.5 h-4 w-4" />
           {{ t('common.actions.back') }}
         </Button>
@@ -295,7 +318,9 @@ onMounted(loadEvent)
       <Card>
         <CardHeader>
           <CardTitle>{{ t('duties.events.addSlotsView.sections.batch') }}</CardTitle>
-          <CardDescription>{{ t('duties.events.addSlotsView.sections.batchDesc') }}</CardDescription>
+          <CardDescription>{{
+            t('duties.events.addSlotsView.sections.batchDesc')
+          }}</CardDescription>
         </CardHeader>
         <CardContent>
           <div class="grid grid-cols-2 gap-4">
@@ -318,7 +343,9 @@ onMounted(loadEvent)
             <CalendarDays class="h-5 w-5 text-primary" />
             <div>
               <CardTitle>{{ t('duties.events.createView.sections.dates') }}</CardTitle>
-              <CardDescription>{{ t('duties.events.createView.sections.datesDesc') }}</CardDescription>
+              <CardDescription>{{
+                t('duties.events.createView.sections.datesDesc')
+              }}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -348,11 +375,20 @@ onMounted(loadEvent)
           <div v-if="dateMode === 'range'" class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
               <Label>{{ t('duties.events.fields.startDate') }} *</Label>
-              <DatePicker v-model="rangeStartDate" :min-value="groupMinDate" :max-value="rangeEndDate || groupMaxDate" />
+              <DatePicker
+                v-model="rangeStartDate"
+                :min-value="groupMinDate"
+                :max-value="rangeEndDate || groupMaxDate"
+              />
             </div>
             <div class="space-y-2">
               <Label>{{ t('duties.events.fields.endDate') }} *</Label>
-              <DatePicker v-model="rangeEndDate" :min-value="rangeStartDate || groupMinDate" :max-value="groupMaxDate" :highlight="rangeStartDate" />
+              <DatePicker
+                v-model="rangeEndDate"
+                :min-value="rangeStartDate || groupMinDate"
+                :max-value="groupMaxDate"
+                :highlight="rangeStartDate"
+              />
             </div>
           </div>
 
@@ -361,14 +397,21 @@ onMounted(loadEvent)
             <div class="flex items-end gap-3">
               <div class="flex-1 space-y-2">
                 <Label>{{ t('duties.events.createView.addDate') }}</Label>
-                <DatePicker v-model="specificDatePicker" :min-value="groupMinDate" :max-value="groupMaxDate" />
+                <DatePicker
+                  v-model="specificDatePicker"
+                  :min-value="groupMinDate"
+                  :max-value="groupMaxDate"
+                />
               </div>
               <Button :disabled="!specificDatePicker" @click="addSpecificDate">
                 <Plus class="mr-1.5 h-4 w-4" />
                 {{ t('duties.events.createView.addDate') }}
               </Button>
             </div>
-            <div v-if="specificDates.length === 0" class="py-4 text-center text-sm text-muted-foreground">
+            <div
+              v-if="specificDates.length === 0"
+              class="py-4 text-center text-sm text-muted-foreground"
+            >
               {{ t('duties.events.createView.noDatesSelected') }}
             </div>
             <div v-else class="flex flex-wrap gap-2">
@@ -379,7 +422,10 @@ onMounted(loadEvent)
                 class="gap-1 py-1.5 pl-3 pr-1.5"
               >
                 {{ formatDateLabel(date.toString()) }}
-                <button class="ml-1 rounded-full p-0.5 hover:bg-muted" @click="removeSpecificDate(index)">
+                <button
+                  class="ml-1 rounded-full p-0.5 hover:bg-muted"
+                  @click="removeSpecificDate(index)"
+                >
                   <X class="h-3 w-3" />
                 </button>
               </Badge>
@@ -395,7 +441,9 @@ onMounted(loadEvent)
             <Clock class="h-5 w-5 text-primary" />
             <div>
               <CardTitle>{{ t('duties.events.createView.sections.schedule') }}</CardTitle>
-              <CardDescription>{{ t('duties.events.createView.sections.scheduleDesc') }}</CardDescription>
+              <CardDescription>{{
+                t('duties.events.createView.sections.scheduleDesc')
+              }}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -420,10 +468,17 @@ onMounted(loadEvent)
           <div class="flex items-center justify-between">
             <div>
               <CardTitle>{{ t('duties.events.createView.sections.preview') }}</CardTitle>
-              <CardDescription>{{ t('duties.events.createView.sections.previewDesc') }}</CardDescription>
+              <CardDescription>{{
+                t('duties.events.createView.sections.previewDesc')
+              }}</CardDescription>
             </div>
             <Badge v-if="totalSlots > 0" variant="secondary">
-              {{ t('duties.events.createView.preview.summary', { slots: totalSlots, days: totalDays }) }}
+              {{
+                t('duties.events.createView.preview.summary', {
+                  slots: totalSlots,
+                  days: totalDays,
+                })
+              }}
             </Badge>
           </div>
         </CardHeader>
@@ -443,7 +498,10 @@ onMounted(loadEvent)
 
       <!-- Actions -->
       <div class="flex justify-end gap-3">
-        <Button variant="outline" @click="router.push({ name: 'event-detail', params: { eventId: eventId } })">
+        <Button
+          variant="outline"
+          @click="router.push({ name: 'event-detail', params: { eventId: eventId } })"
+        >
           {{ t('common.actions.cancel') }}
         </Button>
         <Button :disabled="!isValid || submitting" @click="handleSubmit">

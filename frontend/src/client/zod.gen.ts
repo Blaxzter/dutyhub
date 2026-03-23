@@ -329,6 +329,21 @@ export const zDutySlotUpdate = z.object({
 })
 
 /**
+ * EventBookingEntry
+ * A confirmed booking with slot_id, for the bulk event bookings endpoint.
+ */
+export const zEventBookingEntry = z
+  .object({
+    id: z.uuid(),
+    duty_slot_id: z.uuid(),
+    user_name: z.optional(z.union([z.string(), z.null()])),
+    user_phone_number: z.optional(z.union([z.string(), z.null()])),
+  })
+  .register(z.globalRegistry, {
+    description: 'A confirmed booking with slot_id, for the bulk event bookings endpoint.',
+  })
+
+/**
  * EventCreate
  */
 export const zEventCreate = z.object({
@@ -645,6 +660,7 @@ export const zProfileInit = z
     nickname: z.optional(z.union([z.string(), z.null()])),
     picture: z.optional(z.union([z.string(), z.null()])),
     email_verified: z.optional(z.union([z.boolean(), z.null()])),
+    preferred_language: z.optional(z.union([z.string(), z.null()])),
   })
   .register(z.globalRegistry, {
     description: 'Profile data from Auth0 ID token for user initialization.',
@@ -771,6 +787,7 @@ export const zSlotBookingEntry = z
     user_name: z.optional(z.union([z.string(), z.null()])),
     user_email: z.optional(z.union([z.string(), z.null()])),
     user_picture: z.optional(z.union([z.string(), z.null()])),
+    user_phone_number: z.optional(z.union([z.string(), z.null()])),
     notes: z.optional(z.union([z.string(), z.null()])),
     created_at: z.iso.datetime(),
   })
@@ -965,6 +982,13 @@ export const zUserCreate = z.object({
       }),
     )
     .default(true),
+  preferred_language: z
+    .optional(
+      z.string().register(z.globalRegistry, {
+        description: 'Preferred language',
+      }),
+    )
+    .default('en'),
 })
 
 /**
@@ -977,6 +1001,8 @@ export const zUserProfile = z.object({
   email: z.optional(z.union([z.string(), z.null()])),
   picture: z.optional(z.union([z.string(), z.null()])),
   bio: z.optional(z.union([z.string(), z.null()])),
+  phone_number: z.optional(z.union([z.string(), z.null()])),
+  preferred_language: z.optional(z.string()).default('en'),
   email_verified: z.optional(z.boolean()).default(false),
   roles: z.optional(
     z.array(z.string()).register(z.globalRegistry, {
@@ -1008,6 +1034,8 @@ export const zUserProfileUpdate = z.object({
   nickname: z.optional(z.union([z.string().max(50), z.null()])),
   picture: z.optional(z.union([z.url().min(1).max(2083), z.null()])),
   bio: z.optional(z.union([z.string().max(500), z.null()])),
+  phone_number: z.optional(z.union([z.string().max(30), z.null()])),
+  preferred_language: z.optional(z.union([z.string().regex(/^(en|de)$/), z.null()])),
 })
 
 /**
@@ -1019,6 +1047,8 @@ export const zUserRead = z.object({
   email: z.optional(z.union([z.email(), z.null()])),
   name: z.optional(z.union([z.string(), z.null()])),
   picture: z.optional(z.union([z.string(), z.null()])),
+  phone_number: z.optional(z.union([z.string(), z.null()])),
+  preferred_language: z.optional(z.string()).default('en'),
   roles: z.array(z.string()),
   is_active: z.boolean(),
   rejection_reason: z.optional(z.union([z.string(), z.null()])),
@@ -1035,6 +1065,7 @@ export const zUserUpdate = z.object({
   roles: z.optional(z.union([z.array(z.string()), z.null()])),
   is_active: z.optional(z.union([z.boolean(), z.null()])),
   rejection_reason: z.optional(z.union([z.string(), z.null()])),
+  preferred_language: z.optional(z.union([z.string(), z.null()])),
 })
 
 export const zValidationErrorItem = z.object({
@@ -1374,6 +1405,24 @@ export const zEventsUpdateEventData = z.object({
  * Successful Response
  */
 export const zEventsUpdateEventResponse = zEventRead
+
+export const zEventsListEventBookingsData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    event_id: z.string(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Events-List Event Bookings
+ * Successful Response
+ */
+export const zEventsListEventBookingsResponse = z
+  .array(zEventBookingEntry)
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
 
 export const zEventsCreateEventWithSlotsData = z.object({
   body: zEventCreateWithSlots,

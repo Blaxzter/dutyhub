@@ -7,18 +7,16 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import type { EventGroupListResponse, EventGroupRead } from '@/client/types.gen'
+import { useAuthStore } from '@/stores/auth'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { useDialog } from '@/composables/useDialog'
+
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -30,12 +28,11 @@ import {
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import Textarea from '@/components/ui/textarea/Textarea.vue'
-import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
-import { useDialog } from '@/composables/useDialog'
+
+import type { EventGroupListResponse, EventGroupRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 import { formatDate } from '@/lib/format'
 import { statusVariant } from '@/lib/status'
-import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
 const router = useRouter()

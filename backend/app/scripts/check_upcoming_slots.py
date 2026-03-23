@@ -36,13 +36,10 @@ async def check_upcoming_slots() -> int:
 
     async with async_session() as db:
         # Find slots starting within the lookahead window that aren't full
-        query = (
-            select(DutySlot)
-            .where(
-                col(DutySlot.date) == today,
-                col(DutySlot.start_time) >= now.time(),
-                col(DutySlot.start_time) <= cutoff_time,
-            )
+        query = select(DutySlot).where(
+            col(DutySlot.date) == today,
+            col(DutySlot.start_time) >= now.time(),
+            col(DutySlot.start_time) <= cutoff_time,
         )
         result = await db.execute(query)
         slots = list(result.scalars().all())
@@ -71,7 +68,8 @@ async def check_upcoming_slots() -> int:
                 select(func.count())
                 .select_from(Notification)
                 .where(
-                    col(Notification.notification_type_code) == "slot.starting_soon_unfilled",
+                    col(Notification.notification_type_code)
+                    == "slot.starting_soon_unfilled",
                     Notification.data["slot_id"].astext == str(slot.id),  # type: ignore[union-attr]
                     col(Notification.created_at) >= now - dt.timedelta(hours=1),
                 )
@@ -87,7 +85,7 @@ async def check_upcoming_slots() -> int:
                 title="Unfilled Slot Starting Soon",
                 body=(
                     f'Slot "{slot.title}" starts in ~{LOOKAHEAD_MINUTES} minutes '
-                    f'with {open_spots} open spot(s) ({confirmed}/{slot.max_bookings} filled).'
+                    f"with {open_spots} open spot(s) ({confirmed}/{slot.max_bookings} filled)."
                 ),
                 data={
                     "slot_id": str(slot.id),

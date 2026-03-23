@@ -77,6 +77,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import type { User } from '@auth0/auth0-vue'
 import { UserIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
@@ -86,8 +87,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 
 import SimpleIcon from '@/components/utils/SimpleIcon.vue'
-
-import type { User } from '@auth0/auth0-vue'
 
 import { useAuthProvider } from './useAuthProvider'
 

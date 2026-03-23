@@ -85,11 +85,13 @@ async def get_or_create_user(
     name: str | None = None
     picture: str | None = None
     email_verified: bool = False
+    preferred_language: str = "en"
     if profile_data:
         email = profile_data.get("email")
         name = profile_data.get("name") or profile_data.get("nickname")
         picture = profile_data.get("picture")
         email_verified = bool(profile_data.get("email_verified"))
+        preferred_language = profile_data.get("preferred_language") or "en"
 
     # Fallback to claims if profile_data not provided
     if not email:
@@ -99,7 +101,9 @@ async def get_or_create_user(
     if not picture:
         picture = claims.get("picture")
 
-    is_superadmin = bool(email and email in [str(e) for e in settings.SUPERADMIN_EMAILS])
+    is_superadmin = bool(
+        email and email in [str(e) for e in settings.SUPERADMIN_EMAILS]
+    )
     user_in = UserCreate(
         auth0_sub=auth0_sub,
         email=email,
@@ -108,6 +112,7 @@ async def get_or_create_user(
         email_verified=email_verified,
         roles=["admin"] if is_superadmin else [],
         is_active=is_superadmin,
+        preferred_language=preferred_language,
     )
     new_user = await crud_user.create(session, obj_in=user_in)
 

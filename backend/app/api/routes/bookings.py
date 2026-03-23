@@ -50,8 +50,11 @@ async def list_my_bookings(
         date_to=date_to,
     )
     total = await crud_booking.count_by_user(
-        session, user_id=current_user.id, status=status,
-        date_from=date_from, date_to=date_to,
+        session,
+        user_id=current_user.id,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
     )
 
     enriched: list[BookingReadWithSlot] = []
@@ -130,7 +133,9 @@ async def create_booking(
     existing_bookings = await crud_booking.get_multi_by_slot(
         session, duty_slot_id=slot.id, status="confirmed"
     )
-    existing_user_ids = [b.user_id for b in existing_bookings if b.user_id != current_user.id]
+    existing_user_ids = [
+        b.user_id for b in existing_bookings if b.user_id != current_user.id
+    ]
 
     # If previously cancelled, reactivate
     if existing and existing.status == "cancelled":
@@ -147,15 +152,26 @@ async def create_booking(
         )
         result = await crud_booking.create(session, obj_in=full_booking)  # type: ignore[arg-type]
 
+    # Load event name for richer notification
+    from app.crud.event import event as crud_event
+
+    event = await crud_event.get(session, str(slot.event_id))
+    event_name = event.name if event else None
+
     # Dispatch notifications
     background_tasks.add_task(
         dispatch_booking_confirmed,
         booking_id=result.id,
         user_id=current_user.id,
         slot_title=slot.title,
+        slot_date=slot.date,
+        slot_start_time=slot.start_time,
+        slot_end_time=slot.end_time,
+        slot_location=slot.location,
+        event_name=event_name,
         slot_id=slot.id,
         event_id=slot.event_id,
-        event_group_id=None,
+        event_group_id=event.event_group_id if event else None,
     )
     if existing_user_ids:
         background_tasks.add_task(

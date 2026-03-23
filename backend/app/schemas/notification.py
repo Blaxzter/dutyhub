@@ -128,6 +128,7 @@ class TelegramBindingRead(BaseModel):
 
 class TelegramBindRequest(BaseModel):
     """Response when initiating a Telegram binding."""
+
     pass
 
 

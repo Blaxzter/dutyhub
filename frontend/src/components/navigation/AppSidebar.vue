@@ -88,7 +88,11 @@ function eventBadge(
 
 function formatBookingTitle(slotDate: string, slotTitle: string): string {
   const d = new Date(slotDate + 'T00:00:00')
-  const formatted = d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: '2-digit' })
+  const formatted = d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: '2-digit',
+    month: '2-digit',
+  })
   return `${formatted} — ${slotTitle}`
 }
 
@@ -179,11 +183,18 @@ const navAdmin = computed(() =>
       <!-- Home link above the Platform section -->
       <SidebarMenu class="px-2 pt-1">
         <SidebarMenuItem>
-          <SidebarMenuButton :tooltip="t('navigation.sidebar.items.home.label')" :is-active="route.name === 'home'" as-child>
+          <SidebarMenuButton
+            :tooltip="t('navigation.sidebar.items.home.label')"
+            :is-active="route.name === 'home'"
+            as-child
+          >
             <RouterLink :to="{ name: 'home' }">
               <House />
               <span>{{ t('navigation.sidebar.items.home.label') }}</span>
-              <span v-if="route.name === 'home'" class="ml-auto size-1.5 rounded-full bg-foreground" />
+              <span
+                v-if="route.name === 'home'"
+                class="ml-auto size-1.5 rounded-full bg-foreground"
+              />
             </RouterLink>
           </SidebarMenuButton>
         </SidebarMenuItem>

@@ -1,12 +1,13 @@
-"""Email notification channel using fastapi-mail."""
+"""Email notification channel using aiosmtplib."""
 
 from pathlib import Path
 
 from app.core.config import settings
 from app.core.logger import get_logger
 from app.logic.notifications.channels.base import NotificationChannel
-from app.schemas.notification import NotificationData
+from app.logic.notifications.messages import get_email_strings
 from app.models.user import User
+from app.schemas.notification import NotificationData
 
 logger = get_logger(__name__)
 
@@ -32,14 +33,26 @@ class EmailChannel(NotificationChannel):
             return False
 
         if not recipient.email:
-            logger.warning(f"No email for user {recipient.id}, skipping email notification")
+            logger.warning(
+                f"No email for user {recipient.id}, skipping email notification"
+            )
+            return False
+
+        if recipient.auth0_sub.startswith("demo|"):
+            logger.debug(f"Skipping email for demo user {recipient.id}")
             return False
 
         try:
-            import aiosmtplib
             from email.message import EmailMessage
 
-            html_body = _build_html(title=title, body=body, data=data)
+            import aiosmtplib
+
+            html_body = _build_html(
+                title=title,
+                body=body,
+                data=data,
+                language=recipient.preferred_language,
+            )
             from_name = settings.EMAILS_FROM_NAME or settings.PROJECT_NAME
             from_email = settings.EMAILS_FROM_EMAIL or "noreply@example.com"
 
@@ -67,19 +80,24 @@ class EmailChannel(NotificationChannel):
             return False
 
 
-def _build_html(*, title: str, body: str, data: NotificationData | None = None) -> str:
-    """Build a simple HTML email body."""
+def _build_html(
+    *,
+    title: str,
+    body: str,
+    data: NotificationData | None = None,
+    language: str = "en",
+) -> str:
+    """Build a simple HTML email body with localized template strings."""
     frontend_url = settings.FRONTEND_HOST
+    email_strings = get_email_strings(language)
 
     # Build action link if we have relevant data
     action_link = ""
     if data:
-        if "booking_id" in data:
-            action_link = f'{frontend_url}/app/my-bookings'
-        elif "event_id" in data:
-            action_link = f'{frontend_url}/app/events/{data["event_id"]}'
+        if "event_id" in data:
+            action_link = f"{frontend_url}/app/events/{data['event_id']}"
         elif "event_group_id" in data:
-            action_link = f'{frontend_url}/app/event-groups/{data["event_group_id"]}'
+            action_link = f"{frontend_url}/app/event-groups/{data['event_group_id']}"
 
     action_html = ""
     if action_link:
@@ -89,7 +107,7 @@ def _build_html(*, title: str, body: str, data: NotificationData | None = None) 
                style="background-color: #1f2937; color: #ffffff; padding: 12px 28px;
                       text-decoration: none; border-radius: 8px; display: inline-block;
                       font-size: 14px; font-weight: 600;">
-                View Details
+                {email_strings["view_details"]}
             </a>
         </div>
         """
@@ -99,7 +117,7 @@ def _build_html(*, title: str, body: str, data: NotificationData | None = None) 
 
     return f"""
     <!DOCTYPE html>
-    <html>
+    <html lang="{language}">
     <head><meta charset="utf-8"></head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                  margin: 0; padding: 0; background-color: #f3f4f6; color: #1f2937;">
@@ -119,7 +137,7 @@ def _build_html(*, title: str, body: str, data: NotificationData | None = None) 
                 <div style="padding: 32px 24px;">
                     <h2 style="margin: 0 0 12px; font-size: 20px; color: #1f2937;">{title}</h2>
                     <p style="margin: 0 0 24px; color: #4b5563; font-size: 15px; line-height: 1.6;">
-                        {body}
+                        {body.replace(chr(10), "<br>")}
                     </p>
                     {action_html}
                 </div>
@@ -127,11 +145,11 @@ def _build_html(*, title: str, body: str, data: NotificationData | None = None) 
                 <div style="border-top: 1px solid #e5e7eb; padding: 16px 24px;
                             background-color: #f9fafb; text-align: center;">
                     <p style="margin: 0; font-size: 12px; color: #9ca3af; line-height: 1.5;">
-                        You received this because of your notification settings.
+                        {email_strings["footer_text"]}
                         <br />
                         <a href="{preferences_url}"
                            style="color: #6b7280; text-decoration: underline;">
-                            Manage preferences
+                            {email_strings["manage_preferences"]}
                         </a>
                     </p>
                 </div>

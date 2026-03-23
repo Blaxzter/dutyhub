@@ -13,7 +13,7 @@ interface PersistedFilters {
   myBookingsOnly: boolean
   hideFullSlots: boolean
   dateFrom: string | null // YYYY-MM-DD or null (= today)
-  dateTo: string | null   // YYYY-MM-DD or null (= no upper bound)
+  dateTo: string | null // YYYY-MM-DD or null (= no upper bound)
 }
 
 function loadFromStorage(): Partial<PersistedFilters> {

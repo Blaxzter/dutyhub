@@ -29,6 +29,9 @@ class PushChannel(NotificationChannel):
             logger.warning("Push channel not configured (missing VAPID keys), skipping")
             return False
 
+        if recipient.auth0_sub.startswith("demo|"):
+            return False
+
         try:
             from pywebpush import WebPushException, webpush
 
@@ -42,12 +45,14 @@ class PushChannel(NotificationChannel):
                 logger.debug(f"No push subscriptions for user {recipient.id}")
                 return False
 
-            payload = json.dumps({
-                "title": title,
-                "body": body,
-                "data": data or {},
-                "icon": "/favicon.ico",
-            })
+            payload = json.dumps(
+                {
+                    "title": title,
+                    "body": body,
+                    "data": data or {},
+                    "icon": "/favicon.ico",
+                }
+            )
 
             vapid_claims: dict[str, str | int] = {
                 "sub": f"mailto:{settings.VAPID_CLAIMS_EMAIL or 'noreply@example.com'}",
@@ -72,11 +77,19 @@ class PushChannel(NotificationChannel):
                     )
                     any_success = True
                 except WebPushException as e:
-                    if hasattr(e, "response") and e.response and e.response.status_code == 410:  # type: ignore[union-attr]
+                    if (
+                        hasattr(e, "response")
+                        and e.response
+                        and e.response.status_code == 410
+                    ):  # type: ignore[union-attr]
                         stale_endpoints.append(sub.endpoint)
-                        logger.info(f"Removing stale push subscription: {sub.endpoint[:50]}...")
+                        logger.info(
+                            f"Removing stale push subscription: {sub.endpoint[:50]}..."
+                        )
                     else:
-                        logger.warning(f"Push failed for endpoint {sub.endpoint[:50]}...: {e}")
+                        logger.warning(
+                            f"Push failed for endpoint {sub.endpoint[:50]}...: {e}"
+                        )
 
             # Clean up stale subscriptions
             if stale_endpoints:

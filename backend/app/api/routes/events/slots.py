@@ -32,7 +32,9 @@ from app.schemas.slot_batch import SlotBatchCreate
 router = APIRouter()
 
 
-@router.post("/with-slots", response_model=EventCreateWithSlotsResponse, status_code=201)
+@router.post(
+    "/with-slots", response_model=EventCreateWithSlotsResponse, status_code=201
+)
 async def create_event_with_slots(
     payload: EventCreateWithSlots,
     session: DBDep,
@@ -45,7 +47,9 @@ async def create_event_with_slots(
 
     if payload.new_event_group:
         payload.new_event_group.created_by_id = current_user.id
-        db_group = await crud_event_group.create(session, obj_in=payload.new_event_group)
+        db_group = await crud_event_group.create(
+            session, obj_in=payload.new_event_group
+        )
         event_group_id = db_group.id
         event_group_read = EventGroupRead.model_validate(db_group)
 
@@ -67,7 +71,9 @@ async def create_event_with_slots(
     db_event.default_start_time = payload.schedule.default_start_time
     db_event.default_end_time = payload.schedule.default_end_time
     db_event.people_per_slot = payload.schedule.people_per_slot
-    db_event.schedule_overrides = [o.model_dump(mode="json") for o in payload.schedule.overrides]
+    db_event.schedule_overrides = [
+        o.model_dump(mode="json") for o in payload.schedule.overrides
+    ]
     session.add(db_event)
     await session.flush()
 
@@ -84,7 +90,9 @@ async def create_event_with_slots(
         slot_duration_minutes=payload.schedule.slot_duration_minutes,
         people_per_slot=payload.schedule.people_per_slot,
         remainder_mode=payload.schedule.remainder_mode,
-        schedule_overrides=[o.model_dump(mode="json") for o in payload.schedule.overrides],
+        schedule_overrides=[
+            o.model_dump(mode="json") for o in payload.schedule.overrides
+        ],
     )
     db_batch = await crud_slot_batch.create(session, obj_in=batch_in)
 
@@ -134,7 +142,10 @@ async def add_slots_to_event(
         db_group = await crud_event_group.get(
             session, db_event.event_group_id, raise_404_error=True
         )
-        if payload.start_date < db_group.start_date or payload.end_date > db_group.end_date:
+        if (
+            payload.start_date < db_group.start_date
+            or payload.end_date > db_group.end_date
+        ):
             raise_problem(
                 400,
                 code="dates_outside_event_group",
@@ -157,7 +168,9 @@ async def add_slots_to_event(
         slot_duration_minutes=payload.schedule.slot_duration_minutes,
         people_per_slot=payload.schedule.people_per_slot,
         remainder_mode=payload.schedule.remainder_mode,
-        schedule_overrides=[o.model_dump(mode="json") for o in payload.schedule.overrides],
+        schedule_overrides=[
+            o.model_dump(mode="json") for o in payload.schedule.overrides
+        ],
     )
     db_batch = await crud_slot_batch.create(session, obj_in=batch_in)
 
@@ -215,20 +228,32 @@ async def regenerate_event_slots(
     if batch_id:
         db_batch = await crud_slot_batch.get(session, batch_id, raise_404_error=True)
         if str(db_batch.event_id) != str(db_event.id):
-            raise_problem(400, code="batch.wrong_event", detail="Batch does not belong to this event")
+            raise_problem(
+                400,
+                code="batch.wrong_event",
+                detail="Batch does not belong to this event",
+            )
 
     # Determine effective event fields (use payload overrides or existing/batch values)
     effective_name = payload.name or db_event.name
     if db_batch:
         effective_start_date = payload.start_date or db_batch.start_date
         effective_end_date = payload.end_date or db_batch.end_date
-        effective_location = payload.location if payload.location is not None else db_batch.location
-        effective_category = payload.category if payload.category is not None else db_batch.category
+        effective_location = (
+            payload.location if payload.location is not None else db_batch.location
+        )
+        effective_category = (
+            payload.category if payload.category is not None else db_batch.category
+        )
     else:
         effective_start_date = payload.start_date or db_event.start_date
         effective_end_date = payload.end_date or db_event.end_date
-        effective_location = payload.location if payload.location is not None else db_event.location
-        effective_category = payload.category if payload.category is not None else db_event.category
+        effective_location = (
+            payload.location if payload.location is not None else db_event.location
+        )
+        effective_category = (
+            payload.category if payload.category is not None else db_event.category
+        )
 
     # 1. Generate new slot definitions
     new_slot_defs = generate_duty_slots(

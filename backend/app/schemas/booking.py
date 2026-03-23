@@ -77,5 +77,15 @@ class SlotBookingEntry(BaseModel):
     user_name: str | None = None
     user_email: str | None = None
     user_picture: str | None = None
+    user_phone_number: str | None = None
     notes: str | None = None
     created_at: dt.datetime
+
+
+class EventBookingEntry(BaseModel):
+    """A confirmed booking with slot_id, for the bulk event bookings endpoint."""
+
+    id: uuid.UUID
+    duty_slot_id: uuid.UUID
+    user_name: str | None = None
+    user_phone_number: str | None = None

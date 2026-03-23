@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import { XIcon } from 'lucide-vue-next'
 
@@ -30,19 +30,13 @@ const dismiss = () => {
     leave-active-class="transition duration-200 ease-in"
     leave-to-class="translate-y-full opacity-0"
   >
-    <div
-      v-if="visible"
-      class="fixed bottom-0 inset-x-0 z-50 p-4 pointer-events-none"
-    >
+    <div v-if="visible" class="fixed bottom-0 inset-x-0 z-50 p-4 pointer-events-none">
       <div
         class="max-w-lg mx-auto bg-card border rounded-lg shadow-lg p-4 flex items-center gap-3 pointer-events-auto"
       >
         <p class="text-sm text-muted-foreground flex-1">
           {{ $t('preauth.cookieNotice.message') }}
-          <router-link
-            :to="{ name: 'privacy' }"
-            class="underline hover:text-foreground"
-          >
+          <router-link :to="{ name: 'privacy' }" class="underline hover:text-foreground">
             {{ $t('preauth.cookieNotice.learnMore') }}
           </router-link>
         </p>

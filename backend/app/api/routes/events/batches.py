@@ -36,7 +36,9 @@ async def delete_batch(
     """Delete a slot batch and all its duty slots (cascade)."""
     db_batch = await crud_slot_batch.get(session, batch_id, raise_404_error=True)
     if str(db_batch.event_id) != event_id:
-        raise_problem(400, code="batch.wrong_event", detail="Batch does not belong to this event")
+        raise_problem(
+            400, code="batch.wrong_event", detail="Batch does not belong to this event"
+        )
 
     # Get event name for snapshot
     db_event = await crud_event.get(session, event_id, raise_404_error=True)

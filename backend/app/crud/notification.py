@@ -28,7 +28,9 @@ class _NotificationUpdate(BaseModel):
     channels_failed: list[str] | None = None
 
 
-class CRUDNotification(CRUDBase[Notification, _NotificationCreate, _NotificationUpdate]):
+class CRUDNotification(
+    CRUDBase[Notification, _NotificationCreate, _NotificationUpdate]
+):
     async def get_multi_by_recipient(
         self,
         db: AsyncSession,
@@ -41,7 +43,11 @@ class CRUDNotification(CRUDBase[Notification, _NotificationCreate, _Notification
         query = select(Notification).where(col(Notification.recipient_id) == user_id)
         if unread_only:
             query = query.where(col(Notification.is_read) == False)  # noqa: E712
-        query = query.order_by(col(Notification.created_at).desc()).offset(skip).limit(limit)
+        query = (
+            query.order_by(col(Notification.created_at).desc())
+            .offset(skip)
+            .limit(limit)
+        )
         result = await db.execute(query)
         return result.scalars().all()
 

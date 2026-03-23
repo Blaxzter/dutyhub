@@ -46,12 +46,15 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
     """Application lifespan: seed notification types on startup."""
     from app.core.db import async_session
+    from app.core.sse import sse_manager
     from app.logic.notifications.seeder import seed_notification_types
 
     async with async_session() as session:
         await seed_notification_types(session)
     logger.info("Notification types seeded")
     yield
+    # Signal SSE connections to close so uvicorn can shut down cleanly
+    await sse_manager.shutdown()
 
 
 if settings.SENTRY_DSN and settings.ENVIRONMENT != "local":

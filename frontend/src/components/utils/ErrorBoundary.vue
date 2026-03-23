@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, onErrorCaptured } from 'vue'
+import { onErrorCaptured, ref } from 'vue'
+
 import { useI18n } from 'vue-i18n'
+
 import { Button } from '@/components/ui/button'
 
 const { t } = useI18n()
@@ -25,10 +27,13 @@ const reset = () => {
       <pre
         v-if="error.message"
         class="text-xs text-left bg-muted p-3 rounded-md overflow-auto max-h-32"
-      >{{ error.message }}</pre>
+        >{{ error.message }}</pre
+      >
       <details v-if="error.stack" class="text-left">
         <summary class="text-xs text-muted-foreground cursor-pointer">Stack trace</summary>
-        <pre class="text-xs bg-muted p-3 rounded-md overflow-auto max-h-64 mt-2">{{ error.stack }}</pre>
+        <pre class="text-xs bg-muted p-3 rounded-md overflow-auto max-h-64 mt-2">{{
+          error.stack
+        }}</pre>
       </details>
       <div class="flex gap-2 justify-center">
         <Button variant="outline" @click="reset">{{ t('common.errors.boundary.tryAgain') }}</Button>

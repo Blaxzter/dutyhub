@@ -1,7 +1,7 @@
 /** Visible date range emitted by the calendar for data fetching. */
 export interface DateRange {
   from: string // YYYY-MM-DD
-  to: string   // YYYY-MM-DD
+  to: string // YYYY-MM-DD
 }
 
 /** Minimal event shape used by the calendar — works with both CalendarEvent and DashboardEvent. */

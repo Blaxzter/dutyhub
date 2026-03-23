@@ -1,6 +1,7 @@
 """Core notification dispatch service."""
 
 import uuid
+from collections.abc import Callable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,6 +23,9 @@ from app.schemas.notification import NotificationData
 
 logger = get_logger(__name__)
 
+# Type alias for a factory that returns (title, body) given a language code
+MessageFactory = Callable[[str], tuple[str, str]]
+
 
 class NotificationService:
     """Dispatches notifications to users through configured channels."""
@@ -39,8 +43,9 @@ class NotificationService:
         *,
         recipient_ids: list[uuid.UUID],
         type_code: str,
-        title: str,
-        body: str,
+        title: str = "",
+        body: str = "",
+        message_factory: MessageFactory | None = None,
         data: NotificationData | None = None,
         scope_chain: list[tuple[str, uuid.UUID]] | None = None,
     ) -> list[Notification]:
@@ -48,9 +53,10 @@ class NotificationService:
 
         For each recipient:
         1. Resolve which channels are enabled (via hierarchical subscription)
-        2. Create in-app Notification record
-        3. Dispatch to each enabled channel
-        4. Record delivery status
+        2. Resolve localized title/body via message_factory (or use static strings)
+        3. Create in-app Notification record
+        4. Dispatch to each enabled channel
+        5. Record delivery status
         """
         notifications: list[Notification] = []
 
@@ -63,6 +69,14 @@ class NotificationService:
             if not recipient:
                 logger.warning(f"Recipient {recipient_id} not found, skipping")
                 continue
+
+            # Resolve localized title/body
+            if message_factory:
+                resolved_title, resolved_body = message_factory(
+                    recipient.preferred_language
+                )
+            else:
+                resolved_title, resolved_body = title, body
 
             # Resolve channels
             channel_config = await crud_subscription.resolve_channels(
@@ -81,8 +95,8 @@ class NotificationService:
                 self.db,
                 recipient_id=recipient_id,
                 notification_type_code=type_code,
-                title=title,
-                body=body,
+                title=resolved_title,
+                body=resolved_body,
                 data=data,
             )
 
@@ -101,8 +115,8 @@ class NotificationService:
                 try:
                     success = await channel.send(
                         recipient=recipient,
-                        title=title,
-                        body=body,
+                        title=resolved_title,
+                        body=resolved_body,
                         data=data,
                     )
                     if success:
@@ -137,8 +151,9 @@ class NotificationService:
         self,
         *,
         type_code: str,
-        title: str,
-        body: str,
+        title: str = "",
+        body: str = "",
+        message_factory: MessageFactory | None = None,
         data: NotificationData | None = None,
     ) -> list[Notification]:
         """Send a notification to all active admin users."""
@@ -162,5 +177,6 @@ class NotificationService:
             type_code=type_code,
             title=title,
             body=body,
+            message_factory=message_factory,
             data=data,
         )

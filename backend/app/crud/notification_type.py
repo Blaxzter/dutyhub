@@ -29,7 +29,9 @@ class CRUDNotificationType(CRUDBase[NotificationType, _Empty, _Empty]):
         query = select(NotificationType).where(col(NotificationType.is_active) == True)  # noqa: E712
         if not include_admin_only:
             query = query.where(col(NotificationType.is_admin_only) == False)  # noqa: E712
-        query = query.order_by(col(NotificationType.category), col(NotificationType.code))
+        query = query.order_by(
+            col(NotificationType.category), col(NotificationType.code)
+        )
         result = await db.execute(query)
         return result.scalars().all()
 

@@ -58,9 +58,7 @@ const formatDateTime = (isoStr: string) => {
       <Table class="table-fixed w-full">
         <TableHeader>
           <TableRow>
-            <TableHead class="w-[45%]">{{
-              t('duties.dutySlots.detail.userName')
-            }}</TableHead>
+            <TableHead class="w-[45%]">{{ t('duties.dutySlots.detail.userName') }}</TableHead>
             <TableHead v-if="authStore.isAdmin" class="w-[25%]">
               {{ t('duties.dutySlots.detail.userNotes') }}
             </TableHead>

@@ -98,6 +98,29 @@ DEMO_LAST_NAMES = [
     "Wagner",
 ]
 
+DEMO_PHONE_NUMBERS = [
+    "+49 151 12345678",
+    "+49 152 23456789",
+    "+49 160 34567890",
+    "+49 170 45678901",
+    "+49 171 56789012",
+    "+49 172 67890123",
+    "+49 175 78901234",
+    "+49 176 89012345",
+    "+49 177 90123456",
+    "+49 178 01234567",
+    "+49 179 11223344",
+    "+49 151 22334455",
+    "+49 152 33445566",
+    "+49 160 44556677",
+    "+49 170 55667788",
+    "+49 171 66778899",
+    "+49 172 77889900",
+    "+49 175 88990011",
+    "+49 176 99001122",
+    "+49 177 10203040",
+]
+
 
 @router.post(
     "/",
@@ -205,6 +228,8 @@ async def create_demo_data(
             auth0_sub=f"demo|{uuid.uuid4().hex[:16]}",
             email=f"{first.lower()}.{last.lower()}.{i}@demo.example.com",
             name=f"{DEMO_PREFIX} {first} {last}",
+            phone_number=DEMO_PHONE_NUMBERS[i % len(DEMO_PHONE_NUMBERS)],
+            preferred_language=rng.choice(["en", "de"]),
             is_active=True,
             roles=[],
         )
@@ -227,9 +252,7 @@ async def create_demo_data(
                 max(1, len(created_slots) // 5),
                 max(1, len(created_slots) * 3 // 5),
             )
-            candidates = rng.sample(
-                created_slots, min(num_to_book, len(created_slots))
-            )
+            candidates = rng.sample(created_slots, min(num_to_book, len(created_slots)))
             for slot in candidates:
                 pair = (slot.id, user.id)
                 if pair in booked_pairs:
@@ -267,25 +290,35 @@ async def delete_demo_data(
 
     # Find demo events
     demo_events = (
-        await db.execute(select(Event).where(col(Event.name).startswith(DEMO_PREFIX)))
-    ).scalars().all()
+        (await db.execute(select(Event).where(col(Event.name).startswith(DEMO_PREFIX))))
+        .scalars()
+        .all()
+    )
 
     # Find demo slots
     demo_slots = (
-        await db.execute(
-            select(DutySlot).where(col(DutySlot.title).startswith(DEMO_PREFIX))
+        (
+            await db.execute(
+                select(DutySlot).where(col(DutySlot.title).startswith(DEMO_PREFIX))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     demo_slot_ids = [s.id for s in demo_slots]
 
     # Delete bookings on demo slots
     bookings_deleted = 0
     if demo_slot_ids:
         bookings = (
-            await db.execute(
-                select(Booking).where(col(Booking.duty_slot_id).in_(demo_slot_ids))
+            (
+                await db.execute(
+                    select(Booking).where(col(Booking.duty_slot_id).in_(demo_slot_ids))
+                )
             )
-        ).scalars().all()
+            .scalars()
+            .all()
+        )
         bookings_deleted = len(bookings)
         for b in bookings:
             await db.delete(b)
@@ -300,18 +333,24 @@ async def delete_demo_data(
 
     # Delete demo event groups
     demo_groups = (
-        await db.execute(
-            select(EventGroup).where(col(EventGroup.name).startswith(DEMO_PREFIX))
+        (
+            await db.execute(
+                select(EventGroup).where(col(EventGroup.name).startswith(DEMO_PREFIX))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     groups_deleted = len(demo_groups)
     for g in demo_groups:
         await db.delete(g)
 
     # Delete demo users (auth0_sub starts with 'demo|')
     demo_users = (
-        await db.execute(select(User).where(col(User.auth0_sub).startswith("demo|")))
-    ).scalars().all()
+        (await db.execute(select(User).where(col(User.auth0_sub).startswith("demo|"))))
+        .scalars()
+        .all()
+    )
     users_deleted = len(demo_users)
     for u in demo_users:
         await db.delete(u)

@@ -9,6 +9,7 @@ class ProfileInit(BaseModel):
     nickname: str | None = None
     picture: str | None = None
     email_verified: bool | None = None
+    preferred_language: str | None = None
 
 
 class UserProfileUpdate(BaseModel):
@@ -16,6 +17,12 @@ class UserProfileUpdate(BaseModel):
     nickname: str | None = Field(None, max_length=50, description="User's nickname")
     picture: HttpUrl | None = Field(None, description="URL to user's profile picture")
     bio: str | None = Field(None, max_length=500, description="User's biography")
+    phone_number: str | None = Field(
+        None, max_length=30, description="User's phone number"
+    )
+    preferred_language: str | None = Field(
+        None, pattern="^(en|de)$", description="Preferred language for notifications"
+    )
 
 
 class UserProfile(BaseModel):
@@ -25,6 +32,8 @@ class UserProfile(BaseModel):
     email: str | None = None
     picture: str | None = None
     bio: str | None = None
+    phone_number: str | None = None
+    preferred_language: str = "en"
     email_verified: bool = False
     roles: list[str] = Field(default_factory=list, description="User's roles")
     is_admin: bool = Field(default=False, description="Whether user has admin role")

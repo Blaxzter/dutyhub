@@ -21,16 +21,11 @@ import { useFormatters } from '@/composables/useFormatters'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import Input from '@/components/ui/input/Input.vue'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Separator from '@/components/ui/separator/Separator.vue'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
 
@@ -82,9 +77,7 @@ async function handleVisibleMonth(range: { from: string; to: string }) {
 // --- Grouping state (persisted in localStorage) ---
 type GroupMode = 'none' | 'date' | 'event' | 'location'
 const STORAGE_KEY = 'wirksam:bookings:groupBy'
-const activeGrouping = ref<GroupMode>(
-  (localStorage.getItem(STORAGE_KEY) as GroupMode) || 'none',
-)
+const activeGrouping = ref<GroupMode>((localStorage.getItem(STORAGE_KEY) as GroupMode) || 'none')
 
 watch(activeGrouping, (v) => localStorage.setItem(STORAGE_KEY, v))
 
@@ -362,10 +355,7 @@ onMounted(loadBookings)
     </div>
 
     <!-- Empty -->
-    <div
-      v-else-if="sortedBookings.length === 0"
-      class="text-center py-12 text-muted-foreground"
-    >
+    <div v-else-if="sortedBookings.length === 0" class="text-center py-12 text-muted-foreground">
       {{ t('duties.bookings.empty') }}
     </div>
 
@@ -374,7 +364,9 @@ onMounted(loadBookings)
       <section v-for="group in groupedBookings" :key="group.key">
         <!-- Group header (only when grouping is active) -->
         <div v-if="group.label" class="flex items-center gap-3 mb-4">
-          <h2 class="text-lg font-semibold truncate min-w-0 max-w-sm" :title="group.label">{{ group.label }}</h2>
+          <h2 class="text-lg font-semibold truncate min-w-0 max-w-sm" :title="group.label">
+            {{ group.label }}
+          </h2>
           <Separator class="flex-1" />
           <span class="text-sm text-muted-foreground whitespace-nowrap">
             {{ group.bookings.length }}
@@ -386,15 +378,16 @@ onMounted(loadBookings)
           <Card
             v-for="booking in group.bookings"
             :key="booking.id"
-            :class="[
-              booking.status === 'cancelled' ? 'opacity-75 border-destructive/30' : '',
-            ]"
+            :class="[booking.status === 'cancelled' ? 'opacity-75 border-destructive/30' : '']"
           >
             <CardHeader class="pb-3">
               <div class="flex items-start justify-between gap-2 min-w-0">
                 <div class="min-w-0">
                   <!-- Use event name as title for active bookings; fall back to slot title for cancelled -->
-                  <CardTitle class="text-lg truncate" :title="eventName(booking) ?? slotTitle(booking)">
+                  <CardTitle
+                    class="text-lg truncate"
+                    :title="eventName(booking) ?? slotTitle(booking)"
+                  >
                     {{ eventName(booking) ?? slotTitle(booking) }}
                   </CardTitle>
                 </div>
@@ -418,9 +411,7 @@ onMounted(loadBookings)
                 >
                   <Clock class="h-3.5 w-3.5" />
                   {{ formatTime(slotStartTime(booking)) }}
-                  <template v-if="slotStartTime(booking) && slotEndTime(booking)">
-                    -
-                  </template>
+                  <template v-if="slotStartTime(booking) && slotEndTime(booking)"> - </template>
                   {{ formatTime(slotEndTime(booking)) }}
                 </div>
 
@@ -451,10 +442,7 @@ onMounted(loadBookings)
               </div>
 
               <!-- Slot deleted notice -->
-              <div
-                v-else-if="booking.status === 'cancelled' && !booking.duty_slot_id"
-                class="mt-3"
-              >
+              <div v-else-if="booking.status === 'cancelled' && !booking.duty_slot_id" class="mt-3">
                 <Separator class="mb-3" />
                 <p class="text-xs text-muted-foreground italic">
                   {{ t('duties.bookings.slotDeleted') }}

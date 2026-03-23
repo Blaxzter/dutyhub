@@ -65,6 +65,24 @@
           </FormItem>
         </FormField>
 
+        <!-- Phone Number Field -->
+        <FormField v-slot="{ componentField }" name="phone_number">
+          <FormItem>
+            <FormLabel>{{ $t('user.settings.profile.edit.fields.phoneNumber.label') }}</FormLabel>
+            <FormControl>
+              <Input
+                type="tel"
+                :placeholder="$t('user.settings.profile.edit.fields.phoneNumber.placeholder')"
+                v-bind="componentField"
+              />
+            </FormControl>
+            <FormDescription>{{
+              $t('user.settings.profile.edit.fields.phoneNumber.description')
+            }}</FormDescription>
+            <FormMessage />
+          </FormItem>
+        </FormField>
+
         <!-- Bio/Description Field -->
         <FormField v-slot="{ componentField }" name="bio">
           <FormItem>
@@ -116,6 +134,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
+import type { User } from '@auth0/auth0-vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { EditIcon, InfoIcon, LoaderIcon, SaveIcon } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
@@ -137,9 +156,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
-import { zUserProfileUpdate } from '@/client/zod.gen'
-import type { User } from '@auth0/auth0-vue'
 import type { UserProfileUpdate } from '@/client/types.gen'
+import { zUserProfileUpdate } from '@/client/zod.gen'
 
 interface Props {
   user: User | undefined
@@ -172,16 +190,19 @@ const form = useForm({
     nickname: '',
     picture: '',
     bio: '',
+    phone_number: '',
   },
 })
 
 // Initialize form with current user data
 onMounted(() => {
   if (props.user) {
+    const userRecord = props.user as Record<string, string>
     const formValues: Record<string, string> = {
       name: props.user.name || '',
       nickname: props.user.nickname || '',
-      bio: (props.user as Record<string, string>).bio || '',
+      bio: userRecord.bio || '',
+      phone_number: userRecord.phone_number || '',
     }
 
     // Only include picture if it can be edited
@@ -220,6 +241,7 @@ const updateUserProfile = async (values: UserProfileUpdate) => {
       name: values.name,
       nickname: values.nickname,
       bio: values.bio,
+      phone_number: values.phone_number || undefined,
     }
 
     // Only include picture if it can be edited
@@ -240,10 +262,12 @@ const updateUserProfile = async (values: UserProfileUpdate) => {
 // Reset form to current user values
 const resetForm = () => {
   if (props.user) {
+    const userRecord = props.user as Record<string, string>
     const formValues: Record<string, string> = {
       name: props.user.name || '',
       nickname: props.user.nickname || '',
-      bio: (props.user as Record<string, string>).bio || '',
+      bio: userRecord.bio || '',
+      phone_number: userRecord.phone_number || '',
     }
 
     // Only include picture if it can be edited

@@ -35,11 +35,7 @@
                 <label class="text-sm font-medium">
                   {{ $t('user.settings.deleteAccount.typeToConfirm', { confirmWord }) }}
                 </label>
-                <Input
-                  v-model="confirmText"
-                  :placeholder="confirmWord"
-                  class="mt-2"
-                />
+                <Input v-model="confirmText" :placeholder="confirmWord" class="mt-2" />
               </div>
             </div>
 
@@ -63,7 +59,10 @@
         </Dialog>
 
         <!-- Error message -->
-        <div v-if="errorMessage" class="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800">
+        <div
+          v-if="errorMessage"
+          class="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800"
+        >
           <p class="text-sm">{{ errorMessage }}</p>
         </div>
       </div>
@@ -77,8 +76,9 @@ import { computed, ref } from 'vue'
 import { Trash2Icon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
-import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useAuthStore } from '@/stores/auth'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

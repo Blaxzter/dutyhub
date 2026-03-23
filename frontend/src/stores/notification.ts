@@ -102,7 +102,12 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
-  async function fetchNotifications(options?: { unreadOnly?: boolean; skip?: number; limit?: number; append?: boolean }) {
+  async function fetchNotifications(options?: {
+    unreadOnly?: boolean
+    skip?: number
+    limit?: number
+    append?: boolean
+  }) {
     loading.value = true
     try {
       const params: Record<string, unknown> = {}
@@ -110,13 +115,15 @@ export const useNotificationStore = defineStore('notification', () => {
       if (options?.skip !== undefined) params.skip = options.skip
       if (options?.limit) params.limit = options.limit
 
-      const res = await get<{ data: {
-        items: NotificationItem[]
-        total: number
-        unread_count: number
-        skip: number
-        limit: number
-      } }>({
+      const res = await get<{
+        data: {
+          items: NotificationItem[]
+          total: number
+          unread_count: number
+          skip: number
+          limit: number
+        }
+      }>({
         url: '/notifications/',
         query: params,
       })
@@ -325,11 +332,13 @@ export const useNotificationStore = defineStore('notification', () => {
 
   async function startTelegramBinding() {
     try {
-      const res = await post<{ data: {
-        verification_code: string
-        bot_username: string | null
-        expires_at: string
-      } }>({
+      const res = await post<{
+        data: {
+          verification_code: string
+          bot_username: string | null
+          expires_at: string
+        }
+      }>({
         url: '/notifications/telegram/bind',
       })
       return res.data

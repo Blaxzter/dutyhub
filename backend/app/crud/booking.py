@@ -60,7 +60,9 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         if status:
             query = query.where(col(Booking.status) == status)
         if date_from or date_to:
-            query = query.outerjoin(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
+            query = query.outerjoin(
+                DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id)
+            )
             if date_from:
                 query = query.where(
                     or_(
@@ -100,7 +102,9 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         if status:
             query = query.where(col(Booking.status) == status)
         if date_from or date_to:
-            query = query.outerjoin(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
+            query = query.outerjoin(
+                DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id)
+            )
             if date_from:
                 query = query.where(
                     or_(
@@ -134,6 +138,22 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         result = await db.execute(query)
         return list(result.scalars().all())
 
+    async def get_confirmed_by_event(
+        self,
+        db: AsyncSession,
+        *,
+        event_id: uuid.UUID,
+    ) -> list[Booking]:
+        """Get all confirmed bookings for every slot belonging to an event, with user data."""
+        query = (
+            select(Booking)
+            .join(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
+            .where(col(DutySlot.event_id) == event_id)
+            .where(col(Booking.status) == "confirmed")
+            .options(selectinload(Booking.user))  # type: ignore[arg-type]
+        )
+        result = await db.execute(query)
+        return list(result.scalars().all())
 
     async def cancel_bookings_for_slots(
         self,

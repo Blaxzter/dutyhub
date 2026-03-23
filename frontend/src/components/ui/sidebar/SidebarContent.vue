@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+
 import { ScrollArea } from '@/components/ui/scroll-area'
+
 import { cn } from '@/lib/utils'
 
 const props = defineProps<{

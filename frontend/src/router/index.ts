@@ -209,6 +209,24 @@ const router = createRouter({
       ],
     },
     {
+      path: '/print',
+      name: 'print-layout',
+      component: () => import('@/layout/PrintLayout.vue'),
+      beforeEnter: authGuard,
+      children: [
+        {
+          path: 'events/:eventId',
+          name: 'print-event',
+          component: () => import('@/views/print/PrintEventView.vue'),
+        },
+        {
+          path: 'event-groups/:groupId',
+          name: 'print-event-group',
+          component: () => import('@/views/print/PrintEventGroupView.vue'),
+        },
+      ],
+    },
+    {
       path: '/',
       name: 'no-layout',
       redirect: { name: 'landing' },

@@ -7,9 +7,12 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import type { UserProfile, UserRead } from '@/client/types.gen'
-import ActionToast from '@/components/ui/sonner/ActionToast.vue'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+
+import ActionToast from '@/components/ui/sonner/ActionToast.vue'
+
+import type { UserProfile, UserRead } from '@/client/types.gen'
+import i18n from '@/locales/i18n'
 
 export type { User }
 
@@ -75,6 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
               nickname: auth0.user.value.nickname,
               picture: auth0.user.value.picture,
               email_verified: auth0.user.value.email_verified,
+              preferred_language: i18n.global.locale.value,
             }
           : null
 
@@ -83,6 +87,12 @@ export const useAuthStore = defineStore('auth', () => {
         body: profileInit,
       })
       profile.value = response.data
+
+      // Apply server-side language preference
+      if (response.data.preferred_language) {
+        i18n.global.locale.value = response.data.preferred_language
+        localStorage.setItem('locale', response.data.preferred_language)
+      }
 
       // Check for pending users once per session (admin only)
       if (response.data.is_admin) {

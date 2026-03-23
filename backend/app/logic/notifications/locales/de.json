@@ -1,0 +1,47 @@
+{
+  "booking.confirmed": {
+    "title": "✅ Buchung bestätigt",
+    "body": "Ihre Buchung wurde bestätigt!\n\n📌 {slot_title}\n📅 {date} ⏰ {start_time}–{end_time}\n🏠 {location}\n🎫 {event_name}"
+  },
+  "booking.slot_cobooked": {
+    "title": "Neue Mitbuchung",
+    "body": "{name} hat ebenfalls den Slot „{slot_title}“ gebucht."
+  },
+  "booking.cancelled_by_user": {
+    "title": "Buchung storniert",
+    "body": "Ihre Buchung für „{slot_title}“ wurde storniert."
+  },
+  "booking.cancelled_by_admin": {
+    "title": "Buchung durch Admin storniert",
+    "body": "Ihre Buchung für „{slot_title}“{event_label} wurde von einem Administrator storniert.{detail}"
+  },
+  "slot.time_changed": {
+    "title": "Slot-Zeit geändert",
+    "body": "Die Zeit für den Slot „{slot_title}“ wurde aktualisiert. Bitte prüfen Sie den neuen Zeitplan."
+  },
+  "event.published": {
+    "title": "Neues Event veröffentlicht",
+    "body": "Ein neues Event „{event_name}“ wurde veröffentlicht. Schauen Sie es sich an!"
+  },
+  "event_group.published": {
+    "title": "Neue Eventgruppe veröffentlicht",
+    "body": "Die Eventgruppe „{event_group_name}“ wurde veröffentlicht."
+  },
+  "user.registered": {
+    "title": "Neuer Benutzer registriert",
+    "body": "Ein neuer Benutzer „{name}“ hat sich registriert und wartet auf Freigabe."
+  },
+  "user.approved": {
+    "title": "Konto genehmigt",
+    "body": "Ihr Konto wurde genehmigt! Sie können jetzt alle Funktionen nutzen."
+  },
+  "user.rejected": {
+    "title": "Konto abgelehnt",
+    "body": "Ihre Kontoanfrage wurde abgelehnt.{detail}"
+  },
+  "email": {
+    "view_details": "Details anzeigen",
+    "footer_text": "Sie haben diese Nachricht aufgrund Ihrer Benachrichtigungseinstellungen erhalten.",
+    "manage_preferences": "Einstellungen verwalten"
+  }
+}

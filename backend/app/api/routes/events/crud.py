@@ -8,6 +8,7 @@ from app.crud.booking import booking as crud_booking
 from app.crud.event import event as crud_event
 from app.models.duty_slot import DutySlot
 from app.models.event import Event
+from app.schemas.booking import EventBookingEntry
 from app.schemas.event import (
     EventCreate,
     EventListResponse,
@@ -104,6 +105,30 @@ async def update_event(
         )
 
     return updated
+
+
+@router.get("/{event_id}/bookings", response_model=list[EventBookingEntry])
+async def list_event_bookings(
+    event_id: str,
+    session: DBDep,
+    _current_user: CurrentUser,
+) -> list[EventBookingEntry]:
+    """List all confirmed bookings for every slot in an event, with user info."""
+    import uuid as _uuid
+
+    await crud_event.get(session, event_id, raise_404_error=True)
+    bookings = await crud_booking.get_confirmed_by_event(
+        session, event_id=_uuid.UUID(event_id)
+    )
+    return [
+        EventBookingEntry(
+            id=b.id,
+            duty_slot_id=b.duty_slot_id,  # type: ignore[arg-type]
+            user_name=b.user.name if b.user else None,
+            user_phone_number=b.user.phone_number if b.user else None,
+        )
+        for b in bookings
+    ]
 
 
 @router.delete("/{event_id}", status_code=204)

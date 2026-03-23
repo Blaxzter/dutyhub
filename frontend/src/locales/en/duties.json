@@ -30,6 +30,7 @@
     "adminEmpty": "No members have registered availability yet."
   },
   "bookings": {
+    "bookConfirm": "Do you want to book this slot?",
     "bookSuccess": "Slot booked successfully!",
     "cancel": "Cancel Booking",
     "cancelConfirm": "Are you sure you want to cancel this booking?",

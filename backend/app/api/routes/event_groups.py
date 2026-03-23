@@ -43,12 +43,20 @@ async def list_event_groups(
         effective_status = "published"
 
     items = await crud_event_group.get_multi_filtered(
-        session, skip=skip, limit=limit, search=search, status=effective_status,
-        date_from=date_from, date_to=date_to,
+        session,
+        skip=skip,
+        limit=limit,
+        search=search,
+        status=effective_status,
+        date_from=date_from,
+        date_to=date_to,
     )
     total = await crud_event_group.get_count_filtered(
-        session, search=search, status=effective_status,
-        date_from=date_from, date_to=date_to,
+        session,
+        search=search,
+        status=effective_status,
+        date_from=date_from,
+        date_to=date_to,
     )
     return EventGroupListResponse(
         items=[EventGroupRead.model_validate(i) for i in items],

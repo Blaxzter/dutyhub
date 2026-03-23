@@ -5,7 +5,6 @@ import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-rout
 
 import { Badge } from '@/components/ui/badge'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -16,6 +15,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 import SidebarSplitButton from '@/components/navigation/SidebarSplitButton.vue'
 
@@ -30,7 +30,11 @@ export interface NavSubItem {
   routeName?: string
   routeParams?: Record<string, string>
   routeQuery?: LocationQueryRaw
-  badge?: { text: string; tooltip?: string; variant?: 'default' | 'secondary' | 'destructive' | 'outline' }
+  badge?: {
+    text: string
+    tooltip?: string
+    variant?: 'default' | 'secondary' | 'destructive' | 'outline'
+  }
 }
 
 export interface NavItem {
@@ -68,7 +72,7 @@ const hasSubItems = (item: { items?: unknown[] }) => item.items && item.items.le
 
 const isRouteActive = (routeName?: string, routeParams?: Record<string, string>) => {
   if (!routeName) return false
-  const nameMatch = route.name === routeName || route.matched.some(r => r.name === routeName)
+  const nameMatch = route.name === routeName || route.matched.some((r) => r.name === routeName)
   if (!nameMatch || !routeParams) return nameMatch
   // When routeParams are provided, also check they match (e.g. eventId)
   return Object.entries(routeParams).every(
@@ -79,16 +83,25 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
 
 <template>
   <SidebarGroup>
-    <SidebarGroupLabel>{{ $t(props.groupLabelKey ?? 'navigation.sidebar.platform') }}</SidebarGroupLabel>
+    <SidebarGroupLabel>{{
+      $t(props.groupLabelKey ?? 'navigation.sidebar.platform')
+    }}</SidebarGroupLabel>
     <SidebarMenu>
       <template v-for="item in items" :key="item.routeName ?? item.titleKey ?? item.title">
         <!-- Direct link (no sub-items) -->
         <SidebarMenuItem v-if="!hasSubItems(item)">
-          <SidebarMenuButton :tooltip="resolveTitle(item)" :is-active="isRouteActive(item.routeName)" as-child>
+          <SidebarMenuButton
+            :tooltip="resolveTitle(item)"
+            :is-active="isRouteActive(item.routeName)"
+            as-child
+          >
             <RouterLink v-if="item.routeName" :to="{ name: item.routeName }">
               <component :is="item.icon" v-if="item.icon" />
               <span>{{ resolveTitle(item) }}</span>
-              <span v-if="isRouteActive(item.routeName)" class="ml-auto size-1.5 rounded-full bg-foreground" />
+              <span
+                v-if="isRouteActive(item.routeName)"
+                class="ml-auto size-1.5 rounded-full bg-foreground"
+              />
             </RouterLink>
             <a v-else :href="item.url">
               <component :is="item.icon" v-if="item.icon" />
@@ -98,12 +111,7 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
         </SidebarMenuItem>
 
         <!-- Collapsible group (has sub-items) — split: left navigates, right toggles -->
-        <Collapsible
-          v-else
-          as-child
-          :default-open="item.isActive"
-          class="group/collapsible"
-        >
+        <Collapsible v-else as-child :default-open="item.isActive" class="group/collapsible">
           <SidebarMenuItem>
             <SidebarSplitButton :is-active="isRouteActive(item.routeName)">
               <template #link>
@@ -135,8 +143,18 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
                   v-for="subItem in item.items"
                   :key="subItem.routeName ?? subItem.titleKey ?? subItem.title"
                 >
-                  <SidebarMenuSubButton :is-active="isRouteActive(subItem.routeName, subItem.routeParams)" as-child>
-                    <RouterLink v-if="subItem.routeName" :to="{ name: subItem.routeName, params: subItem.routeParams, query: subItem.routeQuery }">
+                  <SidebarMenuSubButton
+                    :is-active="isRouteActive(subItem.routeName, subItem.routeParams)"
+                    as-child
+                  >
+                    <RouterLink
+                      v-if="subItem.routeName"
+                      :to="{
+                        name: subItem.routeName,
+                        params: subItem.routeParams,
+                        query: subItem.routeQuery,
+                      }"
+                    >
                       <span class="truncate">{{ resolveTitle(subItem) }}</span>
                       <Tooltip v-if="subItem.badge">
                         <TooltipTrigger as-child>
@@ -151,7 +169,10 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
                           {{ subItem.badge.tooltip }}
                         </TooltipContent>
                       </Tooltip>
-                      <span v-else-if="isRouteActive(subItem.routeName, subItem.routeParams)" class="ml-auto size-1.5 rounded-full bg-foreground" />
+                      <span
+                        v-else-if="isRouteActive(subItem.routeName, subItem.routeParams)"
+                        class="ml-auto size-1.5 rounded-full bg-foreground"
+                      />
                     </RouterLink>
                     <a v-else :href="subItem.url">
                       <span class="truncate">{{ resolveTitle(subItem) }}</span>

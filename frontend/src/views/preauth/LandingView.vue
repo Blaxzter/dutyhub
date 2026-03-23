@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
+
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import logo from '@/assets/logo/logo.svg'
+
 import { useAuthStore } from '@/stores/auth'
 
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Carousel,
   CarouselContent,
@@ -15,8 +18,6 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel'
 import type { CarouselApi } from '@/components/ui/carousel'
-
-import logo from '@/assets/logo/logo.svg'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -175,8 +176,12 @@ const navigateToAbout = () => {
 
       <!-- Slide Selector Pills -->
       <div class="pills-wrapper relative overflow-hidden">
-        <div class="pills-fade-left pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent" />
-        <div class="pills-fade-right pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background to-transparent" />
+        <div
+          class="pills-fade-left pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent"
+        />
+        <div
+          class="pills-fade-right pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background to-transparent"
+        />
         <div
           ref="pillsContainer"
           class="flex gap-2 overflow-x-auto scroll-smooth px-8 no-scrollbar"
@@ -199,17 +204,11 @@ const navigateToAbout = () => {
 
       <!-- Carousel -->
       <div class="relative max-w-5xl mx-auto">
-        <Carousel
-          class="w-full"
-          @init-api="onApiSet"
-          :opts="{ loop: true }"
-        >
+        <Carousel class="w-full" @init-api="onApiSet" :opts="{ loop: true }">
           <CarouselContent class="py-4">
             <CarouselItem v-for="slide in slides" :key="slide.key">
               <div class="space-y-4 px-8">
-                <div
-                  class="relative overflow-hidden rounded-xl border bg-background shadow-2xl"
-                >
+                <div class="relative overflow-hidden rounded-xl border bg-background shadow-2xl">
                   <div
                     class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10 pointer-events-none"
                   />

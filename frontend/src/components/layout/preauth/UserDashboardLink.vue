@@ -41,9 +41,7 @@ const authStore = useAuthStore()
       </AvatarFallback>
     </Avatar>
     <div :class="direction === 'vertical' ? 'flex flex-col items-center' : 'flex flex-col'">
-      <span class="text-sm font-medium">{{
-        authStore.user?.name || authStore.user?.email
-      }}</span>
+      <span class="text-sm font-medium">{{ authStore.user?.name || authStore.user?.email }}</span>
       <span class="text-xs text-muted-foreground">
         {{ $t('preauth.layout.navigation.goToDashboard') }}
       </span>

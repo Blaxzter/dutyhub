@@ -4,8 +4,9 @@ import { computed, ref } from 'vue'
 import { Filter, RotateCcw } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
-import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useEventFiltersStore } from '@/stores/eventFilters'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import { Badge } from '@/components/ui/badge'
 import Button from '@/components/ui/button/Button.vue'

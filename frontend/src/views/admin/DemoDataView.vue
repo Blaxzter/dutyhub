@@ -5,8 +5,6 @@ import { Loader2, PackagePlus, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
-import { toastApiError } from '@/lib/api-errors'
-
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import { Button } from '@/components/ui/button'
@@ -21,6 +19,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+
+import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
 const { post, delete: del } = useAuthenticatedClient()
@@ -125,13 +125,7 @@ async function handleDelete() {
         <CardContent class="space-y-4">
           <div class="grid gap-2">
             <Label for="numEvents">{{ t('admin.demoData.fields.numEvents') }}</Label>
-            <Input
-              id="numEvents"
-              v-model.number="numEvents"
-              type="number"
-              :min="1"
-              :max="50"
-            />
+            <Input id="numEvents" v-model.number="numEvents" type="number" :min="1" :max="50" />
           </div>
           <div class="grid gap-2">
             <Label for="numEventGroups">{{ t('admin.demoData.fields.numEventGroups') }}</Label>
@@ -145,13 +139,7 @@ async function handleDelete() {
           </div>
           <div class="grid gap-2">
             <Label for="numUsers">{{ t('admin.demoData.fields.numUsers') }}</Label>
-            <Input
-              id="numUsers"
-              v-model.number="numUsers"
-              type="number"
-              :min="0"
-              :max="20"
-            />
+            <Input id="numUsers" v-model.number="numUsers" type="number" :min="0" :max="20" />
           </div>
           <div class="grid gap-2">
             <Label for="numSlotsPerEvent">{{ t('admin.demoData.fields.numSlotsPerEvent') }}</Label>

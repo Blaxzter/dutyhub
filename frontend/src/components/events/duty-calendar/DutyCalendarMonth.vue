@@ -3,7 +3,13 @@ import { useI18n } from 'vue-i18n'
 
 import EventBars from './EventBars.vue'
 import GroupBars from './GroupBars.vue'
-import type { BookingCalendarItem, CalendarDay, CalendarEvent, CalendarEventGroup, CalendarWeek } from './types'
+import type {
+  BookingCalendarItem,
+  CalendarDay,
+  CalendarEvent,
+  CalendarEventGroup,
+  CalendarWeek,
+} from './types'
 import { isMultiDayEvent, isToday } from './types'
 
 defineProps<{

@@ -4,6 +4,7 @@ import { nextTick, ref, watch } from 'vue'
 import { Clock } from 'lucide-vue-next'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+
 import { cn } from '@/lib/utils'
 
 const props = defineProps<{
@@ -75,10 +76,12 @@ function onInteractOutside(e: Event) {
     <PopoverTrigger as-child>
       <div
         ref="wrapperRef"
-        :class="cn(
-          'flex h-8 w-[5.5rem] items-center gap-1.5 rounded-md border border-input bg-transparent px-2 text-sm shadow-xs transition-[color,box-shadow]',
-          'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
-        )"
+        :class="
+          cn(
+            'flex h-8 w-[5.5rem] items-center gap-1.5 rounded-md border border-input bg-transparent px-2 text-sm shadow-xs transition-[color,box-shadow]',
+            'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
+          )
+        "
         @click.prevent
       >
         <Clock class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -106,10 +109,13 @@ function onInteractOutside(e: Event) {
           :key="time"
           type="button"
           :data-selected="time === modelValue"
-          :class="cn(
-            'w-full rounded-sm px-2 py-1 text-center text-sm tabular-nums hover:bg-accent hover:text-accent-foreground',
-            time === modelValue && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground',
-          )"
+          :class="
+            cn(
+              'w-full rounded-sm px-2 py-1 text-center text-sm tabular-nums hover:bg-accent hover:text-accent-foreground',
+              time === modelValue &&
+                'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground',
+            )
+          "
           @click="selectTime(time)"
         >
           {{ time }}

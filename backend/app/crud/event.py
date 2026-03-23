@@ -64,8 +64,16 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
                 .correlate(DutySlot)
                 .scalar_subquery()
             )
-            today = has_future_slots.date() if isinstance(has_future_slots, dt.datetime) else has_future_slots
-            now_time = has_future_slots.time() if isinstance(has_future_slots, dt.datetime) else None
+            today = (
+                has_future_slots.date()
+                if isinstance(has_future_slots, dt.datetime)
+                else has_future_slots
+            )
+            now_time = (
+                has_future_slots.time()
+                if isinstance(has_future_slots, dt.datetime)
+                else None
+            )
 
             # Slot is in the future if:
             #   date > today, OR

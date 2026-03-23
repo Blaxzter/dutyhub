@@ -1,10 +1,45 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { ArrowLeft, CalendarDays, Check, Info, Pencil, Plus, Trash2, UserCheck, Users } from 'lucide-vue-next'
+import {
+  ArrowLeft,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Info,
+  List,
+  Pencil,
+  Plus,
+  Printer,
+  Trash2,
+  UserCheck,
+  Users,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+
+import { useAuthStore } from '@/stores/auth'
+import { useBreadcrumbStore } from '@/stores/breadcrumb'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { useDialog } from '@/composables/useDialog'
+
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import Badge from '@/components/ui/badge/Badge.vue'
+import Button from '@/components/ui/button/Button.vue'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import Separator from '@/components/ui/separator/Separator.vue'
+
+import AvailabilityDialog from '@/components/events/AvailabilityDialog.vue'
+import AvailabilityDisplay from '@/components/events/AvailabilityDisplay.vue'
+import StatusDropdown from '@/components/events/StatusDropdown.vue'
 
 import type {
   EventGroupRead,
@@ -13,27 +48,9 @@ import type {
   UserAvailabilityRead,
   UserAvailabilityWithUser,
 } from '@/client/types.gen'
-import AvailabilityDialog from '@/components/events/AvailabilityDialog.vue'
-import AvailabilityDisplay from '@/components/events/AvailabilityDisplay.vue'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import Badge from '@/components/ui/badge/Badge.vue'
-import Button from '@/components/ui/button/Button.vue'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import StatusDropdown from '@/components/events/StatusDropdown.vue'
-import Separator from '@/components/ui/separator/Separator.vue'
-import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
-import { useDialog } from '@/composables/useDialog'
+import { toastApiError } from '@/lib/api-errors'
 import { formatDate, formatDateWithTime } from '@/lib/format'
 import { statusVariant } from '@/lib/status'
-import { toastApiError } from '@/lib/api-errors'
-import { useAuthStore } from '@/stores/auth'
-import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -42,7 +59,6 @@ const authStore = useAuthStore()
 const breadcrumbStore = useBreadcrumbStore()
 const { get, post, patch, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
-
 
 const groupId = computed(() => route.params.groupId as string)
 const group = ref<EventGroupRead | null>(null)
@@ -179,7 +195,11 @@ onMounted(loadGroup)
 
     <template v-else-if="group">
       <!-- Draft banner -->
-      <Alert v-if="group.status === 'draft'" variant="default" class="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-500/30">
+      <Alert
+        v-if="group.status === 'draft'"
+        variant="default"
+        class="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-500/30"
+      >
         <Info class="h-4 w-4 text-amber-600 dark:text-amber-400" />
         <AlertDescription>
           {{ t('duties.eventGroups.draftBanner') }}
@@ -204,6 +224,41 @@ onMounted(loadGroup)
             {{ formatDate(group.start_date) }} – {{ formatDate(group.end_date) }}
           </p>
         </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button variant="outline" size="sm">
+              <Printer class="mr-2 h-4 w-4" />
+              {{ t('print.printButton') }}
+              <ChevronDown class="ml-1 h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              @click="
+                router.push({
+                  name: 'print-event-group',
+                  params: { groupId },
+                  query: { mode: 'overview' },
+                })
+              "
+            >
+              <List class="mr-2 h-4 w-4" />
+              {{ t('print.overview') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              @click="
+                router.push({
+                  name: 'print-event-group',
+                  params: { groupId },
+                  query: { mode: 'all' },
+                })
+              "
+            >
+              <Printer class="mr-2 h-4 w-4" />
+              {{ t('print.allEvents') }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <Separator />
@@ -220,11 +275,22 @@ onMounted(loadGroup)
               <CardDescription>{{ t('duties.availability.subtitle') }}</CardDescription>
             </div>
             <div class="flex gap-2">
-              <Button v-if="myAvailability" variant="outline" size="sm" @click="showAvailabilityDialog = true">
+              <Button
+                v-if="myAvailability"
+                variant="outline"
+                size="sm"
+                @click="showAvailabilityDialog = true"
+              >
                 <Pencil class="mr-2 h-4 w-4" />
                 {{ t('duties.availability.update') }}
               </Button>
-              <Button v-if="myAvailability" variant="ghost" size="sm" class="text-destructive" @click="handleRemoveAvailability">
+              <Button
+                v-if="myAvailability"
+                variant="ghost"
+                size="sm"
+                class="text-destructive"
+                @click="handleRemoveAvailability"
+              >
                 <Trash2 class="mr-1.5 h-4 w-4" />
                 {{ t('duties.availability.remove') }}
               </Button>
@@ -326,7 +392,11 @@ onMounted(loadGroup)
                         v-if="avail.default_start_time || avail.default_end_time"
                         class="text-xs text-muted-foreground"
                       >
-                        {{ [avail.default_start_time, avail.default_end_time].filter(Boolean).join(' – ') }}
+                        {{
+                          [avail.default_start_time, avail.default_end_time]
+                            .filter(Boolean)
+                            .join(' – ')
+                        }}
                       </span>
                     </div>
                   </td>
@@ -339,7 +409,9 @@ onMounted(loadGroup)
                     <span v-else class="text-muted-foreground">—</span>
                   </td>
                   <td class="max-w-48 px-4 py-2 text-muted-foreground">
-                    <p class="line-clamp-3" :title="avail.notes ?? undefined">{{ avail.notes ?? '—' }}</p>
+                    <p class="line-clamp-3" :title="avail.notes ?? undefined">
+                      {{ avail.notes ?? '—' }}
+                    </p>
                   </td>
                 </tr>
               </tbody>

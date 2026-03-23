@@ -1,4 +1,4 @@
-import { computed, ref, type Ref, watch } from 'vue'
+import { type Ref, computed, ref, watch } from 'vue'
 
 export type RemainderMode = 'drop' | 'short' | 'extend'
 
@@ -71,7 +71,14 @@ export function useSlotPreview(config: Ref<ScheduleConfig>) {
       const dayStart = override ? override.startTime : defaultStartTime
       const dayEnd = override ? override.endTime : defaultEndTime
 
-      const daySlots = generateSlotsForDay(eventName, dateStr, dayStart, dayEnd, slotDurationMinutes, config.value.remainderMode)
+      const daySlots = generateSlotsForDay(
+        eventName,
+        dateStr,
+        dayStart,
+        dayEnd,
+        slotDurationMinutes,
+        config.value.remainderMode,
+      )
       slots.push(...daySlots)
 
       current.setDate(current.getDate() + 1)

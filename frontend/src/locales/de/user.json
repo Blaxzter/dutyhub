@@ -1,106 +1,111 @@
 {
-    "settings": {
-        "dataExport": {
-            "title": "Meine Daten herunterladen",
-            "subtitle": "Exportieren Sie Ihre persönlichen Daten als JSON-Datei.",
-            "description": "Laden Sie eine Kopie aller persönlichen Daten herunter, die wir über Sie speichern, einschließlich Ihres Profils, Ihrer Buchungen, Verfügbarkeiten und Benachrichtigungseinstellungen. Dies ist Ihr Recht gemäß DSGVO Art. 20 (Datenübertragbarkeit).",
-            "button": "Daten herunterladen",
-            "exporting": "Wird exportiert...",
-            "error": "Fehler beim Exportieren der Daten. Bitte versuchen Sie es später erneut."
+  "settings": {
+    "dataExport": {
+      "title": "Meine Daten herunterladen",
+      "subtitle": "Exportieren Sie Ihre persönlichen Daten als JSON-Datei.",
+      "description": "Laden Sie eine Kopie aller persönlichen Daten herunter, die wir über Sie speichern, einschließlich Ihres Profils, Ihrer Buchungen, Verfügbarkeiten und Benachrichtigungseinstellungen. Dies ist Ihr Recht gemäß DSGVO Art. 20 (Datenübertragbarkeit).",
+      "button": "Daten herunterladen",
+      "exporting": "Wird exportiert...",
+      "error": "Fehler beim Exportieren der Daten. Bitte versuchen Sie es später erneut."
+    },
+    "deleteAccount": {
+      "button": "Mein Konto löschen",
+      "cancelButton": "Abbrechen",
+      "confirmButton": "Ja, mein Konto löschen",
+      "confirmDescription": "Dadurch werden Ihr Konto, alle Ihre Projekte, Aufgaben und Ihre Authentifizierung dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "confirmTitle": "Sind Sie absolut sicher?",
+      "confirmWord": "LÖSCHEN",
+      "deleting": "Wird gelöscht...",
+      "error": "Fehler beim Löschen des Kontos. Bitte versuchen Sie es später erneut.",
+      "subtitle": "Löschen Sie Ihr Konto und alle zugehörigen Daten dauerhaft.",
+      "success": "Ihr Konto wurde erfolgreich gelöscht.",
+      "title": "Konto löschen",
+      "typeToConfirm": "Geben Sie {confirmWord} ein, um zu bestätigen",
+      "warning": "Diese Aktion ist unwiderruflich. Alle Ihre Projekte, Aufgaben und Profildaten werden dauerhaft gelöscht."
+    },
+    "language": {
+      "current": "Aktuelle Sprache",
+      "currentDescription": "Wählen Sie Ihre bevorzugte Sprache für die Anwendungsoberfläche.",
+      "description": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche.",
+      "title": "Sprache & Region"
+    },
+    "password": {
+      "messages": {
+        "error": {
+          "emailNotFound": "Benutzer-E-Mail nicht gefunden.",
+          "sendFailed": "Fehler beim Senden der E-Mail zum Passwort zurücksetzen. Bitte versuchen Sie es später erneut.",
+          "title": "Fehler"
         },
-        "deleteAccount": {
-            "button": "Mein Konto löschen",
-            "cancelButton": "Abbrechen",
-            "confirmButton": "Ja, mein Konto löschen",
-            "confirmDescription": "Dadurch werden Ihr Konto, alle Ihre Projekte, Aufgaben und Ihre Authentifizierung dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
-            "confirmTitle": "Sind Sie absolut sicher?",
-            "confirmWord": "LÖSCHEN",
-            "deleting": "Wird gelöscht...",
-            "error": "Fehler beim Löschen des Kontos. Bitte versuchen Sie es später erneut.",
-            "subtitle": "Löschen Sie Ihr Konto und alle zugehörigen Daten dauerhaft.",
-            "success": "Ihr Konto wurde erfolgreich gelöscht.",
-            "title": "Konto löschen",
-            "typeToConfirm": "Geben Sie {confirmWord} ein, um zu bestätigen",
-            "warning": "Diese Aktion ist unwiderruflich. Alle Ihre Projekte, Aufgaben und Profildaten werden dauerhaft gelöscht."
+        "success": {
+          "description": "E-Mail zum Passwort zurücksetzen wurde gesendet. Bitte überprüfen Sie Ihren Posteingang und folgen Sie den Anweisungen.",
+          "title": "Erfolgreich!"
+        }
+      },
+      "section": {
+        "button": "E-Mail zum Passwort zurücksetzen senden",
+        "description": "Klicken Sie auf die Schaltfläche unten, um eine E-Mail zum Zurücksetzen des Passworts zu erhalten. Sie erhalten eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts.",
+        "sending": "Wird gesendet...",
+        "title": "Passwort zurücksetzen"
+      },
+      "subtitle": "Setzen Sie Ihr Passwort per E-Mail zurück",
+      "title": "Passwort zurücksetzen"
+    },
+    "profile": {
+      "current": {
+        "fields": {
+          "authProvider": "Auth-Anbieter",
+          "email": "E-Mail",
+          "name": "Name",
+          "nickname": "Spitzname",
+          "notProvided": "Nicht angegeben",
+          "unverified": "Nicht verifiziert",
+          "verified": "Verifiziert"
         },
-        "language": {
-            "current": "Aktuelle Sprache",
-            "currentDescription": "Wählen Sie Ihre bevorzugte Sprache für die Anwendungsoberfläche.",
-            "description": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche.",
-            "title": "Sprache & Region"
+        "subtitle": "Ihre aktuellen Profilinformationen von Auth0",
+        "title": "Aktuelles Profil"
+      },
+      "edit": {
+        "actions": {
+          "reset": "Zurücksetzen",
+          "update": "Profil aktualisieren",
+          "updating": "Wird aktualisiert..."
         },
-        "password": {
-            "messages": {
-                "error": {
-                    "emailNotFound": "Benutzer-E-Mail nicht gefunden.",
-                    "sendFailed": "Fehler beim Senden der E-Mail zum Passwort zurücksetzen. Bitte versuchen Sie es später erneut.",
-                    "title": "Fehler"
-                },
-                "success": {
-                    "description": "E-Mail zum Passwort zurücksetzen wurde gesendet. Bitte überprüfen Sie Ihren Posteingang und folgen Sie den Anweisungen.",
-                    "title": "Erfolgreich!"
-                }
-            },
-            "section": {
-                "button": "E-Mail zum Passwort zurücksetzen senden",
-                "description": "Klicken Sie auf die Schaltfläche unten, um eine E-Mail zum Zurücksetzen des Passworts zu erhalten. Sie erhalten eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts.",
-                "sending": "Wird gesendet...",
-                "title": "Passwort zurücksetzen"
-            },
-            "subtitle": "Setzen Sie Ihr Passwort per E-Mail zurück",
-            "title": "Passwort zurücksetzen"
+        "authError": "Benutzer nicht authentifiziert",
+        "error": "Fehler beim Aktualisieren des Profils. Bitte versuchen Sie es erneut.",
+        "fields": {
+          "bio": {
+            "description": "Eine kurze Biografie oder Beschreibung über sich selbst (optional).",
+            "label": "Biografie",
+            "placeholder": "Erzählen Sie uns etwas über sich"
+          },
+          "displayName": {
+            "description": "Dies ist Ihr Anzeigename, den andere sehen werden.",
+            "label": "Anzeigename",
+            "placeholder": "Geben Sie Ihren Anzeigenamen ein"
+          },
+          "nickname": {
+            "description": "Ein kürzerer Name oder Alias für Ihr Profil.",
+            "label": "Spitzname",
+            "placeholder": "Geben Sie Ihren Spitznamen ein"
+          },
+          "phoneNumber": {
+            "description": "Ihre Telefonnummer, damit Organisatoren Sie bei Bedarf erreichen können.",
+            "label": "Telefonnummer",
+            "placeholder": "+49 123 456789"
+          },
+          "picture": {
+            "description": "URL zu Ihrem Profilbild. Muss eine gültige Bild-URL sein.",
+            "label": "Profilbild-URL",
+            "placeholder": "https://example.com/ihr-bild.jpg"
+          }
         },
-        "profile": {
-            "current": {
-                "fields": {
-                    "authProvider": "Auth-Anbieter",
-                    "email": "E-Mail",
-                    "name": "Name",
-                    "nickname": "Spitzname",
-                    "notProvided": "Nicht angegeben",
-                    "unverified": "Nicht verifiziert",
-                    "verified": "Verifiziert"
-                },
-                "subtitle": "Ihre aktuellen Profilinformationen von Auth0",
-                "title": "Aktuelles Profil"
-            },
-            "edit": {
-                "actions": {
-                    "reset": "Zurücksetzen",
-                    "update": "Profil aktualisieren",
-                    "updating": "Wird aktualisiert..."
-                },
-                "authError": "Benutzer nicht authentifiziert",
-                "error": "Fehler beim Aktualisieren des Profils. Bitte versuchen Sie es erneut.",
-                "fields": {
-                    "bio": {
-                        "description": "Eine kurze Biografie oder Beschreibung über sich selbst (optional).",
-                        "label": "Biografie",
-                        "placeholder": "Erzählen Sie uns etwas über sich"
-                    },
-                    "displayName": {
-                        "description": "Dies ist Ihr Anzeigename, den andere sehen werden.",
-                        "label": "Anzeigename",
-                        "placeholder": "Geben Sie Ihren Anzeigenamen ein"
-                    },
-                    "nickname": {
-                        "description": "Ein kürzerer Name oder Alias für Ihr Profil.",
-                        "label": "Spitzname",
-                        "placeholder": "Geben Sie Ihren Spitznamen ein"
-                    },
-                    "picture": {
-                        "description": "URL zu Ihrem Profilbild. Muss eine gültige Bild-URL sein.",
-                        "label": "Profilbild-URL",
-                        "placeholder": "https://example.com/ihr-bild.jpg"
-                    }
-                },
-                "providerLimitation": "Profilbild-Änderungen sind für {provider}-Konten nicht verfügbar. Bitte aktualisieren Sie Ihr Profilbild über Ihre {provider}-Kontoeinstellungen.",
-                "subtitle": "Aktualisieren Sie Ihre Profilinformationen. Änderungen werden über Auth0 verarbeitet.",
-                "success": "Profil erfolgreich aktualisiert!",
-                "title": "Profil aktualisieren"
-            }
-        },
-        "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Profilinformationen.",
-        "title": "Benutzereinstellungen"
-    }
+        "providerLimitation": "Profilbild-Änderungen sind für {provider}-Konten nicht verfügbar. Bitte aktualisieren Sie Ihr Profilbild über Ihre {provider}-Kontoeinstellungen.",
+        "subtitle": "Aktualisieren Sie Ihre Profilinformationen. Änderungen werden über Auth0 verarbeitet.",
+        "success": "Profil erfolgreich aktualisiert!",
+        "title": "Profil aktualisieren"
+      }
+    },
+    "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Profilinformationen.",
+    "title": "Benutzereinstellungen"
+  }
 }

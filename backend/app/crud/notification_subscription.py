@@ -54,9 +54,7 @@ class CRUDNotificationSubscription(
         If no subscription is found, returns None (caller should use defaults).
         """
         # Load user's global channel settings
-        user_result = await db.execute(
-            select(User).where(col(User.id) == user_id)
-        )
+        user_result = await db.execute(select(User).where(col(User.id) == user_id))
         user = user_result.scalar_one_or_none()
 
         # Get the notification type ID
@@ -128,7 +126,8 @@ class CRUDNotificationSubscription(
             # Find existing
             query = select(NotificationSubscription).where(
                 col(NotificationSubscription.user_id) == user_id,
-                col(NotificationSubscription.notification_type_id) == pref.notification_type_id,
+                col(NotificationSubscription.notification_type_id)
+                == pref.notification_type_id,
                 col(NotificationSubscription.scope_type) == pref.scope_type,
             )
             if pref.scope_id is not None:
@@ -136,9 +135,7 @@ class CRUDNotificationSubscription(
                     col(NotificationSubscription.scope_id) == pref.scope_id
                 )
             else:
-                query = query.where(
-                    col(NotificationSubscription.scope_id).is_(None)
-                )
+                query = query.where(col(NotificationSubscription.scope_id).is_(None))
 
             result = await db.execute(query)
             existing = result.scalar_one_or_none()

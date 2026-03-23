@@ -51,8 +51,11 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
     ) -> list[EventGroup]:
         query = select(EventGroup)
         query = self._apply_common_filters(
-            query, search=search, status=status,
-            date_from=date_from, date_to=date_to,
+            query,
+            search=search,
+            status=status,
+            date_from=date_from,
+            date_to=date_to,
         )
         order_col = getattr(EventGroup, sort_by)
         query = query.order_by(
@@ -73,8 +76,11 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
     ) -> int:
         query = select(func.count()).select_from(EventGroup)
         query = self._apply_common_filters(
-            query, search=search, status=status,
-            date_from=date_from, date_to=date_to,
+            query,
+            search=search,
+            status=status,
+            date_from=date_from,
+            date_to=date_to,
         )
         result = await db.execute(query)
         return result.scalar_one()

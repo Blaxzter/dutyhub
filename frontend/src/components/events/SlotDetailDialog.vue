@@ -6,10 +6,11 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
+import { useAuthStore } from '@/stores/auth'
+
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
 import { useFormatters } from '@/composables/useFormatters'
-import { useAuthStore } from '@/stores/auth'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
@@ -253,7 +254,16 @@ const navigateToEvent = () => {
                 <p class="text-xs text-muted-foreground">
                   {{ t('duties.dutySlots.detail.date') }}
                 </p>
-                <p class="text-sm font-medium">{{ formatDateLabel(resolvedSlot.date, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}</p>
+                <p class="text-sm font-medium">
+                  {{
+                    formatDateLabel(resolvedSlot.date, {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  }}
+                </p>
               </div>
             </div>
             <div v-if="timeDisplay" class="flex items-start gap-2.5">

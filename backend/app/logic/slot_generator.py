@@ -68,9 +68,7 @@ def generate_duty_slots(
     # Filter out excluded slots
     if exclusion_set:
         slots = [
-            s
-            for s in slots
-            if (s.date, s.start_time, s.end_time) not in exclusion_set
+            s for s in slots if (s.date, s.start_time, s.end_time) not in exclusion_set
         ]
 
     return slots

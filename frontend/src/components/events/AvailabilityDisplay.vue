@@ -4,8 +4,9 @@ import { computed } from 'vue'
 import { Clock } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
-import type { UserAvailabilityRead } from '@/client/types.gen'
 import Badge from '@/components/ui/badge/Badge.vue'
+
+import type { UserAvailabilityRead } from '@/client/types.gen'
 import { formatDateWithTime } from '@/lib/format'
 
 const props = defineProps<{
@@ -38,10 +39,7 @@ const defaultTimeLabel = computed(() => {
         {{ defaultTimeLabel }}
       </span>
     </div>
-    <div
-      v-if="(availability.available_dates?.length ?? 0) > 0"
-      class="flex flex-wrap gap-1"
-    >
+    <div v-if="(availability.available_dates?.length ?? 0) > 0" class="flex flex-wrap gap-1">
       <Badge
         v-for="d in availability.available_dates"
         :key="d.id"
@@ -51,7 +49,11 @@ const defaultTimeLabel = computed(() => {
         {{ formatDateWithTime(d) }}
       </Badge>
     </div>
-    <p v-if="availability.notes" class="line-clamp-3 text-sm text-muted-foreground" :title="availability.notes">
+    <p
+      v-if="availability.notes"
+      class="line-clamp-3 text-sm text-muted-foreground"
+      :title="availability.notes"
+    >
       {{ availability.notes }}
     </p>
   </div>

@@ -628,6 +628,29 @@ export type DutySlotUpdate = {
 }
 
 /**
+ * EventBookingEntry
+ * A confirmed booking with slot_id, for the bulk event bookings endpoint.
+ */
+export type EventBookingEntry = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Duty Slot Id
+   */
+  duty_slot_id: string
+  /**
+   * User Name
+   */
+  user_name?: string | null
+  /**
+   * User Phone Number
+   */
+  user_phone_number?: string | null
+}
+
+/**
  * EventCreate
  */
 export type EventCreate = {
@@ -1488,6 +1511,10 @@ export type ProfileInit = {
    * Email Verified
    */
   email_verified?: boolean | null
+  /**
+   * Preferred Language
+   */
+  preferred_language?: string | null
 }
 
 /**
@@ -1766,6 +1793,10 @@ export type SlotBookingEntry = {
    * User Picture
    */
   user_picture?: string | null
+  /**
+   * User Phone Number
+   */
+  user_phone_number?: string | null
   /**
    * Notes
    */
@@ -2163,6 +2194,11 @@ export type UserCreate = {
    * Whether the user is active
    */
   is_active?: boolean
+  /**
+   * Preferred Language
+   * Preferred language
+   */
+  preferred_language?: string
 }
 
 /**
@@ -2193,6 +2229,14 @@ export type UserProfile = {
    * Bio
    */
   bio?: string | null
+  /**
+   * Phone Number
+   */
+  phone_number?: string | null
+  /**
+   * Preferred Language
+   */
+  preferred_language?: string
   /**
    * Email Verified
    */
@@ -2243,6 +2287,16 @@ export type UserProfileUpdate = {
    * User's biography
    */
   bio?: string | null
+  /**
+   * Phone Number
+   * User's phone number
+   */
+  phone_number?: string | null
+  /**
+   * Preferred Language
+   * Preferred language for notifications
+   */
+  preferred_language?: string | null
 }
 
 /**
@@ -2269,6 +2323,14 @@ export type UserRead = {
    * Picture
    */
   picture?: string | null
+  /**
+   * Phone Number
+   */
+  phone_number?: string | null
+  /**
+   * Preferred Language
+   */
+  preferred_language?: string
   /**
    * Roles
    */
@@ -2320,6 +2382,11 @@ export type UserUpdate = {
    * Reason for account rejection
    */
   rejection_reason?: string | null
+  /**
+   * Preferred Language
+   * Preferred language
+   */
+  preferred_language?: string | null
 }
 
 export type ValidationErrorItem = {
@@ -3762,6 +3829,67 @@ export type EventsUpdateEventResponses = {
 }
 
 export type EventsUpdateEventResponse = EventsUpdateEventResponses[keyof EventsUpdateEventResponses]
+
+export type EventsListEventBookingsData = {
+  body?: never
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/bookings'
+}
+
+export type EventsListEventBookingsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsListEventBookingsError =
+  EventsListEventBookingsErrors[keyof EventsListEventBookingsErrors]
+
+export type EventsListEventBookingsResponses = {
+  /**
+   * Response Events-List Event Bookings
+   * Successful Response
+   */
+  200: Array<EventBookingEntry>
+}
+
+export type EventsListEventBookingsResponse =
+  EventsListEventBookingsResponses[keyof EventsListEventBookingsResponses]
 
 export type EventsCreateEventWithSlotsData = {
   body: EventCreateWithSlots
