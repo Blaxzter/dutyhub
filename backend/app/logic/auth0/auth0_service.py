@@ -3,8 +3,7 @@ from typing import Any
 
 import httpx
 
-from app.core.auth import get_management_api_token
-from app.core.config import settings
+from app.core.auth import get_management_api_base_url, get_management_api_token
 from app.schemas.users import UserProfileUpdate
 
 logger = logging.getLogger(__name__)
@@ -14,7 +13,7 @@ async def delete_auth0_user(auth0_sub: str) -> bool:
     """Delete a user from Auth0 using the Management API."""
     try:
         token = await get_management_api_token()
-        url = f"https://{settings.AUTH0_DOMAIN}/api/v2/users/{auth0_sub}"
+        url = f"{get_management_api_base_url()}/users/{auth0_sub}"
         headers = {
             "Authorization": f"Bearer {token}",
         }
@@ -58,7 +57,7 @@ async def update_auth0_user(user_id: str, update_data: UserProfileUpdate) -> boo
             return True
 
         # Update user via Management API
-        url = f"https://{settings.AUTH0_DOMAIN}/api/v2/users/{user_id}"
+        url = f"{get_management_api_base_url()}/users/{user_id}"
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",

@@ -93,6 +93,7 @@ class Settings(BaseSettings):
     # Auth0 Management API configuration (for updating user profiles)
     AUTH0_CLIENT_ID: str | None = None
     AUTH0_CLIENT_SECRET: str | None = None
+    AUTH0_MANAGEMENT_AUDIENCE: str | None = None
 
     EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
 

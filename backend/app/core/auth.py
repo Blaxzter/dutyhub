@@ -4,6 +4,13 @@ from fastapi import HTTPException
 from app.core.config import settings
 
 
+def get_management_api_base_url() -> str:
+    """Return the Auth0 Management API base URL (without trailing slash)."""
+    if settings.AUTH0_MANAGEMENT_AUDIENCE:
+        return settings.AUTH0_MANAGEMENT_AUDIENCE.rstrip("/")
+    return f"https://{settings.AUTH0_DOMAIN}/api/v2"
+
+
 async def get_management_api_token() -> str:
     """Get an Auth0 Management API token."""
     if not settings.AUTH0_CLIENT_ID or not settings.AUTH0_CLIENT_SECRET:
@@ -16,7 +23,7 @@ async def get_management_api_token() -> str:
     payload = {
         "client_id": settings.AUTH0_CLIENT_ID,
         "client_secret": settings.AUTH0_CLIENT_SECRET,
-        "audience": f"https://{settings.AUTH0_DOMAIN}/api/v2/",
+        "audience": f"{get_management_api_base_url()}/",
         "grant_type": "client_credentials",
     }
 
