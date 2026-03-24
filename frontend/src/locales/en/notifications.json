@@ -26,7 +26,8 @@
     "subtitle": "Choose which notifications you want to receive and how they are delivered.",
     "save": "Save preferences",
     "saved": "Notification preferences saved",
-    "saveFailed": "Failed to save notification preferences"
+    "saveFailed": "Failed to save notification preferences",
+    "perTypeTitle": "Per-notification Preferences"
   },
 
   "globalToggle": {
@@ -41,9 +42,15 @@
   },
 
   "channels": {
+    "sectionTitle": "Delivery Channels",
     "email": "Email",
     "push": "Push",
     "telegram": "Telegram"
+  },
+
+  "email": {
+    "title": "Email",
+    "description": "Receive notifications via email."
   },
 
   "categories": {
@@ -63,7 +70,14 @@
     "enabled": "Push notifications enabled",
     "denied": "Push notifications are blocked. Please enable them in your browser settings.",
     "notConfigured": "Push notifications are not configured on the server.",
-    "failed": "Failed to enable push notifications"
+    "failed": "Failed to enable push notifications",
+    "disable": "Disable",
+    "disabled": "Push notifications disabled",
+    "disableFailed": "Failed to disable push notifications",
+    "testButton": "Send test notification",
+    "testSending": "Sending...",
+    "testSuccess": "Test notification sent! Check your device.",
+    "testError": "Failed to send test notification. Please try again."
   },
 
   "telegram": {

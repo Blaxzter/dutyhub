@@ -302,6 +302,13 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
+  async function sendTestPush() {
+    const res = await post<{ data: { success: boolean } }>({
+      url: '/notifications/test-push',
+    })
+    return res.data.success
+  }
+
   async function fetchPushSubscriptions() {
     try {
       const res = await get<{ data: PushSubscriptionInfo[] }>({
@@ -313,6 +320,11 @@ export const useNotificationStore = defineStore('notification', () => {
       console.error('Failed to fetch push subscriptions:', error)
       throw error
     }
+  }
+
+  async function removePushSubscription(subscriptionId: string) {
+    await del({ url: `/notifications/push-subscriptions/${subscriptionId}` })
+    pushSubscriptions.value = pushSubscriptions.value.filter((s) => s.id !== subscriptionId)
   }
 
   // ── Telegram ───────────────────────────────────────────────────
@@ -529,6 +541,8 @@ export const useNotificationStore = defineStore('notification', () => {
     fetchVapidPublicKey,
     registerPushSubscription,
     fetchPushSubscriptions,
+    removePushSubscription,
+    sendTestPush,
 
     // Telegram
     fetchTelegramConfig,

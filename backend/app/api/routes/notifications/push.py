@@ -66,3 +66,27 @@ async def get_vapid_public_key(
         )
 
     return {"vapid_public_key": settings.VAPID_PUBLIC_KEY}
+
+
+@router.post("/test-push", status_code=200)
+async def send_test_push(
+    current_user: CurrentUser,
+) -> dict[str, bool]:
+    """Send a test push notification to the current user."""
+    from app.logic.notifications.channels.push import PushChannel
+
+    channel = PushChannel()
+    if not channel.is_configured():
+        raise_problem(
+            503,
+            code="push.not_configured",
+            detail="Push notifications are not configured",
+        )
+
+    success = await channel.send(
+        recipient=current_user,
+        title="Test Push Notification",
+        body="If you see this, push notifications are working!",
+    )
+
+    return {"success": success}

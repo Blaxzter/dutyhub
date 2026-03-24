@@ -26,7 +26,8 @@
     "subtitle": "Waehle aus, welche Benachrichtigungen du erhalten moechtest und wie sie zugestellt werden.",
     "save": "Einstellungen speichern",
     "saved": "Benachrichtigungseinstellungen gespeichert",
-    "saveFailed": "Fehler beim Speichern der Benachrichtigungseinstellungen"
+    "saveFailed": "Fehler beim Speichern der Benachrichtigungseinstellungen",
+    "perTypeTitle": "Einstellungen pro Benachrichtigung"
   },
 
   "globalToggle": {
@@ -41,9 +42,15 @@
   },
 
   "channels": {
+    "sectionTitle": "Zustellkanaele",
     "email": "E-Mail",
     "push": "Push",
     "telegram": "Telegram"
+  },
+
+  "email": {
+    "title": "E-Mail",
+    "description": "Benachrichtigungen per E-Mail erhalten."
   },
 
   "categories": {
@@ -63,7 +70,14 @@
     "enabled": "Push-Benachrichtigungen aktiviert",
     "denied": "Push-Benachrichtigungen sind blockiert. Bitte aktiviere sie in deinen Browsereinstellungen.",
     "notConfigured": "Push-Benachrichtigungen sind auf dem Server nicht konfiguriert.",
-    "failed": "Fehler beim Aktivieren der Push-Benachrichtigungen"
+    "failed": "Fehler beim Aktivieren der Push-Benachrichtigungen",
+    "disable": "Deaktivieren",
+    "disabled": "Push-Benachrichtigungen deaktiviert",
+    "disableFailed": "Fehler beim Deaktivieren der Push-Benachrichtigungen",
+    "testButton": "Testbenachrichtigung senden",
+    "testSending": "Wird gesendet...",
+    "testSuccess": "Testbenachrichtigung gesendet! Pruefe dein Geraet.",
+    "testError": "Testbenachrichtigung konnte nicht gesendet werden. Bitte versuche es erneut."
   },
 
   "telegram": {
