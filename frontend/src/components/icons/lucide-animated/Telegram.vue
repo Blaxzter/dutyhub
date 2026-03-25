@@ -5,7 +5,7 @@ import { siTelegram } from 'simple-icons'
 
 interface Props {
   size?: number
-  class?: string
+  class?: string | string[]
   useColor?: boolean
 }
 

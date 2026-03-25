@@ -4,7 +4,7 @@ import { motion } from 'motion-v'
 
 interface Props {
   size?: number
-  class?: string
+  class?: string | string[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
