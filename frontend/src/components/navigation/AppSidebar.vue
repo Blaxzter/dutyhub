@@ -10,6 +10,7 @@ import wirksamDarkLogo from '@/assets/logo/wirksam-dark.svg'
 import wirksamLightLogo from '@/assets/logo/wirksam-light.svg'
 
 import { useAuthStore } from '@/stores/auth'
+import { useChangelogStatus } from '@/composables/useChangelogStatus'
 import { useSidebarStore } from '@/stores/sidebar'
 
 import type { SidebarProps } from '@/components/ui/sidebar'
@@ -46,6 +47,8 @@ const router = useRouter()
 const route = useRoute()
 const mode = useColorMode()
 const currentLogo = computed(() => (mode.value === 'light' ? wirksamDarkLogo : wirksamLightLogo))
+const appVersion = __APP_VERSION__
+const { hasNewVersions } = useChangelogStatus()
 
 onMounted(() => {
   sidebarStore.fetch()
@@ -207,8 +210,18 @@ const navAdmin = computed(() =>
         group-label-key="admin.sidebar.section"
       />
     </SidebarContent>
-    <SidebarFooter>
+    <SidebarFooter class="flex flex-col gap-1 p-2 pb-1">
       <NavUser />
+      <RouterLink
+        :to="{ name: 'changelog' }"
+        class="inline-flex items-center justify-center gap-1 w-full text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors pb-1 group-data-[collapsible=icon]:hidden"
+      >
+        <span>WirkSam {{ appVersion }}</span>
+        <span
+          v-if="hasNewVersions"
+          class="size-1.5 rounded-full bg-primary"
+        />
+      </RouterLink>
     </SidebarFooter>
     <SidebarRail />
   </Sidebar>

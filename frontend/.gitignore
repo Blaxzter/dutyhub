@@ -35,3 +35,6 @@ e2e/.auth/
 
 # Runtime config (contains personal data, generated from env vars in Docker)
 public/config.js
+
+# Generated changelog (rebuilt from markdown sources)
+src/changelog/generated/

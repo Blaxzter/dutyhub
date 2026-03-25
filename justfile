@@ -78,6 +78,10 @@ seed:
 
 # ── Code Generation ──────────────────────────────────────────
 
+# Regenerate the changelog JSON from markdown files
+generate-changelog:
+    cd frontend && pnpm generate-changelog
+
 # Regenerate the frontend API client from backend OpenAPI spec
 generate-client:
     cd backend && uv run python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../frontend/openapi.json

@@ -3,6 +3,16 @@ import vue from '@vitejs/plugin-vue'
 import { execSync } from 'node:child_process'
 import { URL, fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
+import type { Plugin } from 'vite'
+
+function changelogPlugin(): Plugin {
+  return {
+    name: 'generate-changelog',
+    buildStart() {
+      execSync('pnpm generate-changelog', { stdio: 'inherit' })
+    },
+  }
+}
 
 function getGitVersion(): { version: string; date: string } {
   // In Docker builds, APP_VERSION is passed as an env var since .git is not available
@@ -31,6 +41,7 @@ export default defineConfig(async ({ mode }) => {
       port: 5173,
     },
     plugins: [
+      changelogPlugin(),
       vue(),
       tailwindcss(),
       ...(mode === 'development'

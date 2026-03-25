@@ -156,6 +156,17 @@ const router = createRouter({
           },
         },
         {
+          path: 'changelog',
+          name: 'changelog',
+          component: () => import('@/views/ChangelogView.vue'),
+          meta: {
+            breadcrumbs: [
+              { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
+              { title: "What's New", titleKey: 'changelog.title' },
+            ],
+          },
+        },
+        {
           path: 'settings',
           name: 'settings',
           component: () => import('@/views/UserSettingsView.vue'),
