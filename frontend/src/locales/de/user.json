@@ -105,6 +105,44 @@
         "title": "Profil aktualisieren"
       }
     },
+    "calendarSync": {
+      "title": "Kalender-Synchronisation",
+      "description": "Abonniere deine Dienstbuchungen in deiner Kalender-App.",
+      "enableButton": "Kalender-Synchronisation aktivieren",
+      "enabled": "Kalender-Synchronisation aktiviert",
+      "disabled": "Kalender-Synchronisation deaktiviert",
+      "disabledMessage": "Die Kalender-Synchronisation ist derzeit pausiert. Aktiviere sie, um deine Buchungen in deiner Kalender-App zu abonnieren.",
+      "enableError": "Kalender-Synchronisation konnte nicht aktualisiert werden. Bitte versuche es erneut.",
+      "feedUrl": "Feed-URL",
+      "copied": "URL in die Zwischenablage kopiert",
+      "copyFailed": "URL konnte nicht kopiert werden",
+      "regenerate": "URL erneuern",
+      "regenerateConfirmTitle": "Kalender-URL erneuern?",
+      "regenerateConfirmDescription": "Deine aktuelle Kalender-URL funktioniert dann nicht mehr. Du musst dich mit der neuen URL in allen Kalender-Apps erneut anmelden.",
+      "regenerateConfirmButton": "Erneuern",
+      "regenerated": "Neue Kalender-URL wurde erstellt",
+      "regenerateError": "URL konnte nicht erneuert werden. Bitte versuche es erneut.",
+      "lastSynced": "Zuletzt synchronisiert",
+      "neverSynced": "Noch von keiner Kalender-App synchronisiert",
+      "manual": {
+        "title": "Manuell mit URL hinzufügen"
+      },
+      "addTo": {
+        "title": "Zu deinem Kalender hinzufügen",
+        "google": "Google Kalender",
+        "apple": "Apple Kalender",
+        "outlook": "Outlook"
+      },
+      "instructions": {
+        "title": "So abonnierst du",
+        "googleCalendar": "Google Kalender",
+        "googleSteps": "Öffne Google Kalender → Einstellungen (Zahnrad) → Weitere Kalender hinzufügen → Per URL → füge die obige URL ein → Kalender hinzufügen.",
+        "appleCalendar": "Apple Kalender",
+        "appleSteps": "Öffne die Kalender-App → Ablage → Neues Kalenderabonnement → füge die obige URL ein → Abonnieren.",
+        "outlook": "Outlook",
+        "outlookSteps": "Öffne Outlook.com → Einstellungen → Kalender → Freigegebene Kalender → Aus dem Web abonnieren → füge die obige URL ein → Importieren."
+      }
+    },
     "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Profilinformationen.",
     "title": "Benutzereinstellungen"
   }

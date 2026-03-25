@@ -27,6 +27,9 @@
       <!-- Notification Preferences -->
       <NotificationSettingsCard />
 
+      <!-- Calendar Sync -->
+      <CalendarSyncCard />
+
       <!-- Language Settings -->
       <LanguageSettingsCard />
 
@@ -46,6 +49,7 @@ import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
 
+import CalendarSyncCard from '@/components/account/user/CalendarSyncCard.vue'
 import CurrentProfileCard from '@/components/account/user/CurrentProfileCard.vue'
 import DataExportCard from '@/components/account/user/DataExportCard.vue'
 import DeleteAccountCard from '@/components/account/user/DeleteAccountCard.vue'

@@ -105,6 +105,44 @@
         "title": "Update Profile"
       }
     },
+    "calendarSync": {
+      "title": "Calendar Sync",
+      "description": "Subscribe to your duty bookings in your favourite calendar app.",
+      "enableButton": "Enable calendar sync",
+      "enabled": "Calendar sync enabled",
+      "disabled": "Calendar sync disabled",
+      "disabledMessage": "Calendar sync is currently paused. Turn it on to subscribe to your bookings in your calendar app.",
+      "enableError": "Could not update calendar sync. Please try again.",
+      "feedUrl": "Feed URL",
+      "copied": "URL copied to clipboard",
+      "copyFailed": "Could not copy URL",
+      "regenerate": "Regenerate URL",
+      "regenerateConfirmTitle": "Regenerate calendar URL?",
+      "regenerateConfirmDescription": "Your current calendar URL will stop working. You will need to re-subscribe with the new URL in all your calendar apps.",
+      "regenerateConfirmButton": "Regenerate",
+      "regenerated": "New calendar URL generated",
+      "regenerateError": "Could not regenerate URL. Please try again.",
+      "lastSynced": "Last synced",
+      "neverSynced": "Not yet synced by any calendar app",
+      "manual": {
+        "title": "Add manually with URL"
+      },
+      "addTo": {
+        "title": "Add to your calendar",
+        "google": "Google Calendar",
+        "apple": "Apple Calendar",
+        "outlook": "Outlook"
+      },
+      "instructions": {
+        "title": "How to subscribe",
+        "googleCalendar": "Google Calendar",
+        "googleSteps": "Open Google Calendar → Settings (gear icon) → Add other calendars → From URL → paste the URL above → Add calendar.",
+        "appleCalendar": "Apple Calendar",
+        "appleSteps": "Open the Calendar app → File → New Calendar Subscription → paste the URL above → Subscribe.",
+        "outlook": "Outlook",
+        "outlookSteps": "Open Outlook.com → Settings → Calendar → Shared calendars → Subscribe from web → paste the URL above → Import."
+      }
+    },
     "subtitle": "Manage your account settings and profile information.",
     "title": "User Settings"
   }

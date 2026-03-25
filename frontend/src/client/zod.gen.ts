@@ -173,6 +173,22 @@ export const zBookingUpdate = z.object({
 })
 
 /**
+ * CalendarFeedRead
+ * Response for calendar feed management endpoints.
+ */
+export const zCalendarFeedRead = z
+  .object({
+    id: z.uuid(),
+    feed_url: z.string(),
+    is_enabled: z.boolean(),
+    last_accessed_at: z.optional(z.union([z.iso.datetime(), z.null()])),
+    created_at: z.iso.datetime(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Response for calendar feed management endpoints.',
+  })
+
+/**
  * DashboardBookingItem
  * Booking with inline slot info for calendar display — avoids N+1.
  */
@@ -847,6 +863,32 @@ export const zTelegramChat = z.object({
   id: z.int(),
   username: z.optional(z.union([z.string(), z.null()])),
 })
+
+/**
+ * TelegramConfigResponse
+ */
+export const zTelegramConfigResponse = z.object({
+  bot_username: z.optional(z.union([z.string(), z.null()])),
+  is_configured: z.boolean(),
+})
+
+/**
+ * TelegramLoginData
+ * Auth data returned by the Telegram Login Widget.
+ */
+export const zTelegramLoginData = z
+  .object({
+    id: z.int(),
+    first_name: z.optional(z.union([z.string(), z.null()])),
+    last_name: z.optional(z.union([z.string(), z.null()])),
+    username: z.optional(z.union([z.string(), z.null()])),
+    photo_url: z.optional(z.union([z.string(), z.null()])),
+    auth_date: z.int(),
+    hash: z.string(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Auth data returned by the Telegram Login Widget.',
+  })
 
 /**
  * TelegramMessage
@@ -1698,6 +1740,53 @@ export const zBookingsDismissBookingResponse = z.void().register(z.globalRegistr
   description: 'Successful Response',
 })
 
+export const zCalendarDisableFeedData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zCalendarDisableFeedResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zCalendarGetFeedSettingsData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Calendar-Get Feed Settings
+ * Successful Response
+ */
+export const zCalendarGetFeedSettingsResponse = z.union([zCalendarFeedRead, z.null()])
+
+export const zCalendarEnableFeedData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zCalendarEnableFeedResponse = zCalendarFeedRead
+
+export const zCalendarRegenerateFeedData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zCalendarRegenerateFeedResponse = zCalendarFeedRead
+
 export const zEventGroupsListEventGroupsData = z.object({
   body: z.optional(z.never()),
   path: z.optional(z.never()),
@@ -2081,6 +2170,31 @@ export const zNotificationsGetVapidPublicKeyResponse = z.object({}).register(z.g
   description: 'Successful Response',
 })
 
+export const zNotificationsSendTestPushData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Notifications-Send Test Push
+ * Successful Response
+ */
+export const zNotificationsSendTestPushResponse = z.object({}).register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zNotificationsGetTelegramConfigData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zNotificationsGetTelegramConfigResponse = zTelegramConfigResponse
+
 export const zNotificationsUnbindTelegramData = z.object({
   body: z.optional(z.never()),
   path: z.optional(z.never()),
@@ -2105,6 +2219,17 @@ export const zNotificationsGetTelegramBindingData = z.object({
  * Successful Response
  */
 export const zNotificationsGetTelegramBindingResponse = z.union([zTelegramBindingRead, z.null()])
+
+export const zNotificationsTelegramLoginData = z.object({
+  body: zTelegramLoginData,
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zNotificationsTelegramLoginResponse = zTelegramBindingRead
 
 export const zNotificationsStartTelegramBindingData = z.object({
   body: z.optional(z.never()),

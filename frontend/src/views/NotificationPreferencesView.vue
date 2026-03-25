@@ -18,8 +18,8 @@ import TelegramLoginWidget from '@/components/account/TelegramLoginWidget.vue'
 
 import AnimatedBell from '@/components/icons/lucide-animated/Bell.vue'
 import AnimatedMail from '@/components/icons/lucide-animated/Mail.vue'
-import AnimatedMessageCircle from '@/components/icons/lucide-animated/MessageCircle.vue'
 import AnimatedSend from '@/components/icons/lucide-animated/Send.vue'
+import AnimatedTelegram from '@/components/icons/lucide-animated/Telegram.vue'
 import AnimatedSmartphone from '@/components/icons/lucide-animated/Smartphone.vue'
 
 const { t } = useI18n()
@@ -38,7 +38,7 @@ const globalChannelSettings = computed(() => notificationStore.globalChannelSett
 // Animated icon refs
 const mailIconRef = ref<InstanceType<typeof AnimatedMail>>()
 const smartphoneIconRef = ref<InstanceType<typeof AnimatedSmartphone>>()
-const telegramIconRef = ref<InstanceType<typeof AnimatedMessageCircle>>()
+const telegramIconRef = ref<InstanceType<typeof AnimatedTelegram>>()
 
 async function toggleGlobalChannel(
   field: 'notify_email' | 'notify_push' | 'notify_telegram',
@@ -130,9 +130,9 @@ async function sendTestPush() {
     // Ensure permission is granted
     if (pushPermission.value !== 'granted') {
       await requestPushPermission()
-      if (pushPermission.value !== 'granted') {
-        return
-      }
+    }
+    if (pushPermission.value !== 'granted') {
+      return
     }
 
     let success = await notificationStore.sendTestPush()
@@ -509,12 +509,13 @@ onMounted(async () => {
         <CardHeader>
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <AnimatedMessageCircle
+              <AnimatedTelegram
                 ref="telegramIconRef"
                 :size="20"
+                :use-color="globalChannelSettings.notify_telegram"
                 :class="[
                   'transition-colors duration-300',
-                  globalChannelSettings.notify_telegram ? 'text-sky-600 dark:text-sky-400' : 'text-muted-foreground',
+                  globalChannelSettings.notify_telegram ? '' : 'text-muted-foreground',
                 ]"
               />
               <CardTitle>{{ t('notifications.telegram.title') }}</CardTitle>

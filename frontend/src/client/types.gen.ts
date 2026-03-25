@@ -216,6 +216,33 @@ export type BookingUpdate = {
 }
 
 /**
+ * CalendarFeedRead
+ * Response for calendar feed management endpoints.
+ */
+export type CalendarFeedRead = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Feed Url
+   */
+  feed_url: string
+  /**
+   * Is Enabled
+   */
+  is_enabled: boolean
+  /**
+   * Last Accessed At
+   */
+  last_accessed_at?: string | null
+  /**
+   * Created At
+   */
+  created_at: string
+}
+
+/**
  * DashboardBookingItem
  * Booking with inline slot info for calendar display — avoids N+1.
  */
@@ -1939,6 +1966,55 @@ export type TelegramChat = {
    * Username
    */
   username?: string | null
+}
+
+/**
+ * TelegramConfigResponse
+ */
+export type TelegramConfigResponse = {
+  /**
+   * Bot Username
+   */
+  bot_username?: string | null
+  /**
+   * Is Configured
+   */
+  is_configured: boolean
+}
+
+/**
+ * TelegramLoginData
+ * Auth data returned by the Telegram Login Widget.
+ */
+export type TelegramLoginData = {
+  /**
+   * Id
+   */
+  id: number
+  /**
+   * First Name
+   */
+  first_name?: string | null
+  /**
+   * Last Name
+   */
+  last_name?: string | null
+  /**
+   * Username
+   */
+  username?: string | null
+  /**
+   * Photo Url
+   */
+  photo_url?: string | null
+  /**
+   * Auth Date
+   */
+  auth_date: number
+  /**
+   * Hash
+   */
+  hash: string
 }
 
 /**
@@ -5012,6 +5088,225 @@ export type BookingsDismissBookingResponses = {
 export type BookingsDismissBookingResponse =
   BookingsDismissBookingResponses[keyof BookingsDismissBookingResponses]
 
+export type CalendarDisableFeedData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/calendar/feed-settings'
+}
+
+export type CalendarDisableFeedErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type CalendarDisableFeedError = CalendarDisableFeedErrors[keyof CalendarDisableFeedErrors]
+
+export type CalendarDisableFeedResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type CalendarDisableFeedResponse =
+  CalendarDisableFeedResponses[keyof CalendarDisableFeedResponses]
+
+export type CalendarGetFeedSettingsData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/calendar/feed-settings'
+}
+
+export type CalendarGetFeedSettingsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type CalendarGetFeedSettingsError =
+  CalendarGetFeedSettingsErrors[keyof CalendarGetFeedSettingsErrors]
+
+export type CalendarGetFeedSettingsResponses = {
+  /**
+   * Response Calendar-Get Feed Settings
+   * Successful Response
+   */
+  200: CalendarFeedRead | null
+}
+
+export type CalendarGetFeedSettingsResponse =
+  CalendarGetFeedSettingsResponses[keyof CalendarGetFeedSettingsResponses]
+
+export type CalendarEnableFeedData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/calendar/feed-settings'
+}
+
+export type CalendarEnableFeedErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type CalendarEnableFeedError = CalendarEnableFeedErrors[keyof CalendarEnableFeedErrors]
+
+export type CalendarEnableFeedResponses = {
+  /**
+   * Successful Response
+   */
+  200: CalendarFeedRead
+}
+
+export type CalendarEnableFeedResponse =
+  CalendarEnableFeedResponses[keyof CalendarEnableFeedResponses]
+
+export type CalendarRegenerateFeedData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/calendar/feed-settings/regenerate'
+}
+
+export type CalendarRegenerateFeedErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type CalendarRegenerateFeedError =
+  CalendarRegenerateFeedErrors[keyof CalendarRegenerateFeedErrors]
+
+export type CalendarRegenerateFeedResponses = {
+  /**
+   * Successful Response
+   */
+  200: CalendarFeedRead
+}
+
+export type CalendarRegenerateFeedResponse =
+  CalendarRegenerateFeedResponses[keyof CalendarRegenerateFeedResponses]
+
 export type EventGroupsListEventGroupsData = {
   body?: never
   path?: never
@@ -6618,6 +6913,119 @@ export type NotificationsGetVapidPublicKeyResponses = {
 export type NotificationsGetVapidPublicKeyResponse =
   NotificationsGetVapidPublicKeyResponses[keyof NotificationsGetVapidPublicKeyResponses]
 
+export type NotificationsSendTestPushData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/test-push'
+}
+
+export type NotificationsSendTestPushErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsSendTestPushError =
+  NotificationsSendTestPushErrors[keyof NotificationsSendTestPushErrors]
+
+export type NotificationsSendTestPushResponses = {
+  /**
+   * Response Notifications-Send Test Push
+   * Successful Response
+   */
+  200: {
+    [key: string]: boolean
+  }
+}
+
+export type NotificationsSendTestPushResponse =
+  NotificationsSendTestPushResponses[keyof NotificationsSendTestPushResponses]
+
+export type NotificationsGetTelegramConfigData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/telegram/config'
+}
+
+export type NotificationsGetTelegramConfigErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsGetTelegramConfigError =
+  NotificationsGetTelegramConfigErrors[keyof NotificationsGetTelegramConfigErrors]
+
+export type NotificationsGetTelegramConfigResponses = {
+  /**
+   * Successful Response
+   */
+  200: TelegramConfigResponse
+}
+
+export type NotificationsGetTelegramConfigResponse =
+  NotificationsGetTelegramConfigResponses[keyof NotificationsGetTelegramConfigResponses]
+
 export type NotificationsUnbindTelegramData = {
   body?: never
   path?: never
@@ -6728,6 +7136,61 @@ export type NotificationsGetTelegramBindingResponses = {
 
 export type NotificationsGetTelegramBindingResponse =
   NotificationsGetTelegramBindingResponses[keyof NotificationsGetTelegramBindingResponses]
+
+export type NotificationsTelegramLoginData = {
+  body: TelegramLoginData
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/telegram/login'
+}
+
+export type NotificationsTelegramLoginErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsTelegramLoginError =
+  NotificationsTelegramLoginErrors[keyof NotificationsTelegramLoginErrors]
+
+export type NotificationsTelegramLoginResponses = {
+  /**
+   * Successful Response
+   */
+  200: TelegramBindingRead
+}
+
+export type NotificationsTelegramLoginResponse =
+  NotificationsTelegramLoginResponses[keyof NotificationsTelegramLoginResponses]
 
 export type NotificationsStartTelegramBindingData = {
   body?: never
