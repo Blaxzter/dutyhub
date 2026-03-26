@@ -15,6 +15,8 @@ const { t } = useI18n()
 const router = useRouter()
 const notificationStore = useNotificationStore()
 
+const popoverOpen = ref(false)
+
 const unreadCount = computed(() => notificationStore.unreadCount)
 const hasUnread = computed(() => notificationStore.hasUnread)
 const notifications = computed(() => notificationStore.notifications)
@@ -72,19 +74,23 @@ function handleNotificationClick(notification: (typeof notifications.value)[0]) 
   const data = notification.data
   if (data) {
     if (data.event_id) {
+      popoverOpen.value = false
       router.push({ name: 'event-detail', params: { eventId: data.event_id as string } })
     } else if (data.event_group_id) {
+      popoverOpen.value = false
       router.push({
         name: 'event-group-detail',
         params: { groupId: data.event_group_id as string },
       })
     } else if (data.booking_id) {
+      popoverOpen.value = false
       router.push({ name: 'my-bookings' })
     }
   }
 }
 
 function goToPreferences() {
+  popoverOpen.value = false
   router.push({ name: 'notification-preferences' })
 }
 
@@ -129,7 +135,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Popover @update:open="onOpen">
+  <Popover v-model:open="popoverOpen" @update:open="onOpen">
     <PopoverTrigger as-child>
       <Button variant="ghost" size="icon" class="relative">
         <Bell class="h-5 w-5" />

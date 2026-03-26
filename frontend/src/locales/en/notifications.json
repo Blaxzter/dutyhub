@@ -27,7 +27,11 @@
     "save": "Save preferences",
     "saved": "Notification preferences saved",
     "saveFailed": "Failed to save notification preferences",
-    "perTypeTitle": "Per-notification Preferences"
+    "perTypeTitle": "Per-notification Preferences",
+    "nav": {
+      "channels": "Channels",
+      "perType": "Fine-tuning"
+    }
   },
 
   "globalToggle": {

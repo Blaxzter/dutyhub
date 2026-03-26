@@ -1,20 +1,26 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, type Component } from 'vue'
 
-import { ExternalLink, Mail, MessageCircle, Smartphone, TriangleAlert } from 'lucide-vue-next'
+import { ExternalLink, Mail, MessageCircle, Radio, SlidersHorizontal, Smartphone, TriangleAlert } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
 import type { NotificationSubscription, NotificationType } from '@/stores/notification'
 import { useNotificationStore } from '@/stores/notification'
 
+import { useAdaptiveCarouselHeight } from '@/composables/useAdaptiveCarouselHeight'
+
+import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
+
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 
 import TelegramLoginWidget from '@/components/account/TelegramLoginWidget.vue'
+import ChipNav from '@/components/utils/ChipNav.vue'
 
 import AnimatedBell from '@/components/icons/lucide-animated/Bell.vue'
 import AnimatedMail from '@/components/icons/lucide-animated/Mail.vue'
@@ -25,6 +31,42 @@ import AnimatedSmartphone from '@/components/icons/lucide-animated/Smartphone.vu
 const { t } = useI18n()
 const notificationStore = useNotificationStore()
 
+// ── Section navigation ───────────────────────────────────────────
+interface NavItem {
+  id: string
+  label: string
+  icon: Component
+}
+
+const navItems = computed<NavItem[]>(() => [
+  { id: 'channels', label: t('notifications.preferences.nav.channels'), icon: Radio },
+  { id: 'perType', label: t('notifications.preferences.nav.perType'), icon: SlidersHorizontal },
+])
+
+const chipItems = computed(() =>
+  navItems.value.map((item) => ({ label: item.label, icon: item.icon })),
+)
+
+// Desktop
+const activeSection = ref('channels')
+
+// Mobile carousel
+const mobileSlide = ref(0)
+const carouselApi = ref<UnwrapRefCarouselApi>()
+useAdaptiveCarouselHeight(carouselApi)
+
+function onCarouselInit(api: UnwrapRefCarouselApi) {
+  carouselApi.value = api
+  api.on('select', () => {
+    mobileSlide.value = api.selectedScrollSnap()
+  })
+}
+
+watch(mobileSlide, (index) => {
+  carouselApi.value?.scrollTo(index)
+})
+
+// ── Data state ───────────────────────────────────────────────────
 const loading = ref(true)
 const saving = ref(false)
 const types = ref<NotificationType[]>([])
@@ -370,9 +412,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl space-y-6">
+  <div>
     <!-- Header -->
-    <div class="pb-3">
+    <div class="mx-auto max-w-3xl pb-2">
       <h1 class="text-3xl font-bold tracking-tight break-words">
         {{ t('notifications.preferences.title') }}
       </h1>
@@ -386,320 +428,620 @@ onMounted(async () => {
     </div>
 
     <template v-else>
-      <!-- ── Delivery Channels ─────────────────────────────────── -->
-      <h2 class="text-xl font-semibold tracking-tight">
-        {{ t('notifications.channels.sectionTitle') }}
-      </h2>
+      <!-- ==================== MOBILE / TABLET (<xl) ==================== -->
+      <div class="xl:hidden">
+        <ChipNav v-model="mobileSlide" :items="chipItems" class="mb-4" />
 
-      <!-- Email channel -->
-      <Card
-        :class="[
-          'transition-colors duration-300',
-          globalChannelSettings.notify_email
-            ? 'border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20'
-            : '',
-        ]"
-      >
-        <CardHeader>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <AnimatedMail
-                ref="mailIconRef"
-                :size="20"
-                :class="[
-                  'transition-colors duration-300',
-                  globalChannelSettings.notify_email ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground',
-                ]"
-              />
-              <CardTitle>{{ t('notifications.email.title') }}</CardTitle>
-            </div>
-            <Switch
-              :model-value="globalChannelSettings.notify_email"
-              @update:model-value="(v: boolean) => toggleGlobalChannel('notify_email', v)"
-            />
-          </div>
-          <CardDescription>
-            {{ t('notifications.email.description') }}
-          </CardDescription>
-        </CardHeader>
-      </Card>
+        <div class="mx-auto max-w-3xl">
+          <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
+            <CarouselContent class="items-start">
+              <CarouselItem
+                v-for="item in navItems"
+                :key="item.id"
+                class="basis-full"
+              >
+                <div class="space-y-6">
+                  <template v-if="item.id === 'channels'">
+                    <!-- Email channel -->
+                    <Card
+                      :class="[
+                        'transition-colors duration-300',
+                        globalChannelSettings.notify_email
+                          ? 'border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20'
+                          : '',
+                      ]"
+                    >
+                      <CardHeader>
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <AnimatedMail
+                              ref="mailIconRef"
+                              :size="20"
+                              :class="[
+                                'transition-colors duration-300',
+                                globalChannelSettings.notify_email ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground',
+                              ]"
+                            />
+                            <CardTitle>{{ t('notifications.email.title') }}</CardTitle>
+                          </div>
+                          <Switch
+                            :model-value="globalChannelSettings.notify_email"
+                            @update:model-value="(v: boolean) => toggleGlobalChannel('notify_email', v)"
+                          />
+                        </div>
+                        <CardDescription>
+                          {{ t('notifications.email.description') }}
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
 
-      <!-- Push notification channel -->
-      <Card
-        v-if="pushSupported"
-        :class="[
-          'transition-colors duration-300',
-          globalChannelSettings.notify_push
-            ? 'border-violet-200 bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/20'
-            : '',
-        ]"
-      >
-        <CardHeader>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <AnimatedSmartphone
-                ref="smartphoneIconRef"
-                :size="20"
-                :class="[
-                  'transition-colors duration-300',
-                  globalChannelSettings.notify_push ? 'text-violet-600 dark:text-violet-400' : 'text-muted-foreground',
-                ]"
-              />
-              <CardTitle>{{ t('notifications.push.title') }}</CardTitle>
-            </div>
-            <Switch
-              :model-value="globalChannelSettings.notify_push"
-              @update:model-value="(v: boolean) => toggleGlobalChannel('notify_push', v)"
-            />
-          </div>
-          <CardDescription>
-            {{ t('notifications.push.description') }}
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="space-y-3">
-          <div v-if="pushPermission === 'denied'" class="text-muted-foreground text-sm">
-            {{ t('notifications.push.denied') }}
-          </div>
-          <template v-else-if="pushActive">
-            <div class="flex items-center gap-2">
-              <Badge variant="outline" class="text-green-600">
-                {{ t('notifications.push.enabled') }}
-              </Badge>
-            </div>
-            <div class="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="sendingTestPush"
-                @click="sendTestPush"
-              >
-                <AnimatedSend :size="16" class="mr-2" />
-                {{
-                  sendingTestPush
-                    ? t('notifications.push.testSending')
-                    : t('notifications.push.testButton')
-                }}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="disablingPush"
-                @click="disablePush"
-              >
-                {{ t('notifications.push.disable') }}
+                    <!-- Push notification channel -->
+                    <Card
+                      v-if="pushSupported"
+                      :class="[
+                        'transition-colors duration-300',
+                        globalChannelSettings.notify_push
+                          ? 'border-violet-200 bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/20'
+                          : '',
+                      ]"
+                    >
+                      <CardHeader>
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <AnimatedSmartphone
+                              ref="smartphoneIconRef"
+                              :size="20"
+                              :class="[
+                                'transition-colors duration-300',
+                                globalChannelSettings.notify_push ? 'text-violet-600 dark:text-violet-400' : 'text-muted-foreground',
+                              ]"
+                            />
+                            <CardTitle>{{ t('notifications.push.title') }}</CardTitle>
+                          </div>
+                          <Switch
+                            :model-value="globalChannelSettings.notify_push"
+                            @update:model-value="(v: boolean) => toggleGlobalChannel('notify_push', v)"
+                          />
+                        </div>
+                        <CardDescription>
+                          {{ t('notifications.push.description') }}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent class="space-y-3">
+                        <div v-if="pushPermission === 'denied'" class="text-muted-foreground text-sm">
+                          {{ t('notifications.push.denied') }}
+                        </div>
+                        <template v-else-if="pushActive">
+                          <div class="flex items-center gap-2">
+                            <Badge variant="outline" class="text-green-600">
+                              {{ t('notifications.push.enabled') }}
+                            </Badge>
+                          </div>
+                          <div class="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              :disabled="sendingTestPush"
+                              @click="sendTestPush"
+                            >
+                              <AnimatedSend :size="16" class="mr-2" />
+                              {{
+                                sendingTestPush
+                                  ? t('notifications.push.testSending')
+                                  : t('notifications.push.testButton')
+                              }}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              :disabled="disablingPush"
+                              @click="disablePush"
+                            >
+                              {{ t('notifications.push.disable') }}
+                            </Button>
+                          </div>
+                        </template>
+                        <Button v-else variant="outline" @click="requestPushPermission">
+                          {{ t('notifications.push.enable') }}
+                        </Button>
+                      </CardContent>
+                    </Card>
+
+                    <!-- Telegram channel -->
+                    <Card
+                      v-if="telegramConfigured"
+                      :class="[
+                        'transition-colors duration-300',
+                        globalChannelSettings.notify_telegram
+                          ? 'border-sky-200 bg-sky-50/50 dark:border-sky-900 dark:bg-sky-950/20'
+                          : '',
+                      ]"
+                    >
+                      <CardHeader>
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-2">
+                            <AnimatedTelegram
+                              ref="telegramIconRef"
+                              :size="20"
+                              :use-color="globalChannelSettings.notify_telegram"
+                              :class="[
+                                'transition-colors duration-300',
+                                globalChannelSettings.notify_telegram ? '' : 'text-muted-foreground',
+                              ]"
+                            />
+                            <CardTitle>{{ t('notifications.telegram.title') }}</CardTitle>
+                          </div>
+                          <Switch
+                            :model-value="globalChannelSettings.notify_telegram"
+                            @update:model-value="(v: boolean) => toggleGlobalChannel('notify_telegram', v)"
+                          />
+                        </div>
+                        <CardDescription>
+                          {{ t('notifications.telegram.description') }}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div
+                          v-if="telegramNotConnectedWarning && !telegramBinding?.is_verified"
+                          class="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 mb-4 flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 p-3 text-sm"
+                        >
+                          <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{{ t('notifications.telegram.notConnectedWarning') }}</span>
+                        </div>
+                        <div v-if="telegramBinding?.is_verified" class="space-y-3">
+                          <div class="flex items-center gap-2">
+                            <Badge variant="outline" class="text-green-600">
+                              {{ t('notifications.telegram.connected') }}
+                            </Badge>
+                            <span v-if="telegramBinding.telegram_username" class="text-muted-foreground text-sm">
+                              @{{ telegramBinding.telegram_username }}
+                            </span>
+                          </div>
+                          <p v-if="botStartLink" class="text-muted-foreground text-sm">
+                            {{ t('notifications.telegram.startBotHint') }}
+                            <a :href="botStartLink" target="_blank" rel="noopener noreferrer" class="text-primary underline underline-offset-2">
+                              @{{ telegramBotUsername }}
+                            </a>
+                          </p>
+                          <Button variant="outline" size="sm" @click="unbindTelegram">
+                            {{ t('notifications.telegram.disconnect') }}
+                          </Button>
+                        </div>
+                        <div v-else class="space-y-4">
+                          <div v-if="telegramBotUsername && !telegramCode">
+                            <p class="text-muted-foreground mb-3 text-sm">
+                              {{ t('notifications.telegram.loginDescription') }}
+                            </p>
+                            <TelegramLoginWidget :bot-username="telegramBotUsername" @auth="onTelegramAuth" />
+                            <div v-if="connectingTelegram" class="text-muted-foreground mt-2 text-sm">
+                              {{ t('notifications.telegram.connecting') }}
+                            </div>
+                          </div>
+                          <details class="text-sm">
+                            <summary class="text-muted-foreground cursor-pointer text-xs">
+                              {{ t('notifications.telegram.manualFallback') }}
+                            </summary>
+                            <div class="mt-3 space-y-3">
+                              <div v-if="telegramCode" class="space-y-3">
+                                <a v-if="telegramDeepLink" :href="telegramDeepLink" target="_blank" rel="noopener noreferrer" class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium">
+                                  <ExternalLink class="mr-2 h-4 w-4" />
+                                  {{ t('notifications.telegram.openInTelegram') }}
+                                </a>
+                                <p class="text-muted-foreground text-sm">
+                                  {{ t('notifications.telegram.waitingForVerification') }}
+                                </p>
+                                <div class="space-y-2">
+                                  <p class="text-muted-foreground text-xs">
+                                    {{ t('notifications.telegram.sendCode') }}
+                                  </p>
+                                  <div class="bg-muted rounded-lg p-3 text-center">
+                                    <code class="text-sm font-bold">{{ telegramCode }}</code>
+                                  </div>
+                                  <p v-if="manualBotUsername" class="text-muted-foreground text-xs">
+                                    {{ t('notifications.telegram.sendTo') }}
+                                    <strong>@{{ manualBotUsername }}</strong>
+                                  </p>
+                                </div>
+                              </div>
+                              <Button v-else variant="outline" size="sm" :disabled="bindingTelegram" @click="startManualTelegramBinding">
+                                {{ t('notifications.telegram.connectManually') }}
+                              </Button>
+                            </div>
+                          </details>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </template>
+
+                  <template v-if="item.id === 'perType'">
+                    <Card v-for="(categoryTypes, category) in groupedTypes" :key="category">
+                      <CardHeader>
+                        <CardTitle>{{ getCategoryLabel(category as string) }}</CardTitle>
+                      </CardHeader>
+                      <CardContent class="space-y-0">
+                        <div class="text-muted-foreground mb-3 flex items-center gap-2 sm:gap-4 text-xs font-medium">
+                          <div class="min-w-0 flex-1" />
+                          <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
+                            <Mail class="h-3.5 w-3.5 shrink-0" />
+                            <span class="hidden sm:inline">{{ t('notifications.channels.email') }}</span>
+                          </div>
+                          <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
+                            <Smartphone class="h-3.5 w-3.5 shrink-0" />
+                            <span class="hidden sm:inline">{{ t('notifications.channels.push') }}</span>
+                          </div>
+                          <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
+                            <MessageCircle class="h-3.5 w-3.5 shrink-0" />
+                            <span class="hidden sm:inline">{{ t('notifications.channels.telegram') }}</span>
+                          </div>
+                        </div>
+                        <Separator />
+                        <div
+                          v-for="type in categoryTypes as NotificationType[]"
+                          :key="type.id"
+                          class="flex items-center gap-2 sm:gap-4 py-3"
+                        >
+                          <div class="min-w-0 flex-1">
+                            <p class="text-sm font-medium">{{ type.name }}</p>
+                            <p v-if="type.description" class="text-muted-foreground text-xs">
+                              {{ type.description }}
+                            </p>
+                            <Badge v-if="type.is_admin_only" variant="secondary" class="mt-1 text-[10px]">
+                              {{ t('notifications.adminOnly') }}
+                            </Badge>
+                          </div>
+                          <div class="flex w-10 sm:w-24 justify-center">
+                            <Switch :model-value="getPreference(type.id).email" @update:model-value="(v: boolean) => setPreference(type.id, 'email', v)" />
+                          </div>
+                          <div class="flex w-10 sm:w-24 justify-center">
+                            <Switch :model-value="getPreference(type.id).push" @update:model-value="(v: boolean) => setPreference(type.id, 'push', v)" />
+                          </div>
+                          <div class="flex w-10 sm:w-24 justify-center">
+                            <Switch :model-value="getPreference(type.id).telegram" @update:model-value="(v: boolean) => setPreference(type.id, 'telegram', v)" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <div class="flex justify-end">
+                      <Button :disabled="saving" @click="savePreferences">
+                        <AnimatedBell :size="16" class="mr-2" />
+                        {{ t('notifications.preferences.save') }}
+                      </Button>
+                    </div>
+                  </template>
+                </div>
+              </CarouselItem>
+            </CarouselContent>
+          </Carousel>
+        </div>
+      </div>
+
+      <!-- ==================== DESKTOP (xl+) ==================== -->
+      <div class="hidden xl:grid grid-cols-[1fr_48rem_1fr] mt-8">
+        <!-- Nav in left gutter -->
+        <div class="flex justify-end pr-8">
+          <nav class="w-44 sticky top-8 self-start space-y-1">
+            <button
+              v-for="item in navItems"
+              :key="item.id"
+              @click="activeSection = item.id"
+              class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left"
+              :class="[
+                activeSection === item.id
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground',
+              ]"
+            >
+              <component :is="item.icon" class="h-4 w-4 shrink-0" />
+              {{ item.label }}
+            </button>
+          </nav>
+        </div>
+
+        <!-- Content -->
+        <div class="space-y-6">
+          <template v-if="activeSection === 'channels'">
+            <!-- Email channel -->
+            <Card
+              :class="[
+                'transition-colors duration-300',
+                globalChannelSettings.notify_email
+                  ? 'border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20'
+                  : '',
+              ]"
+            >
+              <CardHeader>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <AnimatedMail
+                      ref="mailIconRef"
+                      :size="20"
+                      :class="[
+                        'transition-colors duration-300',
+                        globalChannelSettings.notify_email ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground',
+                      ]"
+                    />
+                    <CardTitle>{{ t('notifications.email.title') }}</CardTitle>
+                  </div>
+                  <Switch
+                    :model-value="globalChannelSettings.notify_email"
+                    @update:model-value="(v: boolean) => toggleGlobalChannel('notify_email', v)"
+                  />
+                </div>
+                <CardDescription>
+                  {{ t('notifications.email.description') }}
+                </CardDescription>
+              </CardHeader>
+            </Card>
+
+            <!-- Push notification channel -->
+            <Card
+              v-if="pushSupported"
+              :class="[
+                'transition-colors duration-300',
+                globalChannelSettings.notify_push
+                  ? 'border-violet-200 bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/20'
+                  : '',
+              ]"
+            >
+              <CardHeader>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <AnimatedSmartphone
+                      ref="smartphoneIconRef"
+                      :size="20"
+                      :class="[
+                        'transition-colors duration-300',
+                        globalChannelSettings.notify_push ? 'text-violet-600 dark:text-violet-400' : 'text-muted-foreground',
+                      ]"
+                    />
+                    <CardTitle>{{ t('notifications.push.title') }}</CardTitle>
+                  </div>
+                  <Switch
+                    :model-value="globalChannelSettings.notify_push"
+                    @update:model-value="(v: boolean) => toggleGlobalChannel('notify_push', v)"
+                  />
+                </div>
+                <CardDescription>
+                  {{ t('notifications.push.description') }}
+                </CardDescription>
+              </CardHeader>
+              <CardContent class="space-y-3">
+                <div v-if="pushPermission === 'denied'" class="text-muted-foreground text-sm">
+                  {{ t('notifications.push.denied') }}
+                </div>
+                <template v-else-if="pushActive">
+                  <div class="flex items-center gap-2">
+                    <Badge variant="outline" class="text-green-600">
+                      {{ t('notifications.push.enabled') }}
+                    </Badge>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      :disabled="sendingTestPush"
+                      @click="sendTestPush"
+                    >
+                      <AnimatedSend :size="16" class="mr-2" />
+                      {{
+                        sendingTestPush
+                          ? t('notifications.push.testSending')
+                          : t('notifications.push.testButton')
+                      }}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      :disabled="disablingPush"
+                      @click="disablePush"
+                    >
+                      {{ t('notifications.push.disable') }}
+                    </Button>
+                  </div>
+                </template>
+                <Button v-else variant="outline" @click="requestPushPermission">
+                  {{ t('notifications.push.enable') }}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <!-- Telegram channel -->
+            <Card
+              v-if="telegramConfigured"
+              :class="[
+                'transition-colors duration-300',
+                globalChannelSettings.notify_telegram
+                  ? 'border-sky-200 bg-sky-50/50 dark:border-sky-900 dark:bg-sky-950/20'
+                  : '',
+              ]"
+            >
+              <CardHeader>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <AnimatedTelegram
+                      ref="telegramIconRef"
+                      :size="20"
+                      :use-color="globalChannelSettings.notify_telegram"
+                      :class="[
+                        'transition-colors duration-300',
+                        globalChannelSettings.notify_telegram ? '' : 'text-muted-foreground',
+                      ]"
+                    />
+                    <CardTitle>{{ t('notifications.telegram.title') }}</CardTitle>
+                  </div>
+                  <Switch
+                    :model-value="globalChannelSettings.notify_telegram"
+                    @update:model-value="(v: boolean) => toggleGlobalChannel('notify_telegram', v)"
+                  />
+                </div>
+                <CardDescription>
+                  {{ t('notifications.telegram.description') }}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div
+                  v-if="telegramNotConnectedWarning && !telegramBinding?.is_verified"
+                  class="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 mb-4 flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 p-3 text-sm"
+                >
+                  <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{{ t('notifications.telegram.notConnectedWarning') }}</span>
+                </div>
+                <div v-if="telegramBinding?.is_verified" class="space-y-3">
+                  <div class="flex items-center gap-2">
+                    <Badge variant="outline" class="text-green-600">
+                      {{ t('notifications.telegram.connected') }}
+                    </Badge>
+                    <span v-if="telegramBinding.telegram_username" class="text-muted-foreground text-sm">
+                      @{{ telegramBinding.telegram_username }}
+                    </span>
+                  </div>
+                  <p v-if="botStartLink" class="text-muted-foreground text-sm">
+                    {{ t('notifications.telegram.startBotHint') }}
+                    <a
+                      :href="botStartLink"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-primary underline underline-offset-2"
+                    >
+                      @{{ telegramBotUsername }}
+                    </a>
+                  </p>
+                  <Button variant="outline" size="sm" @click="unbindTelegram">
+                    {{ t('notifications.telegram.disconnect') }}
+                  </Button>
+                </div>
+                <div v-else class="space-y-4">
+                  <div v-if="telegramBotUsername && !telegramCode">
+                    <p class="text-muted-foreground mb-3 text-sm">
+                      {{ t('notifications.telegram.loginDescription') }}
+                    </p>
+                    <TelegramLoginWidget :bot-username="telegramBotUsername" @auth="onTelegramAuth" />
+                    <div v-if="connectingTelegram" class="text-muted-foreground mt-2 text-sm">
+                      {{ t('notifications.telegram.connecting') }}
+                    </div>
+                  </div>
+                  <details class="text-sm">
+                    <summary class="text-muted-foreground cursor-pointer text-xs">
+                      {{ t('notifications.telegram.manualFallback') }}
+                    </summary>
+                    <div class="mt-3 space-y-3">
+                      <div v-if="telegramCode" class="space-y-3">
+                        <a
+                          v-if="telegramDeepLink"
+                          :href="telegramDeepLink"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium"
+                        >
+                          <ExternalLink class="mr-2 h-4 w-4" />
+                          {{ t('notifications.telegram.openInTelegram') }}
+                        </a>
+                        <p class="text-muted-foreground text-sm">
+                          {{ t('notifications.telegram.waitingForVerification') }}
+                        </p>
+                        <div class="space-y-2">
+                          <p class="text-muted-foreground text-xs">
+                            {{ t('notifications.telegram.sendCode') }}
+                          </p>
+                          <div class="bg-muted rounded-lg p-3 text-center">
+                            <code class="text-sm font-bold">{{ telegramCode }}</code>
+                          </div>
+                          <p v-if="manualBotUsername" class="text-muted-foreground text-xs">
+                            {{ t('notifications.telegram.sendTo') }}
+                            <strong>@{{ manualBotUsername }}</strong>
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        v-else
+                        variant="outline"
+                        size="sm"
+                        :disabled="bindingTelegram"
+                        @click="startManualTelegramBinding"
+                      >
+                        {{ t('notifications.telegram.connectManually') }}
+                      </Button>
+                    </div>
+                  </details>
+                </div>
+              </CardContent>
+            </Card>
+          </template>
+
+          <template v-if="activeSection === 'perType'">
+            <Card v-for="(categoryTypes, category) in groupedTypes" :key="category">
+              <CardHeader>
+                <CardTitle>{{ getCategoryLabel(category as string) }}</CardTitle>
+              </CardHeader>
+              <CardContent class="space-y-0">
+                <div
+                  class="text-muted-foreground mb-3 flex items-center gap-2 sm:gap-4 text-xs font-medium"
+                >
+                  <div class="min-w-0 flex-1" />
+                  <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
+                    <Mail class="h-3.5 w-3.5 shrink-0" />
+                    <span class="hidden sm:inline">{{ t('notifications.channels.email') }}</span>
+                  </div>
+                  <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
+                    <Smartphone class="h-3.5 w-3.5 shrink-0" />
+                    <span class="hidden sm:inline">{{ t('notifications.channels.push') }}</span>
+                  </div>
+                  <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
+                    <MessageCircle class="h-3.5 w-3.5 shrink-0" />
+                    <span class="hidden sm:inline">{{ t('notifications.channels.telegram') }}</span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div
+                  v-for="type in categoryTypes as NotificationType[]"
+                  :key="type.id"
+                  class="flex items-center gap-2 sm:gap-4 py-3"
+                >
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-medium">{{ type.name }}</p>
+                    <p v-if="type.description" class="text-muted-foreground text-xs">
+                      {{ type.description }}
+                    </p>
+                    <Badge v-if="type.is_admin_only" variant="secondary" class="mt-1 text-[10px]">
+                      {{ t('notifications.adminOnly') }}
+                    </Badge>
+                  </div>
+                  <div class="flex w-10 sm:w-24 justify-center">
+                    <Switch
+                      :model-value="getPreference(type.id).email"
+                      @update:model-value="(v: boolean) => setPreference(type.id, 'email', v)"
+                    />
+                  </div>
+                  <div class="flex w-10 sm:w-24 justify-center">
+                    <Switch
+                      :model-value="getPreference(type.id).push"
+                      @update:model-value="(v: boolean) => setPreference(type.id, 'push', v)"
+                    />
+                  </div>
+                  <div class="flex w-10 sm:w-24 justify-center">
+                    <Switch
+                      :model-value="getPreference(type.id).telegram"
+                      @update:model-value="(v: boolean) => setPreference(type.id, 'telegram', v)"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div class="flex justify-end">
+              <Button :disabled="saving" @click="savePreferences">
+                <AnimatedBell :size="16" class="mr-2" />
+                {{ t('notifications.preferences.save') }}
               </Button>
             </div>
           </template>
-          <Button v-else variant="outline" @click="requestPushPermission">
-            {{ t('notifications.push.enable') }}
-          </Button>
-        </CardContent>
-      </Card>
+        </div>
 
-      <!-- Telegram channel -->
-      <Card
-        v-if="telegramConfigured"
-        :class="[
-          'transition-colors duration-300',
-          globalChannelSettings.notify_telegram
-            ? 'border-sky-200 bg-sky-50/50 dark:border-sky-900 dark:bg-sky-950/20'
-            : '',
-        ]"
-      >
-        <CardHeader>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <AnimatedTelegram
-                ref="telegramIconRef"
-                :size="20"
-                :use-color="globalChannelSettings.notify_telegram"
-                :class="[
-                  'transition-colors duration-300',
-                  globalChannelSettings.notify_telegram ? '' : 'text-muted-foreground',
-                ]"
-              />
-              <CardTitle>{{ t('notifications.telegram.title') }}</CardTitle>
-            </div>
-            <Switch
-              :model-value="globalChannelSettings.notify_telegram"
-              @update:model-value="(v: boolean) => toggleGlobalChannel('notify_telegram', v)"
-            />
-          </div>
-          <CardDescription>
-            {{ t('notifications.telegram.description') }}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <!-- Warning: Telegram enabled but not connected -->
-          <div
-            v-if="telegramNotConnectedWarning && !telegramBinding?.is_verified"
-            class="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 mb-4 flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 p-3 text-sm"
-          >
-            <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{{ t('notifications.telegram.notConnectedWarning') }}</span>
-          </div>
-
-          <!-- Connected state -->
-          <div v-if="telegramBinding?.is_verified" class="space-y-3">
-            <div class="flex items-center gap-2">
-              <Badge variant="outline" class="text-green-600">
-                {{ t('notifications.telegram.connected') }}
-              </Badge>
-              <span v-if="telegramBinding.telegram_username" class="text-muted-foreground text-sm">
-                @{{ telegramBinding.telegram_username }}
-              </span>
-            </div>
-            <p v-if="botStartLink" class="text-muted-foreground text-sm">
-              {{ t('notifications.telegram.startBotHint') }}
-              <a
-                :href="botStartLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-primary underline underline-offset-2"
-              >
-                @{{ telegramBotUsername }}
-              </a>
-            </p>
-            <Button variant="outline" size="sm" @click="unbindTelegram">
-              {{ t('notifications.telegram.disconnect') }}
-            </Button>
-          </div>
-
-          <!-- Not connected: show Login Widget or manual fallback -->
-          <div v-else class="space-y-4">
-            <!-- Telegram Login Widget (primary) -->
-            <div v-if="telegramBotUsername && !telegramCode">
-              <p class="text-muted-foreground mb-3 text-sm">
-                {{ t('notifications.telegram.loginDescription') }}
-              </p>
-              <TelegramLoginWidget :bot-username="telegramBotUsername" @auth="onTelegramAuth" />
-              <div v-if="connectingTelegram" class="text-muted-foreground mt-2 text-sm">
-                {{ t('notifications.telegram.connecting') }}
-              </div>
-            </div>
-
-            <!-- Manual code fallback (collapsed) -->
-            <details class="text-sm">
-              <summary class="text-muted-foreground cursor-pointer text-xs">
-                {{ t('notifications.telegram.manualFallback') }}
-              </summary>
-              <div class="mt-3 space-y-3">
-                <div v-if="telegramCode" class="space-y-3">
-                  <a
-                    v-if="telegramDeepLink"
-                    :href="telegramDeepLink"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium"
-                  >
-                    <ExternalLink class="mr-2 h-4 w-4" />
-                    {{ t('notifications.telegram.openInTelegram') }}
-                  </a>
-                  <p class="text-muted-foreground text-sm">
-                    {{ t('notifications.telegram.waitingForVerification') }}
-                  </p>
-                  <div class="space-y-2">
-                    <p class="text-muted-foreground text-xs">
-                      {{ t('notifications.telegram.sendCode') }}
-                    </p>
-                    <div class="bg-muted rounded-lg p-3 text-center">
-                      <code class="text-sm font-bold">{{ telegramCode }}</code>
-                    </div>
-                    <p v-if="manualBotUsername" class="text-muted-foreground text-xs">
-                      {{ t('notifications.telegram.sendTo') }}
-                      <strong>@{{ manualBotUsername }}</strong>
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  v-else
-                  variant="outline"
-                  size="sm"
-                  :disabled="bindingTelegram"
-                  @click="startManualTelegramBinding"
-                >
-                  {{ t('notifications.telegram.connectManually') }}
-                </Button>
-              </div>
-            </details>
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- ── Per-type Preferences ──────────────────────────────── -->
-      <h2 class="text-xl font-semibold tracking-tight pt-4">
-        {{ t('notifications.preferences.perTypeTitle') }}
-      </h2>
-
-      <!-- Notification type preferences -->
-      <Card v-for="(categoryTypes, category) in groupedTypes" :key="category">
-        <CardHeader>
-          <CardTitle>{{ getCategoryLabel(category as string) }}</CardTitle>
-        </CardHeader>
-        <CardContent class="space-y-0">
-          <!-- Column headers -->
-          <div
-            class="text-muted-foreground mb-3 flex items-center gap-2 sm:gap-4 text-xs font-medium"
-          >
-            <div class="min-w-0 flex-1" />
-            <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
-              <Mail class="h-3.5 w-3.5 shrink-0" />
-              <span class="hidden sm:inline">{{ t('notifications.channels.email') }}</span>
-            </div>
-            <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
-              <Smartphone class="h-3.5 w-3.5 shrink-0" />
-              <span class="hidden sm:inline">{{ t('notifications.channels.push') }}</span>
-            </div>
-            <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
-              <MessageCircle class="h-3.5 w-3.5 shrink-0" />
-              <span class="hidden sm:inline">{{ t('notifications.channels.telegram') }}</span>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div
-            v-for="type in categoryTypes as NotificationType[]"
-            :key="type.id"
-            class="flex items-center gap-2 sm:gap-4 py-3"
-          >
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium">{{ type.name }}</p>
-              <p v-if="type.description" class="text-muted-foreground text-xs">
-                {{ type.description }}
-              </p>
-              <Badge v-if="type.is_admin_only" variant="secondary" class="mt-1 text-[10px]">
-                {{ t('notifications.adminOnly') }}
-              </Badge>
-            </div>
-            <div class="flex w-10 sm:w-24 justify-center">
-              <Switch
-                :model-value="getPreference(type.id).email"
-                @update:model-value="(v: boolean) => setPreference(type.id, 'email', v)"
-              />
-            </div>
-            <div class="flex w-10 sm:w-24 justify-center">
-              <Switch
-                :model-value="getPreference(type.id).push"
-                @update:model-value="(v: boolean) => setPreference(type.id, 'push', v)"
-              />
-            </div>
-            <div class="flex w-10 sm:w-24 justify-center">
-              <Switch
-                :model-value="getPreference(type.id).telegram"
-                @update:model-value="(v: boolean) => setPreference(type.id, 'telegram', v)"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- Save button -->
-      <div class="flex justify-end">
-        <Button :disabled="saving" @click="savePreferences">
-          <AnimatedBell :size="16" class="mr-2" />
-          {{ t('notifications.preferences.save') }}
-        </Button>
+        <!-- Right spacer for symmetry -->
+        <div aria-hidden="true" />
       </div>
     </template>
   </div>
