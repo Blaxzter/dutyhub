@@ -19,9 +19,11 @@ import {
 } from '@/components/ui/carousel'
 import type { CarouselApi } from '@/components/ui/carousel'
 
+import ChipNav from '@/components/utils/ChipNav.vue'
+
 const authStore = useAuthStore()
 const router = useRouter()
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 
 const slideKeys = [
   { key: 'dashboard', file: 'dashboard' },
@@ -57,26 +59,18 @@ function onApiSet(api: CarouselApi) {
   nextTick(syncSlide)
 }
 
-const pillsContainer = ref<HTMLElement>()
+const chipItems = computed(() =>
+  slides.value.map((s) => ({ label: t(`preauth.landing.showcase.slides.${s.key}.title`) })),
+)
+
+// Sync chip/dot selection → carousel
+watch(currentSlide, (index) => {
+  carouselApi.value?.scrollTo(index)
+})
 
 function goToSlide(index: number) {
-  carouselApi.value?.scrollTo(index)
   currentSlide.value = index
 }
-
-function scrollActivePillIntoView() {
-  const container = pillsContainer.value
-  if (!container) return
-  const activeBtn = container.children[currentSlide.value] as HTMLElement | undefined
-  if (!activeBtn) return
-  const containerRect = container.getBoundingClientRect()
-  const btnRect = activeBtn.getBoundingClientRect()
-  if (btnRect.left < containerRect.left || btnRect.right > containerRect.right) {
-    activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
-  }
-}
-
-watch(currentSlide, () => nextTick(scrollActivePillIntoView))
 
 const handleGetStarted = () => {
   if (authStore.isAuthenticated) {
@@ -175,32 +169,7 @@ const navigateToAbout = () => {
       </div>
 
       <!-- Slide Selector Pills -->
-      <div class="pills-wrapper relative overflow-hidden">
-        <div
-          class="pills-fade-left pointer-events-none absolute inset-y-0 left-0 z-10 w-8 bg-gradient-to-r from-background to-transparent"
-        />
-        <div
-          class="pills-fade-right pointer-events-none absolute inset-y-0 right-0 z-10 w-8 bg-gradient-to-l from-background to-transparent"
-        />
-        <div
-          ref="pillsContainer"
-          class="flex gap-2 overflow-x-auto scroll-smooth px-8 no-scrollbar"
-        >
-          <button
-            v-for="(slide, index) in slides"
-            :key="slide.key"
-            @click="goToSlide(index)"
-            class="shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
-            :class="
-              currentSlide === index
-                ? 'bg-primary text-primary-foreground shadow-md'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            "
-          >
-            {{ $t(`preauth.landing.showcase.slides.${slide.key}.title`) }}
-          </button>
-        </div>
-      </div>
+      <ChipNav v-model="currentSlide" :items="chipItems" variant="rounded" stretch />
 
       <!-- Carousel -->
       <div class="relative max-w-5xl mx-auto">
@@ -253,12 +222,3 @@ const navigateToAbout = () => {
   </div>
 </template>
 
-<style scoped>
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-</style>

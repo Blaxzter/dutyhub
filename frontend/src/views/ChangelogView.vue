@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 
 import { useI18n } from 'vue-i18n'
 
+import { useAdaptiveCarouselHeight } from '@/composables/useAdaptiveCarouselHeight'
 import { useChangelogStatus } from '@/composables/useChangelogStatus'
 
+import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
+
 import { Badge } from '@/components/ui/badge'
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
 import {
   Dialog,
   DialogScrollContent,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+
+import ChipNav from '@/components/utils/ChipNav.vue'
 
 const { t, locale } = useI18n()
 const { isNewVersion, markAsSeen } = useChangelogStatus()
 
 onMounted(markAsSeen)
 
+// ── Lightbox ──
 const lightboxSrc = ref('')
 const lightboxAlt = ref('')
 const lightboxOpen = ref(false)
@@ -36,7 +36,7 @@ function onContentClick(e: MouseEvent) {
   lightboxOpen.value = true
 }
 
-// Import pre-rendered changelog JSON per locale
+// ── Changelog data ──
 import enChangelog from '../changelog/generated/en.json'
 import deChangelog from '../changelog/generated/de.json'
 
@@ -45,13 +45,11 @@ const generatedEntries: Record<string, { title: string; version: string; date: s
   de: deChangelog,
 }
 
-// Import changelog images per locale so Vite resolves their asset URLs
 const rawImages = import.meta.glob('../changelog/images/**/*', {
   eager: true,
   import: 'default',
 }) as Record<string, string>
 
-// Build a nested map: { locale: { filename: url } }
 const imagesByLocale: Record<string, Record<string, string>> = {}
 for (const [path, url] of Object.entries(rawImages)) {
   const parts = path.split('/')
@@ -64,7 +62,6 @@ for (const [path, url] of Object.entries(rawImages)) {
 function resolveImagePaths(html: string, loc: string): string {
   const localeImages = imagesByLocale[loc] ?? {}
   const fallbackImages = imagesByLocale.de ?? {}
-  // Resolve locale-aware image URLs and add accessibility attributes
   return html.replace(/<img\s+src="\.\/images\/([^"]+)"\s+alt="([^"]*)"/g, (_, filename, alt) => {
     const resolved = localeImages[filename] ?? fallbackImages[filename]
     const src = resolved ?? `./images/${filename}`
@@ -79,12 +76,10 @@ interface ChangelogEntry {
   html: string
 }
 
-// Merge locale entries with English fallback, resolve images
 const entries = computed<ChangelogEntry[]>(() => {
   const localized = generatedEntries[locale.value] ?? []
   const fallback = generatedEntries.en ?? []
 
-  // Build map by version: English first, then overlay locale
   const byVersion = new Map<string, { title: string; version: string; date: string; html: string }>()
   for (const entry of fallback) byVersion.set(entry.version, entry)
   for (const entry of localized) byVersion.set(entry.version, entry)
@@ -99,11 +94,6 @@ const entries = computed<ChangelogEntry[]>(() => {
     .sort((a, b) => b.date.getTime() - a.date.getTime())
 })
 
-const selectedVersion = ref<string | undefined>(undefined)
-const selected = computed(
-  () => entries.value.find((e) => e.version === selectedVersion.value) ?? entries.value[0],
-)
-
 function formatDateLong(date: Date): string {
   return date.toLocaleString(locale.value, {
     year: 'numeric',
@@ -113,77 +103,119 @@ function formatDateLong(date: Date): string {
     minute: '2-digit',
   })
 }
+
+// ── Chip items for mobile ──
+const chipItems = computed(() =>
+  entries.value.map((e, i) => ({
+    label: i === 0 ? `v${e.version} (${t('changelog.latest')})` : `v${e.version}`,
+  })),
+)
+
+// ── Mobile carousel state ──
+const mobileSlide = ref(0)
+const carouselApi = ref<UnwrapRefCarouselApi>()
+useAdaptiveCarouselHeight(carouselApi)
+
+function onCarouselInit(api: UnwrapRefCarouselApi) {
+  carouselApi.value = api
+  api.on('select', () => {
+    mobileSlide.value = api.selectedScrollSnap()
+  })
+}
+
+watch(mobileSlide, (index) => {
+  carouselApi.value?.scrollTo(index)
+})
+
+// ── Desktop state ──
+const activeIndex = ref(0)
+const desktopSelected = computed(() => entries.value[activeIndex.value])
 </script>
 
 <template>
-  <div class="mx-auto max-w-7xl">
-    <!-- Mobile: header + version select -->
-    <div class="md:hidden space-y-4 mb-6">
-      <div class="space-y-2">
-        <h1 class="text-3xl font-bold">{{ t('changelog.title') }}</h1>
-        <p class="text-muted-foreground">{{ t('changelog.subtitle') }}</p>
-      </div>
-      <Select v-model="selectedVersion">
-        <SelectTrigger>
-          <SelectValue :placeholder="selected ? `v${selected.version}` : ''" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem
-            v-for="(entry, index) in entries"
-            :key="entry.version"
-            :value="entry.version"
-          >
-            v{{ entry.version }}
-            <span v-if="index === 0" class="text-muted-foreground ml-1">
-              ({{ t('changelog.latest') }})
-            </span>
-          </SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-
-    <!-- Header (desktop) — indented past the nav column -->
-    <div class="hidden md:block space-y-2 mb-6" style="padding-left: calc(9rem + 2rem)">
+  <div>
+    <!-- Header — always centered -->
+    <div class="mx-auto max-w-3xl pb-2">
       <h1 class="text-3xl font-bold">{{ t('changelog.title') }}</h1>
-      <p class="text-muted-foreground">{{ t('changelog.subtitle') }}</p>
+      <p class="text-muted-foreground mt-2">{{ t('changelog.subtitle') }}</p>
     </div>
 
-    <!-- Two-column layout -->
-    <div class="flex gap-8 items-start">
-      <!-- Version nav (desktop) -->
-      <nav class="hidden md:block w-36 shrink-0 self-start sticky top-4">
-        <div class="rounded-lg border p-2 space-y-0.5">
-          <button
-            v-for="(entry, index) in entries"
-            :key="entry.version"
-            class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors"
-            :class="
-              selected?.version === entry.version
-                ? 'bg-accent text-accent-foreground font-medium'
-                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
-            "
-            @click="selectedVersion = entry.version"
-          >
-            <span
-              class="size-1.5 shrink-0 rounded-full"
-              :class="index === 0 ? 'bg-primary' : 'bg-border'"
-            />
-            <span class="truncate flex-1">v{{ entry.version }}</span>
-            <span
-              v-if="isNewVersion(entry.version)"
-              class="size-1.5 shrink-0 rounded-full bg-primary"
-            />
-          </button>
-        </div>
-      </nav>
+    <!-- ==================== MOBILE / TABLET (<xl) ==================== -->
+    <div class="xl:hidden">
+      <ChipNav v-model="mobileSlide" :items="chipItems" class="mb-4" />
+
+      <div class="mx-auto max-w-3xl">
+        <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
+          <CarouselContent class="items-start">
+            <CarouselItem
+              v-for="entry in entries"
+              :key="entry.version"
+              class="basis-full"
+            >
+              <div>
+                <div class="space-y-1 mb-4">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-xl font-semibold">{{ entry.title }}</h2>
+                    <Badge
+                      v-if="entry.version === entries[0]?.version"
+                      variant="default"
+                      class="text-[10px]"
+                    >
+                      {{ t('changelog.latest') }}
+                    </Badge>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>v{{ entry.version }}</span>
+                    <span>&middot;</span>
+                    <time>{{ formatDateLong(entry.date) }}</time>
+                  </div>
+                </div>
+                <div class="changelog-content" v-html="entry.html" @click="onContentClick" />
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
+      </div>
+    </div>
+
+    <!-- ==================== DESKTOP (xl+) ==================== -->
+    <div class="hidden xl:grid grid-cols-[1fr_48rem_1fr] mt-8">
+      <!-- Nav in left gutter -->
+      <div class="flex justify-end pr-8">
+        <nav class="w-44 sticky top-8 self-start">
+          <div class="rounded-lg border p-2 space-y-0.5">
+            <button
+              v-for="(entry, index) in entries"
+              :key="entry.version"
+              class="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors"
+              :class="
+                activeIndex === index
+                  ? 'bg-accent text-accent-foreground font-medium'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
+              "
+              @click="activeIndex = index"
+            >
+              <span
+                class="size-1.5 shrink-0 rounded-full"
+                :class="index === 0 ? 'bg-primary' : 'bg-border'"
+              />
+              <span class="truncate flex-1">v{{ entry.version }}</span>
+              <span
+                v-if="isNewVersion(entry.version)"
+                class="size-1.5 shrink-0 rounded-full bg-primary"
+              />
+            </button>
+          </div>
+        </nav>
+      </div>
 
       <!-- Content -->
-      <div v-if="selected" class="min-w-0 flex-1">
+      <div v-if="desktopSelected">
         <div class="space-y-1 mb-4">
           <div class="flex flex-wrap items-center gap-2">
-            <h2 class="text-xl font-semibold">{{ selected.title }}</h2>
+            <h2 class="text-xl font-semibold">{{ desktopSelected.title }}</h2>
             <Badge
-              v-if="selected.version === entries[0]?.version"
+              v-if="desktopSelected.version === entries[0]?.version"
               variant="default"
               class="text-[10px]"
             >
@@ -191,14 +223,17 @@ function formatDateLong(date: Date): string {
             </Badge>
           </div>
           <div class="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>v{{ selected.version }}</span>
+            <span>v{{ desktopSelected.version }}</span>
             <span>&middot;</span>
-            <time>{{ formatDateLong(selected.date) }}</time>
+            <time>{{ formatDateLong(desktopSelected.date) }}</time>
           </div>
         </div>
 
-        <div class="changelog-content" v-html="selected.html" @click="onContentClick" />
+        <div class="changelog-content" v-html="desktopSelected.html" @click="onContentClick" />
       </div>
+
+      <!-- Right spacer for symmetry -->
+      <div aria-hidden="true" />
     </div>
 
     <!-- Image lightbox -->

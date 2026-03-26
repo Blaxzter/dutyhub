@@ -144,6 +144,14 @@
       }
     },
     "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Profilinformationen.",
-    "title": "Benutzereinstellungen"
+    "title": "Benutzereinstellungen",
+    "nav": {
+      "profile": "Profil",
+      "security": "Sicherheit",
+      "notifications": "Benachrichtigungen",
+      "calendar": "Kalender",
+      "language": "Sprache",
+      "dataPrivacy": "Daten & Datenschutz"
+    }
   }
 }

@@ -144,6 +144,14 @@
       }
     },
     "subtitle": "Manage your account settings and profile information.",
-    "title": "User Settings"
+    "title": "User Settings",
+    "nav": {
+      "profile": "Profile",
+      "security": "Security",
+      "notifications": "Notifications",
+      "calendar": "Calendar",
+      "language": "Language",
+      "dataPrivacy": "Data & Privacy"
+    }
   }
 }
