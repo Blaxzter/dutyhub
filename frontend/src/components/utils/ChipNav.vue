@@ -26,7 +26,7 @@ function select(index: number) {
   activeIndex.value = index
 }
 
-const FADE_THRESHOLD = 0
+const FADE_THRESHOLD = 2
 
 function updateOverflow() {
   const el = container.value
@@ -36,6 +36,11 @@ function updateOverflow() {
 }
 
 onMounted(() => nextTick(updateOverflow))
+
+watch(
+  () => props.items,
+  () => nextTick(updateOverflow),
+)
 
 watch(activeIndex, async () => {
   await nextTick()
@@ -68,7 +73,7 @@ watch(activeIndex, async () => {
         @click="select(index)"
         class="flex items-center justify-center gap-1.5 px-3.5 py-2 text-sm font-medium transition-all duration-200"
         :class="[
-          stretch ? 'flex-1 min-w-0 whitespace-nowrap' : 'shrink-0',
+          stretch ? 'grow shrink-0 whitespace-nowrap' : 'shrink-0',
           variant === 'rounded' ? 'rounded-full' : 'rounded-lg',
           activeIndex === index
             ? 'bg-primary text-primary-foreground shadow-sm'

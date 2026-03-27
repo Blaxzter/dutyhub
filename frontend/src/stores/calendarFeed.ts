@@ -10,8 +10,11 @@ export const useCalendarFeedStore = defineStore('calendarFeed', () => {
 
   const feedSettings = ref<CalendarFeedRead | null>(null)
   const loading = ref(false)
+  let fetched = false
 
   async function fetchFeedSettings() {
+    if (fetched) return
+    fetched = true
     loading.value = true
     try {
       const res = await get<{ data: CalendarFeedRead | null }>({
@@ -19,6 +22,7 @@ export const useCalendarFeedStore = defineStore('calendarFeed', () => {
       })
       feedSettings.value = res.data
     } catch (error) {
+      fetched = false
       console.error('Failed to fetch calendar feed settings:', error)
     } finally {
       loading.value = false

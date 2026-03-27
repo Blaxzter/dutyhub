@@ -215,6 +215,11 @@ useAdaptiveCarouselHeight(carouselApi)
 
 function onCarouselInit(api: UnwrapRefCarouselApi) {
   carouselApi.value = api
+  if (!api) return
+  // Scroll to initial position for deep-linked sections
+  if (mobileSlide.value > 0) {
+    api.scrollTo(mobileSlide.value, true)
+  }
   api.on('select', () => {
     const index = api.selectedScrollSnap()
     mobileSlide.value = index
