@@ -8,7 +8,10 @@ from icalendar import Alarm, Calendar, Event  # type: ignore[import-untyped]
 from app.models.booking import Booking
 
 
-def build_calendar(bookings: Sequence[Booking]) -> bytes:
+def build_calendar(
+    bookings: Sequence[Booking],
+    reminder_offsets: Sequence[int] | None = None,
+) -> bytes:
     """Convert confirmed bookings into an iCalendar byte string.
 
     Each booking with a linked duty_slot becomes a VEVENT.
@@ -70,12 +73,14 @@ def build_calendar(bookings: Sequence[Booking]) -> bytes:
         if booking.updated_at:
             event.add("last-modified", booking.updated_at)
 
-        # 1-hour reminder
-        alarm = Alarm()
-        alarm.add("action", "DISPLAY")
-        alarm.add("description", summary)
-        alarm.add("trigger", dt.timedelta(hours=-1))
-        event.add_component(alarm)
+        # Reminders from user's default offsets (or 1-hour fallback)
+        offsets = reminder_offsets if reminder_offsets else [60]
+        for offset in offsets:
+            alarm = Alarm()
+            alarm.add("action", "DISPLAY")
+            alarm.add("description", summary)
+            alarm.add("trigger", dt.timedelta(minutes=-offset))
+            event.add_component(alarm)
 
         cal.add_component(event)
 

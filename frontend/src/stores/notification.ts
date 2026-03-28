@@ -13,6 +13,7 @@ export interface NotificationType {
   is_admin_only: boolean
   default_channels: string[]
   is_active: boolean
+  is_user_configurable: boolean
 }
 
 export interface NotificationItem {

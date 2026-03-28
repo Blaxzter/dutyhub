@@ -7,6 +7,7 @@ from sqlmodel import col
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
+from app.crud.booking_reminder import booking_reminder as crud_reminder
 from app.crud.duty_slot import duty_slot as crud_duty_slot
 from app.logic.notifications.triggers import (
     dispatch_booking_cancelled_by_user,
@@ -183,6 +184,18 @@ async def create_booking(
             existing_user_ids=existing_user_ids,
         )
 
+    # Create default reminders for this booking
+    if current_user.default_reminder_offsets:
+        slot_start = _slot_start_datetime(slot.date, slot.start_time)
+        await crud_reminder.create_from_defaults(
+            session,
+            booking_id=result.id,
+            user_id=current_user.id,
+            duty_slot_id=slot.id,
+            slot_start=slot_start,
+            defaults=current_user.default_reminder_offsets,
+        )
+
     return result
 
 
@@ -237,6 +250,9 @@ async def cancel_booking(
         session, db_obj=db_booking, obj_in=BookingUpdate(status="cancelled")
     )
 
+    # Cancel pending reminders
+    await crud_reminder.cancel_by_booking(session, booking_id=db_booking.id)
+
     # Dispatch cancellation notification
     if db_booking.duty_slot_id:
         slot = await crud_duty_slot.get(session, str(db_booking.duty_slot_id))
@@ -275,3 +291,12 @@ async def dismiss_booking(
         )
     await session.delete(db_booking)
     await session.commit()
+
+
+def _slot_start_datetime(
+    slot_date: dt.date, slot_start_time: dt.time | None
+) -> dt.datetime:
+    """Combine slot date + time into a naive UTC datetime."""
+    if slot_start_time:
+        return dt.datetime.combine(slot_date, slot_start_time)
+    return dt.datetime.combine(slot_date, dt.time(0, 0))

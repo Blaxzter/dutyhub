@@ -48,6 +48,7 @@ class NotificationService:
         message_factory: MessageFactory | None = None,
         data: NotificationData | None = None,
         scope_chain: list[tuple[str, uuid.UUID]] | None = None,
+        force_channels: list[str] | None = None,
     ) -> list[Notification]:
         """Send a notification to one or more recipients.
 
@@ -78,13 +79,16 @@ class NotificationService:
             else:
                 resolved_title, resolved_body = title, body
 
-            # Resolve channels
-            channel_config = await crud_subscription.resolve_channels(
-                self.db,
-                user_id=recipient_id,
-                type_code=type_code,
-                scope_chain=scope_chain,
-            )
+            # Resolve channels — use force_channels if provided, else subscription-based
+            if force_channels is not None:
+                channel_config = {ch: (ch in force_channels) for ch in self.channels}
+            else:
+                channel_config = await crud_subscription.resolve_channels(
+                    self.db,
+                    user_id=recipient_id,
+                    type_code=type_code,
+                    scope_chain=scope_chain,
+                )
 
             if channel_config is None:
                 logger.debug(f"Notification {type_code} muted for user {recipient_id}")

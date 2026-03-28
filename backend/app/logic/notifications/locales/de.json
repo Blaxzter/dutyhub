@@ -11,6 +11,10 @@
     "title": "Buchung storniert",
     "body": "Ihre Buchung für „{slot_title}“ wurde storniert."
   },
+  "booking.reminder": {
+    "title": "Bevorstehende Buchung",
+    "body": "Ihre Buchung \u201e{slot_title}\u201c beginnt {time_until}.\n\n\ud83d\udcc5 {date} \u23f0 {start_time}\u2013{end_time}\n\ud83c\udfe0 {location}"
+  },
   "booking.cancelled_by_admin": {
     "title": "Buchung durch Admin storniert",
     "body": "Ihre Buchung für „{slot_title}“{event_label} wurde von einem Administrator storniert.{detail}"

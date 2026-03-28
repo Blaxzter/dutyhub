@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { Calendar, Clock, ExternalLink, MapPin, Pencil, Tag, Users } from 'lucide-vue-next'
+import { Calendar, Clock, EllipsisVertical, ExternalLink, MapPin, Tag, Users } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -21,24 +21,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import Separator from '@/components/ui/separator/Separator.vue'
-import { Textarea } from '@/components/ui/textarea'
 
 import SlotBookingsTable from '@/components/events/SlotBookingsTable.vue'
 
 import type { BookingRead, DutySlotRead, SlotBookingEntry } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
-const props = defineProps<{
-  /** Pass a full slot object (from EventDetailView) */
-  dutySlot?: DutySlotRead | null
-  /** Or pass just an ID to fetch the slot (from MyBookingsView) */
-  slotId?: string | null
-  eventName?: string | null
-  /** The current user's booking for this slot (enables notes editing) */
-  myBooking?: BookingRead | null
-  open: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    /** Pass a full slot object (from EventDetailView) */
+    dutySlot?: DutySlotRead | null
+    /** Or pass just an ID to fetch the slot (from MyBookingsView) */
+    slotId?: string | null
+    eventName?: string | null
+    /** The current user's booking for this slot (enables booking link) */
+    myBooking?: BookingRead | null
+    /** Whether to show the "View Event" navigation link (hide when already on event page) */
+    showEventLink?: boolean
+    open: boolean
+  }>(),
+  { showEventLink: true },
+)
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
@@ -48,7 +58,7 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { formatTime, formatDateLabel } = useFormatters()
 const router = useRouter()
-const { get, post, patch, delete: del } = useAuthenticatedClient()
+const { get, post, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 const authStore = useAuthStore()
 
@@ -56,37 +66,6 @@ const fetchedSlot = ref<DutySlotRead | null>(null)
 const slotBookings = ref<SlotBookingEntry[]>([])
 const loadingSlot = ref(false)
 const loadingBookings = ref(false)
-
-// Notes editing
-const editingNotes = ref(false)
-const notesValue = ref('')
-const savingNotes = ref(false)
-
-const saveNotes = async () => {
-  if (!resolvedMyBooking.value) return
-  savingNotes.value = true
-  try {
-    await patch({
-      url: `/bookings/${resolvedMyBooking.value.id}`,
-      body: { notes: notesValue.value || null },
-    })
-    editingNotes.value = false
-    toast.success(t('duties.dutySlots.detail.notesSaved'))
-    emit('booking-updated')
-    // Reload bookings table to reflect updated notes
-    const slotId = resolvedSlot.value?.id
-    if (slotId) {
-      const response = await get<{ data: SlotBookingEntry[] }>({
-        url: `/duty-slots/${slotId}/bookings`,
-      })
-      slotBookings.value = response.data
-    }
-  } catch (error) {
-    toastApiError(error)
-  } finally {
-    savingNotes.value = false
-  }
-}
 
 const dialogOpen = computed({
   get: () => props.open,
@@ -113,12 +92,8 @@ watch(
     if (!isOpen) {
       slotBookings.value = []
       fetchedSlot.value = null
-      editingNotes.value = false
       return
     }
-
-    // Initialize notes from booking
-    notesValue.value = resolvedMyBooking.value?.notes ?? ''
 
     // If we only have a slotId, fetch the full slot
     const slotId = props.dutySlot?.id ?? props.slotId
@@ -153,13 +128,6 @@ watch(
   },
 )
 
-// Initialize notes when booking becomes available (e.g., after slotBookings are fetched)
-watch(resolvedMyBooking, (booking) => {
-  if (booking && !editingNotes.value) {
-    notesValue.value = booking.notes ?? ''
-  }
-})
-
 const timeDisplay = computed(() => {
   const s = resolvedSlot.value
   if (!s) return null
@@ -177,6 +145,10 @@ const isSlotFull = computed(() => {
 
 const canBook = computed(() => {
   return !resolvedMyBooking.value && !isSlotFull.value
+})
+
+const hasMenuItems = computed(() => {
+  return (props.showEventLink && !!resolvedSlot.value?.event_id) || !!resolvedMyBooking.value
 })
 
 const bookingInProgress = ref(false)
@@ -219,6 +191,14 @@ const navigateToEvent = () => {
   if (eventId) {
     dialogOpen.value = false
     router.push({ name: 'event-detail', params: { eventId } })
+  }
+}
+
+const navigateToBooking = () => {
+  const booking = resolvedMyBooking.value
+  if (booking) {
+    dialogOpen.value = false
+    router.push({ name: 'booking-detail', params: { bookingId: booking.id } })
   }
 }
 </script>
@@ -328,52 +308,6 @@ const navigateToEvent = () => {
             <p class="text-sm whitespace-pre-line">{{ resolvedSlot.description }}</p>
           </div>
 
-          <!-- My notes (when user has a booking) -->
-          <div v-if="resolvedMyBooking">
-            <div class="flex items-center justify-between mb-1.5">
-              <p class="text-xs text-muted-foreground">
-                {{ t('duties.dutySlots.detail.myNotes') }}
-              </p>
-              <Button
-                v-if="!editingNotes"
-                variant="ghost"
-                size="sm"
-                class="h-6 px-2 text-xs"
-                @click="editingNotes = true"
-              >
-                <Pencil class="mr-1 h-3 w-3" />
-                {{ t('common.actions.edit') }}
-              </Button>
-            </div>
-            <div v-if="editingNotes" class="space-y-2">
-              <Textarea
-                v-model="notesValue"
-                :placeholder="t('duties.dutySlots.detail.notesPlaceholder')"
-                rows="2"
-              />
-              <div class="flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  @click="
-                    () => {
-                      editingNotes = false
-                      notesValue = resolvedMyBooking?.notes ?? ''
-                    }
-                  "
-                >
-                  {{ t('common.actions.cancel') }}
-                </Button>
-                <Button size="sm" :disabled="savingNotes" @click="saveNotes">
-                  {{ t('common.actions.save') }}
-                </Button>
-              </div>
-            </div>
-            <p v-else class="text-sm">
-              {{ resolvedMyBooking?.notes || t('duties.dutySlots.detail.noNotes') }}
-            </p>
-          </div>
-
           <!-- Extensibility slot: future fields (materials, protection, etc.) go here -->
           <slot name="extra-details" />
 
@@ -392,40 +326,47 @@ const navigateToEvent = () => {
         </div>
 
         <!-- Footer actions -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-2">
-          <div class="flex items-center gap-2">
-            <Button
-              v-if="eventName"
-              variant="outline"
-              size="sm"
-              class="w-full sm:w-auto"
-              @click="navigateToEvent"
-            >
-              <ExternalLink class="mr-1.5 h-3.5 w-3.5" />
-              {{ t('duties.dutySlots.detail.viewEvent') }}
-            </Button>
-          </div>
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <Button
-              v-if="canBook"
-              size="sm"
-              class="w-full sm:w-auto"
-              :disabled="bookingInProgress"
-              @click="handleBook"
-            >
-              {{ t('duties.dutySlots.book') }}
-            </Button>
-            <Button
-              v-if="resolvedMyBooking"
-              variant="destructive"
-              size="sm"
-              class="w-full sm:w-auto"
-              :disabled="bookingInProgress"
-              @click="handleCancelBooking"
-            >
-              {{ t('duties.bookings.cancel') }}
-            </Button>
-          </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <DropdownMenu v-if="hasMenuItems">
+            <DropdownMenuTrigger as-child>
+              <Button variant="outline" size="sm" class="h-8 w-8 p-0">
+                <EllipsisVertical class="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem
+                v-if="showEventLink && resolvedSlot?.event_id"
+                @click="navigateToEvent"
+              >
+                <ExternalLink class="mr-2 h-4 w-4" />
+                {{ t('duties.dutySlots.detail.viewEvent') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem v-if="resolvedMyBooking" @click="navigateToBooking">
+                <ExternalLink class="mr-2 h-4 w-4" />
+                {{ t('duties.dutySlots.detail.openBookingDetails') }}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div class="flex-1" />
+
+          <Button
+            v-if="canBook"
+            size="sm"
+            :disabled="bookingInProgress"
+            @click="handleBook"
+          >
+            {{ t('duties.dutySlots.book') }}
+          </Button>
+          <Button
+            v-if="resolvedMyBooking"
+            variant="destructive"
+            size="sm"
+            :disabled="bookingInProgress"
+            @click="handleCancelBooking"
+          >
+            {{ t('duties.bookings.cancel') }}
+          </Button>
         </div>
       </template>
     </DialogContent>

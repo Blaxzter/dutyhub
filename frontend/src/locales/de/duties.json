@@ -66,7 +66,13 @@
     "noLocation": "Kein Ort",
     "today": "Heute",
     "tomorrow": "Morgen",
-    "yesterday": "Gestern"
+    "yesterday": "Gestern",
+    "detail": {
+      "title": "Buchungsdetails",
+      "loadFailed": "Buchungsdetails konnten nicht geladen werden.",
+      "viewBooking": "Buchung anzeigen",
+      "pastEvent": "Diese Veranstaltung hat bereits stattgefunden."
+    }
   },
   "deleteDialog": {
     "activeBookings": "Dies storniert {count} aktive Buchung(en). Betroffene Benutzer sehen die Stornierung in ihren Buchungen.",
@@ -114,6 +120,7 @@
       "bookedAt": "Gebucht am",
       "viewEvent": "Veranstaltung anzeigen",
       "openDetails": "Details anzeigen",
+      "openBookingDetails": "Buchungsdetails öffnen",
       "myNotes": "Meine Anmerkungen",
       "notesPlaceholder": "z.B. komme später, brauche Ausrüstung, Ernährungshinweise...",
       "noNotes": "Füge eine Notiz hinzu, die für den Organisator sichtbar ist — z.B. Fragen, Einschränkungen oder besondere Wünsche.",

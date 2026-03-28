@@ -60,9 +60,76 @@
     "slot": "Dienstschichten",
     "event": "Veranstaltungen",
     "eventGroup": "Veranstaltungsgruppen",
-    "availability": "Verfuegbarkeit",
+    "availability": "Verfügbarkeit",
     "admin": "Admin",
     "user": "Konto"
+  },
+
+  "types": {
+    "booking": {
+      "confirmed": {
+        "name": "Buchung bestätigt",
+        "description": "Wenn deine Buchung bestätigt wurde"
+      },
+      "cancelled_by_user": {
+        "name": "Buchung storniert",
+        "description": "Wenn du eine Buchung stornierst"
+      },
+      "cancelled_by_admin": {
+        "name": "Buchung durch Admin storniert",
+        "description": "Wenn ein Admin deine Buchung storniert"
+      },
+      "slot_cobooked": {
+        "name": "Schicht mitgebucht",
+        "description": "Wenn jemand anderes eine Schicht bucht, auf der du eingeteilt bist"
+      },
+      "reminder": {
+        "name": "Buchungserinnerung",
+        "description": "Erinnerung vor Beginn einer gebuchten Schicht"
+      }
+    },
+    "slot": {
+      "starting_soon_unfilled": {
+        "name": "Schicht beginnt bald (unbesetzt)",
+        "description": "Wenn eine Schicht bald beginnt, aber noch freie Plätze hat"
+      },
+      "time_changed": {
+        "name": "Schichtzeit geändert",
+        "description": "Wenn sich die Zeit einer gebuchten Schicht ändert"
+      }
+    },
+    "event": {
+      "published": {
+        "name": "Veranstaltung veröffentlicht",
+        "description": "Wenn eine neue Veranstaltung veröffentlicht wird"
+      }
+    },
+    "event_group": {
+      "published": {
+        "name": "Veranstaltungsgruppe veröffentlicht",
+        "description": "Wenn eine neue Veranstaltungsgruppe veröffentlicht wird"
+      }
+    },
+    "availability": {
+      "reminder": {
+        "name": "Verfügbarkeitserinnerung",
+        "description": "Erinnerung, deine Verfügbarkeit für eine veröffentlichte Veranstaltungsgruppe einzutragen"
+      }
+    },
+    "user": {
+      "registered": {
+        "name": "Neue Registrierung",
+        "description": "Wenn sich ein neuer Nutzer anmeldet und auf Freigabe wartet"
+      },
+      "approved": {
+        "name": "Konto freigegeben",
+        "description": "Wenn dein Konto freigegeben wurde"
+      },
+      "rejected": {
+        "name": "Konto abgelehnt",
+        "description": "Wenn dein Konto abgelehnt wurde"
+      }
+    }
   },
 
   "push": {
@@ -80,6 +147,36 @@
     "testSending": "Wird gesendet...",
     "testSuccess": "Testbenachrichtigung gesendet! Pruefe dein Geraet.",
     "testError": "Testbenachrichtigung konnte nicht gesendet werden. Bitte versuche es erneut."
+  },
+
+  "reminders": {
+    "title": "Standard-Buchungserinnerungen",
+    "description": "Erinnerungen werden automatisch hinzugefuegt, wenn du einen Slot buchst. Du kannst sie auch pro Buchung anpassen.",
+    "addReminder": "Erinnerung hinzufuegen",
+    "noDefaults": "Keine Standard-Erinnerungen gesetzt. Du kannst sie unten hinzufuegen.",
+    "offset": {
+      "15": "15 Minuten vorher",
+      "30": "30 Minuten vorher",
+      "60": "1 Stunde vorher",
+      "120": "2 Stunden vorher",
+      "180": "3 Stunden vorher",
+      "360": "6 Stunden vorher",
+      "720": "12 Stunden vorher",
+      "1440": "1 Tag vorher",
+      "2880": "2 Tage vorher"
+    },
+    "saveFailed": "Fehler beim Speichern der Erinnerungseinstellungen",
+    "perBooking": {
+      "title": "Erinnerungen",
+      "add": "Erinnerung hinzufuegen",
+      "empty": "Keine Erinnerungen gesetzt",
+      "addFailed": "Fehler beim Hinzufuegen der Erinnerung",
+      "removeFailed": "Fehler beim Entfernen der Erinnerung",
+      "pending": "Geplant",
+      "sent": "Gesendet",
+      "expired": "Abgelaufen",
+      "cancelled": "Abgebrochen"
+    }
   },
 
   "telegram": {

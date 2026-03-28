@@ -161,6 +161,21 @@ const router = createRouter({
           },
         },
         {
+          path: 'bookings/:bookingId',
+          name: 'booking-detail',
+          component: () => import('@/views/bookings/BookingDetailView.vue'),
+          meta: {
+            breadcrumbs: [
+              {
+                title: 'My Bookings',
+                titleKey: 'duties.bookings.title',
+                to: { name: 'my-bookings' },
+              },
+              { title: 'Booking Details', titleKey: 'duties.bookings.detail.title' },
+            ],
+          },
+        },
+        {
           path: 'changelog/:version?',
           name: 'changelog',
           component: () => import('@/views/ChangelogView.vue'),

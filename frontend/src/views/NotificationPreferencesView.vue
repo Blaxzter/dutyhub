@@ -1,29 +1,29 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
-import { Check, ExternalLink, LoaderCircle, Mail, MessageCircle, Smartphone, TriangleAlert } from 'lucide-vue-next'
+import { Check, LoaderCircle } from 'lucide-vue-next'
 import { useDebounceFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
 import type { NotificationSubscription, NotificationType } from '@/stores/notification'
 import { useNotificationStore } from '@/stores/notification'
+import type { ReminderOffsetEntry } from '@/stores/bookingReminder'
+import { useBookingReminderStore } from '@/stores/bookingReminder'
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 
-import TelegramLoginWidget from '@/components/account/TelegramLoginWidget.vue'
+import DefaultRemindersCard from '@/components/notifications/DefaultRemindersCard.vue'
+import PerTypePreferencesSection from '@/components/notifications/PerTypePreferencesSection.vue'
+import PushChannelCard from '@/components/notifications/PushChannelCard.vue'
+import TelegramChannelCard from '@/components/notifications/TelegramChannelCard.vue'
 
 import AnimatedMail from '@/components/icons/lucide-animated/Mail.vue'
-import AnimatedSend from '@/components/icons/lucide-animated/Send.vue'
-import AnimatedTelegram from '@/components/icons/lucide-animated/Telegram.vue'
-import AnimatedSmartphone from '@/components/icons/lucide-animated/Smartphone.vue'
 
 const { t } = useI18n()
 const notificationStore = useNotificationStore()
+const reminderStore = useBookingReminderStore()
 
 const loading = ref(true)
 const types = ref<NotificationType[]>([])
@@ -31,13 +31,18 @@ const preferences = ref<Map<string, { email: boolean; push: boolean; telegram: b
   new Map(),
 )
 
-// Global channel toggles (backed by user-level settings on the server)
+// Global channel toggles
 const globalChannelSettings = computed(() => notificationStore.globalChannelSettings)
 
-// Animated icon refs
+// Available reminder channels (hide telegram if not connected)
+const telegramConnected = computed(() => notificationStore.telegramBinding?.is_verified ?? false)
+const reminderChannels = computed(() => {
+  const channels = ['email', 'push']
+  if (telegramConnected.value) channels.push('telegram')
+  return channels
+})
+
 const mailIconRef = ref<InstanceType<typeof AnimatedMail>>()
-const smartphoneIconRef = ref<InstanceType<typeof AnimatedSmartphone>>()
-const telegramIconRef = ref<InstanceType<typeof AnimatedTelegram>>()
 
 async function toggleGlobalChannel(
   field: 'notify_email' | 'notify_push' | 'notify_telegram',
@@ -45,48 +50,28 @@ async function toggleGlobalChannel(
 ) {
   try {
     await notificationStore.updateGlobalChannelSettings({ [field]: enabled })
-    if (enabled) {
-      if (field === 'notify_email') mailIconRef.value?.startAnimation()
-      if (field === 'notify_push') smartphoneIconRef.value?.startAnimation()
-      if (field === 'notify_telegram') telegramIconRef.value?.startAnimation()
-    }
+    if (enabled && field === 'notify_email') mailIconRef.value?.startAnimation()
   } catch {
     toast.error(t('notifications.preferences.saveFailed'))
   }
 }
 
-// Group types by category
+// Per-type preferences (only show user-configurable types)
 const groupedTypes = computed(() => {
   const groups: Record<string, NotificationType[]> = {}
   for (const type of types.value) {
-    if (!groups[type.category]) {
-      groups[type.category] = []
-    }
+    if (!type.is_user_configurable) continue
+    if (!groups[type.category]) groups[type.category] = []
     groups[type.category].push(type)
   }
   return groups
 })
 
-const categoryLabels: Record<string, string> = {
-  booking: 'notifications.categories.booking',
-  slot: 'notifications.categories.slot',
-  event: 'notifications.categories.event',
-  event_group: 'notifications.categories.eventGroup',
-  availability: 'notifications.categories.availability',
-  admin: 'notifications.categories.admin',
-  user: 'notifications.categories.user',
-}
-
-function getCategoryLabel(category: string): string {
-  const key = categoryLabels[category]
-  return key ? t(key) : category
-}
-
 function getPreference(typeId: string) {
   return preferences.value.get(typeId) || { email: true, push: true, telegram: false }
 }
 
-// Auto-save status: 'idle' | 'saving' | 'saved' | 'error'
+// Auto-save
 const autoSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 let savedResetTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -124,230 +109,25 @@ function setPreference(typeId: string, channel: 'email' | 'push' | 'telegram', v
   debouncedSave()
 }
 
-// ── Push notification management ─────────────────────────────────
+// Default reminders
+const defaultReminderEntries = ref<ReminderOffsetEntry[]>([])
 
-const pushSupported = ref(false)
-const pushPermission = ref<NotificationPermission>('default')
-const pushActive = ref(false)
-const sendingTestPush = ref(false)
-const disablingPush = ref(false)
-
-async function sendTestPush() {
-  sendingTestPush.value = true
-  try {
-    // Ensure permission is granted
-    if (pushPermission.value !== 'granted') {
-      await requestPushPermission()
-    }
-    if (pushPermission.value !== 'granted') {
-      return
-    }
-
-    let success = await notificationStore.sendTestPush()
-
-    // If it failed, the subscription may be stale — re-register and retry once
-    if (!success) {
-      await requestPushPermission()
-      success = await notificationStore.sendTestPush()
-    }
-
-    if (success) {
-      toast.success(t('notifications.push.testSuccess'))
-    } else {
-      toast.error(t('notifications.push.testError'))
-    }
-  } catch {
-    toast.error(t('notifications.push.testError'))
-  } finally {
-    sendingTestPush.value = false
-  }
-}
-
-async function requestPushPermission() {
-  try {
-    const permission = await Notification.requestPermission()
-    pushPermission.value = permission
-
-    if (permission === 'granted') {
-      const vapidKey = await notificationStore.fetchVapidPublicKey()
-      if (!vapidKey) {
-        toast.error(t('notifications.push.notConfigured'))
-        return
-      }
-
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
-      })
-
-      await notificationStore.registerPushSubscription(subscription)
-      pushActive.value = true
-      toast.success(t('notifications.push.enabled'))
-    }
-  } catch (error) {
-    console.error('Push registration failed:', error)
-    toast.error(t('notifications.push.failed'))
-  }
-}
-
-async function disablePush() {
-  disablingPush.value = true
-  try {
-    const registration = await navigator.serviceWorker.ready
-    const subscription = await registration.pushManager.getSubscription()
-    if (subscription) {
-      await subscription.unsubscribe()
-    }
-
-    // Remove all backend subscriptions for this user
-    const subs = await notificationStore.fetchPushSubscriptions()
-    for (const sub of subs) {
-      await notificationStore.removePushSubscription(sub.id)
-    }
-
-    pushActive.value = false
-    toast.success(t('notifications.push.disabled'))
-  } catch (error) {
-    console.error('Failed to disable push:', error)
-    toast.error(t('notifications.push.disableFailed'))
-  } finally {
-    disablingPush.value = false
-  }
-}
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
-  }
-  return outputArray
-}
-
-// ── Telegram management ──────────────────────────────────────────
-
-const telegramBinding = computed(() => notificationStore.telegramBinding)
-const telegramBotUsername = computed(() => notificationStore.telegramBotUsername)
-const telegramConfigured = computed(() => notificationStore.telegramConfigured)
-const connectingTelegram = ref(false)
-
-const telegramNotConnectedWarning = computed(() => {
-  if (telegramBinding.value?.is_verified) return false
-  return globalChannelSettings.value.notify_telegram
-})
-
-// Manual code fallback
-const telegramCode = ref<string | null>(null)
-const manualBotUsername = ref<string | null>(null)
-const bindingTelegram = ref(false)
-let telegramPollTimer: ReturnType<typeof setInterval> | null = null
-
-const telegramDeepLink = computed(() => {
-  if (!telegramCode.value || !manualBotUsername.value) return null
-  return `https://t.me/${manualBotUsername.value}?start=${telegramCode.value}`
-})
-
-const botStartLink = computed(() => {
-  if (!telegramBotUsername.value) return null
-  return `https://t.me/${telegramBotUsername.value}`
-})
-
-async function onTelegramAuth(data: {
-  id: number
-  first_name?: string
-  last_name?: string
-  username?: string
-  photo_url?: string
-  auth_date: number
-  hash: string
-}) {
-  connectingTelegram.value = true
-  try {
-    await notificationStore.loginWithTelegram(data)
-    toast.success(t('notifications.telegram.connected'))
-  } catch {
-    toast.error(t('notifications.telegram.authFailed'))
-  } finally {
-    connectingTelegram.value = false
-  }
-}
-
-function startTelegramPolling() {
-  stopTelegramPolling()
-  telegramPollTimer = setInterval(async () => {
-    await notificationStore.fetchTelegramBinding()
-    if (telegramBinding.value?.is_verified) {
-      stopTelegramPolling()
-      telegramCode.value = null
-      toast.success(t('notifications.telegram.connected'))
-    }
-  }, 3000)
-}
-
-function stopTelegramPolling() {
-  if (telegramPollTimer) {
-    clearInterval(telegramPollTimer)
-    telegramPollTimer = null
-  }
-}
-
-async function startManualTelegramBinding() {
-  bindingTelegram.value = true
-  try {
-    const result = await notificationStore.startTelegramBinding()
-    telegramCode.value = result.verification_code
-    manualBotUsername.value = result.bot_username
-    startTelegramPolling()
-  } catch {
-    toast.error(t('notifications.telegram.bindFailed'))
-  } finally {
-    bindingTelegram.value = false
-  }
-}
-
-async function unbindTelegram() {
-  try {
-    await notificationStore.unbindTelegram()
-    telegramCode.value = null
-    stopTelegramPolling()
-    toast.success(t('notifications.telegram.unbound'))
-  } catch {
-    toast.error(t('notifications.telegram.unbindFailed'))
-  }
-}
-
-// ── Lifecycle ────────────────────────────────────────────────────
-
-onUnmounted(() => stopTelegramPolling())
-
+// Lifecycle
 onMounted(async () => {
   try {
-    // Check push support
-    pushSupported.value = 'serviceWorker' in navigator && 'PushManager' in window
-    if (pushSupported.value) {
-      pushPermission.value = Notification.permission
-      if (pushPermission.value === 'granted') {
-        const registration = await navigator.serviceWorker.ready
-        const subscription = await registration.pushManager.getSubscription()
-        pushActive.value = !!subscription
-      }
-    }
-
-    // Load data
     const [typesData, prefsData] = await Promise.all([
       notificationStore.fetchNotificationTypes(),
       notificationStore.fetchPreferences(),
       notificationStore.fetchTelegramBinding(),
       notificationStore.fetchTelegramConfig(),
       notificationStore.fetchGlobalChannelSettings(),
+      reminderStore.fetchDefaultOffsets().then((entries) => {
+        defaultReminderEntries.value = entries
+      }),
     ])
 
     types.value = typesData
 
-    // Build preferences map from existing subscriptions
     const prefMap = new Map<string, { email: boolean; push: boolean; telegram: boolean }>()
     for (const pref of prefsData as NotificationSubscription[]) {
       if (pref.scope_type === 'global') {
@@ -359,7 +139,6 @@ onMounted(async () => {
       }
     }
 
-    // Fill in defaults for types without preferences
     for (const type of typesData as NotificationType[]) {
       if (!prefMap.has(type.id)) {
         prefMap.set(type.id, {
@@ -432,276 +211,39 @@ onMounted(async () => {
         </CardHeader>
       </Card>
 
-      <!-- Push notification channel -->
-      <Card
-        v-if="pushSupported"
-        :class="[
-          'transition-colors duration-300',
-          globalChannelSettings.notify_push
-            ? 'border-violet-200 bg-violet-50/50 dark:border-violet-900 dark:bg-violet-950/20'
-            : '',
-        ]"
-      >
-        <CardHeader>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <AnimatedSmartphone
-                ref="smartphoneIconRef"
-                :size="20"
-                :class="[
-                  'transition-colors duration-300',
-                  globalChannelSettings.notify_push ? 'text-violet-600 dark:text-violet-400' : 'text-muted-foreground',
-                ]"
-              />
-              <CardTitle>{{ t('notifications.push.title') }}</CardTitle>
-            </div>
-            <Switch
-              :model-value="globalChannelSettings.notify_push"
-              @update:model-value="(v: boolean) => toggleGlobalChannel('notify_push', v)"
-            />
-          </div>
-          <CardDescription>
-            {{ t('notifications.push.description') }}
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="space-y-3">
-          <div v-if="pushPermission === 'denied'" class="text-muted-foreground text-sm">
-            {{ t('notifications.push.denied') }}
-          </div>
-          <template v-else-if="pushActive">
-            <div class="flex items-center gap-2">
-              <Badge variant="outline" class="text-green-600">
-                {{ t('notifications.push.enabled') }}
-              </Badge>
-            </div>
-            <div class="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="sendingTestPush"
-                @click="sendTestPush"
-              >
-                <AnimatedSend :size="16" class="mr-2" />
-                {{
-                  sendingTestPush
-                    ? t('notifications.push.testSending')
-                    : t('notifications.push.testButton')
-                }}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                :disabled="disablingPush"
-                @click="disablePush"
-              >
-                {{ t('notifications.push.disable') }}
-              </Button>
-            </div>
-          </template>
-          <Button v-else variant="outline" @click="requestPushPermission">
-            {{ t('notifications.push.enable') }}
-          </Button>
-        </CardContent>
-      </Card>
+      <!-- Push channel -->
+      <PushChannelCard
+        :enabled="globalChannelSettings.notify_push"
+        @toggle="(v) => toggleGlobalChannel('notify_push', v)"
+      />
 
       <!-- Telegram channel -->
-      <Card
-        v-if="telegramConfigured"
-        :class="[
-          'transition-colors duration-300',
-          globalChannelSettings.notify_telegram
-            ? 'border-sky-200 bg-sky-50/50 dark:border-sky-900 dark:bg-sky-950/20'
-            : '',
-        ]"
-      >
-        <CardHeader>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <AnimatedTelegram
-                ref="telegramIconRef"
-                :size="20"
-                :use-color="globalChannelSettings.notify_telegram"
-                :class="[
-                  'transition-colors duration-300',
-                  globalChannelSettings.notify_telegram ? '' : 'text-muted-foreground',
-                ]"
-              />
-              <CardTitle>{{ t('notifications.telegram.title') }}</CardTitle>
-            </div>
-            <Switch
-              :model-value="globalChannelSettings.notify_telegram"
-              @update:model-value="(v: boolean) => toggleGlobalChannel('notify_telegram', v)"
-            />
-          </div>
-          <CardDescription>
-            {{ t('notifications.telegram.description') }}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <!-- Warning: Telegram enabled but not connected -->
-          <div
-            v-if="telegramNotConnectedWarning && !telegramBinding?.is_verified"
-            class="bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-200 mb-4 flex items-start gap-2 rounded-lg border border-amber-200 dark:border-amber-800 p-3 text-sm"
-          >
-            <TriangleAlert class="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{{ t('notifications.telegram.notConnectedWarning') }}</span>
-          </div>
+      <TelegramChannelCard
+        :enabled="globalChannelSettings.notify_telegram"
+        @toggle="(v) => toggleGlobalChannel('notify_telegram', v)"
+      />
 
-          <!-- Connected state -->
-          <div v-if="telegramBinding?.is_verified" class="space-y-3">
-            <div class="flex items-center gap-2">
-              <Badge variant="outline" class="text-green-600">
-                {{ t('notifications.telegram.connected') }}
-              </Badge>
-              <span v-if="telegramBinding.telegram_username" class="text-muted-foreground text-sm">
-                @{{ telegramBinding.telegram_username }}
-              </span>
-            </div>
-            <p v-if="botStartLink" class="text-muted-foreground text-sm">
-              {{ t('notifications.telegram.startBotHint') }}
-              <a
-                :href="botStartLink"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-primary underline underline-offset-2"
-              >
-                @{{ telegramBotUsername }}
-              </a>
-            </p>
-            <Button variant="outline" size="sm" @click="unbindTelegram">
-              {{ t('notifications.telegram.disconnect') }}
-            </Button>
-          </div>
+      <!-- ── Default Booking Reminders ────────────────────────── -->
+      <h2 class="text-xl font-semibold tracking-tight pt-4">
+        {{ t('notifications.reminders.title') }}
+      </h2>
 
-          <!-- Not connected: show Login Widget or manual fallback -->
-          <div v-else class="space-y-4">
-            <!-- Telegram Login Widget (primary) -->
-            <div v-if="telegramBotUsername && !telegramCode">
-              <p class="text-muted-foreground mb-3 text-sm">
-                {{ t('notifications.telegram.loginDescription') }}
-              </p>
-              <TelegramLoginWidget :bot-username="telegramBotUsername" @auth="onTelegramAuth" />
-              <div v-if="connectingTelegram" class="text-muted-foreground mt-2 text-sm">
-                {{ t('notifications.telegram.connecting') }}
-              </div>
-            </div>
-
-            <!-- Manual code fallback (collapsed) -->
-            <details class="text-sm">
-              <summary class="text-muted-foreground cursor-pointer text-xs">
-                {{ t('notifications.telegram.manualFallback') }}
-              </summary>
-              <div class="mt-3 space-y-3">
-                <div v-if="telegramCode" class="space-y-3">
-                  <a
-                    v-if="telegramDeepLink"
-                    :href="telegramDeepLink"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium"
-                  >
-                    <ExternalLink class="mr-2 h-4 w-4" />
-                    {{ t('notifications.telegram.openInTelegram') }}
-                  </a>
-                  <p class="text-muted-foreground text-sm">
-                    {{ t('notifications.telegram.waitingForVerification') }}
-                  </p>
-                  <div class="space-y-2">
-                    <p class="text-muted-foreground text-xs">
-                      {{ t('notifications.telegram.sendCode') }}
-                    </p>
-                    <div class="bg-muted rounded-lg p-3 text-center">
-                      <code class="text-sm font-bold">{{ telegramCode }}</code>
-                    </div>
-                    <p v-if="manualBotUsername" class="text-muted-foreground text-xs">
-                      {{ t('notifications.telegram.sendTo') }}
-                      <strong>@{{ manualBotUsername }}</strong>
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  v-else
-                  variant="outline"
-                  size="sm"
-                  :disabled="bindingTelegram"
-                  @click="startManualTelegramBinding"
-                >
-                  {{ t('notifications.telegram.connectManually') }}
-                </Button>
-              </div>
-            </details>
-          </div>
-        </CardContent>
-      </Card>
+      <DefaultRemindersCard
+        :entries="defaultReminderEntries"
+        :available-channels="reminderChannels"
+        @update:entries="defaultReminderEntries = $event"
+      />
 
       <!-- ── Per-type Preferences ──────────────────────────────── -->
       <h2 class="text-xl font-semibold tracking-tight pt-4">
         {{ t('notifications.preferences.perTypeTitle') }}
       </h2>
 
-      <!-- Notification type preferences -->
-      <Card v-for="(categoryTypes, category) in groupedTypes" :key="category">
-        <CardHeader>
-          <CardTitle>{{ getCategoryLabel(category as string) }}</CardTitle>
-        </CardHeader>
-        <CardContent class="space-y-0">
-          <!-- Column headers -->
-          <div
-            class="text-muted-foreground mb-3 flex items-center gap-2 sm:gap-4 text-xs font-medium"
-          >
-            <div class="min-w-0 flex-1" />
-            <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
-              <Mail class="h-3.5 w-3.5 shrink-0" />
-              <span class="hidden sm:inline">{{ t('notifications.channels.email') }}</span>
-            </div>
-            <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
-              <Smartphone class="h-3.5 w-3.5 shrink-0" />
-              <span class="hidden sm:inline">{{ t('notifications.channels.push') }}</span>
-            </div>
-            <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
-              <MessageCircle class="h-3.5 w-3.5 shrink-0" />
-              <span class="hidden sm:inline">{{ t('notifications.channels.telegram') }}</span>
-            </div>
-          </div>
-
-          <Separator />
-
-          <div
-            v-for="type in categoryTypes as NotificationType[]"
-            :key="type.id"
-            class="flex items-center gap-2 sm:gap-4 py-3"
-          >
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-medium">{{ type.name }}</p>
-              <p v-if="type.description" class="text-muted-foreground text-xs">
-                {{ type.description }}
-              </p>
-              <Badge v-if="type.is_admin_only" variant="secondary" class="mt-1 text-[10px]">
-                {{ t('notifications.adminOnly') }}
-              </Badge>
-            </div>
-            <div class="flex w-10 sm:w-24 justify-center">
-              <Switch
-                :model-value="getPreference(type.id).email"
-                @update:model-value="(v: boolean) => setPreference(type.id, 'email', v)"
-              />
-            </div>
-            <div class="flex w-10 sm:w-24 justify-center">
-              <Switch
-                :model-value="getPreference(type.id).push"
-                @update:model-value="(v: boolean) => setPreference(type.id, 'push', v)"
-              />
-            </div>
-            <div class="flex w-10 sm:w-24 justify-center">
-              <Switch
-                :model-value="getPreference(type.id).telegram"
-                @update:model-value="(v: boolean) => setPreference(type.id, 'telegram', v)"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
+      <PerTypePreferencesSection
+        :grouped-types="groupedTypes"
+        :preferences="preferences"
+        @set-preference="setPreference"
+      />
     </template>
 
     <!-- Fixed auto-save indicator -->

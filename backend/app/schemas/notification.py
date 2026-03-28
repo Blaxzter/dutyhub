@@ -23,6 +23,7 @@ class NotificationTypeRead(BaseModel):
     is_admin_only: bool
     default_channels: list[str]
     is_active: bool
+    is_user_configurable: bool
 
 
 # ── NotificationSubscription (preferences) ────────────────────────

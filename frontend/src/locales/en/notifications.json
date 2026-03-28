@@ -65,6 +65,73 @@
     "user": "Account"
   },
 
+  "types": {
+    "booking": {
+      "confirmed": {
+        "name": "Booking Confirmed",
+        "description": "When your booking is confirmed"
+      },
+      "cancelled_by_user": {
+        "name": "Booking Cancelled",
+        "description": "When you cancel a booking"
+      },
+      "cancelled_by_admin": {
+        "name": "Booking Cancelled by Admin",
+        "description": "When an admin cancels your booking"
+      },
+      "slot_cobooked": {
+        "name": "Slot Co-booked",
+        "description": "When someone else books a slot you are on"
+      },
+      "reminder": {
+        "name": "Booking Reminder",
+        "description": "Reminder before a booked slot starts"
+      }
+    },
+    "slot": {
+      "starting_soon_unfilled": {
+        "name": "Slot Starting Soon (Unfilled)",
+        "description": "When a slot starts soon but still has open spots"
+      },
+      "time_changed": {
+        "name": "Slot Time Changed",
+        "description": "When a slot you booked has its time changed"
+      }
+    },
+    "event": {
+      "published": {
+        "name": "Event Published",
+        "description": "When a new event is published"
+      }
+    },
+    "event_group": {
+      "published": {
+        "name": "Event Group Published",
+        "description": "When a new event group is published"
+      }
+    },
+    "availability": {
+      "reminder": {
+        "name": "Availability Reminder",
+        "description": "Reminder to submit your availability for a published event group"
+      }
+    },
+    "user": {
+      "registered": {
+        "name": "New User Registered",
+        "description": "When a new user signs up and is pending approval"
+      },
+      "approved": {
+        "name": "Account Approved",
+        "description": "When your account is approved"
+      },
+      "rejected": {
+        "name": "Account Rejected",
+        "description": "When your account is rejected"
+      }
+    }
+  },
+
   "push": {
     "title": "Push Notifications",
     "description": "Receive push notifications in your browser when important events occur.",
@@ -80,6 +147,36 @@
     "testSending": "Sending...",
     "testSuccess": "Test notification sent! Check your device.",
     "testError": "Failed to send test notification. Please try again."
+  },
+
+  "reminders": {
+    "title": "Default Booking Reminders",
+    "description": "Automatically add reminders when you book a slot. You can also adjust reminders individually per booking.",
+    "addReminder": "Add reminder",
+    "noDefaults": "No default reminders set. You can add them below.",
+    "offset": {
+      "15": "15 minutes before",
+      "30": "30 minutes before",
+      "60": "1 hour before",
+      "120": "2 hours before",
+      "180": "3 hours before",
+      "360": "6 hours before",
+      "720": "12 hours before",
+      "1440": "1 day before",
+      "2880": "2 days before"
+    },
+    "saveFailed": "Failed to save reminder settings",
+    "perBooking": {
+      "title": "Reminders",
+      "add": "Add reminder",
+      "empty": "No reminders set",
+      "addFailed": "Failed to add reminder",
+      "removeFailed": "Failed to remove reminder",
+      "pending": "Scheduled",
+      "sent": "Sent",
+      "expired": "Expired",
+      "cancelled": "Cancelled"
+    }
   },
 
   "telegram": {

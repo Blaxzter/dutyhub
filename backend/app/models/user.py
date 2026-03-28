@@ -2,7 +2,9 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field
 
+from app.logic.utils.pydantic_jsonb import PydanticJSONB
 from app.models.base import Base
+from app.schemas.booking_reminder import ReminderOffsetEntry
 
 
 class User(Base, table=True):
@@ -66,6 +68,16 @@ class User(Base, table=True):
     notify_telegram: bool = Field(
         default=True,
         description="Global toggle: allow Telegram notifications",
+    )
+
+    # Default reminder offsets applied when creating new bookings
+    default_reminder_offsets: list[ReminderOffsetEntry] = Field(
+        default_factory=lambda: [
+            ReminderOffsetEntry(offset_minutes=15, channels=["push"]),
+            ReminderOffsetEntry(offset_minutes=1440, channels=["email"]),
+        ],
+        sa_column=sa.Column(PydanticJSONB(ReminderOffsetEntry, is_list=True), nullable=False, server_default="[]"),
+        description="Default reminders, e.g. [{offset_minutes: 60, channels: ['push']}]",
     )
 
     @property

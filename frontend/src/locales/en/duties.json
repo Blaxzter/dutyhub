@@ -66,7 +66,13 @@
     "noLocation": "No location",
     "today": "Today",
     "tomorrow": "Tomorrow",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "detail": {
+      "title": "Booking Details",
+      "loadFailed": "Could not load booking details.",
+      "viewBooking": "View booking",
+      "pastEvent": "This event has already taken place."
+    }
   },
   "deleteDialog": {
     "activeBookings": "This will cancel {count} active booking(s). Affected users will see the cancellation in their bookings.",
@@ -114,6 +120,7 @@
       "bookedAt": "Booked at",
       "viewEvent": "View Event",
       "openDetails": "View details",
+      "openBookingDetails": "Open booking details",
       "myNotes": "My Notes",
       "notesPlaceholder": "e.g. arriving late, need equipment, dietary requirements...",
       "noNotes": "Add a note visible to the organizer — e.g. questions, availability constraints, or special requests.",

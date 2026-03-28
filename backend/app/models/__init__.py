@@ -8,6 +8,7 @@ from sqlmodel import SQLModel
 
 from .base import Base  # Import the Base model for common fields and functionality
 from .booking import Booking
+from .booking_reminder import BookingReminder
 from .calendar_feed import CalendarFeedToken
 from .duty_slot import DutySlot
 from .event import Event
@@ -28,6 +29,7 @@ __all__ = [
     "SQLModel",
     "Base",
     "Booking",
+    "BookingReminder",
     "CalendarFeedToken",
     "DutySlot",
     "Event",

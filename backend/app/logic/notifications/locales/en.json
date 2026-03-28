@@ -11,6 +11,10 @@
     "title": "Booking Cancelled",
     "body": "Your booking for \"{slot_title}\" has been cancelled."
   },
+  "booking.reminder": {
+    "title": "Upcoming Booking",
+    "body": "Your booking \"{slot_title}\" starts {time_until}.\n\n📅 {date} ⏰ {start_time}–{end_time}\n🏠 {location}"
+  },
   "booking.cancelled_by_admin": {
     "title": "Booking Cancelled by Admin",
     "body": "Your booking for \"{slot_title}\"{event_label} was cancelled by an administrator.{detail}"

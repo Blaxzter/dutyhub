@@ -15,6 +15,7 @@ class NotificationTypeDict(TypedDict):
     category: str
     is_admin_only: bool
     default_channels: list[str]
+    is_user_configurable: bool
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,7 @@ class NotificationTypeDef:
     category: str
     is_admin_only: bool = False
     default_channels: list[str] | None = None
+    is_user_configurable: bool = True
 
     def to_dict(self) -> NotificationTypeDict:
         return {
@@ -34,6 +36,7 @@ class NotificationTypeDef:
             "category": self.category,
             "is_admin_only": self.is_admin_only,
             "default_channels": self.default_channels or ["email"],
+            "is_user_configurable": self.is_user_configurable,
         }
 
 
@@ -69,6 +72,15 @@ BOOKING_SLOT_COBOOKED = NotificationTypeDef(
     description="Notification when someone else also books a slot you are on",
     category="booking",
     default_channels=["push"],
+)
+
+BOOKING_REMINDER = NotificationTypeDef(
+    code="booking.reminder",
+    name="Booking Reminder",
+    description="Reminder before a booked slot starts",
+    category="booking",
+    default_channels=["push"],
+    is_user_configurable=False,
 )
 
 # ── Slot notifications ────────────────────────────────────────────
@@ -154,6 +166,7 @@ ALL_NOTIFICATION_TYPES: list[NotificationTypeDef] = [
     BOOKING_CANCELLED_BY_USER,
     BOOKING_CANCELLED_BY_ADMIN,
     BOOKING_SLOT_COBOOKED,
+    BOOKING_REMINDER,
     SLOT_STARTING_SOON_UNFILLED,
     SLOT_TIME_CHANGED,
     EVENT_PUBLISHED,

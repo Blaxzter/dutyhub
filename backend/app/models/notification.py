@@ -43,6 +43,10 @@ class NotificationType(Base, table=True):
         description="Default delivery channels, e.g. ['email', 'push']",
     )
     is_active: bool = Field(default=True, description="Whether this type is active")
+    is_user_configurable: bool = Field(
+        default=True,
+        description="Whether users can configure channel preferences for this type",
+    )
 
     subscriptions: list["NotificationSubscription"] = Relationship(
         back_populates="notification_type"

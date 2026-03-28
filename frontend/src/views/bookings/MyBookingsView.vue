@@ -15,6 +15,8 @@ import {
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
+import { useRouter } from 'vue-router'
+
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
 import { useFormatters } from '@/composables/useFormatters'
@@ -27,8 +29,6 @@ import Input from '@/components/ui/input/Input.vue'
 import Separator from '@/components/ui/separator/Separator.vue'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
-import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
-
 import type { BookingReadWithSlot, MyBookingsListResponse } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
@@ -36,22 +36,13 @@ const { t, locale } = useI18n()
 const { formatTime, formatDateLabel } = useFormatters()
 const { get, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
+const router = useRouter()
 
 const bookings = ref<BookingReadWithSlot[]>([])
 const loading = ref(false)
 
-// Slot detail dialog
-const showSlotDetail = ref(false)
-const detailSlotId = ref<string | null>(null)
-const detailEventName = ref<string | null>(null)
-const detailBooking = ref<BookingReadWithSlot | null>(null)
-
-const openSlotDetail = (booking: BookingReadWithSlot) => {
-  if (!booking.duty_slot) return
-  detailSlotId.value = booking.duty_slot.id
-  detailEventName.value = booking.duty_slot.event_name ?? null
-  detailBooking.value = booking
-  showSlotDetail.value = true
+const openBookingDetail = (booking: BookingReadWithSlot) => {
+  router.push({ name: 'booking-detail', params: { bookingId: booking.id } })
 }
 
 // --- Filter state ---
@@ -241,7 +232,6 @@ const handleCancel = async (booking: BookingReadWithSlot) => {
   try {
     await del({ url: `/bookings/${booking.id}` })
     toast.success(t('duties.bookings.cancelSuccess'))
-    showSlotDetail.value = false
     await loadBookings()
   } catch (error) {
     toastApiError(error)
@@ -459,7 +449,7 @@ onMounted(loadBookings)
                   v-if="booking.duty_slot"
                   variant="outline"
                   size="sm"
-                  @click="openSlotDetail(booking)"
+                  @click="openBookingDetail(booking)"
                 >
                   {{ t('duties.dutySlots.detail.openDetails') }}
                 </Button>
@@ -502,13 +492,5 @@ onMounted(loadBookings)
       </section>
     </div>
 
-    <!-- Slot Detail Dialog -->
-    <SlotDetailDialog
-      v-model:open="showSlotDetail"
-      :slot-id="detailSlotId"
-      :event-name="detailEventName"
-      :my-booking="detailBooking"
-      @booking-updated="loadBookings"
-    />
   </div>
 </template>

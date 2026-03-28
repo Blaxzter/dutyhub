@@ -4,6 +4,7 @@ from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.calendar_feed import crud_calendar_feed
+from app.crud.user import user as crud_user
 from app.logic.calendar_feed import build_calendar
 from app.schemas.calendar_feed import CalendarFeedRead
 
@@ -34,7 +35,13 @@ async def get_calendar_feed(token: str, session: DBDep) -> Response:
         limit=500,
     )
 
-    ical_bytes = build_calendar(bookings)
+    # Load user's default reminder offsets for calendar alarms
+    user = await crud_user.get(session, feed_token.user_id)
+    reminder_offsets = (
+        [e.offset_minutes for e in user.default_reminder_offsets] if user else None
+    )
+
+    ical_bytes = build_calendar(bookings, reminder_offsets=reminder_offsets)
 
     # Track last access
     await crud_calendar_feed.update_last_accessed(session, db_obj=feed_token)
