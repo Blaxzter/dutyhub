@@ -8,16 +8,12 @@ import {
   Clock,
   ExternalLink,
   History,
-  Mail,
   MapPin,
-  MessageCircle,
   Pencil,
   Plus,
-  Smartphone,
   Tag,
   Trash2,
   Users,
-  X,
 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -42,6 +38,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Textarea } from '@/components/ui/textarea'
 
+import ReminderEntryRow from '@/components/notifications/ReminderEntryRow.vue'
 import SlotBookingsTable from '@/components/events/SlotBookingsTable.vue'
 
 import type { BookingRead, DutySlotRead, SlotBookingEntry } from '@/client/types.gen'
@@ -77,6 +74,7 @@ const savingNotes = ref(false)
 
 // Reminders
 const bookingReminders = ref<BookingReminder[]>([])
+const loadingReminderIds = ref(new Set<string>())
 
 const activeReminders = computed(() =>
   bookingReminders.value.filter((r) => r.status === 'pending'),
@@ -228,6 +226,8 @@ async function toggleReminderChannel(reminderId: string, channel: string) {
     ? reminder.channels.filter((c) => c !== channel)
     : [...reminder.channels, channel]
 
+  loadingReminderIds.value.add(reminderId)
+  let newId: string | null = null
   try {
     // Delete and re-create with new channels (no PATCH endpoint for reminders)
     await reminderStore.deleteReminder(reminderId)
@@ -237,6 +237,7 @@ async function toggleReminderChannel(reminderId: string, channel: string) {
       reminder.offset_minutes,
       newChannels,
     )
+    newId = newReminder.id
     bookingReminders.value = bookingReminders.value
       .filter((r) => r.id !== reminderId)
       .concat(newReminder)
@@ -245,15 +246,21 @@ async function toggleReminderChannel(reminderId: string, channel: string) {
     toast.error(t('notifications.reminders.perBooking.addFailed'))
     // Reload to recover
     bookingReminders.value = await reminderStore.fetchBookingReminders(booking.value!.id)
+  } finally {
+    loadingReminderIds.value.delete(reminderId)
+    if (newId) loadingReminderIds.value.delete(newId)
   }
 }
 
 async function removeReminder(reminderId: string) {
+  loadingReminderIds.value.add(reminderId)
   try {
     await reminderStore.deleteReminder(reminderId)
     bookingReminders.value = bookingReminders.value.filter((r) => r.id !== reminderId)
   } catch {
     toast.error(t('notifications.reminders.perBooking.removeFailed'))
+  } finally {
+    loadingReminderIds.value.delete(reminderId)
   }
 }
 
@@ -423,64 +430,27 @@ onMounted(loadData)
           </CardDescription>
         </CardHeader>
         <CardContent class="space-y-3">
-          <div
+          <ReminderEntryRow
             v-for="reminder in activeReminders"
-            :key="reminder.id"
-            class="flex items-center gap-3 rounded-lg border p-3"
-          >
-            <div class="flex-1 text-sm font-medium">
-              {{ getReminderOffsetLabel(reminder.offset_minutes) }}
-            </div>
-            <div class="flex items-center gap-1.5">
-              <button
-                v-for="ch in reminderChannels"
-                :key="ch"
-                :class="[
-                  'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-                  reminder.channels.includes(ch)
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80',
-                ]"
-                :title="t(`notifications.channels.${ch}`)"
-                @click="toggleReminderChannel(reminder.id, ch)"
-              >
-                <Mail v-if="ch === 'email'" :size="14" />
-                <Smartphone v-else-if="ch === 'push'" :size="14" />
-                <MessageCircle v-else :size="14" />
-              </button>
-            </div>
-            <button
-              class="text-muted-foreground hover:text-foreground transition-colors"
-              @click="removeReminder(reminder.id)"
-            >
-              <X :size="16" />
-            </button>
-          </div>
+            :key="reminder.offset_minutes"
+            :offset-label="getReminderOffsetLabel(reminder.offset_minutes)"
+            :channels="reminder.channels"
+            :available-channels="reminderChannels"
+            :loading="loadingReminderIds.has(reminder.id)"
+            @toggle-channel="(ch) => toggleReminderChannel(reminder.id, ch)"
+            @remove="removeReminder(reminder.id)"
+          />
 
           <!-- Past reminders (sent/expired) — read-only, muted -->
-          <div
+          <ReminderEntryRow
             v-for="reminder in pastReminders"
             :key="reminder.id"
-            class="flex items-center gap-3 rounded-lg border border-dashed p-3 opacity-50"
-          >
-            <div class="flex-1 text-sm">
-              {{ getReminderOffsetLabel(reminder.offset_minutes) }}
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span
-                v-for="ch in reminder.channels"
-                :key="ch"
-                class="bg-muted text-muted-foreground rounded-md px-2 py-1 text-xs"
-              >
-                <Mail v-if="ch === 'email'" :size="14" />
-                <Smartphone v-else-if="ch === 'push'" :size="14" />
-                <MessageCircle v-else :size="14" />
-              </span>
-            </div>
-            <Badge variant="outline" class="text-xs">
-              {{ t(`notifications.reminders.perBooking.${reminder.status}`) }}
-            </Badge>
-          </div>
+            :offset-label="getReminderOffsetLabel(reminder.offset_minutes)"
+            :channels="reminder.channels"
+            :available-channels="reminderChannels"
+            readonly
+            :status-label="t(`notifications.reminders.perBooking.${reminder.status}`)"
+          />
 
           <DropdownMenu v-if="availableReminderOffsets.length > 0">
             <DropdownMenuTrigger as-child>

@@ -10,8 +10,6 @@ from app.crud.booking_reminder import booking_reminder as crud_reminder
 from app.crud.duty_slot import duty_slot as crud_duty_slot
 from app.models.booking_reminder import BookingReminder
 from app.schemas.booking_reminder import (
-    ALLOWED_CHANNELS,
-    ALLOWED_OFFSETS,
     MAX_REMINDERS_PER_BOOKING,
     BookingReminderCreate,
     BookingReminderListResponse,
@@ -43,36 +41,6 @@ async def update_reminder_defaults(
     current_user: CurrentUser,
 ) -> DefaultReminderOffsetsRead:
     """Update the current user's default reminder offsets."""
-    # Validate
-    seen_offsets: set[int] = set()
-    for entry in body.default_reminder_offsets:
-        if entry.offset_minutes not in ALLOWED_OFFSETS:
-            raise_problem(
-                422,
-                code="reminder.invalid_offset",
-                detail=f"Offset {entry.offset_minutes} is not allowed. Valid: {sorted(ALLOWED_OFFSETS)}",
-            )
-        for ch in entry.channels:
-            if ch not in ALLOWED_CHANNELS:
-                raise_problem(
-                    422,
-                    code="reminder.invalid_channel",
-                    detail=f"Channel '{ch}' is not allowed. Valid: {sorted(ALLOWED_CHANNELS)}",
-                )
-        if not entry.channels:
-            raise_problem(
-                422,
-                code="reminder.no_channels",
-                detail="Each reminder must have at least one channel",
-            )
-        seen_offsets.add(entry.offset_minutes)
-    if len(body.default_reminder_offsets) > MAX_REMINDERS_PER_BOOKING:
-        raise_problem(
-            422,
-            code="reminder.too_many",
-            detail=f"Maximum {MAX_REMINDERS_PER_BOOKING} default reminders allowed",
-        )
-
     # Deduplicate by offset_minutes, sort by offset
     deduped = {e.offset_minutes: e for e in body.default_reminder_offsets}
     sorted_entries = sorted(deduped.values(), key=lambda e: e.offset_minutes)
@@ -119,26 +87,6 @@ async def add_booking_reminder(
     current_user: CurrentUser,
 ) -> BookingReminder:
     """Add a reminder to an existing booking."""
-    if body.offset_minutes not in ALLOWED_OFFSETS:
-        raise_problem(
-            422,
-            code="reminder.invalid_offset",
-            detail=f"Offset {body.offset_minutes} is not allowed. Valid: {sorted(ALLOWED_OFFSETS)}",
-        )
-    for ch in body.channels:
-        if ch not in ALLOWED_CHANNELS:
-            raise_problem(
-                422,
-                code="reminder.invalid_channel",
-                detail=f"Channel '{ch}' is not allowed. Valid: {sorted(ALLOWED_CHANNELS)}",
-            )
-    if not body.channels:
-        raise_problem(
-            422,
-            code="reminder.no_channels",
-            detail="Reminder must have at least one channel",
-        )
-
     db_booking = await crud_booking.get(session, str(booking_id), raise_404_error=True)
     if not current_user.is_admin and db_booking.user_id != current_user.id:
         raise_problem(

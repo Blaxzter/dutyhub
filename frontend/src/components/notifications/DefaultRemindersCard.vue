@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
-import { Bell, Mail, MessageCircle, Plus, Smartphone, X } from 'lucide-vue-next'
+import { Bell, Plus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -16,6 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+
+import ReminderEntryRow from '@/components/notifications/ReminderEntryRow.vue'
 
 const props = defineProps<{
   entries: ReminderOffsetEntry[]
@@ -41,7 +43,10 @@ function getOffsetLabel(offset: number): string {
   return t(`notifications.reminders.offset.${offset}`)
 }
 
-async function save(entries: ReminderOffsetEntry[]) {
+const loadingOffset = ref<number | null>(null)
+
+async function save(entries: ReminderOffsetEntry[], affectedOffset: number | null = null) {
+  loadingOffset.value = affectedOffset
   emit('update:entries', entries)
   try {
     await reminderStore.updateDefaultOffsets(entries)
@@ -49,6 +54,8 @@ async function save(entries: ReminderOffsetEntry[]) {
     toast.error(t('notifications.reminders.saveFailed'))
     const fresh = await reminderStore.fetchDefaultOffsets()
     emit('update:entries', fresh)
+  } finally {
+    loadingOffset.value = null
   }
 }
 
@@ -61,7 +68,7 @@ function addOffset(offset: number) {
 }
 
 function removeOffset(offset: number) {
-  save(props.entries.filter((e) => e.offset_minutes !== offset))
+  save(props.entries.filter((e) => e.offset_minutes !== offset), offset)
 }
 
 function toggleChannel(offset: number, channel: string) {
@@ -78,7 +85,7 @@ function toggleChannel(offset: number, channel: string) {
         : [...e.channels, channel],
     }
   })
-  save(updated)
+  save(updated, offset)
 }
 </script>
 
@@ -94,39 +101,16 @@ function toggleChannel(offset: number, channel: string) {
       </CardDescription>
     </CardHeader>
     <CardContent class="space-y-3">
-      <div
+      <ReminderEntryRow
         v-for="entry in entries"
         :key="entry.offset_minutes"
-        class="flex items-center gap-3 rounded-lg border p-3"
-      >
-        <div class="flex-1 text-sm font-medium">
-          {{ getOffsetLabel(entry.offset_minutes) }}
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button
-            v-for="ch in channels"
-            :key="ch"
-            :class="[
-              'rounded-md px-2 py-1 text-xs font-medium transition-colors',
-              entry.channels.includes(ch)
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80',
-            ]"
-            :title="t(`notifications.channels.${ch}`)"
-            @click="toggleChannel(entry.offset_minutes, ch)"
-          >
-            <Mail v-if="ch === 'email'" :size="14" />
-            <Smartphone v-else-if="ch === 'push'" :size="14" />
-            <MessageCircle v-else :size="14" />
-          </button>
-        </div>
-        <button
-          class="text-muted-foreground hover:text-foreground transition-colors"
-          @click="removeOffset(entry.offset_minutes)"
-        >
-          <X :size="16" />
-        </button>
-      </div>
+        :offset-label="getOffsetLabel(entry.offset_minutes)"
+        :channels="entry.channels"
+        :available-channels="channels"
+        :loading="loadingOffset === entry.offset_minutes"
+        @toggle-channel="(ch) => toggleChannel(entry.offset_minutes, ch)"
+        @remove="removeOffset(entry.offset_minutes)"
+      />
 
       <DropdownMenu v-if="availableOffsets.length > 0">
         <DropdownMenuTrigger as-child>

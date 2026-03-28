@@ -166,6 +166,10 @@
       "2880": "2 days before"
     },
     "saveFailed": "Failed to save reminder settings",
+    "remove": "Remove",
+    "removeConfirm": "Remove?",
+    "lastChannelHint": "At least one channel must stay enabled",
+    "channelActiveHint": "You'll be notified via {channel} {offset}",
     "perBooking": {
       "title": "Reminders",
       "add": "Add reminder",

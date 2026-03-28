@@ -166,6 +166,10 @@
       "2880": "2 Tage vorher"
     },
     "saveFailed": "Fehler beim Speichern der Erinnerungseinstellungen",
+    "remove": "Entfernen",
+    "removeConfirm": "Entfernen?",
+    "lastChannelHint": "Mindestens ein Kanal muss aktiviert bleiben",
+    "channelActiveHint": "Du wirst {offset} per {channel} benachrichtigt",
     "perBooking": {
       "title": "Erinnerungen",
       "add": "Erinnerung hinzufuegen",

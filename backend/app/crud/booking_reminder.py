@@ -8,7 +8,7 @@ from sqlmodel import col
 
 from app.crud.base import CRUDBase
 from app.models.booking_reminder import BookingReminder
-from app.schemas.booking_reminder import BookingReminderCreate, ReminderOffsetEntry
+from app.schemas.booking_reminder import AllowedChannel, BookingReminderCreate, ReminderOffsetEntry
 
 
 class CRUDBookingReminder(CRUDBase[BookingReminder, BookingReminderCreate, BookingReminderCreate]):
@@ -21,7 +21,7 @@ class CRUDBookingReminder(CRUDBase[BookingReminder, BookingReminderCreate, Booki
         duty_slot_id: uuid.UUID,
         offset_minutes: int,
         slot_start: dt.datetime,
-        channels: list[str] | None = None,
+        channels: Sequence[AllowedChannel] | None = None,
     ) -> BookingReminder:
         """Create a single reminder for a booking."""
         remind_at = slot_start - dt.timedelta(minutes=offset_minutes)
@@ -41,7 +41,7 @@ class CRUDBookingReminder(CRUDBase[BookingReminder, BookingReminderCreate, Booki
             remind_at=remind_at,
             offset_minutes=offset_minutes,
             status=status,
-            channels=channels or ["push"],
+            channels=list(channels) if channels else ["push"],
         )
         db.add(reminder)
         await db.flush()
