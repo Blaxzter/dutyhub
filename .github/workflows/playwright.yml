@@ -4,10 +4,22 @@ on:
   push:
     branches:
     - master
+    paths:
+    - 'backend/**'
+    - 'frontend/**'
+    - '.env'
+    - 'docker-compose*.yml'
+    - '.github/workflows/playwright.yml'
   pull_request:
     types:
     - opened
     - synchronize
+    paths:
+    - 'backend/**'
+    - 'frontend/**'
+    - '.env'
+    - 'docker-compose*.yml'
+    - '.github/workflows/playwright.yml'
   workflow_dispatch:
     inputs:
       debug_enabled:

@@ -5,6 +5,9 @@ on:
         types:
             - opened
             - synchronize
+        paths:
+            - 'backend/**'
+            - '.github/workflows/generate-client.yml'
 
 jobs:
     generate-client:

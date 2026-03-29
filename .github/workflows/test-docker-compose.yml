@@ -4,10 +4,22 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose*.yml'
+      - '.env'
+      - '.github/workflows/test-docker-compose.yml'
   pull_request:
     types:
       - opened
       - synchronize
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose*.yml'
+      - '.env'
+      - '.github/workflows/test-docker-compose.yml'
 
 permissions:
   contents: read

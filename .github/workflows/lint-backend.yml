@@ -4,10 +4,20 @@ on:
   push:
     branches:
       - master
+    paths:
+      - 'backend/app/**'
+      - 'backend/tests/**'
+      - 'backend/pyproject.toml'
+      - '.github/workflows/lint-backend.yml'
   pull_request:
     types:
       - opened
       - synchronize
+    paths:
+      - 'backend/app/**'
+      - 'backend/tests/**'
+      - 'backend/pyproject.toml'
+      - '.github/workflows/lint-backend.yml'
 
 permissions:
   contents: read
