@@ -2,7 +2,7 @@
 name = "app"
 version = "0.1.0"
 description = ""
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.13,<4.0"
 dependencies = [
     # Updated FastAPI to latest version (0.116.1) - supports Python 3.13
     "fastapi[standard]>=0.115.14,<1.0.0",
