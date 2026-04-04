@@ -64,7 +64,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         *,
         raise_404_error: Literal[True],
         select_in_load: list[str] | None = None,
-    ) -> ModelType: ...
+    ) -> ModelType:
+        ...
 
     @overload
     async def get(  # noqa: E704
@@ -74,7 +75,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         *,
         raise_404_error: Literal[False] = False,
         select_in_load: list[str] | None = None,
-    ) -> ModelType | None: ...
+    ) -> ModelType | None:
+        ...
 
     async def get(
         self,
@@ -167,7 +169,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         return db_obj
 
-    async def remove(self, db: AsyncSession, *, id: int) -> ModelType | None:
+    async def remove(self, db: AsyncSession, *, id: Any) -> ModelType | None:
         obj = await db.get(self.model, id)
         if not obj:
             return None
