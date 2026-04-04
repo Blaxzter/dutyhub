@@ -135,7 +135,7 @@ export const test = base.extend<
     const page = await context.newPage()
     if (IS_TESTING) {
       await setupApiInterception(page, adminUser.email)
-      await page.goto('http://localhost:5173/app/home')
+      await page.goto('/app/home')
       await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
     }
     await use(page)
@@ -152,7 +152,7 @@ export const test = base.extend<
     const page = await context.newPage()
     if (IS_TESTING) {
       await setupApiInterception(page, memberUser.email)
-      await page.goto('http://localhost:5173/app/home')
+      await page.goto('/app/home')
       await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
     }
     await use(page)
