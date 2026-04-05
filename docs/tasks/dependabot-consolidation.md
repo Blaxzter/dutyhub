@@ -77,6 +77,7 @@ just test-e2e
 ## 4. Commit with Consistent Message
 
 Use this commit message format for all dependabot consolidation commits:
+We dont use coauthor commits.
 
 ```
 chore(deps): consolidate dependency updates
@@ -86,8 +87,6 @@ chore(deps): consolidate dependency updates
 - Updated GitHub Actions versions
 - Updated Docker base images
 - Resolved X Dependabot alerts
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ```
 
 Adjust the bullet points to reflect what was actually updated. Keep the `chore(deps):` prefix consistent.
@@ -117,44 +116,3 @@ gh api --method PATCH repos/Blaxzter/wirksam/dependabot/alerts/<alert_number> \
   -f state=dismissed -f dismissed_reason="tolerable_risk" \
   -f dismissed_comment="Transitive dep, no direct exposure"
 ```
-
-## Current Snapshot (2026-04-05)
-
-### Open PRs (14)
-
-| PR  | Update |
-| --- | ------ |
-| #27 | Grouped npm update (10 packages) |
-| #19 | lucide-vue-next 0.525.0 → 1.0.0 |
-| #18 | Docker node 24-alpine → 25-alpine |
-| #17 | Docker playwright v1.49.0 → v1.58.2 |
-| #16 | @vue/eslint-config-typescript 14.6.0 → 14.7.0 |
-| #15 | vite-plugin-vue-devtools 7.7.7 → 8.1.1 |
-| #14 | vite-svg-loader 5.1.0 → 5.1.1 |
-| #13 | actions/labeler 5.0.0 → 6.0.1 |
-| #12 | @trivago/prettier-plugin-sort-imports 5.2.2 → 6.0.2 |
-| #11 | Docker python 3.10 → 3.14 |
-| #10 | actions/download-artifact 5.0.0 → 8.0.1 |
-| #9  | icalendar >=6.0.0,<7.0.0 → >=6.0.0,<8.0.0 |
-| #8  | actions/upload-artifact 4.6.2 → 7.0.0 |
-| #7  | actions/setup-node 4.4.0 → 6.3.0 |
-| #6  | astral-sh/setup-uv hash update |
-
-### Vulnerability Alerts (22 open, all npm)
-
-| Severity | Package | Issue |
-| -------- | ------- | ----- |
-| critical | handlebars | JS Injection via AST Type Confusion |
-| high | defu | Prototype pollution via `__proto__` |
-| high | lodash, lodash-es | Code Injection via `_.template` |
-| high | handlebars (×3) | JS Injection variants |
-| high | picomatch | ReDoS via extglob quantifiers |
-| high | flatted | Prototype Pollution via parse() |
-| high | tar (×2) | Symlink/Hardlink Path Traversal |
-| high | svgo | DoS via entity expansion |
-| high | minimatch (×2) | ReDoS via GLOBSTAR segments |
-| high | rollup | Arbitrary File Write via Path Traversal |
-| medium | lodash, lodash-es | Prototype Pollution via array path |
-| medium | handlebars (×2) | Prototype Pollution / Access Control Gap |
-| medium | picomatch (×2) | Method Injection in POSIX classes |
-| low | handlebars | Property Access Validation Bypass |
