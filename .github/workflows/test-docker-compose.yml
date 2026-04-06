@@ -1,45 +1,46 @@
 name: Test Docker Compose
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'docker-compose*.yml'
-      - '.env'
-      - '.github/workflows/test-docker-compose.yml'
-  pull_request:
-    types:
-      - opened
-      - synchronize
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'docker-compose*.yml'
-      - '.env'
-      - '.github/workflows/test-docker-compose.yml'
+    push:
+        branches:
+            - master
+        paths:
+            - "backend/**"
+            - "frontend/**"
+            - "docker-compose*.yml"
+            - ".env"
+            - ".github/workflows/test-docker-compose.yml"
+    pull_request:
+        types:
+            - opened
+            - synchronize
+        branches-ignore:
+            - "dependabot/**"
+        paths:
+            - "backend/**"
+            - "frontend/**"
+            - "docker-compose*.yml"
+            - ".env"
+            - ".github/workflows/test-docker-compose.yml"
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
-
-  test-docker-compose:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-      - name: Create .env file
-        run: cp .env.example .env
-      - name: Create external network
-        run: docker network create traefik-net || true
-      - run: docker compose -f docker-compose.yml build
-      - run: docker compose -f docker-compose.yml down -v --remove-orphans
-      - run: docker compose -f docker-compose.yml up -d --wait backend frontend adminer
-      - name: Test backend is up
-        run: docker compose -f docker-compose.yml exec backend curl -f http://localhost:8000/api/v1/healthz
-      - name: Test frontend is up
-        run: docker compose -f docker-compose.yml exec backend curl -f http://frontend
-      - run: docker compose -f docker-compose.yml down -v --remove-orphans
+    test-docker-compose:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - name: Create .env file
+              run: cp .env.example .env
+            - name: Create external network
+              run: docker network create traefik-net || true
+            - run: docker compose -f docker-compose.yml build
+            - run: docker compose -f docker-compose.yml down -v --remove-orphans
+            - run: docker compose -f docker-compose.yml up -d --wait backend frontend adminer
+            - name: Test backend is up
+              run: docker compose -f docker-compose.yml exec backend curl -f http://localhost:8000/api/v1/healthz
+            - name: Test frontend is up
+              run: docker compose -f docker-compose.yml exec backend curl -f http://frontend
+            - run: docker compose -f docker-compose.yml down -v --remove-orphans
