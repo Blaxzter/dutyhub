@@ -62,7 +62,7 @@
     "dotenv": "^17.4.1",
     "eslint": "^9.39.4",
     "eslint-plugin-playwright": "^2.10.1",
-    "eslint-plugin-vue": "~10.3.0",
+    "eslint-plugin-vue": "~10.8.0",
     "jiti": "^2.6.1",
     "markdown-it": "^14.1.1",
     "npm-run-all2": "^8.0.4",
