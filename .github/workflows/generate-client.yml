@@ -5,9 +5,11 @@ on:
         types:
             - opened
             - synchronize
+        branches-ignore:
+            - "dependabot/**"
         paths:
-            - 'backend/**'
-            - '.github/workflows/generate-client.yml'
+            - "backend/**"
+            - ".github/workflows/generate-client.yml"
 
 jobs:
     generate-client:

@@ -14,6 +14,8 @@ on:
         types:
             - opened
             - synchronize
+        branches-ignore:
+            - "dependabot/**"
         paths:
             - "backend/**"
             - "frontend/**"
