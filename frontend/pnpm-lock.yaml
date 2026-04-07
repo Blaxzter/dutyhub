@@ -63,8 +63,8 @@ importers:
         specifier: ^1.5.4
         version: 1.5.4
       reka-ui:
-        specifier: ^2.9.3
-        version: 2.9.3(vue@3.5.32(typescript@5.8.3))
+        specifier: ^2.9.4
+        version: 2.9.4(vue@3.5.32(typescript@5.8.3))
       simple-icons:
         specifier: ^16.15.0
         version: 16.15.0
@@ -2785,8 +2785,8 @@ packages:
     resolution: {integrity: sha512-GDhwkLfywWL2s6vEjyhri+eXmfH6j1L7JE27WhqLeYzoh/A3DBaYGEj2H/HFZCn/kMfim73FXxEJTw06WtxQwg==}
     engines: {node: '>= 14.18.0'}
 
-  reka-ui@2.9.3:
-    resolution: {integrity: sha512-C9lCVxsSC7uYD0Nbgik1+14FNndHNprZmf0zGQt0ZDYIt5KxXV3zD0hEqNcfRUsEEJvVmoRsUkJnASBVBeaaUw==}
+  reka-ui@2.9.4:
+    resolution: {integrity: sha512-Xz8yKl+5SwhzZU6lxTX9uCWydsv9+4zyYFv/LL+paa+sqnYZohdFqgkFxtroEy75fdoyFIlCXZK1VtSF9YVESA==}
     peerDependencies:
       vue: '>= 3.4.0'
 
@@ -5931,7 +5931,7 @@ snapshots:
 
   readdirp@4.1.2: {}
 
-  reka-ui@2.9.3(vue@3.5.32(typescript@5.8.3)):
+  reka-ui@2.9.4(vue@3.5.32(typescript@5.8.3)):
     dependencies:
       '@floating-ui/dom': 1.7.6
       '@floating-ui/vue': 1.1.11(vue@3.5.32(typescript@5.8.3))
