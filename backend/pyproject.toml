@@ -53,7 +53,8 @@ build-backend = "hatchling.build"
 
 [tool.basedpyright]
 typeCheckingMode = "strict"
-exclude = ["venv", ".venv", "**/alembic"]
+include = ["app", "tests"]
+exclude = ["**/alembic"]
 reportMissingTypeStubs = "warning"
 
 [tool.ruff]

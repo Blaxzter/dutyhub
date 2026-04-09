@@ -2,11 +2,12 @@ from fastapi import APIRouter, Query
 from sqlalchemy import select
 from sqlmodel import col
 
-from app.api.deps import CurrentSuperuser, CurrentUser, DBDep
+from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.event import event as crud_event
 from app.crud.slot_batch import slot_batch as crud_slot_batch
+from app.logic.permissions import require_event_group_access
 from app.models.duty_slot import DutySlot
 from app.schemas.slot_batch import SlotBatchRead
 
@@ -30,7 +31,7 @@ async def delete_batch(
     event_id: str,
     batch_id: str,
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentUser,
     cancellation_reason: str | None = Query(default=None),
 ) -> None:
     """Delete a slot batch and all its duty slots (cascade)."""
@@ -42,6 +43,7 @@ async def delete_batch(
 
     # Get event name for snapshot
     db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, db_event.event_group_id)
 
     # Collect slot IDs in this batch
     stmt = select(col(DutySlot.id)).where(col(DutySlot.batch_id) == db_batch.id)

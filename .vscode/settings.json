@@ -16,5 +16,10 @@
     "basedpyright.analysis.configFilePath": "backend",
     "python.terminal.activateEnvironment": false,
     "workbench.colorTheme": "Monokai",
-    "i18n-ally.localesPaths": ["frontend/src/locales"]
+    "i18n-ally.localesPaths": ["frontend/src/locales"],
+    "chat.tools.terminal.autoApprove": {
+        "uv": true,
+        "pnpm": true
+    },
+    "python.languageServer": "None"
 }

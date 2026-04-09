@@ -60,8 +60,7 @@ function toMonthData(input: BookingsTrendPoint[]): Datum[] {
 const data = ref<Datum[]>([])
 
 function syncData() {
-  data.value =
-    granularity.value === 'day' ? toDayData(props.trend) : toMonthData(props.trend)
+  data.value = granularity.value === 'day' ? toDayData(props.trend) : toMonthData(props.trend)
 }
 
 syncData()
@@ -72,9 +71,13 @@ const autoGranularity = computed(() => {
   if (props.trend.length > 60) return 'month'
   return null
 })
-watch(autoGranularity, (val) => {
-  if (val) granularity.value = val
-}, { immediate: true })
+watch(
+  autoGranularity,
+  (val) => {
+    if (val) granularity.value = val
+  },
+  { immediate: true },
+)
 
 const xFn = (d: Datum) => d.x
 const yConfirmed = (d: Datum) => d.confirmed
@@ -114,12 +117,7 @@ const tickFormat = (i: number) => data.value[i]?.label ?? ''
     </CardHeader>
     <CardContent class="px-2 sm:p-6">
       <div class="h-[250px] w-full">
-        <VisXYContainer
-          v-if="data.length > 1"
-          :data="data"
-          :height="250"
-          :duration="0"
-        >
+        <VisXYContainer v-if="data.length > 1" :data="data" :height="250" :duration="0">
           <VisLine
             :x="xFn"
             :y="yConfirmed"

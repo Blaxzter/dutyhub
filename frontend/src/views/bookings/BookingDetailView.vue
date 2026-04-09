@@ -38,8 +38,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Textarea } from '@/components/ui/textarea'
 
-import ReminderEntryRow from '@/components/notifications/ReminderEntryRow.vue'
 import SlotBookingsTable from '@/components/events/SlotBookingsTable.vue'
+import ReminderEntryRow from '@/components/notifications/ReminderEntryRow.vue'
 
 import type { BookingRead, DutySlotRead, SlotBookingEntry } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
@@ -76,13 +76,9 @@ const savingNotes = ref(false)
 const bookingReminders = ref<BookingReminder[]>([])
 const loadingReminderIds = ref(new Set<string>())
 
-const activeReminders = computed(() =>
-  bookingReminders.value.filter((r) => r.status === 'pending'),
-)
+const activeReminders = computed(() => bookingReminders.value.filter((r) => r.status === 'pending'))
 
-const pastReminders = computed(() =>
-  bookingReminders.value.filter((r) => r.status !== 'pending'),
-)
+const pastReminders = computed(() => bookingReminders.value.filter((r) => r.status !== 'pending'))
 
 const hasAnyReminders = computed(() => bookingReminders.value.length > 0)
 
@@ -290,16 +286,24 @@ onMounted(loadData)
       </Button>
 
       <div v-if="loading" class="flex items-center justify-center py-12">
-        <div class="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
+        <div
+          class="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
+        />
       </div>
 
       <template v-else-if="booking && slot">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <h1 data-testid="page-heading" class="text-2xl font-bold tracking-tight">{{ slot.title }}</h1>
+            <h1 data-testid="page-heading" class="text-2xl font-bold tracking-tight">
+              {{ slot.title }}
+            </h1>
             <p v-if="eventName" class="text-muted-foreground mt-1">{{ eventName }}</p>
           </div>
-          <Badge data-testid="booking-status" :variant="isConfirmed ? 'default' : 'destructive'" class="mt-1">
+          <Badge
+            data-testid="booking-status"
+            :variant="isConfirmed ? 'default' : 'destructive'"
+            class="mt-1"
+          >
             {{ t(`duties.bookings.statuses.${booking.status ?? 'confirmed'}`) }}
           </Badge>
         </div>
@@ -327,7 +331,14 @@ onMounted(loadData)
               <div>
                 <p class="text-xs text-muted-foreground">{{ t('duties.dutySlots.detail.date') }}</p>
                 <p class="text-sm font-medium">
-                  {{ formatDateLabel(slot.date, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
+                  {{
+                    formatDateLabel(slot.date, {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })
+                  }}
                 </p>
               </div>
             </div>
@@ -341,23 +352,34 @@ onMounted(loadData)
             <div v-if="slot.location" class="flex items-start gap-2.5">
               <MapPin class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
-                <p class="text-xs text-muted-foreground">{{ t('duties.dutySlots.detail.location') }}</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ t('duties.dutySlots.detail.location') }}
+                </p>
                 <p class="text-sm font-medium">{{ slot.location }}</p>
               </div>
             </div>
             <div v-if="slot.category" class="flex items-start gap-2.5">
               <Tag class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
-                <p class="text-xs text-muted-foreground">{{ t('duties.dutySlots.detail.category') }}</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ t('duties.dutySlots.detail.category') }}
+                </p>
                 <p class="text-sm font-medium">{{ slot.category }}</p>
               </div>
             </div>
             <div class="flex items-start gap-2.5">
               <Users class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
-                <p class="text-xs text-muted-foreground">{{ t('duties.dutySlots.detail.capacity') }}</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ t('duties.dutySlots.detail.capacity') }}
+                </p>
                 <p class="text-sm font-medium">
-                  {{ t('duties.dutySlots.detail.capacityValue', { current: slot.current_bookings ?? 0, max: slot.max_bookings ?? 1 }) }}
+                  {{
+                    t('duties.dutySlots.detail.capacityValue', {
+                      current: slot.current_bookings ?? 0,
+                      max: slot.max_bookings ?? 1,
+                    })
+                  }}
                 </p>
               </div>
             </div>
@@ -404,7 +426,12 @@ onMounted(loadData)
               <Button
                 variant="ghost"
                 size="sm"
-                @click="() => { editingNotes = false; notesValue = booking?.notes ?? '' }"
+                @click="
+                  () => {
+                    editingNotes = false
+                    notesValue = booking?.notes ?? ''
+                  }
+                "
               >
                 {{ t('common.actions.cancel') }}
               </Button>
@@ -424,7 +451,9 @@ onMounted(loadData)
         <CardHeader>
           <div class="flex items-center gap-2">
             <Bell class="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            <CardTitle class="text-base">{{ t('notifications.reminders.perBooking.title') }}</CardTitle>
+            <CardTitle class="text-base">{{
+              t('notifications.reminders.perBooking.title')
+            }}</CardTitle>
           </div>
           <CardDescription>
             {{ t('notifications.reminders.description') }}
@@ -492,7 +521,12 @@ onMounted(loadData)
 
       <!-- ── Danger Zone ─────────────────────────────────────── -->
       <div v-if="isConfirmed" class="flex justify-end pt-2">
-        <Button data-testid="btn-cancel-booking" variant="destructive" size="sm" @click="cancelBooking">
+        <Button
+          data-testid="btn-cancel-booking"
+          variant="destructive"
+          size="sm"
+          @click="cancelBooking"
+        >
           <Trash2 class="mr-1.5 h-4 w-4" />
           {{ t('duties.bookings.cancel') }}
         </Button>

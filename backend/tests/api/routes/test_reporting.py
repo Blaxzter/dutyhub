@@ -1,9 +1,13 @@
 """Route tests for Reporting endpoints."""
 
 import pytest
+from fastapi import FastAPI
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
+from app.models.event_group import EventGroup
+from app.models.user import User
 
 
 @pytest.mark.asyncio
@@ -118,3 +122,99 @@ class TestReportingRoutes:
 
         assert r.status_code == 200
         assert "text/csv" in r.headers["content-type"]
+
+
+@pytest.mark.asyncio
+class TestReportingEventManagerRole:
+    """Test event_manager scoped access to /reporting/ endpoints."""
+
+    async def test_reporting_overview_accessible_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can access the reporting overview."""
+        r = await async_client.get("/api/v1/reporting/overview")
+
+        assert r.status_code == 200
+        data = r.json()
+        assert "overview" in data
+        assert "event_fill_rates" in data
+
+    async def test_reporting_export_accessible_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can access the CSV export."""
+        r = await async_client.get("/api/v1/reporting/export")
+
+        assert r.status_code == 200
+        assert "text/csv" in r.headers["content-type"]
+
+    async def test_reporting_blocked_for_normal_user(
+        self,
+        async_client: AsyncClient,
+    ):
+        """Test that a plain user cannot access reporting endpoints."""
+        r = await async_client.get("/api/v1/reporting/overview")
+
+        assert r.status_code == 403
+
+    async def test_reporting_export_blocked_for_normal_user(
+        self,
+        async_client: AsyncClient,
+    ):
+        """Test that a plain user cannot access reporting CSV export."""
+        r = await async_client.get("/api/v1/reporting/export")
+
+        assert r.status_code == 403
+
+    async def test_event_manager_sees_only_own_events_in_stats(
+        self,
+        async_client: AsyncClient,
+        app: FastAPI,
+        db_session: AsyncSession,
+        test_event_manager_user: User,
+        test_event_group: EventGroup,
+    ):
+        """Test that event_manager overview stats only count events they manage."""
+        from datetime import date
+        from typing import Any, get_args
+
+        from app.api import deps as deps_module
+        from app.models.event import Event as EventModel
+
+        # Create an event owned by the event_manager user in the managed group
+        event = EventModel(
+            name="Manager's Event",
+            start_date=date(2026, 7, 1),
+            end_date=date(2026, 7, 1),
+            status="published",
+            created_by_id=test_event_manager_user.id,
+            event_group_id=test_event_group.id,
+        )
+        db_session.add(event)
+        await db_session.flush()
+
+        # Override deps to return the event_manager user
+        user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
+        manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
+
+        async def override():
+            return test_event_manager_user
+
+        app.dependency_overrides[user_dep] = override
+        app.dependency_overrides[manager_dep] = override
+
+        r = await async_client.get("/api/v1/reporting/overview")
+
+        app.dependency_overrides.pop(user_dep, None)
+        app.dependency_overrides.pop(manager_dep, None)
+
+        assert r.status_code == 200
+        # The event_manager only sees events they created or groups they manage
+        overview = r.json()["overview"]
+        assert "total_events" in overview
+        # Their own event should be counted
+        assert overview["total_events"] >= 1

@@ -73,7 +73,12 @@ const flowSteps = [
   <div class="space-y-12 sm:space-y-16 max-w-4xl mx-auto">
     <!-- Header -->
     <div class="space-y-4">
-      <Button data-testid="btn-back" variant="ghost" size="sm" @click="router.push({ name: 'landing' })">
+      <Button
+        data-testid="btn-back"
+        variant="ghost"
+        size="sm"
+        @click="router.push({ name: 'landing' })"
+      >
         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"

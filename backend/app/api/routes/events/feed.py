@@ -5,16 +5,18 @@ import uuid
 from collections import defaultdict
 
 from fastapi import APIRouter, Query
-from sqlalchemy import case, func, literal_column, select
+from sqlalchemy import case, func, literal_column, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.event import event as crud_event
+from app.crud.event_group_manager import event_group_manager as crud_egm
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
 from app.models.event import Event
+from app.models.event_group_manager import EventGroupManager
 from app.schemas.event import EventRead
 from app.schemas.feed import (
     EventFeedResponse,
@@ -294,7 +296,22 @@ async def event_feed(
     days: int = Query(default=5, ge=1, le=31),
 ) -> EventFeedResponse:
     """Unified feed endpoint — returns events with view-specific embedded data."""
-    effective_status = None if current_user.is_admin else "published"
+    effective_status: str | None = None
+    also_include_group_ids: list[uuid.UUID] | None = None
+
+    if current_user.is_manager:
+        pass  # global admin/event_manager — see everything
+    else:
+        result = await session.execute(
+            select(col(EventGroupManager.event_group_id)).where(
+                col(EventGroupManager.user_id) == current_user.id
+            )
+        )
+        managed_ids: list[uuid.UUID] = list(result.scalars().all())
+        effective_status = "published"
+        if managed_ids:
+            also_include_group_ids = managed_ids
+
     booked_by_user_id = str(current_user.id) if my_bookings else None
 
     today = dt.date.today()
@@ -315,6 +332,7 @@ async def event_feed(
         date_from=ev_date_from,
         date_to=ev_date_to,
         has_future_slots=future_slots_cutoff,
+        also_include_group_ids=also_include_group_ids,
     )
     total = await crud_event.get_count_filtered(
         session,
@@ -324,6 +342,7 @@ async def event_feed(
         date_from=ev_date_from,
         date_to=ev_date_to,
         has_future_slots=future_slots_cutoff,
+        also_include_group_ids=also_include_group_ids,
     )
 
     if not events:
@@ -352,8 +371,6 @@ async def event_active_dates(
     date_to: dt.date = Query(...),
 ) -> list[dt.date]:
     """Return distinct slot dates within a range where published events have slots."""
-    effective_status = None if current_user.is_admin else "published"
-
     query = (
         select(func.distinct(col(DutySlot.date)))
         .join(Event, col(DutySlot.event_id) == col(Event.id))
@@ -363,8 +380,22 @@ async def event_active_dates(
         )
         .order_by(col(DutySlot.date))
     )
-    if effective_status:
-        query = query.where(col(Event.status) == effective_status)
+
+    if current_user.is_manager:
+        pass  # global admin/event_manager — no status filter
+    else:
+        result = await session.execute(
+            select(col(EventGroupManager.event_group_id)).where(
+                col(EventGroupManager.user_id) == current_user.id
+            )
+        )
+        managed_ids: list[uuid.UUID] = list(result.scalars().all())
+        status_filter = col(Event.status) == "published"
+        if managed_ids:
+            status_filter = or_(
+                status_filter, col(Event.event_group_id).in_(managed_ids)
+            )
+        query = query.where(status_filter)
 
     result = await session.execute(query)
     return [row[0] for row in result.all()]
@@ -380,8 +411,13 @@ async def get_slot_window(
 ) -> SlotWindowResponse:
     """Get slots for a single event within a date window (for next/prev navigation)."""
     db_event = await crud_event.get(session, event_id, raise_404_error=True)
-    if not current_user.is_admin and db_event.status != "published":
-        raise_problem(403, code="event.not_published", detail="Event is not published")
+    if not current_user.is_manager and db_event.status != "published":
+        if not db_event.event_group_id or not await crud_egm.is_manager(
+            session, user_id=current_user.id, event_group_id=db_event.event_group_id
+        ):
+            raise_problem(
+                403, code="event.not_published", detail="Event is not published"
+            )
 
     end_date = start_date + dt.timedelta(days=days - 1)
     pairs = await _query_slots_with_bookings(

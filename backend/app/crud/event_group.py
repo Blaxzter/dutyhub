@@ -1,7 +1,8 @@
 import datetime as dt
+import uuid
 from typing import Any, Literal
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 from sqlmodel import col
@@ -22,6 +23,7 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
         status: str | None = None,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
+        also_include_ids: list[uuid.UUID] | None = None,
     ) -> Select[Any]:
         if search:
             query = query.where(
@@ -29,7 +31,12 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
                 | col(EventGroup.description).ilike(f"%{search}%")
             )
         if status:
-            query = query.where(col(EventGroup.status) == status)
+            status_filter = col(EventGroup.status) == status
+            if also_include_ids:
+                status_filter = or_(
+                    status_filter, col(EventGroup.id).in_(also_include_ids)
+                )
+            query = query.where(status_filter)
         if date_from:
             query = query.where(col(EventGroup.end_date) >= date_from)
         if date_to:
@@ -48,6 +55,7 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
         date_to: dt.date | None = None,
         sort_by: EventGroupSortField = "start_date",
         sort_dir: Literal["asc", "desc"] = "asc",
+        also_include_ids: list[uuid.UUID] | None = None,
     ) -> list[EventGroup]:
         query = select(EventGroup)
         query = self._apply_common_filters(
@@ -56,6 +64,7 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
             status=status,
             date_from=date_from,
             date_to=date_to,
+            also_include_ids=also_include_ids,
         )
         order_col = getattr(EventGroup, sort_by)
         query = query.order_by(
@@ -73,6 +82,7 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
         status: str | None = None,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
+        also_include_ids: list[uuid.UUID] | None = None,
     ) -> int:
         query = select(func.count()).select_from(EventGroup)
         query = self._apply_common_filters(
@@ -81,6 +91,7 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
             status=status,
             date_from=date_from,
             date_to=date_to,
+            also_include_ids=also_include_ids,
         )
         result = await db.execute(query)
         return result.scalar_one()

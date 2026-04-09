@@ -3,7 +3,13 @@ import { onMounted, ref } from 'vue'
 
 import { Sparkles } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { RouterLink, RouterView, useRouter } from 'vue-router'
+import {
+  type RouteLocationNormalizedLoadedGeneric,
+  RouterLink,
+  RouterView,
+  useRoute,
+  useRouter,
+} from 'vue-router'
 
 import { useChangelogStatus } from '@/composables/useChangelogStatus'
 
@@ -23,8 +29,17 @@ import AppSidebar from '@/components/navigation/AppSidebar.vue'
 import ErrorBoundary from '@/components/utils/ErrorBoundary.vue'
 
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 const open = ref(true)
+
+function routeViewKey(r: RouteLocationNormalizedLoadedGeneric): string {
+  const key = r.meta.routerViewKey
+  if (typeof key === 'function')
+    return (key as (r: RouteLocationNormalizedLoadedGeneric) => string)(r)
+  if (typeof key === 'string') return key
+  return r.fullPath
+}
 
 const { hasNewVersions, newVersionCount, latestVersion, latestTitle, markAsSeen } =
   useChangelogStatus()
@@ -56,7 +71,7 @@ function goToChangelog() {
 
       <div class="flex-1 p-4 pt-0" data-testid="main-content">
         <ErrorBoundary>
-          <RouterView :key="($route.meta.routerViewKey as string | undefined) ?? $route.fullPath" />
+          <RouterView :key="routeViewKey(route)" />
         </ErrorBoundary>
       </div>
 

@@ -1,4 +1,4 @@
-import { nextTick, watch, type Ref } from 'vue'
+import { type Ref, nextTick, watch } from 'vue'
 
 import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
 

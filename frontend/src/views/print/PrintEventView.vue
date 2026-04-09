@@ -56,15 +56,8 @@ const eventUrl = computed(() => {
   return `${window.location.origin}/app/events/${eventId.value}`
 })
 
-// Check if column would have varied content
-const hasMultipleTitles = computed(() => {
-  return new Set(dutySlots.value.map((s) => s.title)).size > 1
-})
 const hasAnyLocation = computed(() => {
   return dutySlots.value.some((s) => s.location)
-})
-const hasMultipleLocations = computed(() => {
-  return new Set(dutySlots.value.map((s) => s.location).filter(Boolean)).size > 1
 })
 
 // Final visibility: user toggle controls the column
@@ -234,7 +227,11 @@ onMounted(async () => {
 <template>
   <div class="print-page mx-auto max-w-5xl w-full space-y-4 p-4 print:p-0">
     <!-- Floating toolbar -->
-    <PrintToolbar data-testid="print-toolbar" :disabled="loading || bookingsLoading" @print="handlePrint">
+    <PrintToolbar
+      data-testid="print-toolbar"
+      :disabled="loading || bookingsLoading"
+      @print="handlePrint"
+    >
       <!-- Column toggles -->
       <label class="flex items-center gap-2 cursor-pointer">
         <Checkbox v-model="showTitle" />

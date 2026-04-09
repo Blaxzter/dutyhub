@@ -122,7 +122,7 @@ test.describe('Event Groups – admin create & delete', () => {
   test('admin can delete an event group via trash icon', async ({ adminPage: page }) => {
     const deleteName = uniqueName('E2E Delete')
     await page.goto('/app/event-groups')
-    const groupToDelete = await createGroup(page, deleteName)
+    await createGroup(page, deleteName)
 
     await page.goto('/app/event-groups')
     const card = page.locator('[class*="cursor-pointer"]').filter({ hasText: deleteName })
@@ -133,6 +133,7 @@ test.describe('Event Groups – admin create & delete', () => {
 
     // Handle app-level confirmation dialog
     const confirmBtn = page.getByRole('button', { name: /confirm|bestätigen/i })
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await confirmBtn.click()
     }
@@ -169,7 +170,7 @@ test.describe('Event Group Detail – page structure', () => {
   })
 
   test('shows My Availability section', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await expect(page.getByTestId('section-my-availability')).toBeVisible()
   })
 
@@ -207,18 +208,18 @@ test.describe('Availability – fully available', () => {
   })
 
   test('Register button is visible when no availability set', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await expect(page.getByTestId('btn-availability')).toBeVisible()
   })
 
   test('Register button opens availability dialog', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await page.getByTestId('btn-availability').click()
     await expect(page.getByTestId('dialog-availability')).toBeVisible()
   })
 
   test('dialog shows both availability type options', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await page.getByTestId('btn-availability').click()
     await expect(page.getByTestId('dialog-availability')).toBeVisible()
     await expect(page.getByTestId('availability-type-fully_available')).toBeVisible()
@@ -226,7 +227,7 @@ test.describe('Availability – fully available', () => {
   })
 
   test('Cancel closes the dialog without saving', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await page.getByTestId('btn-availability').click()
     await expect(page.getByTestId('dialog-availability')).toBeVisible()
     await page.getByTestId('btn-cancel').click()
@@ -236,7 +237,7 @@ test.describe('Availability – fully available', () => {
   })
 
   test('can register as fully available', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await page.getByTestId('btn-availability').click()
 
     // "Open to be requested" / "fully available" option — select it
@@ -253,7 +254,7 @@ test.describe('Availability – fully available', () => {
   })
 
   test('can add a note when registering', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await page.getByTestId('btn-availability').click()
 
     await page.getByTestId('availability-type-fully_available').click()
@@ -276,7 +277,7 @@ test.describe('Availability – fully available', () => {
       dates: [],
     })
 
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     // Confirm-destructive dialog is inside the app; accept via dialog event
     page.on('dialog', (d) => d.accept())
 
@@ -293,7 +294,7 @@ test.describe('Availability – fully available', () => {
       dates: [],
     })
 
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await page.getByTestId('btn-availability').click()
     await expect(page.getByTestId('dialog-availability')).toBeVisible()
 
@@ -325,7 +326,7 @@ test.describe('Availability – specific dates', () => {
   })
 
   test('specific dates option reveals date builder', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await page.getByTestId('btn-availability').click()
     await page.getByTestId('availability-type-specific_dates').click()
     // Add date button or date input appears
@@ -333,7 +334,7 @@ test.describe('Availability – specific dates', () => {
   })
 
   test('can register availability with specific dates', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await page.getByTestId('btn-availability').click()
     await page.getByTestId('availability-type-specific_dates').click()
 
@@ -360,7 +361,7 @@ test.describe('Availability – specific dates', () => {
       dates: [date1, date2],
     })
 
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await expect(
       page.getByTestId('section-my-availability').getByText(/specific.?dates|bestimmte.?termine/i),
     ).toBeVisible()
@@ -386,12 +387,12 @@ test.describe('Admin – member availability table', () => {
   })
 
   test('member availabilities section is visible for admins', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     await expect(page.getByTestId('section-admin-availabilities')).toBeVisible()
   })
 
   test('empty state is shown when no members have registered', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     // Match both EN "No members have registered" and DE "Noch keine Mitglieder haben Verfügbarkeit registriert"
     await expect(
       page.getByText(/no.*(members|registrations|availability)|keine.*mitglieder.*verfügbarkeit/i),
@@ -405,7 +406,7 @@ test.describe('Admin – member availability table', () => {
       dates: [],
     })
 
-    await page.goto(`/app/event-groups/${group.id}`)
+    await page.goto(`/app/event-groups/${group.id}/availability`)
     // The admin table should show an entry — look for the availability type or note
     await expect(
       page.getByText(/fully.?available|open to be requested|voll.?verfügbar/i).nth(1),

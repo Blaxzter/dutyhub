@@ -3,7 +3,6 @@
  */
 import { expect, test } from '../../fixtures.js'
 import {
-  type DutySlotRead,
   type EventWithSlots,
   createEventWithSlots,
   deleteEvent,
@@ -13,7 +12,6 @@ import {
 } from '../../helpers/api.js'
 
 let created: EventWithSlots
-let slots: DutySlotRead[]
 const eventName = uniqueName('E2E Member Event')
 
 test.beforeEach(async ({ adminPage }) => {
@@ -26,7 +24,7 @@ test.beforeEach(async ({ adminPage }) => {
     peoplePerSlot: 5,
   })
   await publishEvent(adminPage, created.event.id)
-  slots = await listSlots(adminPage, created.event.id)
+  await listSlots(adminPage, created.event.id)
 })
 
 test.afterEach(async ({ adminPage }) => {
@@ -78,11 +76,7 @@ test.describe('Member – events viewing', () => {
     await member.goto(`/app/events/${created.event.id}`)
     await expect(member.getByText(/0\/5/).first()).toBeVisible()
     await member.getByText(/0\/5/).first().click()
-    // Handle booking confirmation dialog if it appears
-    const confirmBtn = member.getByRole('button', { name: /confirm|bestätigen/i })
-    if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await confirmBtn.click()
-    }
+    await member.getByTestId('btn-dialog-confirm').click()
     await expect(member.getByText(/1\/5/).first()).toBeVisible()
   })
 })

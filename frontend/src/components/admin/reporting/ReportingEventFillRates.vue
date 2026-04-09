@@ -2,7 +2,14 @@
 import { useI18n } from 'vue-i18n'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 import type { EventFillRate } from '@/client/types.gen'
 
@@ -24,9 +31,15 @@ const { t } = useI18n()
         <TableHeader>
           <TableRow>
             <TableHead>{{ t('admin.reporting.eventFillRates.event') }}</TableHead>
-            <TableHead class="text-right">{{ t('admin.reporting.eventFillRates.capacity') }}</TableHead>
-            <TableHead class="text-right">{{ t('admin.reporting.eventFillRates.booked') }}</TableHead>
-            <TableHead class="text-right">{{ t('admin.reporting.eventFillRates.fillRate') }}</TableHead>
+            <TableHead class="text-right">{{
+              t('admin.reporting.eventFillRates.capacity')
+            }}</TableHead>
+            <TableHead class="text-right">{{
+              t('admin.reporting.eventFillRates.booked')
+            }}</TableHead>
+            <TableHead class="text-right">{{
+              t('admin.reporting.eventFillRates.fillRate')
+            }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

@@ -1,20 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { type Component, computed, onMounted, ref, watch } from 'vue'
 
-import {
-  ArrowLeft,
-  CalendarDays,
-  Check,
-  ChevronDown,
-  Info,
-  List,
-  Pencil,
-  Plus,
-  Printer,
-  Trash2,
-  UserCheck,
-  Users,
-} from 'lucide-vue-next'
+import { useMediaQuery } from '@vueuse/core'
+import { ArrowLeft, CalendarCheck, ListTodo, ShieldCheck } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -22,24 +10,20 @@ import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
+import { useAdaptiveCarouselHeight } from '@/composables/useAdaptiveCarouselHeight'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import Separator from '@/components/ui/separator/Separator.vue'
+import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
+import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
 
+import EventGroupAvailability from '@/components/event-groups/EventGroupAvailability.vue'
+import EventGroupEvents from '@/components/event-groups/EventGroupEvents.vue'
+import EventGroupHeader from '@/components/event-groups/EventGroupHeader.vue'
+import EventGroupManagers from '@/components/event-groups/EventGroupManagers.vue'
 import AvailabilityDialog from '@/components/events/AvailabilityDialog.vue'
-import AvailabilityDisplay from '@/components/events/AvailabilityDisplay.vue'
-import StatusDropdown from '@/components/events/StatusDropdown.vue'
+import ChipNav from '@/components/utils/ChipNav.vue'
 
 import type {
   EventGroupRead,
@@ -47,10 +31,16 @@ import type {
   EventRead,
   UserAvailabilityRead,
   UserAvailabilityWithUser,
+  UserRead,
 } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
-import { formatDate, formatDateWithTime } from '@/lib/format'
-import { statusVariant } from '@/lib/status'
+
+interface NavItem {
+  id: string
+  label: string
+  icon: Component
+  adminOnly?: boolean
+}
 
 const { t } = useI18n()
 const route = useRoute()
@@ -60,14 +50,100 @@ const breadcrumbStore = useBreadcrumbStore()
 const { get, post, patch, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 
+const isDesktop = useMediaQuery('(min-width: 1280px)')
+
 const groupId = computed(() => route.params.groupId as string)
+
+const canManageGroup = computed(() => authStore.canManageGroup(groupId.value))
+
 const group = ref<EventGroupRead | null>(null)
 const groupEvents = ref<EventRead[]>([])
 const myAvailability = ref<UserAvailabilityRead | null>(null)
 const allAvailabilities = ref<UserAvailabilityWithUser[]>([])
 const loading = ref(false)
 const showAvailabilityDialog = ref(false)
+const groupManagers = ref<UserRead[]>([])
 
+// ── Navigation ──
+const navItems = computed<NavItem[]>(() => [
+  { id: 'events', label: t('duties.eventGroups.detail.nav.events'), icon: ListTodo },
+  {
+    id: 'availability',
+    label: t('duties.eventGroups.detail.nav.availability'),
+    icon: CalendarCheck,
+  },
+  {
+    id: 'management',
+    label: t('duties.eventGroups.detail.nav.management'),
+    icon: ShieldCheck,
+    adminOnly: true,
+  },
+])
+
+const visibleNavItems = computed(() =>
+  navItems.value.filter((item) => !item.adminOnly || canManageGroup.value),
+)
+
+const chipItems = computed(() =>
+  visibleNavItems.value.map((item) => ({ label: item.label, icon: item.icon })),
+)
+
+const validSectionIds = computed(() => visibleNavItems.value.map((item) => item.id))
+
+const activeSection = computed({
+  get: () => {
+    const param = route.params.section as string | undefined
+    if (param && validSectionIds.value.includes(param)) return param
+    return 'events'
+  },
+  set: (id: string) => {
+    router.replace({
+      name: 'event-group-detail',
+      params: {
+        groupId: groupId.value,
+        section: id === 'events' ? undefined : id,
+      },
+    })
+  },
+})
+
+// ── Mobile carousel ──
+const mobileSlide = ref(validSectionIds.value.indexOf(activeSection.value))
+const carouselApi = ref<UnwrapRefCarouselApi>()
+useAdaptiveCarouselHeight(carouselApi)
+
+function onCarouselInit(api: UnwrapRefCarouselApi) {
+  carouselApi.value = api
+  if (!api) return
+  if (mobileSlide.value > 0) {
+    api.scrollTo(mobileSlide.value, true)
+  }
+  api.on('select', () => {
+    const index = api.selectedScrollSnap()
+    mobileSlide.value = index
+    const sectionId = visibleNavItems.value[index]?.id
+    if (sectionId && sectionId !== activeSection.value) {
+      activeSection.value = sectionId
+    }
+  })
+}
+
+watch(mobileSlide, (index) => {
+  carouselApi.value?.scrollTo(index)
+  const sectionId = visibleNavItems.value[index]?.id
+  if (sectionId && sectionId !== activeSection.value) {
+    activeSection.value = sectionId
+  }
+})
+
+watch(activeSection, (id) => {
+  const index = validSectionIds.value.indexOf(id)
+  if (index !== -1 && index !== mobileSlide.value) {
+    mobileSlide.value = index
+  }
+})
+
+// ── Data loading ──
 const handleStatusChange = async (status: 'draft' | 'published' | 'archived') => {
   if (!group.value || group.value.status === status) return
   try {
@@ -79,6 +155,17 @@ const handleStatusChange = async (status: 'draft' | 'published' | 'archived') =>
     toast.success(t(`duties.eventGroups.statuses.${status}`))
   } catch (error) {
     toastApiError(error)
+  }
+}
+
+const loadManagers = async () => {
+  try {
+    const res = await get<{ data: UserRead[] }>({
+      url: `/event-groups/${groupId.value}/managers`,
+    })
+    groupManagers.value = res.data
+  } catch {
+    groupManagers.value = []
   }
 }
 
@@ -106,7 +193,11 @@ const loadGroup = async () => {
       myAvailability.value = null
     }
 
-    if (authStore.isAdmin) {
+    if (canManageGroup.value) {
+      await loadManagers()
+    }
+
+    if (canManageGroup.value) {
       try {
         const adminRes = await get<{ data: UserAvailabilityWithUser[] }>({
           url: `/event-groups/${groupId.value}/availabilities`,
@@ -144,7 +235,7 @@ const handleSaveAvailability = async (payload: {
     myAvailability.value = res.data
     showAvailabilityDialog.value = false
     toast.success(t('duties.availability.update'))
-    if (authStore.isAdmin) {
+    if (canManageGroup.value) {
       const adminRes = await get<{ data: UserAvailabilityWithUser[] }>({
         url: `/event-groups/${groupId.value}/availabilities`,
       })
@@ -163,7 +254,7 @@ const handleRemoveAvailability = async () => {
     await del({ url: `/event-groups/${groupId.value}/availability/me` })
     myAvailability.value = null
     toast.success(t('duties.availability.remove'))
-    if (authStore.isAdmin) {
+    if (canManageGroup.value) {
       const adminRes = await get<{ data: UserAvailabilityWithUser[] }>({
         url: `/event-groups/${groupId.value}/availabilities`,
       })
@@ -174,255 +265,138 @@ const handleRemoveAvailability = async () => {
   }
 }
 
-const navigateToEvent = (event: EventRead) => {
-  router.push({ name: 'event-detail', params: { eventId: event.id } })
-}
-
 onMounted(loadGroup)
 </script>
 
 <template>
-  <div class="mx-auto max-w-5xl space-y-6">
-    <!-- Back -->
-    <Button variant="ghost" size="sm" data-testid="btn-back" @click="router.push({ name: 'event-groups' })">
-      <ArrowLeft class="mr-2 h-4 w-4" />
-      {{ t('duties.eventGroups.title') }}
-    </Button>
+  <div :class="{ 'grid grid-cols-[1fr_56rem_1fr]': isDesktop }">
+    <!-- Back + header -->
+    <div :class="isDesktop ? 'col-start-2 space-y-6 pb-6' : 'mx-auto max-w-4xl space-y-6 pb-6'">
+      <Button
+        variant="ghost"
+        size="sm"
+        data-testid="btn-back"
+        @click="router.push({ name: 'event-groups' })"
+      >
+        <ArrowLeft class="mr-2 h-4 w-4" />
+        {{ t('duties.eventGroups.title') }}
+      </Button>
 
-    <div v-if="loading" class="py-12 text-center text-muted-foreground">
-      {{ t('common.states.loading') }}
+      <div v-if="loading" class="py-12 text-center text-muted-foreground">
+        {{ t('common.states.loading') }}
+      </div>
+
+      <template v-else-if="group">
+        <EventGroupHeader
+          :group="group"
+          :group-id="groupId"
+          :can-manage="canManageGroup"
+          @status-change="handleStatusChange"
+        />
+      </template>
     </div>
 
-    <template v-else-if="group">
-      <!-- Draft banner -->
-      <Alert
-        v-if="group.status === 'draft'"
-        variant="default"
-        class="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-500/30"
-      >
-        <Info class="h-4 w-4 text-amber-600 dark:text-amber-400" />
-        <AlertDescription>
-          {{ t('duties.eventGroups.draftBanner') }}
-        </AlertDescription>
-      </Alert>
+    <!-- ==================== MOBILE / TABLET (<xl) ==================== -->
+      <div v-if="!loading && group && !isDesktop" class="mx-auto max-w-4xl space-y-4">
+        <ChipNav v-model="mobileSlide" :items="chipItems" />
 
-      <!-- Group Header -->
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div class="space-y-1">
-          <div class="flex items-center gap-3">
-            <h1 data-testid="page-heading" class="text-3xl font-bold">{{ group.name }}</h1>
-            <StatusDropdown
-              data-testid="group-status"
-              :status="group.status"
-              i18n-prefix="duties.eventGroups.statuses"
-              :editable="authStore.isAdmin"
-              @change="handleStatusChange"
+        <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
+          <CarouselContent class="items-start">
+            <CarouselItem v-for="item in visibleNavItems" :key="item.id" class="basis-full">
+              <div class="space-y-6">
+                <template v-if="item.id === 'events'">
+                  <EventGroupEvents
+                    :events="groupEvents"
+                    :group-id="groupId"
+                    :can-manage="canManageGroup"
+                  />
+                </template>
+
+                <template v-if="item.id === 'availability'">
+                  <EventGroupAvailability
+                    :my-availability="myAvailability"
+                    :all-availabilities="allAvailabilities"
+                    :can-manage="canManageGroup"
+                    @edit="showAvailabilityDialog = true"
+                    @remove="handleRemoveAvailability"
+                  />
+                </template>
+
+                <template v-if="item.id === 'management'">
+                  <EventGroupManagers
+                    :group-id="groupId"
+                    :managers="groupManagers"
+                    @updated="loadManagers"
+                  />
+                </template>
+              </div>
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
+      </div>
+
+      <!-- ==================== DESKTOP (xl+) ==================== -->
+      <template v-if="!loading && group && isDesktop">
+        <!-- Nav in left gutter -->
+        <div class="row-start-2 flex justify-end pr-8">
+          <nav class="w-44 sticky top-8 self-start space-y-1">
+            <button
+              v-for="item in visibleNavItems"
+              :key="item.id"
+              @click="activeSection = item.id"
+              class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left"
+              :class="[
+                activeSection === item.id
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground',
+              ]"
+            >
+              <component :is="item.icon" class="h-4 w-4 shrink-0" />
+              {{ item.label }}
+            </button>
+          </nav>
+        </div>
+
+        <!-- Content -->
+        <div class="row-start-2 space-y-6">
+          <div v-if="activeSection === 'events'" class="space-y-6">
+            <EventGroupEvents
+              :events="groupEvents"
+              :group-id="groupId"
+              :can-manage="canManageGroup"
             />
           </div>
-          <p v-if="group.description" class="text-muted-foreground">{{ group.description }}</p>
-          <p class="text-sm text-muted-foreground">
-            <CalendarDays class="mr-1 inline h-3.5 w-3.5" />
-            {{ formatDate(group.start_date) }} – {{ formatDate(group.end_date) }}
-          </p>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button variant="outline" size="sm">
-              <Printer class="mr-2 h-4 w-4" />
-              {{ t('print.printButton') }}
-              <ChevronDown class="ml-1 h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              @click="
-                router.push({
-                  name: 'print-event-group',
-                  params: { groupId },
-                  query: { mode: 'overview' },
-                })
-              "
-            >
-              <List class="mr-2 h-4 w-4" />
-              {{ t('print.overview') }}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              @click="
-                router.push({
-                  name: 'print-event-group',
-                  params: { groupId },
-                  query: { mode: 'all' },
-                })
-              "
-            >
-              <Printer class="mr-2 h-4 w-4" />
-              {{ t('print.allEvents') }}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
-      <Separator />
-
-      <!-- My Availability -->
-      <Card data-testid="section-my-availability">
-        <CardHeader>
-          <div class="flex items-center justify-between gap-2">
-            <div class="min-w-0 space-y-1">
-              <CardTitle class="flex items-center gap-2">
-                <UserCheck class="h-5 w-5 shrink-0" />
-                {{ t('duties.availability.title') }}
-              </CardTitle>
-              <CardDescription>{{ t('duties.availability.subtitle') }}</CardDescription>
-            </div>
-            <div class="flex gap-2 shrink-0">
-              <Button
-                v-if="myAvailability"
-                data-testid="btn-availability"
-                variant="outline"
-                size="sm"
-                @click="showAvailabilityDialog = true"
-              >
-                <Pencil class="sm:mr-2 h-4 w-4" />
-                <span class="hidden sm:inline">{{ t('duties.availability.update') }}</span>
-              </Button>
-              <Button
-                v-if="myAvailability"
-                data-testid="btn-remove-availability"
-                variant="ghost"
-                size="sm"
-                class="text-destructive"
-                @click="handleRemoveAvailability"
-              >
-                <Trash2 class="sm:mr-1.5 h-4 w-4" />
-                <span class="hidden sm:inline">{{ t('duties.availability.remove') }}</span>
-              </Button>
-              <Button v-if="!myAvailability" data-testid="btn-availability" size="sm" @click="showAvailabilityDialog = true">
-                <Check class="sm:mr-2 h-4 w-4" />
-                <span class="hidden sm:inline">{{ t('duties.availability.register') }}</span>
-              </Button>
-            </div>
+          <div
+            v-if="activeSection === 'availability'"
+            data-testid="section-availability"
+            class="space-y-6"
+          >
+            <EventGroupAvailability
+              :my-availability="myAvailability"
+              :all-availabilities="allAvailabilities"
+              :can-manage="canManageGroup"
+              @edit="showAvailabilityDialog = true"
+              @remove="handleRemoveAvailability"
+            />
           </div>
-        </CardHeader>
-        <CardContent>
-          <AvailabilityDisplay v-if="myAvailability" :availability="myAvailability" />
-          <p v-else class="text-sm text-muted-foreground">
-            {{ t('duties.availability.notRegistered') }}
-          </p>
-        </CardContent>
-      </Card>
 
-      <!-- Events in group -->
-      <div data-testid="section-events" class="space-y-3">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xl font-semibold">{{ t('duties.eventGroups.detail.events') }}</h2>
-          <Button
-            v-if="authStore.isAdmin"
-            size="sm"
-            @click="router.push({ name: 'event-create', query: { groupId: groupId } })"
+          <div
+            v-if="activeSection === 'management'"
+            data-testid="section-management"
+            class="space-y-6"
           >
-            <Plus class="mr-1.5 h-4 w-4" />
-            {{ t('duties.events.create') }}
-          </Button>
-        </div>
-        <p v-if="groupEvents.length === 0" class="text-sm text-muted-foreground">
-          {{ t('duties.eventGroups.detail.eventsEmpty') }}
-        </p>
-        <div v-else class="grid gap-3 sm:grid-cols-2">
-          <Card
-            v-for="event in groupEvents"
-            :key="event.id"
-            class="cursor-pointer transition-colors hover:bg-muted/50"
-            @click="navigateToEvent(event)"
-          >
-            <CardHeader class="pb-2">
-              <div class="flex items-start justify-between">
-                <CardTitle class="text-base">{{ event.name }}</CardTitle>
-                <Badge :variant="statusVariant(event.status)">
-                  {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
-                </Badge>
-              </div>
-              <CardDescription v-if="event.description">{{ event.description }}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p class="text-sm text-muted-foreground">
-                {{ formatDate(event.start_date) }} – {{ formatDate(event.end_date) }}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      <!-- Admin: all member availabilities -->
-      <template v-if="authStore.isAdmin">
-        <Separator />
-        <div data-testid="section-admin-availabilities" class="space-y-3">
-          <h2 class="flex items-center gap-2 text-xl font-semibold">
-            <Users class="h-5 w-5" />
-            {{ t('duties.availability.adminTitle') }}
-          </h2>
-          <p v-if="allAvailabilities.length === 0" class="text-sm text-muted-foreground">
-            {{ t('duties.availability.adminEmpty') }}
-          </p>
-          <div v-else class="overflow-hidden rounded-lg border">
-            <table class="w-full text-sm">
-              <thead class="bg-muted/50">
-                <tr>
-                  <th class="px-4 py-2 text-left font-medium">User</th>
-                  <th class="px-4 py-2 text-left font-medium">
-                    {{ t('duties.availability.fields.type') }}
-                  </th>
-                  <th class="px-4 py-2 text-left font-medium">
-                    {{ t('duties.availability.fields.dates') }}
-                  </th>
-                  <th class="px-4 py-2 text-left font-medium">
-                    {{ t('duties.availability.fields.notes') }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="divide-y">
-                <tr v-for="avail in allAvailabilities" :key="avail.id" class="hover:bg-muted/30">
-                  <td class="px-4 py-2">
-                    <div>{{ avail.user_full_name ?? '—' }}</div>
-                    <div class="text-xs text-muted-foreground">{{ avail.user_email ?? '' }}</div>
-                  </td>
-                  <td class="px-4 py-2">
-                    <div class="flex flex-wrap items-center gap-1.5">
-                      <Badge variant="secondary">
-                        {{ t(`duties.availability.types.${avail.availability_type}`) }}
-                      </Badge>
-                      <span
-                        v-if="avail.default_start_time || avail.default_end_time"
-                        class="text-xs text-muted-foreground"
-                      >
-                        {{
-                          [avail.default_start_time, avail.default_end_time]
-                            .filter(Boolean)
-                            .join(' – ')
-                        }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="px-4 py-2">
-                    <span v-if="avail.available_dates?.length">
-                      <span class="text-xs">
-                        {{ avail.available_dates.map((d) => formatDateWithTime(d)).join(', ') }}
-                      </span>
-                    </span>
-                    <span v-else class="text-muted-foreground">—</span>
-                  </td>
-                  <td class="max-w-48 px-4 py-2 text-muted-foreground">
-                    <p class="line-clamp-3" :title="avail.notes ?? undefined">
-                      {{ avail.notes ?? '—' }}
-                    </p>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <EventGroupManagers
+              :group-id="groupId"
+              :managers="groupManagers"
+              @updated="loadManagers"
+            />
           </div>
         </div>
+
+        <!-- Right spacer for symmetry -->
+        <div class="row-start-2" aria-hidden="true" />
       </template>
-    </template>
 
     <!-- Availability Dialog -->
     <AvailabilityDialog

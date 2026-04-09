@@ -5,6 +5,7 @@
     },
     "sidebar": {
         "badges": {
+            "managersOnly": "Only visible to managers",
             "openSlots": "{count} open slot | {count} open slots"
         },
         "items": {
@@ -18,6 +19,9 @@
             },
             "home": {
                 "label": "Home"
+            },
+            "management": {
+                "label": "Management"
             },
             "myBookings": {
                 "description": "Your reservations",

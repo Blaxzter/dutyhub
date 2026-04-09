@@ -16,6 +16,7 @@ class Booking(Base, table=True):
     __tablename__ = "bookings"  # type: ignore[assignment]
     __table_args__ = (
         sa.UniqueConstraint("duty_slot_id", "user_id", name="uq_booking_slot_user"),
+        sa.Index("ix_bookings_duty_slot_id_status", "duty_slot_id", "status"),
     )
 
     duty_slot_id: uuid.UUID | None = Field(

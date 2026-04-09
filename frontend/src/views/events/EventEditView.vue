@@ -8,6 +8,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
+import { useAuthStore } from '@/stores/auth'
 import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
@@ -45,6 +46,7 @@ const { t } = useI18n()
 const { formatTime, formatDateLabel } = useFormatters()
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 const breadcrumbStore = useBreadcrumbStore()
 const { get, post, patch } = useAuthenticatedClient()
 
@@ -228,6 +230,12 @@ const loadEvent = async () => {
     })
     event.value = response.data
     const ev = response.data
+
+    // Check if user can manage this event
+    if (!authStore.canManageGroup(ev.event_group_id)) {
+      router.replace({ name: 'event-detail', params: { eventId: eventId.value } })
+      return
+    }
 
     // Populate form — use batch config if in batch mode
     name.value = ev.name

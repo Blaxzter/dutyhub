@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { MapPin, Tag, Trash2 } from 'lucide-vue-next'
+import { MapPin, ShieldCheck, Tag, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -33,6 +33,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const authStore = useAuthStore()
 const { get } = useAuthenticatedClient()
+
+const canManage = computed(() => authStore.canManageGroup(props.event.event_group_id))
 
 const numDays = computed(() => props.visibleDays ?? 5)
 const weekOffset = ref(0)
@@ -171,13 +173,12 @@ watch(
             <h3 class="text-sm font-semibold leading-tight line-clamp-2 break-words">
               {{ event.name }}
             </h3>
-            <Badge
-              :variant="statusVariant(event.status)"
-              class="shrink-0 text-[10px]"
-              v-if="authStore.isAdmin"
-            >
-              {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
-            </Badge>
+            <div v-if="canManage" class="flex shrink-0 items-center gap-1">
+              <ShieldCheck class="h-3.5 w-3.5 text-primary" />
+              <Badge :variant="statusVariant(event.status)" class="text-[10px]">
+                {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
+              </Badge>
+            </div>
           </div>
 
           <p
@@ -210,7 +211,7 @@ watch(
             {{ t('duties.events.quickView.availableSlots', { count: totalAvailableSlots }) }}
           </span>
           <Button
-            v-if="authStore.isAdmin"
+            v-if="canManage"
             variant="ghost"
             size="icon"
             class="h-6 w-6"

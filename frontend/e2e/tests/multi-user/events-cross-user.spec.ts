@@ -36,11 +36,7 @@ test.describe('Cross-user – event booking flow', () => {
     await memberPage.goto(`/app/events/${created.event.id}`)
     await expect(memberPage.getByText(/0\/3/).first()).toBeVisible()
     await memberPage.getByText(/0\/3/).first().click()
-    // Handle booking confirmation dialog if it appears
-    const confirmBtn = memberPage.getByRole('button', { name: /confirm|bestätigen/i })
-    if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await confirmBtn.click()
-    }
+    await memberPage.getByTestId('btn-dialog-confirm').click()
     await expect(memberPage.getByText(/1\/3/).first()).toBeVisible()
 
     // Admin sees the updated booking count (dynamic slot counts)

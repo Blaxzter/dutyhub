@@ -11,7 +11,9 @@ import {
   Eye,
   EyeOff,
   KeyRound,
+  Loader2,
   Shield,
+  ShieldCheck,
   ShieldOff,
   Trash2,
   UserCheck,
@@ -69,7 +71,7 @@ import type { UserRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
-const { get, patch } = useAuthenticatedClient()
+const { get, patch, delete: del } = useAuthenticatedClient()
 
 const PAGE_SIZE = 10
 
@@ -109,6 +111,35 @@ const showRejectDialog = ref(false)
 const rejectingUser = ref<UserRead | null>(null)
 const rejectionReason = ref('')
 const isRejecting = ref(false)
+
+// Delete dialog state
+const showDeleteDialog = ref(false)
+const deletingUser = ref<UserRead | null>(null)
+const isDeleting = ref(false)
+
+const openDeleteDialog = (user: UserRead) => {
+  deletingUser.value = user
+  showDeleteDialog.value = true
+}
+
+const submitDelete = async () => {
+  if (!deletingUser.value) return
+  isDeleting.value = true
+  try {
+    await del({ url: `/users/${deletingUser.value.id}` })
+    users.value = users.value.filter((u) => u.id !== deletingUser.value!.id)
+    toast.success(
+      t('admin.users.deletedToast', {
+        name: deletingUser.value.name ?? deletingUser.value.email,
+      }),
+    )
+    showDeleteDialog.value = false
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    isDeleting.value = false
+  }
+}
 
 // Stats
 const totalUsers = computed(() => users.value.length)
@@ -207,6 +238,31 @@ const toggleAdmin = async (user: UserRead) => {
       hasAdmin
         ? t('admin.users.removedAdmin', { name: user.name ?? user.email })
         : t('admin.users.grantedAdmin', { name: user.name ?? user.email }),
+    )
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    updatingId.value = null
+  }
+}
+
+const toggleEventManager = async (user: UserRead) => {
+  updatingId.value = user.id
+  const hasRole = user.roles.includes('event_manager')
+  const newRoles = hasRole
+    ? user.roles.filter((r) => r !== 'event_manager')
+    : [...user.roles, 'event_manager']
+  try {
+    const response = await patch<{ data: UserRead }>({
+      url: `/users/${user.id}`,
+      body: { roles: newRoles },
+    })
+    const idx = users.value.findIndex((u) => u.id === user.id)
+    if (idx !== -1) users.value[idx] = response.data
+    toast.success(
+      hasRole
+        ? t('admin.users.removedEventManager', { name: user.name ?? user.email })
+        : t('admin.users.grantedEventManager', { name: user.name ?? user.email }),
     )
   } catch (error) {
     toastApiError(error)
@@ -587,6 +643,26 @@ onMounted(() => {
                           : t('admin.users.makeAdmin')
                       }}
                     </DropdownMenuItem>
+                    <DropdownMenuItem @click="toggleEventManager(user)">
+                      <ShieldOff
+                        v-if="user.roles.includes('event_manager')"
+                        class="mr-2 h-4 w-4 text-amber-500"
+                      />
+                      <ShieldCheck v-else class="mr-2 h-4 w-4 text-amber-500" />
+                      {{
+                        user.roles.includes('event_manager')
+                          ? t('admin.users.removeEventManager')
+                          : t('admin.users.makeEventManager')
+                      }}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      class="text-destructive focus:bg-destructive/10 focus:text-destructive dark:focus:bg-destructive/30"
+                      @click="openDeleteDialog(user)"
+                    >
+                      <Trash2 class="mr-2 h-4 w-4 text-destructive" />
+                      {{ t('admin.users.delete') }}
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -617,7 +693,11 @@ onMounted(() => {
                   variant="outline"
                   size="icon"
                   class="h-9 w-9"
-                  :class="currentPage === item ? '!bg-primary !text-primary-foreground !border-primary' : ''"
+                  :class="
+                    currentPage === item
+                      ? '!bg-primary !text-primary-foreground !border-primary'
+                      : ''
+                  "
                 >
                   {{ item }}
                 </Button>
@@ -662,6 +742,30 @@ onMounted(() => {
 
     <!-- Clear Approval Password Dialog -->
     <Dialog v-model:open="showClearPasswordDialog">
+      <!-- Delete User Dialog -->
+      <Dialog v-model:open="showDeleteDialog">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ t('admin.users.deleteDialogTitle') }}</DialogTitle>
+            <DialogDescription>
+              {{
+                t('admin.users.deleteDialogDescription', {
+                  name: deletingUser?.name ?? deletingUser?.email,
+                })
+              }}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" @click="showDeleteDialog = false">
+              {{ t('common.actions.cancel') }}
+            </Button>
+            <Button variant="destructive" :disabled="isDeleting" @click="submitDelete">
+              <Loader2 v-if="isDeleting" class="h-4 w-4 animate-spin" />
+              {{ t('admin.users.delete') }}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{{ t('admin.users.approvalPassword.clearDialogTitle') }}</DialogTitle>

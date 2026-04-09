@@ -40,6 +40,7 @@ test.describe('Notifications – preferences page', () => {
     try {
       await telegram.waitFor({ timeout: 3_000 })
     } catch {
+      // eslint-disable-next-line playwright/no-skipped-test
       test.skip(true, 'Telegram bot not configured')
     }
     await expect(telegram).toBeVisible()
@@ -60,13 +61,16 @@ test.describe('Notifications – preferences page', () => {
     // Find a switch element and click it
     const switches = page.locator('button[role="switch"]')
     const count = await switches.count()
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (count > 0) {
       const firstSwitch = switches.first()
       const wasChecked = await firstSwitch.getAttribute('data-state')
       await firstSwitch.click()
       // State should have changed
+      // eslint-disable-next-line playwright/no-wait-for-timeout
       await page.waitForTimeout(500)
       const nowChecked = firstSwitch
+      // eslint-disable-next-line playwright/no-conditional-expect
       await expect(nowChecked).not.toHaveAttribute('data-state', wasChecked)
       // Toggle back to restore original state
       await firstSwitch.click()

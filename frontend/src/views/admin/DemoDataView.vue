@@ -111,7 +111,9 @@ async function handleDelete() {
 <template>
   <div class="space-y-6">
     <div>
-      <h1 data-testid="page-heading" class="text-2xl font-bold tracking-tight">{{ t('admin.demoData.title') }}</h1>
+      <h1 data-testid="page-heading" class="text-2xl font-bold tracking-tight">
+        {{ t('admin.demoData.title') }}
+      </h1>
       <p class="text-muted-foreground">{{ t('admin.demoData.subtitle') }}</p>
     </div>
 
@@ -177,7 +179,12 @@ async function handleDelete() {
           </p>
         </CardContent>
         <CardFooter>
-          <Button data-testid="btn-delete-demo" variant="destructive" :disabled="deleting" @click="handleDelete">
+          <Button
+            data-testid="btn-delete-demo"
+            variant="destructive"
+            :disabled="deleting"
+            @click="handleDelete"
+          >
             <Loader2 v-if="deleting" class="animate-spin" />
             <Trash2 v-else />
             {{ t('admin.demoData.delete.button') }}

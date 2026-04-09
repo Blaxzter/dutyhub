@@ -146,7 +146,11 @@ onMounted(loadApprovalPasswordStatus)
               <Eye v-else class="h-4 w-4" />
             </button>
           </div>
-          <Button data-testid="btn-approve" type="submit" :disabled="isApproving || !approvalPasswordInput.trim()">
+          <Button
+            data-testid="btn-approve"
+            type="submit"
+            :disabled="isApproving || !approvalPasswordInput.trim()"
+          >
             {{
               isApproving
                 ? t('common.pendingApproval.approving')

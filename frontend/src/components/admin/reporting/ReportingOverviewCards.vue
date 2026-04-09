@@ -84,8 +84,7 @@ const { t } = useI18n()
         <div class="text-2xl font-bold">{{ overview.active_volunteers }}</div>
         <p class="text-xs text-muted-foreground">
           {{ overview.total_volunteers }}
-          {{ t('admin.reporting.overview.totalVolunteers') }} ·
-          {{ overview.cancellation_rate }}%
+          {{ t('admin.reporting.overview.totalVolunteers') }} · {{ overview.cancellation_rate }}%
           {{ t('admin.reporting.overview.cancellationRate') }}
         </p>
       </CardContent>

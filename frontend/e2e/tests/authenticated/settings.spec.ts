@@ -34,6 +34,7 @@ test.describe('Settings – page structure', () => {
 
   test('shows security section', async ({ adminPage: page }) => {
     // Security section is auth0Only — skip in isolated testing mode
+    // eslint-disable-next-line playwright/no-skipped-test
     test.skip(process.env.USE_AUTH0_E2E?.toLowerCase() !== 'true', 'Security section requires Auth0')
     await page.goto('/app/settings/security')
     await expect(page.getByTestId('section-security')).toBeVisible()
@@ -49,10 +50,13 @@ test.describe('Settings – language', () => {
   test('can switch language to German', async ({ adminPage: page }) => {
     await page.goto('/app/settings/language')
     const germanBtn = page.getByText(/deutsch|german/i).first()
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (await germanBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await germanBtn.click()
+      // eslint-disable-next-line playwright/no-conditional-expect
       await expect(page.getByText(/sprache|einstellungen/i).first()).toBeVisible()
       const englishBtn = page.getByText(/english/i).first()
+      // eslint-disable-next-line playwright/no-conditional-in-test
       if (await englishBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
         await englishBtn.click()
       }

@@ -1,14 +1,20 @@
 import datetime as dt
 import uuid
+from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, Query
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
 from sqlalchemy import select as sa_select
+from sqlmodel import col
 
-from app.api.deps import CurrentSuperuser, CurrentUser, DBDep
+from app.api.deps import CurrentGlobalManager, CurrentSuperuser, CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.event_group import event_group as crud_event_group
+from app.crud.event_group_manager import event_group_manager as crud_egm
+from app.crud.user import user as crud_user
 from app.crud.user_availability import user_availability as crud_availability
+from app.logic.permissions import require_event_group_access
 from app.models.event_group import EventGroup
+from app.models.event_group_manager import EventGroupManager
 from app.models.user import User as UserModel
 from app.schemas.event_group import (
     EventGroupCreate,
@@ -17,6 +23,7 @@ from app.schemas.event_group import (
     EventGroupStatus,
     EventGroupUpdate,
 )
+from app.schemas.user import UserRead
 from app.schemas.user_availability import (
     UserAvailabilityCreate,
     UserAvailabilityRead,
@@ -37,26 +44,48 @@ async def list_event_groups(
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
 ) -> EventGroupListResponse:
-    """List published event groups (all users) or all groups (admin)."""
+    """List published event groups (all users) or all groups (admin/manager).
+
+    Scoped group managers see published groups plus their managed groups
+    regardless of status.
+    """
     effective_status = status
-    if not current_user.is_admin and effective_status is None:
-        effective_status = "published"
+    also_include_ids: list[uuid.UUID] | None = None
+
+    if current_user.is_manager:
+        # Global admin/event_manager — see everything
+        pass
+    else:
+        # Check if user is a scoped group manager
+        result = await session.execute(
+            sa_select(col(EventGroupManager.event_group_id)).where(
+                col(EventGroupManager.user_id) == current_user.id
+            )
+        )
+        managed_ids = list(result.scalars().all())
+
+        if effective_status is None:
+            effective_status = "published"
+        if managed_ids:
+            also_include_ids = managed_ids
+
+    filter_kwargs: dict[str, Any] = {
+        "search": search,
+        "status": effective_status,
+        "date_from": date_from,
+        "date_to": date_to,
+        "also_include_ids": also_include_ids,
+    }
 
     items = await crud_event_group.get_multi_filtered(
         session,
         skip=skip,
         limit=limit,
-        search=search,
-        status=effective_status,
-        date_from=date_from,
-        date_to=date_to,
+        **filter_kwargs,
     )
     total = await crud_event_group.get_count_filtered(
         session,
-        search=search,
-        status=effective_status,
-        date_from=date_from,
-        date_to=date_to,
+        **filter_kwargs,
     )
     return EventGroupListResponse(
         items=[EventGroupRead.model_validate(i) for i in items],
@@ -73,12 +102,17 @@ async def get_event_group(
     current_user: CurrentUser,
 ) -> EventGroup:
     db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
-    if not current_user.is_admin and db_group.status != "published":
-        raise_problem(
-            403,
-            code="event_group.not_published",
-            detail="Event group is not published",
+    if not current_user.is_manager and db_group.status != "published":
+        # Allow scoped group managers to see their own unpublished groups
+        is_scoped = await crud_egm.is_manager(
+            session, user_id=current_user.id, event_group_id=group_id
         )
+        if not is_scoped:
+            raise_problem(
+                403,
+                code="event_group.not_published",
+                detail="Event group is not published",
+            )
     return db_group
 
 
@@ -86,7 +120,7 @@ async def get_event_group(
 async def create_event_group(
     group_in: EventGroupCreate,
     session: DBDep,
-    current_user: CurrentSuperuser,
+    current_user: CurrentGlobalManager,
 ) -> EventGroup:
     group_in.created_by_id = current_user.id
     return await crud_event_group.create(session, obj_in=group_in)
@@ -97,10 +131,11 @@ async def update_event_group(
     group_id: uuid.UUID,
     group_in: EventGroupUpdate,
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentUser,
     background_tasks: BackgroundTasks,
 ) -> EventGroup:
     db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, db_group.id)
     old_status = db_group.status
     updated = await crud_event_group.update(session, db_obj=db_group, obj_in=group_in)
 
@@ -121,9 +156,10 @@ async def update_event_group(
 async def delete_event_group(
     group_id: uuid.UUID,
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentUser,
 ) -> None:
     db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, db_group.id)
     await session.delete(db_group)
     await session.commit()
 
@@ -135,12 +171,13 @@ async def delete_event_group(
 async def list_group_availabilities(
     group_id: uuid.UUID,
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=200, ge=1, le=500),
 ) -> list[UserAvailabilityWithUser]:
-    """Admin: list all user availabilities for this event group."""
+    """List all user availabilities for this event group (managers only)."""
     await crud_event_group.get(session, group_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, group_id)
     availabilities = await crud_availability.get_multi_by_group(
         session, event_group_id=group_id, skip=skip, limit=limit
     )
@@ -233,3 +270,56 @@ async def delete_my_availability(
             detail="No availability registered",
         )
     await session.commit()
+
+
+# --- Manager assignment endpoints ---
+
+
+@router.get("/{group_id}/managers", response_model=list[UserRead])
+async def list_group_managers(
+    group_id: uuid.UUID,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> list[UserRead]:
+    """List all assigned managers for this event group."""
+    await crud_event_group.get(session, group_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, group_id)
+    assignments = await crud_egm.get_by_group(session, event_group_id=group_id)
+    user_ids = [a.user_id for a in assignments]
+    if not user_ids:
+        return []
+    result = await session.execute(
+        sa_select(UserModel).where(UserModel.id.in_(user_ids))  # type: ignore[attr-defined]
+    )
+    return [UserRead.model_validate(u) for u in result.scalars().all()]
+
+
+@router.post("/{group_id}/managers/{user_id}", response_model=UserRead, status_code=201)
+async def assign_group_manager(
+    group_id: uuid.UUID,
+    user_id: uuid.UUID,
+    session: DBDep,
+    _current_user: CurrentSuperuser,
+) -> UserRead:
+    """Admin-only: assign a user as manager of this event group."""
+    await crud_event_group.get(session, group_id, raise_404_error=True)
+    user = await crud_user.get(session, id=user_id, raise_404_error=True)
+    await crud_egm.assign(session, user_id=user_id, event_group_id=group_id)
+    return UserRead.model_validate(user)
+
+
+@router.delete("/{group_id}/managers/{user_id}", status_code=204)
+async def remove_group_manager(
+    group_id: uuid.UUID,
+    user_id: uuid.UUID,
+    session: DBDep,
+    _current_user: CurrentSuperuser,
+) -> None:
+    """Admin-only: remove a user as manager of this event group."""
+    await crud_event_group.get(session, group_id, raise_404_error=True)
+    removed = await crud_egm.remove(session, user_id=user_id, event_group_id=group_id)
+    if not removed:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Manager assignment not found",
+        )

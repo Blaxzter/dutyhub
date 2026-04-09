@@ -3,16 +3,19 @@
 import csv
 import datetime as dt
 import io
+import uuid
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
-from app.api.deps import CurrentSuperuser, DBDep
+from app.api.deps import CurrentManager, DBDep
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
 from app.models.event import Event
+from app.models.event_group_manager import EventGroupManager
 from app.models.user import User
 from app.schemas.reporting import (
     BookingsByHour,
@@ -30,17 +33,28 @@ router = APIRouter(prefix="/reporting", tags=["reporting"])
 @router.get("/overview", response_model=ReportingResponse)
 async def reporting_overview(
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentManager,
     date_from: dt.date | None = Query(None, description="Start date filter"),
     date_to: dt.date | None = Query(None, description="End date filter"),
 ) -> ReportingResponse:
-    """Admin-only reporting dashboard data."""
-    overview = await _overview_stats(session, date_from, date_to)
-    bookings_trend = await _bookings_trend(session, date_from, date_to)
-    top_volunteers = await _top_volunteers(session, date_from, date_to)
-    category_breakdown = await _category_breakdown(session, date_from, date_to)
-    bookings_by_hour = await _bookings_by_hour(session, date_from, date_to)
-    event_fill_rates = await _event_fill_rates(session, date_from, date_to)
+    """Reporting dashboard data. Admins see all; event_managers see their own events."""
+    event_ids_filter = await _get_managed_event_ids(current_user, session)
+    overview = await _overview_stats(session, date_from, date_to, event_ids_filter)
+    bookings_trend = await _bookings_trend(
+        session, date_from, date_to, event_ids_filter
+    )
+    top_volunteers = await _top_volunteers(
+        session, date_from, date_to, event_ids_filter
+    )
+    category_breakdown = await _category_breakdown(
+        session, date_from, date_to, event_ids_filter
+    )
+    bookings_by_hour = await _bookings_by_hour(
+        session, date_from, date_to, event_ids_filter
+    )
+    event_fill_rates = await _event_fill_rates(
+        session, date_from, date_to, event_ids_filter
+    )
 
     return ReportingResponse(
         overview=overview,
@@ -55,11 +69,12 @@ async def reporting_overview(
 @router.get("/export")
 async def reporting_export(
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentManager,
     date_from: dt.date | None = Query(None),
     date_to: dt.date | None = Query(None),
 ) -> StreamingResponse:
-    """Export booking data as CSV."""
+    """Export booking data as CSV. Admins get all; event_managers get scoped to their events."""
+    event_ids_filter = await _get_managed_event_ids(current_user, session)
     query = (
         select(
             col(Booking.id).label("booking_id"),
@@ -81,6 +96,8 @@ async def reporting_export(
         .outerjoin(Event, col(DutySlot.event_id) == col(Event.id))
         .order_by(col(Booking.created_at).desc())
     )
+    if event_ids_filter is not None:
+        query = query.where(col(Event.id).in_(event_ids_filter))
     query = _apply_slot_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
@@ -146,8 +163,49 @@ def _apply_slot_date_filters(query, date_from, date_to):  # noqa: ANN001, ANN202
     return query
 
 
+async def _get_managed_event_ids(
+    user: User, session: AsyncSession
+) -> list[uuid.UUID] | None:
+    """Return list of event IDs the user may see in reporting.
+
+    Admins get None (= no filter, see everything).
+    event_managers see: events they created + events in groups they manage.
+    """
+    if user.is_admin:
+        return None
+
+    # Events created by this user
+    created_result = await session.execute(
+        select(col(Event.id)).where(col(Event.created_by_id) == user.id)
+    )
+    created_ids: list[uuid.UUID] = list(created_result.scalars().all())
+
+    # Event groups where this user is an assigned manager
+    group_result = await session.execute(
+        select(col(EventGroupManager.event_group_id)).where(
+            col(EventGroupManager.user_id) == user.id
+        )
+    )
+    managed_group_ids = list(group_result.scalars().all())
+
+    if managed_group_ids:
+        group_events_result = await session.execute(
+            select(col(Event.id)).where(
+                col(Event.event_group_id).in_(managed_group_ids)
+            )
+        )
+        group_event_ids: list[uuid.UUID] = list(group_events_result.scalars().all())
+    else:
+        group_event_ids = []
+
+    return list({*created_ids, *group_event_ids})
+
+
 async def _overview_stats(  # noqa: ANN001
-    session, date_from: dt.date | None, date_to: dt.date | None
+    session,
+    date_from: dt.date | None,
+    date_to: dt.date | None,
+    event_ids_filter: list[uuid.UUID] | None = None,
 ) -> ReportingOverviewStats:
     # Booking counts
     booking_query = (
@@ -159,6 +217,10 @@ async def _overview_stats(  # noqa: ANN001
         .select_from(Booking)
         .outerjoin(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
     )
+    if event_ids_filter is not None:
+        booking_query = booking_query.where(
+            col(DutySlot.event_id).in_(event_ids_filter)
+        )
     booking_query = _apply_slot_date_filters(booking_query, date_from, date_to)
     result = await session.execute(booking_query)
     row = result.one()
@@ -171,6 +233,8 @@ async def _overview_stats(  # noqa: ANN001
 
     # Event count
     event_query = select(func.count()).select_from(Event)
+    if event_ids_filter is not None:
+        event_query = event_query.where(col(Event.id).in_(event_ids_filter))
     if date_from:
         event_query = event_query.where(col(Event.end_date) >= date_from)
     if date_to:
@@ -183,6 +247,8 @@ async def _overview_stats(  # noqa: ANN001
         func.count().label("total_slots"),
         func.coalesce(func.sum(col(DutySlot.max_bookings)), 0).label("total_capacity"),
     ).select_from(DutySlot)
+    if event_ids_filter is not None:
+        slot_query = slot_query.where(col(DutySlot.event_id).in_(event_ids_filter))
     if date_from:
         slot_query = slot_query.where(col(DutySlot.date) >= date_from)
     if date_to:
@@ -206,6 +272,8 @@ async def _overview_stats(  # noqa: ANN001
     filled_query = (
         select(func.count()).select_from(DutySlot).where(confirmed_count_sq > 0)
     )
+    if event_ids_filter is not None:
+        filled_query = filled_query.where(col(DutySlot.event_id).in_(event_ids_filter))
     if date_from:
         filled_query = filled_query.where(col(DutySlot.date) >= date_from)
     if date_to:
@@ -240,7 +308,10 @@ async def _overview_stats(  # noqa: ANN001
 
 
 async def _bookings_trend(  # noqa: ANN001
-    session, date_from: dt.date | None, date_to: dt.date | None
+    session,
+    date_from: dt.date | None,
+    date_to: dt.date | None,
+    event_ids_filter: list[uuid.UUID] | None = None,
 ) -> list[BookingsTrendPoint]:
     query = (
         select(
@@ -253,6 +324,8 @@ async def _bookings_trend(  # noqa: ANN001
         .group_by(col(DutySlot.date))
         .order_by(col(DutySlot.date))
     )
+    if event_ids_filter is not None:
+        query = query.where(col(DutySlot.event_id).in_(event_ids_filter))
     query = _apply_slot_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
@@ -263,7 +336,10 @@ async def _bookings_trend(  # noqa: ANN001
 
 
 async def _top_volunteers(  # noqa: ANN001
-    session, date_from: dt.date | None, date_to: dt.date | None
+    session,
+    date_from: dt.date | None,
+    date_to: dt.date | None,
+    event_ids_filter: list[uuid.UUID] | None = None,
 ) -> list[TopVolunteer]:
     query = (
         select(
@@ -280,6 +356,8 @@ async def _top_volunteers(  # noqa: ANN001
         .order_by(func.count().desc())
         .limit(10)
     )
+    if event_ids_filter is not None:
+        query = query.where(col(DutySlot.event_id).in_(event_ids_filter))
     query = _apply_slot_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
@@ -295,7 +373,10 @@ async def _top_volunteers(  # noqa: ANN001
 
 
 async def _category_breakdown(  # noqa: ANN001
-    session, date_from: dt.date | None, date_to: dt.date | None
+    session,
+    date_from: dt.date | None,
+    date_to: dt.date | None,
+    event_ids_filter: list[uuid.UUID] | None = None,
 ) -> list[CategoryBreakdown]:
     confirmed_count_sq = (
         select(func.count())
@@ -320,6 +401,8 @@ async def _category_breakdown(  # noqa: ANN001
         .group_by(col(DutySlot.category))
         .order_by(func.count().desc())
     )
+    if event_ids_filter is not None:
+        query = query.where(col(DutySlot.event_id).in_(event_ids_filter))
     if date_from:
         query = query.where(col(DutySlot.date) >= date_from)
     if date_to:
@@ -344,7 +427,10 @@ async def _category_breakdown(  # noqa: ANN001
 
 
 async def _bookings_by_hour(  # noqa: ANN001
-    session, date_from: dt.date | None, date_to: dt.date | None
+    session,
+    date_from: dt.date | None,
+    date_to: dt.date | None,
+    event_ids_filter: list[uuid.UUID] | None = None,
 ) -> list[BookingsByHour]:
     hour_expr = func.extract("hour", col(DutySlot.start_time))
     query = (
@@ -361,6 +447,8 @@ async def _bookings_by_hour(  # noqa: ANN001
         .group_by(hour_expr)
         .order_by(hour_expr)
     )
+    if event_ids_filter is not None:
+        query = query.where(col(DutySlot.event_id).in_(event_ids_filter))
     query = _apply_slot_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
@@ -371,7 +459,10 @@ async def _bookings_by_hour(  # noqa: ANN001
 
 
 async def _event_fill_rates(  # noqa: ANN001
-    session, date_from: dt.date | None, date_to: dt.date | None
+    session,
+    date_from: dt.date | None,
+    date_to: dt.date | None,
+    event_ids_filter: list[uuid.UUID] | None = None,
 ) -> list[EventFillRate]:
     confirmed_count_sq = (
         select(func.count())
@@ -397,6 +488,8 @@ async def _event_fill_rates(  # noqa: ANN001
         .group_by(col(Event.id), col(Event.name))
         .order_by(col(Event.name))
     )
+    if event_ids_filter is not None:
+        query = query.where(col(Event.id).in_(event_ids_filter))
     if date_from:
         query = query.where(col(DutySlot.date) >= date_from)
     if date_to:

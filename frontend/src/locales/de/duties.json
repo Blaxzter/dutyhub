@@ -132,8 +132,22 @@
         "delete": "Veranstaltungsgruppe löschen",
         "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",
         "detail": {
+            "addManager": "Verwalter hinzufügen",
             "events": "Veranstaltungen in dieser Gruppe",
             "eventsEmpty": "Noch keine Veranstaltungen dieser Gruppe zugeordnet.",
+            "managerAdded": "Verwalter hinzugefügt.",
+            "managerRemoved": "Verwalter entfernt.",
+            "managers": "Gruppenverwalter",
+            "managersEmpty": "Dieser Gruppe sind noch keine eingeschränkten Verwalter zugewiesen.",
+            "managersNoResults": "Keine Benutzer gefunden.",
+            "managersSearch": "Benutzer nach Name oder E-Mail suchen...",
+            "managersSubtitle": "Benutzer mit eingeschränktem Zugriff zur Verwaltung von Veranstaltungen in dieser Gruppe",
+            "nav": {
+                "availability": "Verfügbarkeit",
+                "events": "Veranstaltungen",
+                "management": "Verwaltung"
+            },
+            "roleEventManager": "Veranstaltungsverwalter",
             "title": "Veranstaltungsgruppendetails"
         },
         "draftBanner": "Diese Veranstaltungsgruppe ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",

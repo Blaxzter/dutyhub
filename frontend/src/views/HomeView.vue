@@ -158,7 +158,7 @@ onMounted(loadStats)
       </Card>
 
       <Card
-        v-if="authStore.isAdmin"
+        v-if="authStore.isManager"
         data-testid="stat-card-users"
         class="cursor-pointer hover:shadow-md transition-shadow"
         @click="router.push({ name: 'admin-users' })"
@@ -187,7 +187,12 @@ onMounted(loadStats)
             <TooltipTrigger as="span" class="inline-flex">
               <Popover>
                 <PopoverTrigger as-child>
-                  <Button data-testid="btn-calendar-filter" variant="outline" size="sm" class="relative">
+                  <Button
+                    data-testid="btn-calendar-filter"
+                    variant="outline"
+                    size="sm"
+                    class="relative"
+                  >
                     <SlidersHorizontal class="mr-2 h-4 w-4" />
                     {{ t('dashboard.home.calendar.filter') }}
                     <span
@@ -273,11 +278,19 @@ onMounted(loadStats)
     <div data-testid="dashboard-quick-actions" class="rounded-xl bg-muted/50 p-6">
       <h2 class="text-xl font-semibold mb-4">{{ t('dashboard.home.quickActions.title') }}</h2>
       <div class="flex flex-wrap gap-3">
-        <Button data-testid="btn-browse-events" variant="outline" @click="router.push({ name: 'events' })">
+        <Button
+          data-testid="btn-browse-events"
+          variant="outline"
+          @click="router.push({ name: 'events' })"
+        >
           <CalendarDays class="mr-2 h-4 w-4" />
           {{ t('dashboard.home.quickActions.browseEvents') }}
         </Button>
-        <Button data-testid="btn-my-bookings" variant="outline" @click="router.push({ name: 'my-bookings' })">
+        <Button
+          data-testid="btn-my-bookings"
+          variant="outline"
+          @click="router.push({ name: 'my-bookings' })"
+        >
           <BookCheck class="mr-2 h-4 w-4" />
           {{ t('dashboard.home.quickActions.myBookings') }}
         </Button>

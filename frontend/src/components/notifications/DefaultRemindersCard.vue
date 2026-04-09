@@ -34,9 +34,7 @@ const reminderStore = useBookingReminderStore()
 const channels = computed(() => props.availableChannels ?? ['email', 'push', 'telegram'])
 
 const availableOffsets = computed(() =>
-  ALLOWED_OFFSETS.filter(
-    (o) => !props.entries.some((e) => e.offset_minutes === o),
-  ),
+  ALLOWED_OFFSETS.filter((o) => !props.entries.some((e) => e.offset_minutes === o)),
 )
 
 function getOffsetLabel(offset: number): string {
@@ -61,14 +59,15 @@ async function save(entries: ReminderOffsetEntry[], affectedOffset: number | nul
 
 function addOffset(offset: number) {
   const entry: ReminderOffsetEntry = { offset_minutes: offset, channels: ['push'] }
-  const updated = [...props.entries, entry].sort(
-    (a, b) => a.offset_minutes - b.offset_minutes,
-  )
+  const updated = [...props.entries, entry].sort((a, b) => a.offset_minutes - b.offset_minutes)
   save(updated)
 }
 
 function removeOffset(offset: number) {
-  save(props.entries.filter((e) => e.offset_minutes !== offset), offset)
+  save(
+    props.entries.filter((e) => e.offset_minutes !== offset),
+    offset,
+  )
 }
 
 function toggleChannel(offset: number, channel: string) {
@@ -80,9 +79,7 @@ function toggleChannel(offset: number, channel: string) {
     if (e.offset_minutes !== offset) return e
     return {
       ...e,
-      channels: has
-        ? e.channels.filter((c) => c !== channel)
-        : [...e.channels, channel],
+      channels: has ? e.channels.filter((c) => c !== channel) : [...e.channels, channel],
     }
   })
   save(updated, offset)
@@ -130,10 +127,7 @@ function toggleChannel(offset: number, channel: string) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <p
-        v-if="entries.length === 0"
-        class="text-muted-foreground text-sm"
-      >
+      <p v-if="entries.length === 0" class="text-muted-foreground text-sm">
         {{ t('notifications.reminders.noDefaults') }}
       </p>
     </CardContent>

@@ -135,3 +135,119 @@ class TestDutySlotRoutes:
         r = await async_client.get(f"/api/v1/duty-slots/{test_duty_slot.id}/bookings")
         assert r.status_code == 200
         assert isinstance(r.json(), list)
+
+
+@pytest.mark.asyncio
+class TestDutySlotsEventManagerRole:
+    """Test event_manager role access on /duty-slots/ routes."""
+
+    async def test_create_duty_slot_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        as_event_manager: None,
+        test_event: Event,
+    ):
+        """Test that an event_manager can create duty slots."""
+        r = await async_client.post(
+            "/api/v1/duty-slots/",
+            json={
+                "event_id": str(test_event.id),
+                "title": "Manager Slot",
+                "date": "2026-07-01",
+                "start_time": "09:00:00",
+                "end_time": "12:00:00",
+            },
+        )
+
+        assert r.status_code == 201
+        assert r.json()["title"] == "Manager Slot"
+
+    async def test_create_duty_slot_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+    ):
+        """Test that a plain user cannot create duty slots."""
+        r = await async_client.post(
+            "/api/v1/duty-slots/",
+            json={
+                "event_id": str(test_event.id),
+                "title": "Unauthorized Slot",
+                "date": "2026-07-01",
+                "start_time": "09:00:00",
+                "end_time": "12:00:00",
+            },
+        )
+
+        assert r.status_code == 403
+
+    async def test_update_duty_slot_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        as_event_manager: None,
+        test_duty_slot: DutySlot,
+    ):
+        """Test that an event_manager can update duty slots."""
+        r = await async_client.patch(
+            f"/api/v1/duty-slots/{test_duty_slot.id}",
+            json={"title": "Updated by Manager"},
+        )
+
+        assert r.status_code == 200
+        assert r.json()["title"] == "Updated by Manager"
+
+    async def test_update_duty_slot_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+        test_duty_slot: DutySlot,
+    ):
+        """Test that a plain user cannot update duty slots."""
+        r = await async_client.patch(
+            f"/api/v1/duty-slots/{test_duty_slot.id}",
+            json={"title": "Should Fail"},
+        )
+
+        assert r.status_code == 403
+
+    async def test_delete_duty_slot_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        as_event_manager: None,
+        db_session: AsyncSession,
+        test_event: Event,
+    ):
+        """Test that an event_manager can delete duty slots."""
+        slot = DutySlot(
+            event_id=test_event.id,
+            title="Manager Delete Me",
+            date=date(2026, 9, 1),
+            start_time=time(10, 0),
+            end_time=time(14, 0),
+        )
+        db_session.add(slot)
+        await db_session.flush()
+        await db_session.refresh(slot)
+
+        r = await async_client.delete(f"/api/v1/duty-slots/{slot.id}")
+        assert r.status_code == 204
+
+    async def test_delete_duty_slot_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        test_event: Event,
+    ):
+        """Test that a plain user cannot delete duty slots."""
+        slot = DutySlot(
+            event_id=test_event.id,
+            title="Should Not Delete",
+            date=date(2026, 9, 1),
+            start_time=time(10, 0),
+            end_time=time(14, 0),
+        )
+        db_session.add(slot)
+        await db_session.flush()
+        await db_session.refresh(slot)
+
+        r = await async_client.delete(f"/api/v1/duty-slots/{slot.id}")
+        assert r.status_code == 403

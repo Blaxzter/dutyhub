@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { Calendar, Clock, EllipsisVertical, ExternalLink, MapPin, Tag, Users } from 'lucide-vue-next'
+import {
+  Calendar,
+  Clock,
+  EllipsisVertical,
+  ExternalLink,
+  MapPin,
+  Tag,
+  Users,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -350,12 +358,7 @@ const navigateToBooking = () => {
 
           <div class="flex-1" />
 
-          <Button
-            v-if="canBook"
-            size="sm"
-            :disabled="bookingInProgress"
-            @click="handleBook"
-          >
+          <Button v-if="canBook" size="sm" :disabled="bookingInProgress" @click="handleBook">
             {{ t('duties.dutySlots.book') }}
           </Button>
           <Button

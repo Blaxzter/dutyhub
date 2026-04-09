@@ -24,8 +24,8 @@ class Event(Base, table=True):
     description: str | None = Field(
         default=None, sa_column=sa.Column(sa.Text, nullable=True)
     )
-    start_date: date = Field(sa_column=sa.Column(sa.Date, nullable=False))
-    end_date: date = Field(sa_column=sa.Column(sa.Date, nullable=False))
+    start_date: date = Field(sa_column=sa.Column(sa.Date, nullable=False, index=True))
+    end_date: date = Field(sa_column=sa.Column(sa.Date, nullable=False, index=True))
     status: str = Field(
         default="draft", sa_column=sa.Column(sa.String, nullable=False, index=True)
     )

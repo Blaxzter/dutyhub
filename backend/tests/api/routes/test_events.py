@@ -1,9 +1,13 @@
 """Route tests for Event endpoints."""
 
 import pytest
+from fastapi import FastAPI
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.event import Event
+from app.models.event_group import EventGroup
+from app.models.user import User
 
 
 @pytest.mark.asyncio
@@ -196,3 +200,208 @@ class TestEventsRoutes:
         data = r.json()
         # Day 1: 10-12 = 2 slots, Day 2: 14-18 = 4 slots
         assert data["duty_slots_created"] == 6
+
+
+@pytest.mark.asyncio
+class TestEventsEventManagerRole:
+    """Test suite verifying event_manager role access on /events/ routes."""
+
+    async def test_create_event_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can create an event (no group required)."""
+        r = await async_client.post(
+            "/api/v1/events/",
+            json={
+                "name": "Manager Event",
+                "start_date": "2026-08-01",
+                "end_date": "2026-08-02",
+            },
+        )
+
+        assert r.status_code == 201
+        assert r.json()["name"] == "Manager Event"
+
+    async def test_create_event_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+    ):
+        """Test that a plain user cannot create events without group assignment."""
+        r = await async_client.post(
+            "/api/v1/events/",
+            json={
+                "name": "Unauthorized Event",
+                "start_date": "2026-08-01",
+                "end_date": "2026-08-02",
+            },
+        )
+
+        assert r.status_code == 403
+
+    async def test_update_event_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can update any event."""
+        r = await async_client.patch(
+            f"/api/v1/events/{test_event.id}",
+            json={"name": "Updated by Manager"},
+        )
+
+        assert r.status_code == 200
+        assert r.json()["name"] == "Updated by Manager"
+
+    async def test_update_event_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+    ):
+        """Test that a plain user cannot update events."""
+        r = await async_client.patch(
+            f"/api/v1/events/{test_event.id}",
+            json={"name": "Should Fail"},
+        )
+
+        assert r.status_code == 403
+
+    async def test_delete_event_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can delete any event."""
+        r = await async_client.delete(f"/api/v1/events/{test_event.id}")
+
+        assert r.status_code == 204
+
+    async def test_delete_event_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+    ):
+        """Test that a plain user cannot delete events."""
+        r = await async_client.delete(f"/api/v1/events/{test_event.id}")
+
+        assert r.status_code == 403
+
+    async def test_scoped_manager_can_manage_own_group_event(
+        self,
+        async_client: AsyncClient,
+        app: FastAPI,
+        db_session: AsyncSession,
+        test_event_manager_user: User,
+        test_event_group: EventGroup,
+    ):
+        """Test that a scoped group manager can edit events in their assigned group."""
+        from datetime import date
+        from typing import Any, get_args
+
+        from app.api import deps as deps_module
+        from app.crud.event_group_manager import event_group_manager as crud_egm
+        from app.models.event import Event as EventModel
+
+        # Assign test_event_manager_user as scoped manager (no global role)
+        test_event_manager_user.roles = []
+        db_session.add(test_event_manager_user)
+        await db_session.flush()
+        await crud_egm.assign(
+            db_session,
+            user_id=test_event_manager_user.id,
+            event_group_id=test_event_group.id,
+        )
+
+        # Create an event in that group
+        event = EventModel(
+            name="Group Event",
+            start_date=date(2026, 7, 1),
+            end_date=date(2026, 7, 1),
+            status="published",
+            created_by_id=test_event_manager_user.id,
+            event_group_id=test_event_group.id,
+        )
+        db_session.add(event)
+        await db_session.flush()
+        await db_session.refresh(event)
+
+        # Override deps to return the scoped user
+        user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
+        manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
+
+        async def override():
+            return test_event_manager_user
+
+        app.dependency_overrides[user_dep] = override
+        app.dependency_overrides[manager_dep] = override
+
+        r = await async_client.patch(
+            f"/api/v1/events/{event.id}", json={"name": "Renamed by Scoped Manager"}
+        )
+
+        app.dependency_overrides.pop(user_dep, None)
+        app.dependency_overrides.pop(manager_dep, None)
+
+        assert r.status_code == 200
+        assert r.json()["name"] == "Renamed by Scoped Manager"
+
+    async def test_scoped_manager_cannot_manage_other_group_event(
+        self,
+        async_client: AsyncClient,
+        app: FastAPI,
+        db_session: AsyncSession,
+        test_event_manager_user: User,
+        test_event_group: EventGroup,
+        test_draft_event_group: EventGroup,
+    ):
+        """Test that a scoped group manager cannot edit events in another group."""
+        from datetime import date
+        from typing import Any, get_args
+
+        from app.api import deps as deps_module
+        from app.crud.event_group_manager import event_group_manager as crud_egm
+        from app.models.event import Event as EventModel
+
+        # Assign user as scoped manager for test_event_group only (no global role)
+        test_event_manager_user.roles = []
+        db_session.add(test_event_manager_user)
+        await db_session.flush()
+        await crud_egm.assign(
+            db_session,
+            user_id=test_event_manager_user.id,
+            event_group_id=test_event_group.id,
+        )
+
+        # Create event in the OTHER group
+        event = EventModel(
+            name="Other Group Event",
+            start_date=date(2026, 7, 1),
+            end_date=date(2026, 7, 1),
+            status="published",
+            created_by_id=test_event_manager_user.id,
+            event_group_id=test_draft_event_group.id,
+        )
+        db_session.add(event)
+        await db_session.flush()
+        await db_session.refresh(event)
+
+        user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
+        manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
+
+        async def override():
+            return test_event_manager_user
+
+        app.dependency_overrides[user_dep] = override
+        app.dependency_overrides[manager_dep] = override
+
+        r = await async_client.patch(
+            f"/api/v1/events/{event.id}", json={"name": "Should Fail"}
+        )
+
+        app.dependency_overrides.pop(user_dep, None)
+        app.dependency_overrides.pop(manager_dep, None)
+
+        assert r.status_code == 403

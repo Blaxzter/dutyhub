@@ -305,3 +305,117 @@ class TestAvailabilityRoutes:
         dates = {d["slot_date"] for d in data["available_dates"]}
         assert "2026-06-10" in dates
         assert "2026-06-11" in dates
+
+
+@pytest.mark.asyncio
+class TestEventGroupsEventManagerRole:
+    """Test event_manager role access on /event-groups/ routes."""
+
+    async def test_create_event_group_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can create an event group."""
+        r = await async_client.post(
+            "/api/v1/event-groups/",
+            json={
+                "name": "Manager Group",
+                "start_date": "2026-09-01",
+                "end_date": "2026-09-07",
+            },
+        )
+
+        assert r.status_code == 201
+        assert r.json()["name"] == "Manager Group"
+
+    async def test_create_event_group_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+    ):
+        """Test that a plain user cannot create event groups."""
+        r = await async_client.post(
+            "/api/v1/event-groups/",
+            json={
+                "name": "Unauthorized Group",
+                "start_date": "2026-09-01",
+                "end_date": "2026-09-07",
+            },
+        )
+
+        assert r.status_code == 403
+
+    async def test_update_event_group_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        test_event_group: EventGroup,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can update any event group."""
+        r = await async_client.patch(
+            f"/api/v1/event-groups/{test_event_group.id}",
+            json={"name": "Updated by Manager"},
+        )
+
+        assert r.status_code == 200
+        assert r.json()["name"] == "Updated by Manager"
+
+    async def test_update_event_group_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+        test_event_group: EventGroup,
+    ):
+        """Test that a plain user cannot update event groups."""
+        r = await async_client.patch(
+            f"/api/v1/event-groups/{test_event_group.id}",
+            json={"name": "Should Fail"},
+        )
+
+        assert r.status_code == 403
+
+    async def test_delete_event_group_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        test_event_group: EventGroup,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can delete any event group."""
+        r = await async_client.delete(f"/api/v1/event-groups/{test_event_group.id}")
+
+        assert r.status_code == 204
+
+    async def test_delete_event_group_as_normal_user_raises_403(
+        self,
+        async_client: AsyncClient,
+        test_event_group: EventGroup,
+    ):
+        """Test that a plain user cannot delete event groups."""
+        r = await async_client.delete(f"/api/v1/event-groups/{test_event_group.id}")
+
+        assert r.status_code == 403
+
+    async def test_list_availabilities_as_event_manager(
+        self,
+        async_client: AsyncClient,
+        test_event_group: EventGroup,
+        test_user_availability: UserAvailability,
+        as_event_manager: None,
+    ):
+        """Test that an event_manager can list availabilities for a group."""
+        r = await async_client.get(
+            f"/api/v1/event-groups/{test_event_group.id}/availabilities"
+        )
+
+        assert r.status_code == 200
+
+    async def test_list_availabilities_blocked_for_normal_user(
+        self,
+        async_client: AsyncClient,
+        test_event_group: EventGroup,
+    ):
+        """Test that a plain user cannot list all group availabilities."""
+        r = await async_client.get(
+            f"/api/v1/event-groups/{test_event_group.id}/availabilities"
+        )
+
+        assert r.status_code == 403

@@ -41,7 +41,9 @@ export const useBookingReminderStore = defineStore('bookingReminder', () => {
     return defaultOffsets.value
   }
 
-  async function updateDefaultOffsets(offsets: ReminderOffsetEntry[]): Promise<ReminderOffsetEntry[]> {
+  async function updateDefaultOffsets(
+    offsets: ReminderOffsetEntry[],
+  ): Promise<ReminderOffsetEntry[]> {
     const res = await put<{ data: DefaultReminderOffsets }>({
       url: '/users/me/reminder-defaults',
       body: { default_reminder_offsets: offsets },

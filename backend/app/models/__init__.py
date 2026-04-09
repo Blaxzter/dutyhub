@@ -13,6 +13,7 @@ from .calendar_feed import CalendarFeedToken
 from .duty_slot import DutySlot
 from .event import Event
 from .event_group import EventGroup
+from .event_group_manager import EventGroupManager
 from .notification import (
     Notification,
     NotificationSubscription,
@@ -34,6 +35,7 @@ __all__ = [
     "DutySlot",
     "Event",
     "EventGroup",
+    "EventGroupManager",
     "Notification",
     "NotificationSubscription",
     "NotificationType",

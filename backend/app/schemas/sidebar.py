@@ -7,11 +7,13 @@ from pydantic import BaseModel
 class SidebarEventGroup(BaseModel):
     id: uuid.UUID
     name: str
+    status: str = "published"
 
 
 class SidebarEvent(BaseModel):
     id: uuid.UUID
     name: str
+    status: str = "published"
     open_slots: int
     next_slot_date: dt.date | None = None
     next_slot_start_time: dt.time | None = None

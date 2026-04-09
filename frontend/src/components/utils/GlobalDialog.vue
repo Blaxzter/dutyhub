@@ -16,6 +16,7 @@
           <Button
             v-if="dialogStore.dialog.onCancel"
             variant="outline"
+            data-testid="btn-dialog-cancel"
             @click="handleCancel"
             class="flex items-center gap-2"
           >
@@ -25,6 +26,7 @@
           <Button
             v-if="dialogStore.dialog.onConfirm"
             :variant="dialogStore.dialog.variant"
+            data-testid="btn-dialog-confirm"
             @click="handleConfirm"
             class="flex items-center gap-2"
           >

@@ -868,6 +868,7 @@ export const zSidebarBooking = z.object({
 export const zSidebarEvent = z.object({
   id: z.uuid(),
   name: z.string(),
+  status: z.optional(z.string()).default('published'),
   open_slots: z.int(),
   next_slot_date: z.optional(z.union([z.iso.date(), z.null()])),
   next_slot_start_time: z.optional(z.union([z.iso.time(), z.null()])),
@@ -879,6 +880,7 @@ export const zSidebarEvent = z.object({
 export const zSidebarEventGroup = z.object({
   id: z.uuid(),
   name: z.string(),
+  status: z.optional(z.string()).default('published'),
 })
 
 /**
@@ -1208,6 +1210,13 @@ export const zUserProfile = z.object({
       }),
     )
     .default(false),
+  is_event_manager: z
+    .optional(
+      z.boolean().register(z.globalRegistry, {
+        description: 'Whether user has event_manager role',
+      }),
+    )
+    .default(false),
   is_active: z
     .optional(
       z.boolean().register(z.globalRegistry, {
@@ -1216,6 +1225,11 @@ export const zUserProfile = z.object({
     )
     .default(true),
   rejection_reason: z.optional(z.union([z.string(), z.null()])),
+  managed_event_group_ids: z.optional(
+    z.array(z.uuid()).register(z.globalRegistry, {
+      description: 'IDs of event groups this user manages (via event_group_managers)',
+    }),
+  ),
 })
 
 /**
@@ -2135,6 +2149,52 @@ export const zEventGroupsSetMyAvailabilityData = z.object({
  * Successful Response
  */
 export const zEventGroupsSetMyAvailabilityResponse = zUserAvailabilityRead
+
+export const zEventGroupsListGroupManagersData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.uuid(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Event-Groups-List Group Managers
+ * Successful Response
+ */
+export const zEventGroupsListGroupManagersResponse = z.array(zUserRead).register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zEventGroupsRemoveGroupManagerData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.uuid(),
+    user_id: z.uuid(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsRemoveGroupManagerResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zEventGroupsAssignGroupManagerData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.uuid(),
+    user_id: z.uuid(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsAssignGroupManagerResponse = zUserRead
 
 export const zNotificationsListNotificationTypesData = z.object({
   body: z.optional(z.never()),

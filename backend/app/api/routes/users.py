@@ -21,6 +21,7 @@ from app.crud.site_settings import site_settings as crud_site_settings
 from app.crud.user import user as crud_user
 from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
 from app.models.booking import Booking
+from app.models.event_group_manager import EventGroupManager
 from app.models.notification import NotificationSubscription
 from app.models.user import User
 from app.models.user_availability import UserAvailability, UserAvailabilityDate
@@ -31,6 +32,19 @@ from app.schemas.users import ProfileInit, UserProfile, UserProfileUpdate
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+
+async def _build_user_profile(user: User, session: Any) -> UserProfile:
+    """Build a UserProfile including scoped managed_event_group_ids."""
+    result = await session.execute(
+        select(col(EventGroupManager.event_group_id)).where(
+            col(EventGroupManager.user_id) == user.id
+        )
+    )
+    managed_ids = list(result.scalars().all())
+    profile = UserProfile.model_validate(user)
+    profile.managed_event_group_ids = managed_ids
+    return profile
 
 
 @router.post("/me", response_model=UserProfile)
@@ -76,13 +90,15 @@ async def get_current_user_profile(
             session.add(user)
             await session.flush()
 
-    return UserProfile.model_validate(user)
+    return await _build_user_profile(user, session)
 
 
 @router.patch("/me", response_model=UserProfile)
 async def update_user_profile(
     user_update: UserProfileUpdate,
     current_user: CurrentUser,
+    *,
+    session: DBDep,
 ) -> UserProfile:
     """Update current user profile information using Auth0 Management API."""
     auth0_sub = current_user.auth0_sub
@@ -107,7 +123,7 @@ async def update_user_profile(
     if user_update.preferred_language is not None:
         current_user.preferred_language = user_update.preferred_language
 
-    profile = UserProfile.model_validate(current_user)
+    profile = await _build_user_profile(current_user, session)
     return profile.model_copy(
         update={
             k: v
@@ -179,7 +195,7 @@ async def self_approve(
     session.add(user)
     await session.flush()
 
-    return UserProfile.model_validate(user)
+    return await _build_user_profile(user, session)
 
 
 @router.get("/auth0-management-url")

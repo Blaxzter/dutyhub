@@ -48,7 +48,7 @@ test.describe('Admin Users – page structure', () => {
 
   test('current admin user appears in the list', async ({ adminPage: page, adminUser }) => {
     await page.goto('/app/admin/users')
-    await expect(page.getByText(new RegExp(adminUser.name, 'i'))).toBeVisible()
+    await expect(page.getByTestId('users-table').getByText(new RegExp(adminUser.name, 'i'))).toBeVisible()
   })
 
   test('shows approval password section', async ({ adminPage: page }) => {

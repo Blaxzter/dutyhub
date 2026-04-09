@@ -17,15 +17,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-import type { ReportingResponse } from '@/client/types.gen'
-import { toastApiError } from '@/lib/api-errors'
-
 import ReportingBookingsChart from '@/components/admin/reporting/ReportingBookingsChart.vue'
 import ReportingBusiestTimes from '@/components/admin/reporting/ReportingBusiestTimes.vue'
 import ReportingCategoryBreakdown from '@/components/admin/reporting/ReportingCategoryBreakdown.vue'
 import ReportingEventFillRates from '@/components/admin/reporting/ReportingEventFillRates.vue'
 import ReportingOverviewCards from '@/components/admin/reporting/ReportingOverviewCards.vue'
 import ReportingTopVolunteers from '@/components/admin/reporting/ReportingTopVolunteers.vue'
+
+import type { ReportingResponse } from '@/client/types.gen'
+import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
 const { get } = useAuthenticatedClient()
@@ -160,7 +160,9 @@ onMounted(() => {
     <!-- Header + actions -->
     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 data-testid="page-heading" class="text-2xl font-bold tracking-tight">{{ t('admin.reporting.title') }}</h1>
+        <h1 data-testid="page-heading" class="text-2xl font-bold tracking-tight">
+          {{ t('admin.reporting.title') }}
+        </h1>
         <p class="text-muted-foreground">{{ t('admin.reporting.subtitle') }}</p>
       </div>
       <div class="flex items-center gap-2 mt-2 sm:mt-0">
@@ -211,31 +213,31 @@ onMounted(() => {
       <ReportingOverviewCards data-testid="section-overview" :overview="data.overview" />
 
       <div data-testid="section-charts">
-      <ReportingBookingsChart
-        v-if="data.bookings_trend?.length > 0"
-        :trend="data.bookings_trend"
-      />
-
-      <div class="grid gap-4 lg:grid-cols-2">
-        <ReportingTopVolunteers
-          v-if="data.top_volunteers.length > 0"
-          :volunteers="data.top_volunteers"
+        <ReportingBookingsChart
+          v-if="data.bookings_trend?.length > 0"
+          :trend="data.bookings_trend"
         />
-        <ReportingBusiestTimes
-          v-if="data.bookings_by_hour?.length > 0"
-          :hours="data.bookings_by_hour"
+
+        <div class="grid gap-4 lg:grid-cols-2">
+          <ReportingTopVolunteers
+            v-if="data.top_volunteers.length > 0"
+            :volunteers="data.top_volunteers"
+          />
+          <ReportingBusiestTimes
+            v-if="data.bookings_by_hour?.length > 0"
+            :hours="data.bookings_by_hour"
+          />
+        </div>
+
+        <ReportingCategoryBreakdown
+          v-if="data.category_breakdown.length > 0"
+          :categories="data.category_breakdown"
         />
-      </div>
 
-      <ReportingCategoryBreakdown
-        v-if="data.category_breakdown.length > 0"
-        :categories="data.category_breakdown"
-      />
-
-      <ReportingEventFillRates
-        v-if="data.event_fill_rates.length > 0"
-        :events="data.event_fill_rates"
-      />
+        <ReportingEventFillRates
+          v-if="data.event_fill_rates.length > 0"
+          :events="data.event_fill_rates"
+        />
       </div>
 
       <!-- No data state -->

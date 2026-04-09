@@ -1,4 +1,5 @@
 """Generate iCalendar (.ics) feeds from user bookings."""
+# pyright: reportUnknownMemberType=false
 
 import datetime as dt
 from collections.abc import Sequence

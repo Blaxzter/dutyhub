@@ -1,28 +1,29 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
+import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useAdaptiveCarouselHeight } from '@/composables/useAdaptiveCarouselHeight'
 import { useChangelogStatus } from '@/composables/useChangelogStatus'
 
-import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
-
 import { Badge } from '@/components/ui/badge'
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
-import {
-  Dialog,
-  DialogScrollContent,
-  DialogTitle,
-} from '@/components/ui/dialog'
+import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
+import { Dialog, DialogScrollContent, DialogTitle } from '@/components/ui/dialog'
 
 import ChipNav from '@/components/utils/ChipNav.vue'
+
+import deChangelog from '../changelog/generated/de.json'
+// ── Changelog data ──
+import enChangelog from '../changelog/generated/en.json'
 
 const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { isNewVersion, markAsSeen } = useChangelogStatus()
+const isDesktop = useMediaQuery('(min-width: 1280px)')
 
 onMounted(markAsSeen)
 
@@ -39,11 +40,10 @@ function onContentClick(e: MouseEvent) {
   lightboxOpen.value = true
 }
 
-// ── Changelog data ──
-import enChangelog from '../changelog/generated/en.json'
-import deChangelog from '../changelog/generated/de.json'
-
-const generatedEntries: Record<string, { title: string; version: string; date: string; html: string }[]> = {
+const generatedEntries: Record<
+  string,
+  { title: string; version: string; date: string; html: string }[]
+> = {
   en: enChangelog,
   de: deChangelog,
 }
@@ -83,7 +83,10 @@ const entries = computed<ChangelogEntry[]>(() => {
   const localized = generatedEntries[locale.value] ?? []
   const fallback = generatedEntries.en ?? []
 
-  const byVersion = new Map<string, { title: string; version: string; date: string; html: string }>()
+  const byVersion = new Map<
+    string,
+    { title: string; version: string; date: string; html: string }
+  >()
   for (const entry of fallback) byVersion.set(entry.version, entry)
   for (const entry of localized) byVersion.set(entry.version, entry)
 
@@ -164,25 +167,21 @@ watch(activeIndex, (index) => {
 </script>
 
 <template>
-  <div>
-    <!-- Header — always centered -->
-    <div class="mx-auto max-w-3xl pb-2">
+  <div :class="{ 'grid grid-cols-[1fr_48rem_1fr] gap-y-8': isDesktop }">
+    <!-- Header -->
+    <div :class="isDesktop ? 'col-start-2 pb-2' : 'mx-auto max-w-3xl pb-2'">
       <h1 data-testid="page-heading" class="text-3xl font-bold">{{ t('changelog.title') }}</h1>
       <p class="text-muted-foreground mt-2">{{ t('changelog.subtitle') }}</p>
     </div>
 
     <!-- ==================== MOBILE / TABLET (<xl) ==================== -->
-    <div class="xl:hidden">
+    <div v-if="!isDesktop">
       <ChipNav v-model="mobileSlide" :items="chipItems" class="mb-4" />
 
       <div class="mx-auto max-w-3xl">
         <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
           <CarouselContent class="items-start">
-            <CarouselItem
-              v-for="entry in entries"
-              :key="entry.version"
-              class="basis-full"
-            >
+            <CarouselItem v-for="entry in entries" :key="entry.version" class="basis-full">
               <div>
                 <div class="space-y-1 mb-4">
                   <div class="flex flex-wrap items-center gap-2">
@@ -210,9 +209,9 @@ watch(activeIndex, (index) => {
     </div>
 
     <!-- ==================== DESKTOP (xl+) ==================== -->
-    <div class="hidden xl:grid grid-cols-[1fr_48rem_1fr] mt-8">
+    <template v-if="isDesktop">
       <!-- Nav in left gutter -->
-      <div class="flex justify-end pr-8">
+      <div class="row-start-2 flex justify-end pr-8">
         <nav class="w-44 sticky top-8 self-start" data-testid="changelog-nav">
           <div class="rounded-lg border p-2 space-y-0.5">
             <button
@@ -241,7 +240,7 @@ watch(activeIndex, (index) => {
       </div>
 
       <!-- Content -->
-      <div v-if="desktopSelected">
+      <div v-if="desktopSelected" class="row-start-2">
         <div class="space-y-1 mb-4">
           <div class="flex flex-wrap items-center gap-2">
             <h2 class="text-xl font-semibold">{{ desktopSelected.title }}</h2>
@@ -264,18 +263,14 @@ watch(activeIndex, (index) => {
       </div>
 
       <!-- Right spacer for symmetry -->
-      <div aria-hidden="true" />
-    </div>
+      <div class="row-start-2" aria-hidden="true" />
+    </template>
 
     <!-- Image lightbox -->
     <Dialog v-model:open="lightboxOpen">
       <DialogScrollContent class="max-w-4xl p-2">
         <DialogTitle class="sr-only">{{ lightboxAlt }}</DialogTitle>
-        <img
-          :src="lightboxSrc"
-          :alt="lightboxAlt"
-          class="w-full rounded-md"
-        />
+        <img :src="lightboxSrc" :alt="lightboxAlt" class="w-full rounded-md" />
       </DialogScrollContent>
     </Dialog>
   </div>

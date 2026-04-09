@@ -76,13 +76,12 @@ export async function createGroup(
   name: string,
   status: 'draft' | 'published' = 'published',
 ): Promise<EventGroupRead> {
-  const draft = await api<EventGroupRead>(page, 'POST', '/event-groups/', {
+  return api<EventGroupRead>(page, 'POST', '/event-groups/', {
     name,
+    status,
     start_date: futureDate(30),
     end_date: futureDate(34),
   })
-  if (status === 'draft') return draft
-  return api<EventGroupRead>(page, 'PATCH', `/event-groups/${draft.id}`, { status: 'published' })
 }
 
 /** Delete an event group. Admin token required. */

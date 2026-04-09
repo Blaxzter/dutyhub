@@ -97,7 +97,9 @@ const navigateToAbout = () => {
     <div class="text-center space-y-8">
       <div class="space-y-4">
         <img :src="logo" alt="Logo" class="h-24 w-24 mx-auto rounded-xl" />
-        <h1 data-testid="page-heading" class="text-4xl font-bold tracking-tight">{{ $t('preauth.landing.welcome') }}</h1>
+        <h1 data-testid="page-heading" class="text-4xl font-bold tracking-tight">
+          {{ $t('preauth.landing.welcome') }}
+        </h1>
         <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
           {{ $t('preauth.landing.subtitle') }}
         </p>
@@ -108,7 +110,12 @@ const navigateToAbout = () => {
 
       <div class="space-y-4">
         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button data-testid="btn-cta-primary" @click="handleGetStarted" size="lg" class="px-8 py-3 text-lg font-medium">
+          <Button
+            data-testid="btn-cta-primary"
+            @click="handleGetStarted"
+            size="lg"
+            class="px-8 py-3 text-lg font-medium"
+          >
             {{
               authStore.isAuthenticated
                 ? $t('preauth.layout.navigation.goToDashboard')
