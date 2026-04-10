@@ -1877,6 +1877,16 @@ export type SelfApproveRequest = {
 }
 
 /**
+ * ShiftDatesRequest
+ */
+export type ShiftDatesRequest = {
+  /**
+   * New Start Date
+   */
+  new_start_date: string
+}
+
+/**
  * SidebarBooking
  */
 export type SidebarBooking = {
@@ -6236,6 +6246,129 @@ export type EventGroupsUpdateEventGroupResponses = {
 
 export type EventGroupsUpdateEventGroupResponse =
   EventGroupsUpdateEventGroupResponses[keyof EventGroupsUpdateEventGroupResponses]
+
+export type EventGroupsGetEventDateBoundsData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/event-date-bounds'
+}
+
+export type EventGroupsGetEventDateBoundsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsGetEventDateBoundsError =
+  EventGroupsGetEventDateBoundsErrors[keyof EventGroupsGetEventDateBoundsErrors]
+
+export type EventGroupsGetEventDateBoundsResponses = {
+  /**
+   * Response Event-Groups-Get Event Date Bounds
+   * Successful Response
+   */
+  200: {
+    [key: string]: string | null
+  }
+}
+
+export type EventGroupsGetEventDateBoundsResponse =
+  EventGroupsGetEventDateBoundsResponses[keyof EventGroupsGetEventDateBoundsResponses]
+
+export type EventGroupsShiftEventGroupDatesData = {
+  body: ShiftDatesRequest
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/shift-dates'
+}
+
+export type EventGroupsShiftEventGroupDatesErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsShiftEventGroupDatesError =
+  EventGroupsShiftEventGroupDatesErrors[keyof EventGroupsShiftEventGroupDatesErrors]
+
+export type EventGroupsShiftEventGroupDatesResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventGroupRead
+}
+
+export type EventGroupsShiftEventGroupDatesResponse =
+  EventGroupsShiftEventGroupDatesResponses[keyof EventGroupsShiftEventGroupDatesResponses]
 
 export type EventGroupsListGroupAvailabilitiesData = {
   body?: never
