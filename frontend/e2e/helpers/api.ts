@@ -106,6 +106,7 @@ export async function createEventWithSlots(
     description?: string
     startDate?: string
     endDate?: string
+    status?: 'draft' | 'published' | 'archived'
     location?: string
     category?: string
     eventGroupId?: string
@@ -124,6 +125,7 @@ export async function createEventWithSlots(
     description: opts.description ?? null,
     start_date: startDate,
     end_date: endDate,
+    status: opts.status ?? 'draft',
     location: opts.location ?? null,
     category: opts.category ?? null,
     event_group_id: opts.eventGroupId ?? null,

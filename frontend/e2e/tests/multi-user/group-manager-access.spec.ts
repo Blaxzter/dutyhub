@@ -53,12 +53,13 @@ async function assignManager(
 }
 
 /** Create an event in a group via API. */
-function eventPayload(groupId: string, name: string) {
+function eventPayload(groupId: string, name: string, status: 'draft' | 'published' = 'published') {
   const date = futureDate(30)
   return {
     name,
     start_date: date,
     end_date: date,
+    status,
     event_group_id: groupId,
     schedule: {
       default_start_time: '10:00:00',
@@ -88,7 +89,7 @@ test.describe('Group Manager – unpublished visibility', () => {
       adminPage,
       'POST',
       '/events/with-slots',
-      eventPayload(group.id, 'Draft Event'),
+      eventPayload(group.id, 'Draft Event', 'draft'),
     )
     event = result.event
   })
@@ -166,7 +167,7 @@ test.describe('Group Manager – event detail controls', () => {
     group = await createGroup(adminPage, uniqueName('E2E Controls'))
     await assignManager(adminPage, group.id, memberUser.email, memberPage)
 
-    // Create and publish an event in the managed group
+    // Create a published event in the managed group
     const result = await api<{ event: { id: string } }>(
       adminPage,
       'POST',
@@ -174,9 +175,8 @@ test.describe('Group Manager – event detail controls', () => {
       eventPayload(group.id, 'Managed Event'),
     )
     managedEvent = result.event
-    await api(adminPage, 'PATCH', `/events/${managedEvent.id}`, { status: 'published' })
 
-    // Create and publish an event without a group (admin-only)
+    // Create a published event without a group (admin-only)
     const result2 = await api<{ event: { id: string } }>(
       adminPage,
       'POST',
@@ -187,7 +187,6 @@ test.describe('Group Manager – event detail controls', () => {
       },
     )
     unmanagedEvent = result2.event
-    await api(adminPage, 'PATCH', `/events/${unmanagedEvent.id}`, { status: 'published' })
   })
 
   test.afterEach(async ({ adminPage }) => {
@@ -233,7 +232,6 @@ test.describe('Group Manager – edit page access', () => {
       eventPayload(group.id, 'Editable Event'),
     )
     managedEvent = result.event
-    await api(adminPage, 'PATCH', `/events/${managedEvent.id}`, { status: 'published' })
 
     const result2 = await api<{ event: { id: string } }>(
       adminPage,
@@ -245,7 +243,6 @@ test.describe('Group Manager – edit page access', () => {
       },
     )
     unmanagedEvent = result2.event
-    await api(adminPage, 'PATCH', `/events/${unmanagedEvent.id}`, { status: 'published' })
   })
 
   test.afterEach(async ({ adminPage }) => {
@@ -544,7 +541,7 @@ test.describe('Group Manager – sidebar visibility', () => {
       adminPage,
       'POST',
       '/events/with-slots',
-      eventPayload(group.id, 'Sidebar Draft Event'),
+      eventPayload(group.id, 'Sidebar Draft Event', 'draft'),
     )
     event = result.event
   })

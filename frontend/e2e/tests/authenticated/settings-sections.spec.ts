@@ -40,7 +40,7 @@ test.describe('Settings – data export section', () => {
 
   test('shows data section content', async ({ adminPage: page }) => {
     await page.goto('/app/settings/dataPrivacy')
-    await expect(page.getByTestId('section-data')).toBeVisible()
+    await expect(page.getByTestId('section-dataPrivacy')).toBeVisible()
   })
 })
 

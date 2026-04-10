@@ -6,7 +6,6 @@ import {
   type EventWithSlots,
   createEventWithSlots,
   deleteEvent,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -37,8 +36,7 @@ test.describe('Events – list view', () => {
 
   test.beforeEach(async ({ adminPage: page }) => {
     await page.goto('/app/events')
-    created = await createEventWithSlots(page, { name: uniqueName('E2E Test Event List') })
-    await publishEvent(page, created.event.id)
+    created = await createEventWithSlots(page, { name: uniqueName('E2E Test Event List'), status: 'published' })
   })
 
   test.afterEach(async ({ adminPage: page }) => {

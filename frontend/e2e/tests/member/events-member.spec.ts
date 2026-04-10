@@ -7,7 +7,6 @@ import {
   createEventWithSlots,
   deleteEvent,
   listSlots,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -18,12 +17,12 @@ test.beforeEach(async ({ adminPage }) => {
   await adminPage.goto('/app/events')
   created = await createEventWithSlots(adminPage, {
     name: eventName,
+    status: 'published',
     startTime: '10:00',
     endTime: '12:00',
     slotDuration: 60,
     peoplePerSlot: 5,
   })
-  await publishEvent(adminPage, created.event.id)
   await listSlots(adminPage, created.event.id)
 })
 

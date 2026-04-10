@@ -127,6 +127,7 @@ class EventCreateWithSlots(BaseModel):
     description: str | None = None
     start_date: dt.date
     end_date: dt.date
+    status: EventStatus = "draft"
     location: str | None = None
     category: str | None = None
     event_group_id: uuid.UUID | None = None

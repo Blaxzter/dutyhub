@@ -10,7 +10,6 @@ import {
   createEventWithSlots,
   deleteEvent,
   listSlots,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -22,12 +21,12 @@ test.beforeEach(async ({ adminPage: page }) => {
   await page.goto('/app/events')
   created = await createEventWithSlots(page, {
     name: uniqueName('E2E Booking Detail Event'),
+    status: 'published',
     startTime: '10:00',
     endTime: '12:00',
     slotDuration: 60,
     peoplePerSlot: 5,
   })
-  await publishEvent(page, created.event.id)
   slots = await listSlots(page, created.event.id)
   if (slots.length > 0) {
     booking = await bookSlot(page, slots[0].id)

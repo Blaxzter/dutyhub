@@ -9,7 +9,6 @@ import {
   createEventWithSlots,
   deleteEvent,
   listSlots,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -23,12 +22,12 @@ test.beforeEach(async ({ adminPage: page }) => {
     description: 'E2E test description',
     location: 'Main Hall',
     category: 'Sound',
+    status: 'published',
     startTime: '09:00',
     endTime: '11:00',
     slotDuration: 60,
     peoplePerSlot: 3,
   })
-  await publishEvent(page, created.event.id)
   slots = await listSlots(page, created.event.id)
 })
 
@@ -173,8 +172,7 @@ test.describe('Event Detail – admin actions', () => {
   })
 
   test('admin can delete event', async ({ adminPage: page }) => {
-    const toDelete = await createEventWithSlots(page, { name: uniqueName('E2E Delete Me') })
-    await publishEvent(page, toDelete.event.id)
+    const toDelete = await createEventWithSlots(page, { name: uniqueName('E2E Delete Me'), status: 'published' })
 
     await page.goto(`/app/events/${toDelete.event.id}`)
     await page.getByTestId('btn-delete-event').click()

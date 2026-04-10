@@ -8,7 +8,6 @@ import {
   createEventWithSlots,
   deleteEvent,
   listSlots,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -28,8 +27,7 @@ test.describe('Reporting – page structure', () => {
   let created: EventWithSlots
 
   test.beforeEach(async ({ adminPage: page }) => {
-    created = await createEventWithSlots(page, { name: uniqueName('Report') })
-    await publishEvent(page, created.event.id)
+    created = await createEventWithSlots(page, { name: uniqueName('Report'), status: 'published' })
     const slots = await listSlots(page, created.event.id)
     await bookSlot(page, slots[0].id)
   })

@@ -8,7 +8,6 @@ import {
   type EventWithSlots,
   createEventWithSlots,
   deleteEvent,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -19,12 +18,12 @@ test.describe('Cross-user – event booking flow', () => {
     await adminPage.goto('/app/events')
     created = await createEventWithSlots(adminPage, {
       name: uniqueName('E2E Cross-User Booking Event'),
+      status: 'published',
       startTime: '10:00',
       endTime: '12:00',
       slotDuration: 60,
       peoplePerSlot: 3,
     })
-    await publishEvent(adminPage, created.event.id)
   })
 
   test.afterEach(async ({ adminPage }) => {

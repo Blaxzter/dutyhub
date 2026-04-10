@@ -62,6 +62,7 @@ async def create_event_with_slots(
         description=payload.description,
         start_date=payload.start_date,
         end_date=payload.end_date,
+        status=payload.status,
         location=payload.location,
         category=payload.category,
         event_group_id=event_group_id,
