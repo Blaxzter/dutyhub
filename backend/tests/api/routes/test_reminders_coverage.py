@@ -199,6 +199,7 @@ class TestReminderCoverage:
 
         import datetime as dt
 
+        assert slot.start_time is not None
         slot_start = dt.datetime.combine(slot.date, slot.start_time)
         reminder = await crud_reminder.create_reminder(
             db_session,

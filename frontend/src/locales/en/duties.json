@@ -133,8 +133,18 @@
         "deleteConfirm": "Are you sure you want to delete this event group? All related availability data will be lost.",
         "detail": {
             "addManager": "Add Manager",
+            "dateConstraintHint": "Date range is limited by existing events. Use \"Shift Dates\" below to move everything at once.",
+            "earliestEvent": "Earliest event: {date}",
+            "editDescription": "Update the name, description, and date range for this event group.",
             "events": "Events in this Group",
             "eventsEmpty": "No events assigned to this group yet.",
+            "latestEvent": "Latest event: {date}",
+            "legend": {
+                "eventDay": "Event day",
+                "eventEnd": "Event end",
+                "eventStart": "Event start",
+                "today": "Today"
+            },
             "managerAdded": "Manager added.",
             "managerRemoved": "Manager removed.",
             "managers": "Group Managers",
@@ -144,11 +154,21 @@
             "managersSubtitle": "Users with scoped access to manage events in this group",
             "nav": {
                 "availability": "Availability",
+                "details": "Details",
                 "events": "Events",
                 "management": "Management"
             },
             "roleEventManager": "Event Manager",
-            "title": "Event Group Details"
+            "shiftApply": "Shift all dates",
+            "shiftBackward": "backward",
+            "shiftDates": "Shift Dates",
+            "shiftDescription": "Move the entire programme to a new date. All events, duty slots, and availability entries will be shifted by the same offset.",
+            "shiftForward": "forward",
+            "shiftNewStart": "New start date",
+            "shiftPreview": "{days} days {direction}",
+            "shiftSuccess": "All dates shifted successfully.",
+            "title": "Event Group Details",
+            "updated": "Event group updated."
         },
         "draftBanner": "This event group is a draft and is not visible to regular users. Change the status to \"Published\" to make it available.",
         "edit": "Edit Event Group",

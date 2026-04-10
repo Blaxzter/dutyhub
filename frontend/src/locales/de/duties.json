@@ -133,8 +133,18 @@
         "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",
         "detail": {
             "addManager": "Verwalter hinzufügen",
+            "dateConstraintHint": "Der Zeitraum ist durch vorhandene Veranstaltungen eingeschränkt. Verwenden Sie \"Termine verschieben\", um alles gleichzeitig zu verschieben.",
+            "earliestEvent": "Früheste Veranstaltung: {date}",
+            "editDescription": "Name, Beschreibung und Zeitraum dieser Veranstaltungsgruppe bearbeiten.",
             "events": "Veranstaltungen in dieser Gruppe",
             "eventsEmpty": "Noch keine Veranstaltungen dieser Gruppe zugeordnet.",
+            "latestEvent": "Späteste Veranstaltung: {date}",
+            "legend": {
+                "eventDay": "Veranstaltungstag",
+                "eventEnd": "Veranstaltungsende",
+                "eventStart": "Veranstaltungsbeginn",
+                "today": "Heute"
+            },
             "managerAdded": "Verwalter hinzugefügt.",
             "managerRemoved": "Verwalter entfernt.",
             "managers": "Gruppenverwalter",
@@ -144,11 +154,21 @@
             "managersSubtitle": "Benutzer mit eingeschränktem Zugriff zur Verwaltung von Veranstaltungen in dieser Gruppe",
             "nav": {
                 "availability": "Verfügbarkeit",
+                "details": "Details",
                 "events": "Veranstaltungen",
                 "management": "Verwaltung"
             },
             "roleEventManager": "Veranstaltungsverwalter",
-            "title": "Veranstaltungsgruppendetails"
+            "shiftApply": "Alle Termine verschieben",
+            "shiftBackward": "zurück",
+            "shiftDates": "Termine verschieben",
+            "shiftDescription": "Das gesamte Programm auf ein neues Datum verschieben. Alle Veranstaltungen, Dienstschichten und Verfügbarkeiten werden um denselben Zeitraum verschoben.",
+            "shiftForward": "vorwärts",
+            "shiftNewStart": "Neues Startdatum",
+            "shiftPreview": "{days} Tage {direction}",
+            "shiftSuccess": "Alle Termine erfolgreich verschoben.",
+            "title": "Veranstaltungsgruppendetails",
+            "updated": "Veranstaltungsgruppe aktualisiert."
         },
         "draftBanner": "Diese Veranstaltungsgruppe ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
         "edit": "Veranstaltungsgruppe bearbeiten",

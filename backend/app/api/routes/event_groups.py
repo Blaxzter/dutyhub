@@ -3,7 +3,10 @@ import uuid
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+from pydantic import BaseModel
+from sqlalchemy import func as sa_func
 from sqlalchemy import select as sa_select
+from sqlalchemy import update as sa_update
 from sqlmodel import col
 
 from app.api.deps import CurrentGlobalManager, CurrentSuperuser, CurrentUser, DBDep
@@ -13,9 +16,13 @@ from app.crud.event_group_manager import event_group_manager as crud_egm
 from app.crud.user import user as crud_user
 from app.crud.user_availability import user_availability as crud_availability
 from app.logic.permissions import require_event_group_access
+from app.models.duty_slot import DutySlot
+from app.models.event import Event
 from app.models.event_group import EventGroup
 from app.models.event_group_manager import EventGroupManager
+from app.models.slot_batch import SlotBatch
 from app.models.user import User as UserModel
+from app.models.user_availability import UserAvailabilityDate
 from app.schemas.event_group import (
     EventGroupCreate,
     EventGroupListResponse,
@@ -136,6 +143,38 @@ async def update_event_group(
 ) -> EventGroup:
     db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
     await require_event_group_access(current_user, session, db_group.id)
+
+    # Validate date range against existing events
+    new_start = group_in.start_date or db_group.start_date
+    new_end = group_in.end_date or db_group.end_date
+    if new_end < new_start:
+        raise_problem(
+            422,
+            code="event_group.invalid_dates",
+            detail="End date must be on or after start date",
+        )
+    if group_in.start_date is not None or group_in.end_date is not None:
+        result = await session.execute(
+            sa_select(
+                sa_func.min(col(Event.start_date)),
+                sa_func.max(col(Event.end_date)),
+            ).where(col(Event.event_group_id) == group_id)
+        )
+        row = result.one()
+        earliest_event, latest_event = row[0], row[1]
+        if earliest_event is not None and new_start > earliest_event:
+            raise_problem(
+                422,
+                code="event_group.date_range_conflict",
+                detail=f"Cannot set start date after {earliest_event.isoformat()} — an event starts on that date",
+            )
+        if latest_event is not None and new_end < latest_event:
+            raise_problem(
+                422,
+                code="event_group.date_range_conflict",
+                detail=f"Cannot set end date before {latest_event.isoformat()} — an event ends on that date",
+            )
+
     old_status = db_group.status
     updated = await crud_event_group.update(session, db_obj=db_group, obj_in=group_in)
 
@@ -150,6 +189,163 @@ async def update_event_group(
         )
 
     return updated
+
+
+@router.get("/{group_id}/event-date-bounds")
+async def get_event_date_bounds(
+    group_id: uuid.UUID,
+    session: DBDep,
+    _current_user: CurrentUser,
+) -> dict[str, dt.date | None]:
+    """Return the earliest event start and latest event end within this group."""
+    await crud_event_group.get(session, group_id, raise_404_error=True)
+    result = await session.execute(
+        sa_select(
+            sa_func.min(col(Event.start_date)),
+            sa_func.max(col(Event.end_date)),
+        ).where(col(Event.event_group_id) == group_id)
+    )
+    row = result.one()
+    return {"earliest_start": row[0], "latest_end": row[1]}
+
+
+class ShiftDatesRequest(BaseModel):
+    new_start_date: dt.date
+
+
+@router.post("/{group_id}/shift-dates", response_model=EventGroupRead)
+async def shift_event_group_dates(
+    group_id: uuid.UUID,
+    body: ShiftDatesRequest,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> EventGroup:
+    """Shift the entire event group and all its events/slots/availabilities by a date offset.
+
+    The offset is calculated from the difference between the current group
+    start_date and the provided new_start_date.
+    """
+    db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, db_group.id)
+
+    delta = body.new_start_date - db_group.start_date
+    if delta.days == 0:
+        return db_group
+
+    # 1. Shift the event group itself
+    db_group.start_date = db_group.start_date + delta
+    db_group.end_date = db_group.end_date + delta
+    session.add(db_group)
+
+    # Get event IDs in this group
+    event_ids_result = await session.execute(
+        sa_select(col(Event.id)).where(col(Event.event_group_id) == group_id)
+    )
+    event_ids = list(event_ids_result.scalars().all())
+
+    if event_ids:
+        # 2. Shift events
+        await session.execute(
+            sa_update(Event)
+            .where(col(Event.event_group_id) == group_id)
+            .values(
+                start_date=Event.start_date + delta,
+                end_date=Event.end_date + delta,
+            )
+        )
+
+        # 3. Shift slot_batches
+        await session.execute(
+            sa_update(SlotBatch)
+            .where(col(SlotBatch.event_id).in_(event_ids))
+            .values(
+                start_date=SlotBatch.start_date + delta,
+                end_date=SlotBatch.end_date + delta,
+            )
+        )
+
+        # 4. Shift duty_slots
+        await session.execute(
+            sa_update(DutySlot)
+            .where(col(DutySlot.event_id).in_(event_ids))
+            .values(date=DutySlot.date + delta)
+        )
+
+        # 5. Shift schedule_overrides in events and slot_batches (JSON with date keys)
+        if delta.days != 0:
+            events_with_overrides = (
+                (
+                    await session.execute(
+                        sa_select(Event).where(
+                            col(Event.id).in_(event_ids),
+                            col(Event.schedule_overrides).isnot(None),
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for ev in events_with_overrides:
+                ev.schedule_overrides = _shift_overrides(ev.schedule_overrides, delta)
+                session.add(ev)
+
+            batches_with_overrides = (
+                (
+                    await session.execute(
+                        sa_select(SlotBatch).where(
+                            col(SlotBatch.event_id).in_(event_ids),
+                            col(SlotBatch.schedule_overrides).isnot(None),
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            for batch in batches_with_overrides:
+                batch.schedule_overrides = _shift_overrides(
+                    batch.schedule_overrides, delta
+                )
+                session.add(batch)
+
+    # 6. Shift user availability dates for this group
+    from app.models.user_availability import UserAvailability
+
+    avail_ids_result = await session.execute(
+        sa_select(col(UserAvailability.id)).where(
+            col(UserAvailability.event_group_id) == group_id
+        )
+    )
+    avail_ids = list(avail_ids_result.scalars().all())
+    if avail_ids:
+        await session.execute(
+            sa_update(UserAvailabilityDate)
+            .where(col(UserAvailabilityDate.availability_id).in_(avail_ids))
+            .values(slot_date=UserAvailabilityDate.slot_date + delta)
+        )
+
+    await session.flush()
+    await session.refresh(db_group)
+    return db_group
+
+
+def _shift_overrides(
+    overrides: list[dict[str, object]] | None,
+    delta: dt.timedelta,
+) -> list[dict[str, object]]:
+    """Shift the 'date' key in each schedule override entry."""
+    if not overrides:
+        return overrides or []
+    shifted: list[dict[str, object]] = []
+    for entry in overrides:
+        new_entry = dict(entry)
+        if "date" in new_entry and isinstance(new_entry["date"], str):
+            try:
+                d = dt.date.fromisoformat(new_entry["date"])
+                new_entry["date"] = (d + delta).isoformat()
+            except ValueError:
+                pass
+        shifted.append(new_entry)
+    return shifted
 
 
 @router.delete("/{group_id}", status_code=204)

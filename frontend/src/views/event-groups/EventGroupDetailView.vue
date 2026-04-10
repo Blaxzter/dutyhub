@@ -2,7 +2,7 @@
 import { type Component, computed, onMounted, ref, watch } from 'vue'
 
 import { useMediaQuery } from '@vueuse/core'
-import { ArrowLeft, CalendarCheck, ListTodo, ShieldCheck } from 'lucide-vue-next'
+import { ArrowLeft, CalendarCheck, ListTodo, Pencil, ShieldCheck } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -19,6 +19,7 @@ import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carouse
 import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
 
 import EventGroupAvailability from '@/components/event-groups/EventGroupAvailability.vue'
+import EventGroupEditForm from '@/components/event-groups/EventGroupEditForm.vue'
 import EventGroupEvents from '@/components/event-groups/EventGroupEvents.vue'
 import EventGroupHeader from '@/components/event-groups/EventGroupHeader.vue'
 import EventGroupManagers from '@/components/event-groups/EventGroupManagers.vue'
@@ -71,6 +72,12 @@ const navItems = computed<NavItem[]>(() => [
     id: 'availability',
     label: t('duties.eventGroups.detail.nav.availability'),
     icon: CalendarCheck,
+  },
+  {
+    id: 'details',
+    label: t('duties.eventGroups.detail.nav.details'),
+    icon: Pencil,
+    adminOnly: true,
   },
   {
     id: 'management',
@@ -144,6 +151,12 @@ watch(activeSection, (id) => {
 })
 
 // ── Data loading ──
+const handleGroupUpdated = (updated: EventGroupRead) => {
+  group.value = updated
+  activeSection.value = 'events'
+  breadcrumbStore.setDynamicTitle(updated.name)
+}
+
 const handleStatusChange = async (status: 'draft' | 'published' | 'archived') => {
   if (!group.value || group.value.status === status) return
   try {
@@ -322,6 +335,16 @@ onMounted(loadGroup)
                   />
                 </template>
 
+                <template v-if="item.id === 'details'">
+                  <EventGroupEditForm
+                    :group="group"
+                    :group-id="groupId"
+                    :events="groupEvents"
+                    @updated="handleGroupUpdated"
+                    @cancel="activeSection = 'events'"
+                  />
+                </template>
+
                 <template v-if="item.id === 'management'">
                   <EventGroupManagers
                     :group-id="groupId"
@@ -378,6 +401,16 @@ onMounted(loadGroup)
               :can-manage="canManageGroup"
               @edit="showAvailabilityDialog = true"
               @remove="handleRemoveAvailability"
+            />
+          </div>
+
+          <div v-if="activeSection === 'details'" class="space-y-6">
+            <EventGroupEditForm
+              :group="group"
+              :group-id="groupId"
+              :events="groupEvents"
+              @updated="handleGroupUpdated"
+              @cancel="activeSection = 'events'"
             />
           </div>
 

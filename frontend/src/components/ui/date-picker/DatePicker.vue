@@ -7,7 +7,7 @@ import { CalendarIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
-import { Calendar } from '@/components/ui/calendar'
+import { Calendar, type MarkerVariant } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 import { cn } from '@/lib/utils'
@@ -19,6 +19,10 @@ defineProps<{
   minValue?: DateValue
   maxValue?: DateValue
   highlight?: DateValue
+  /** Set of ISO date strings (YYYY-MM-DD) to show dot indicators on */
+  markedDays?: Set<string>
+  /** Map of ISO date strings to marker variants for colored dots */
+  markers?: Map<string, MarkerVariant>
 }>()
 
 const { t, locale } = useI18n()
@@ -63,6 +67,8 @@ function onSelect(value: DateValue | undefined) {
         :min-value="minValue"
         :max-value="maxValue"
         :highlight="highlight"
+        :marked-days="markedDays"
+        :markers="markers"
         @update:model-value="onSelect"
       />
     </PopoverContent>

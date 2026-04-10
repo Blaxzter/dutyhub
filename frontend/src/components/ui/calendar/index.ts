@@ -1,4 +1,4 @@
-export { default as Calendar } from './Calendar.vue'
+export { default as Calendar, type MarkerVariant } from './Calendar.vue'
 export { default as CalendarCell } from './CalendarCell.vue'
 export { default as CalendarCellTrigger } from './CalendarCellTrigger.vue'
 export { default as CalendarGrid } from './CalendarGrid.vue'

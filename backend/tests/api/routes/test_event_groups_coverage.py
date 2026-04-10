@@ -135,7 +135,7 @@ class TestEventGroupAvailability:
         )
 
         assert r.status_code == 200
-        data = r.json()
+        data: list[dict[str, object]] = r.json()
         assert isinstance(data, list)
         assert len(data) >= 1
         assert "user_full_name" in data[0]
