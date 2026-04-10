@@ -21,6 +21,7 @@ import { toastApiError } from '@/lib/api-errors'
 const props = defineProps<{
   groupId: string
   managers: UserRead[]
+  canEdit?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -111,7 +112,7 @@ const removeManager = async (userId: string) => {
           </CardTitle>
           <CardDescription>{{ t('duties.eventGroups.detail.managersSubtitle') }}</CardDescription>
         </div>
-        <Button v-if="!showAddManager" size="sm" variant="outline" @click="openAddManager">
+        <Button v-if="canEdit && !showAddManager" size="sm" variant="outline" @click="openAddManager">
           <UserPlus class="mr-1.5 h-4 w-4" />
           {{ t('duties.eventGroups.detail.addManager') }}
         </Button>
@@ -121,7 +122,9 @@ const removeManager = async (userId: string) => {
       <p v-if="managers.length === 0 && !showAddManager" class="text-sm text-muted-foreground">
         {{ t('duties.eventGroups.detail.managersEmpty') }}
       </p>
-      <div v-if="managers.length > 0" class="space-y-1.5">
+
+      <!-- Admin view: editable list with remove buttons -->
+      <div v-if="canEdit && managers.length > 0" class="space-y-1.5">
         <div
           v-for="manager in managers"
           :key="manager.id"
@@ -164,8 +167,32 @@ const removeManager = async (userId: string) => {
         </div>
       </div>
 
-      <!-- Add Manager panel -->
-      <template v-if="showAddManager">
+      <!-- Read-only view: clean user overview -->
+      <div v-if="!canEdit && managers.length > 0" class="flex flex-wrap gap-3">
+        <div
+          v-for="manager in managers"
+          :key="manager.id"
+          class="flex items-center gap-2.5 rounded-full border px-3 py-1.5"
+        >
+          <Avatar class="size-6">
+            <AvatarImage v-if="manager.picture" :src="manager.picture" />
+            <AvatarFallback class="text-xs">
+              {{ (manager.name ?? manager.email ?? '?').slice(0, 2).toUpperCase() }}
+            </AvatarFallback>
+          </Avatar>
+          <span class="text-sm font-medium">{{ manager.name ?? manager.email }}</span>
+          <Badge
+            v-if="manager.roles.includes('event_manager')"
+            variant="outline"
+            class="border-amber-300 bg-amber-50 text-amber-600 dark:border-amber-700 dark:bg-amber-950/30"
+          >
+            {{ t('duties.eventGroups.detail.roleEventManager') }}
+          </Badge>
+        </div>
+      </div>
+
+      <!-- Add Manager panel (admin only) -->
+      <template v-if="canEdit && showAddManager">
         <Separator v-if="managers.length > 0" />
         <div class="space-y-2">
           <Input

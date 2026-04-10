@@ -349,6 +349,7 @@ onMounted(loadGroup)
                   <EventGroupManagers
                     :group-id="groupId"
                     :managers="groupManagers"
+                    :can-edit="authStore.isAdmin"
                     @updated="loadManagers"
                   />
                 </template>
