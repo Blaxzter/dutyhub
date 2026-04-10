@@ -482,6 +482,7 @@ export const zEventCreateWithSlots = z.object({
   description: z.optional(z.union([z.string(), z.null()])),
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  status: z.optional(z.enum(['draft', 'published', 'archived'])),
   location: z.optional(z.union([z.string(), z.null()])),
   category: z.optional(z.union([z.string(), z.null()])),
   event_group_id: z.optional(z.union([z.uuid(), z.null()])),

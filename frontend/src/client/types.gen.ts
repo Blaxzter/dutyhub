@@ -877,6 +877,10 @@ export type EventCreateWithSlots = {
    */
   end_date: string
   /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
    * Location
    */
   location?: string | null
