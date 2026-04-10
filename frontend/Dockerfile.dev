@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN corepack enable && corepack prepare pnpm@10.30.3 --activate && pnpm install
+RUN npm install -g pnpm@10.30.3 && pnpm install
 
 COPY . .
 
