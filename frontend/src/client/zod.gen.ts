@@ -851,6 +851,13 @@ export const zSelfApproveRequest = z.object({
 })
 
 /**
+ * ShiftDatesRequest
+ */
+export const zShiftDatesRequest = z.object({
+  new_start_date: z.iso.date(),
+})
+
+/**
  * SidebarBooking
  */
 export const zSidebarBooking = z.object({
@@ -2085,6 +2092,35 @@ export const zEventGroupsUpdateEventGroupData = z.object({
  * Successful Response
  */
 export const zEventGroupsUpdateEventGroupResponse = zEventGroupRead
+
+export const zEventGroupsGetEventDateBoundsData = z.object({
+  body: z.optional(z.never()),
+  path: z.object({
+    group_id: z.uuid(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Event-Groups-Get Event Date Bounds
+ * Successful Response
+ */
+export const zEventGroupsGetEventDateBoundsResponse = z.object({}).register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zEventGroupsShiftEventGroupDatesData = z.object({
+  body: zShiftDatesRequest,
+  path: z.object({
+    group_id: z.uuid(),
+  }),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventGroupsShiftEventGroupDatesResponse = zEventGroupRead
 
 export const zEventGroupsListGroupAvailabilitiesData = z.object({
   body: z.optional(z.never()),
