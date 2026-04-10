@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type Component, computed, onMounted, ref, watch } from 'vue'
 
-import { useMediaQuery } from '@vueuse/core'
+import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
 import { ArrowLeft, CalendarCheck, ListTodo, Pencil, ShieldCheck } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -52,6 +52,8 @@ const { get, post, patch, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 
 const isDesktop = useMediaQuery('(min-width: 1280px)')
+
+const [DefineSectionContent, SectionContent] = createReusableTemplate<{ id: string }>()
 
 const groupId = computed(() => route.params.groupId as string)
 
@@ -282,6 +284,47 @@ onMounted(loadGroup)
 </script>
 
 <template>
+  <!-- Define section content once, reuse in both mobile and desktop layouts -->
+  <DefineSectionContent v-slot="{ id }">
+    <div
+      class="space-y-6"
+      :data-testid="id === 'management' ? 'section-management' : id === 'availability' ? 'section-availability' : undefined"
+    >
+      <EventGroupEvents
+        v-if="id === 'events'"
+        :events="groupEvents"
+        :group-id="groupId"
+        :can-manage="canManageGroup"
+      />
+
+      <EventGroupAvailability
+        v-if="id === 'availability'"
+        :my-availability="myAvailability"
+        :all-availabilities="allAvailabilities"
+        :can-manage="canManageGroup"
+        @edit="showAvailabilityDialog = true"
+        @remove="handleRemoveAvailability"
+      />
+
+      <EventGroupEditForm
+        v-if="id === 'details'"
+        :group="group!"
+        :group-id="groupId"
+        :events="groupEvents"
+        @updated="handleGroupUpdated"
+        @cancel="activeSection = 'events'"
+      />
+
+      <EventGroupManagers
+        v-if="id === 'management'"
+        :group-id="groupId"
+        :managers="groupManagers"
+        :can-edit="authStore.isAdmin"
+        @updated="loadManagers"
+      />
+    </div>
+  </DefineSectionContent>
+
   <div :class="{ 'grid grid-cols-[1fr_56rem_1fr]': isDesktop }">
     <!-- Back + header -->
     <div :class="isDesktop ? 'col-start-2 space-y-6 pb-6' : 'mx-auto max-w-4xl space-y-6 pb-6'">
@@ -310,127 +353,48 @@ onMounted(loadGroup)
     </div>
 
     <!-- ==================== MOBILE / TABLET (<xl) ==================== -->
-      <div v-if="!loading && group && !isDesktop" class="mx-auto max-w-4xl space-y-4">
-        <ChipNav v-model="mobileSlide" :items="chipItems" />
+    <div v-if="!loading && group && !isDesktop" class="mx-auto max-w-4xl space-y-4">
+      <ChipNav v-model="mobileSlide" :items="chipItems" />
 
-        <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
-          <CarouselContent class="items-start">
-            <CarouselItem v-for="item in visibleNavItems" :key="item.id" class="basis-full">
-              <div class="space-y-6">
-                <template v-if="item.id === 'events'">
-                  <EventGroupEvents
-                    :events="groupEvents"
-                    :group-id="groupId"
-                    :can-manage="canManageGroup"
-                  />
-                </template>
+      <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
+        <CarouselContent class="items-start">
+          <CarouselItem v-for="item in visibleNavItems" :key="item.id" class="basis-full">
+            <SectionContent :id="item.id" />
+          </CarouselItem>
+        </CarouselContent>
+      </Carousel>
+    </div>
 
-                <template v-if="item.id === 'availability'">
-                  <EventGroupAvailability
-                    :my-availability="myAvailability"
-                    :all-availabilities="allAvailabilities"
-                    :can-manage="canManageGroup"
-                    @edit="showAvailabilityDialog = true"
-                    @remove="handleRemoveAvailability"
-                  />
-                </template>
-
-                <template v-if="item.id === 'details'">
-                  <EventGroupEditForm
-                    :group="group"
-                    :group-id="groupId"
-                    :events="groupEvents"
-                    @updated="handleGroupUpdated"
-                    @cancel="activeSection = 'events'"
-                  />
-                </template>
-
-                <template v-if="item.id === 'management'">
-                  <EventGroupManagers
-                    :group-id="groupId"
-                    :managers="groupManagers"
-                    :can-edit="authStore.isAdmin"
-                    @updated="loadManagers"
-                  />
-                </template>
-              </div>
-            </CarouselItem>
-          </CarouselContent>
-        </Carousel>
+    <!-- ==================== DESKTOP (xl+) ==================== -->
+    <template v-if="!loading && group && isDesktop">
+      <!-- Nav in left gutter -->
+      <div class="row-start-2 flex justify-end pr-8">
+        <nav class="w-44 sticky top-8 self-start space-y-1">
+          <button
+            v-for="item in visibleNavItems"
+            :key="item.id"
+            @click="activeSection = item.id"
+            class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left"
+            :class="[
+              activeSection === item.id
+                ? 'bg-accent text-accent-foreground'
+                : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground',
+            ]"
+          >
+            <component :is="item.icon" class="h-4 w-4 shrink-0" />
+            {{ item.label }}
+          </button>
+        </nav>
       </div>
 
-      <!-- ==================== DESKTOP (xl+) ==================== -->
-      <template v-if="!loading && group && isDesktop">
-        <!-- Nav in left gutter -->
-        <div class="row-start-2 flex justify-end pr-8">
-          <nav class="w-44 sticky top-8 self-start space-y-1">
-            <button
-              v-for="item in visibleNavItems"
-              :key="item.id"
-              @click="activeSection = item.id"
-              class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors text-left"
-              :class="[
-                activeSection === item.id
-                  ? 'bg-accent text-accent-foreground'
-                  : 'text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground',
-              ]"
-            >
-              <component :is="item.icon" class="h-4 w-4 shrink-0" />
-              {{ item.label }}
-            </button>
-          </nav>
-        </div>
+      <!-- Content -->
+      <div class="row-start-2">
+        <SectionContent :id="activeSection" />
+      </div>
 
-        <!-- Content -->
-        <div class="row-start-2 space-y-6">
-          <div v-if="activeSection === 'events'" class="space-y-6">
-            <EventGroupEvents
-              :events="groupEvents"
-              :group-id="groupId"
-              :can-manage="canManageGroup"
-            />
-          </div>
-
-          <div
-            v-if="activeSection === 'availability'"
-            data-testid="section-availability"
-            class="space-y-6"
-          >
-            <EventGroupAvailability
-              :my-availability="myAvailability"
-              :all-availabilities="allAvailabilities"
-              :can-manage="canManageGroup"
-              @edit="showAvailabilityDialog = true"
-              @remove="handleRemoveAvailability"
-            />
-          </div>
-
-          <div v-if="activeSection === 'details'" class="space-y-6">
-            <EventGroupEditForm
-              :group="group"
-              :group-id="groupId"
-              :events="groupEvents"
-              @updated="handleGroupUpdated"
-              @cancel="activeSection = 'events'"
-            />
-          </div>
-
-          <div
-            v-if="activeSection === 'management'"
-            data-testid="section-management"
-            class="space-y-6"
-          >
-            <EventGroupManagers
-              :group-id="groupId"
-              :managers="groupManagers"
-              @updated="loadManagers"
-            />
-          </div>
-        </div>
-
-        <!-- Right spacer for symmetry -->
-        <div class="row-start-2" aria-hidden="true" />
-      </template>
+      <!-- Right spacer for symmetry -->
+      <div class="row-start-2" aria-hidden="true" />
+    </template>
 
     <!-- Availability Dialog -->
     <AvailabilityDialog

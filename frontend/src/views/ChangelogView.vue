@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { useMediaQuery } from '@vueuse/core'
+import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -78,6 +78,8 @@ interface ChangelogEntry {
   date: Date
   html: string
 }
+
+const [DefineEntryContent, EntryContent] = createReusableTemplate<{ entry: ChangelogEntry }>()
 
 const entries = computed<ChangelogEntry[]>(() => {
   const localized = generatedEntries[locale.value] ?? []
@@ -167,6 +169,30 @@ watch(activeIndex, (index) => {
 </script>
 
 <template>
+  <!-- Define entry content once, reuse in both mobile and desktop layouts -->
+  <DefineEntryContent v-slot="{ entry }">
+    <div>
+      <div class="space-y-1 mb-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <h2 class="text-xl font-semibold">{{ entry.title }}</h2>
+          <Badge
+            v-if="entry.version === entries[0]?.version"
+            variant="default"
+            class="text-[10px]"
+          >
+            {{ t('changelog.latest') }}
+          </Badge>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>v{{ entry.version }}</span>
+          <span>&middot;</span>
+          <time>{{ formatDateLong(entry.date) }}</time>
+        </div>
+      </div>
+      <div class="changelog-content" v-html="entry.html" @click="onContentClick" />
+    </div>
+  </DefineEntryContent>
+
   <div :class="{ 'grid grid-cols-[1fr_48rem_1fr] gap-y-8': isDesktop }">
     <!-- Header -->
     <div :class="isDesktop ? 'col-start-2 pb-2' : 'mx-auto max-w-3xl pb-2'">
@@ -182,26 +208,7 @@ watch(activeIndex, (index) => {
         <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
           <CarouselContent class="items-start">
             <CarouselItem v-for="entry in entries" :key="entry.version" class="basis-full">
-              <div>
-                <div class="space-y-1 mb-4">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <h2 class="text-xl font-semibold">{{ entry.title }}</h2>
-                    <Badge
-                      v-if="entry.version === entries[0]?.version"
-                      variant="default"
-                      class="text-[10px]"
-                    >
-                      {{ t('changelog.latest') }}
-                    </Badge>
-                  </div>
-                  <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>v{{ entry.version }}</span>
-                    <span>&middot;</span>
-                    <time>{{ formatDateLong(entry.date) }}</time>
-                  </div>
-                </div>
-                <div class="changelog-content" v-html="entry.html" @click="onContentClick" />
-              </div>
+              <EntryContent :entry="entry" />
             </CarouselItem>
           </CarouselContent>
         </Carousel>
@@ -241,25 +248,7 @@ watch(activeIndex, (index) => {
 
       <!-- Content -->
       <div v-if="desktopSelected" class="row-start-2">
-        <div class="space-y-1 mb-4">
-          <div class="flex flex-wrap items-center gap-2">
-            <h2 class="text-xl font-semibold">{{ desktopSelected.title }}</h2>
-            <Badge
-              v-if="desktopSelected.version === entries[0]?.version"
-              variant="default"
-              class="text-[10px]"
-            >
-              {{ t('changelog.latest') }}
-            </Badge>
-          </div>
-          <div class="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>v{{ desktopSelected.version }}</span>
-            <span>&middot;</span>
-            <time>{{ formatDateLong(desktopSelected.date) }}</time>
-          </div>
-        </div>
-
-        <div class="changelog-content" v-html="desktopSelected.html" @click="onContentClick" />
+        <EntryContent :entry="desktopSelected" />
       </div>
 
       <!-- Right spacer for symmetry -->
