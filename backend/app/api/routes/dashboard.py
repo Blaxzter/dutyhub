@@ -1,6 +1,7 @@
 # pyright: reportUnknownVariableType=false, reportUnknownMemberType=false, reportUnknownParameterType=false, reportMissingParameterType=false, reportUnknownArgumentType=false
 # SQLAlchemy column-level selects produce types that basedpyright cannot resolve.
 import datetime as dt
+import uuid
 
 from fastapi import APIRouter
 from sqlalchemy import and_, func, or_, select
@@ -13,6 +14,7 @@ from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
 from app.models.event import Event
 from app.models.event_group import EventGroup
+from app.models.event_group_manager import EventGroupManager
 from app.models.user import User
 from app.schemas.dashboard import (
     DashboardBookingItem,
@@ -30,19 +32,37 @@ from app.schemas.sidebar import (
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
+async def _get_visibility_filters(
+    session,
+    user: User,  # noqa: ANN001
+) -> tuple[str | None, list[uuid.UUID] | None]:
+    """Return (effective_status, managed_group_ids) for the current user."""
+    if user.is_manager:
+        return None, None  # global admin/event_manager — see everything
+    result = await session.execute(
+        select(col(EventGroupManager.event_group_id)).where(
+            col(EventGroupManager.user_id) == user.id
+        )
+    )
+    managed_ids: list[uuid.UUID] = list(result.scalars().all())
+    return "published", managed_ids or None
+
+
 @router.get("/feed", response_model=DashboardFeedResponse)
 async def dashboard_feed(
     session: DBDep,
     current_user: CurrentUser,
 ) -> DashboardFeedResponse:
     """Single endpoint powering the /app/home dashboard."""
-    effective_status = None if current_user.is_admin else "published"
+    effective_status, managed_group_ids = await _get_visibility_filters(
+        session, current_user
+    )
     now = dt.datetime.now()
     today = now.date()
 
     # Events + count (only current/future)
     events_list, event_count, groups_list = await _load_events_and_groups(
-        session, effective_status, today, now
+        session, effective_status, today, now, managed_group_ids
     )
 
     # User's upcoming confirmed bookings with slot info (single query, no N+1)
@@ -70,6 +90,7 @@ async def _load_events_and_groups(  # noqa: ANN001, ANN202
     effective_status,
     today: dt.date,
     now: dt.datetime,
+    managed_group_ids: list[uuid.UUID] | None = None,
 ):
     events_list = await crud_event.get_multi_filtered(
         session,
@@ -77,15 +98,20 @@ async def _load_events_and_groups(  # noqa: ANN001, ANN202
         status=effective_status,
         date_from=today,
         has_future_slots=now,
+        also_include_group_ids=managed_group_ids,
     )
     event_count = await crud_event.get_count_filtered(
         session,
         status=effective_status,
         date_from=today,
         has_future_slots=now,
+        also_include_group_ids=managed_group_ids,
     )
     groups_list = await crud_event_group.get_multi_filtered(
-        session, limit=100, status=effective_status
+        session,
+        limit=100,
+        status=effective_status,
+        also_include_ids=managed_group_ids,
     )
     return events_list, event_count, groups_list
 
@@ -195,10 +221,16 @@ async def dashboard_sidebar(
     now = dt.datetime.now()
     today = now.date()
     now_time = now.time()
-    effective_status = None if current_user.is_admin else "published"
+    effective_status, managed_group_ids = await _get_visibility_filters(
+        session, current_user
+    )
 
-    groups = await _sidebar_event_groups(session, today, effective_status)
-    events = await _sidebar_events(session, today, now_time, effective_status)
+    groups = await _sidebar_event_groups(
+        session, today, effective_status, managed_group_ids
+    )
+    events = await _sidebar_events(
+        session, today, now_time, effective_status, managed_group_ids
+    )
     bookings = await _sidebar_bookings(session, current_user.id, today, now_time)
 
     return SidebarResponse(
@@ -209,23 +241,37 @@ async def dashboard_sidebar(
 
 
 async def _sidebar_event_groups(  # noqa: ANN001
-    session, today: dt.date, status: str | None
+    session,
+    today: dt.date,
+    status: str | None,
+    managed_group_ids: list[uuid.UUID] | None = None,
 ) -> list[SidebarEventGroup]:
-    """Published groups whose end_date >= today, limit 5."""
+    """Published groups (+ managed groups) whose end_date >= today, limit 5."""
     query = (
-        select(col(EventGroup.id), col(EventGroup.name))
+        select(col(EventGroup.id), col(EventGroup.name), col(EventGroup.status))
         .where(col(EventGroup.end_date) >= today)
         .order_by(col(EventGroup.start_date))
         .limit(5)
     )
     if status:
-        query = query.where(col(EventGroup.status) == status)
+        status_filter = col(EventGroup.status) == status
+        if managed_group_ids:
+            status_filter = or_(
+                status_filter, col(EventGroup.id).in_(managed_group_ids)
+            )
+        query = query.where(status_filter)
     result = await session.execute(query)
-    return [SidebarEventGroup(id=r.id, name=r.name) for r in result.all()]
+    return [
+        SidebarEventGroup(id=r.id, name=r.name, status=r.status) for r in result.all()
+    ]
 
 
 async def _sidebar_events(  # noqa: ANN001
-    session, today: dt.date, now_time: dt.time, status: str | None
+    session,
+    today: dt.date,
+    now_time: dt.time,
+    status: str | None,
+    managed_group_ids: list[uuid.UUID] | None = None,
 ) -> list[SidebarEvent]:
     """Published events with open-slot count and next slot date, limit 10."""
     future_cond = _future_slot_condition(today, now_time)
@@ -289,6 +335,7 @@ async def _sidebar_events(  # noqa: ANN001
         select(
             col(Event.id),
             col(Event.name),
+            col(Event.status),
             open_slots_sq.label("open_slots"),
             next_slot_date_sq.label("next_slot_date"),
             next_slot_time_sq.label("next_slot_start_time"),
@@ -301,13 +348,19 @@ async def _sidebar_events(  # noqa: ANN001
         .limit(10)
     )
     if status:
-        query = query.where(col(Event.status) == status)
+        status_filter = col(Event.status) == status
+        if managed_group_ids:
+            status_filter = or_(
+                status_filter, col(Event.event_group_id).in_(managed_group_ids)
+            )
+        query = query.where(status_filter)
 
     result = await session.execute(query)
     return [
         SidebarEvent(
             id=r.id,
             name=r.name,
+            status=r.status,
             open_slots=r.open_slots or 0,
             next_slot_date=r.next_slot_date,
             next_slot_start_time=r.next_slot_start_time,

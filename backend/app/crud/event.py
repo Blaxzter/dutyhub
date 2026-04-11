@@ -1,4 +1,5 @@
 import datetime as dt
+import uuid
 from typing import Any, Literal
 
 from sqlalchemy import and_, func, or_, select
@@ -27,6 +28,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
         has_future_slots: dt.date | dt.datetime | None = None,
+        also_include_group_ids: list[uuid.UUID] | None = None,
     ) -> Select[Any]:
         if search:
             query = query.where(
@@ -34,7 +36,13 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
                 | col(Event.description).ilike(f"%{search}%")
             )
         if status:
-            query = query.where(col(Event.status) == status)
+            status_filter = col(Event.status) == status
+            if also_include_group_ids:
+                status_filter = or_(
+                    status_filter,
+                    col(Event.event_group_id).in_(also_include_group_ids),
+                )
+            query = query.where(status_filter)
         if created_by_id:
             query = query.where(col(Event.created_by_id) == created_by_id)
         if booked_by_user_id:
@@ -116,6 +124,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         has_future_slots: dt.date | None = None,
         sort_by: EventSortField = "start_date",
         sort_dir: Literal["asc", "desc"] = "asc",
+        also_include_group_ids: list[uuid.UUID] | None = None,
     ) -> list[Event]:
         query = select(Event)
         query = self._apply_common_filters(
@@ -127,6 +136,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
             date_from=date_from,
             date_to=date_to,
             has_future_slots=has_future_slots,
+            also_include_group_ids=also_include_group_ids,
         )
         order_col = getattr(Event, sort_by)
         query = query.order_by(
@@ -147,6 +157,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
         has_future_slots: dt.date | None = None,
+        also_include_group_ids: list[uuid.UUID] | None = None,
     ) -> int:
         query = select(func.count()).select_from(Event)
         query = self._apply_common_filters(
@@ -158,6 +169,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
             date_from=date_from,
             date_to=date_to,
             has_future_slots=has_future_slots,
+            also_include_group_ids=also_include_group_ids,
         )
         result = await db.execute(query)
         return result.scalar_one()

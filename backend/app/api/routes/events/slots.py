@@ -5,12 +5,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlmodel import col
 
-from app.api.deps import CurrentSuperuser, DBDep
+from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.duty_slot import duty_slot as crud_duty_slot
 from app.crud.event import event as crud_event
 from app.crud.event_group import event_group as crud_event_group
 from app.crud.slot_batch import slot_batch as crud_slot_batch
+from app.logic.permissions import require_event_group_access
 from app.logic.slot_generator import generate_duty_slots
 from app.models.duty_slot import DutySlot
 from app.models.slot_batch import SlotBatch
@@ -38,9 +39,11 @@ router = APIRouter()
 async def create_event_with_slots(
     payload: EventCreateWithSlots,
     session: DBDep,
-    current_user: CurrentSuperuser,
+    current_user: CurrentUser,
 ) -> EventCreateWithSlotsResponse:
     """Create an event with auto-generated duty slots in a single transaction."""
+    # Check access for the target event group (if any)
+    await require_event_group_access(current_user, session, payload.event_group_id)
     # 1. Optionally create a new event group
     event_group_read: EventGroupRead | None = None
     event_group_id = payload.event_group_id
@@ -59,6 +62,7 @@ async def create_event_with_slots(
         description=payload.description,
         start_date=payload.start_date,
         end_date=payload.end_date,
+        status=payload.status,
         location=payload.location,
         category=payload.category,
         event_group_id=event_group_id,
@@ -132,10 +136,11 @@ async def add_slots_to_event(
     event_id: str,
     payload: AddSlotsToEvent,
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentUser,
 ) -> AddSlotsResponse:
     """Add a new batch of duty slots to an existing event without touching existing slots."""
     db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, db_event.event_group_id)
 
     # Validate dates against event group constraints
     if db_event.event_group_id:
@@ -211,7 +216,7 @@ async def regenerate_event_slots(
     event_id: str,
     payload: EventUpdateWithSlots,
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentUser,
     dry_run: bool = Query(default=False),
     batch_id: str | None = Query(default=None),
 ) -> SlotRegenerationResult:
@@ -222,6 +227,7 @@ async def regenerate_event_slots(
     Slots are matched by (date, start_time, end_time) — matched slots keep their bookings.
     """
     db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, db_event.event_group_id)
 
     # If batch_id provided, load the batch for defaults
     db_batch: SlotBatch | None = None

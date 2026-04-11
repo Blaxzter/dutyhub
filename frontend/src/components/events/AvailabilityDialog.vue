@@ -234,7 +234,7 @@ defineExpose({ resetForm })
               <div class="flex items-center gap-2">
                 <div class="flex-1 min-w-0">
                   <DatePicker
-                    :model-value="entry.date as DateValue | undefined"
+                    :model-value="(entry.date as DateValue | undefined)"
                     :placeholder="t('duties.eventGroups.pickDate')"
                     :min-value="groupMinDate"
                     :max-value="groupMaxDate"
@@ -298,7 +298,13 @@ defineExpose({ resetForm })
               </div>
             </div>
           </div>
-          <Button type="button" variant="outline" size="sm" data-testid="btn-add-date" @click="addDateEntry">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            data-testid="btn-add-date"
+            @click="addDateEntry"
+          >
             + {{ t('duties.availability.fields.dates') }}
           </Button>
         </div>

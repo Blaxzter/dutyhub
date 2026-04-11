@@ -42,7 +42,7 @@ function getPreference(typeId: string) {
 
 <template>
   <div v-bind="$attrs">
-    <Card v-for="(categoryTypes, category) in groupedTypes" :key="category">
+    <Card v-for="(categoryTypes, category) in groupedTypes" :key="category" class="my-6">
       <CardHeader>
         <CardTitle>{{ getCategoryLabel(category as string) }}</CardTitle>
       </CardHeader>

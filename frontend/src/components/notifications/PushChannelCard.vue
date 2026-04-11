@@ -164,10 +164,7 @@ defineExpose({ pushSupported })
           />
           <CardTitle>{{ t('notifications.push.title') }}</CardTitle>
         </div>
-        <Switch
-          :model-value="enabled"
-          @update:model-value="handleToggle"
-        />
+        <Switch :model-value="enabled" @update:model-value="handleToggle" />
       </div>
       <CardDescription>
         {{ t('notifications.push.description') }}
@@ -184,12 +181,7 @@ defineExpose({ pushSupported })
           </Badge>
         </div>
         <div class="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="sendingTestPush"
-            @click="sendTestPush"
-          >
+          <Button variant="outline" size="sm" :disabled="sendingTestPush" @click="sendTestPush">
             <AnimatedSend :size="16" class="mr-2" />
             {{
               sendingTestPush
@@ -197,12 +189,7 @@ defineExpose({ pushSupported })
                 : t('notifications.push.testButton')
             }}
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            :disabled="disablingPush"
-            @click="disablePush"
-          >
+          <Button variant="outline" size="sm" :disabled="disablingPush" @click="disablePush">
             {{ t('notifications.push.disable') }}
           </Button>
         </div>

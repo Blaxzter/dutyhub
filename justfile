@@ -62,6 +62,36 @@ type-check:
 test-e2e *args:
     if [ "{{dev_mode}}" = "docker" ]; then docker compose run --rm playwright npx playwright test {{args}}; else cd frontend && pnpm exec playwright test {{args}}; fi
 
+# ── Docker E2E (full stack) ──────────────────────────────────────
+
+# Run E2E tests against full Docker stack (parallel + serial)
+e2e *args:
+    node scripts/run-e2e-docker.mjs {{args}}
+
+# Run E2E tests — parallel only
+e2e-parallel *args:
+    node scripts/run-e2e-docker.mjs --parallel {{args}}
+
+# Run E2E tests — serial only
+e2e-serial *args:
+    node scripts/run-e2e-docker.mjs --serial {{args}}
+
+# Start Docker E2E stack without running tests
+e2e-up:
+    node scripts/run-e2e-docker.mjs --up-only
+
+# Stop Docker E2E stack
+e2e-down:
+    node scripts/run-e2e-docker.mjs --down
+
+# Re-run E2E tests without rebuilding or tearing down (stack must be running)
+e2e-rerun *args:
+    node scripts/run-e2e-docker.mjs --no-build --no-teardown {{args}}
+
+# Show logs for an e2e service (e.g., just e2e-logs backend)
+e2e-logs service *args:
+    docker compose -p wirksam-e2e -f docker-compose.e2e.yml logs {{service}} {{args}}
+
 # ── Database ──────────────────────────────────────────────────
 
 # Run Alembic migrations

@@ -5,13 +5,10 @@ import { expect, test } from '../../fixtures.js'
 import {
   type DutySlotRead,
   type EventWithSlots,
-  api,
   bookSlot,
-  cancelBooking,
   createEventWithSlots,
   deleteEvent,
   listSlots,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -23,12 +20,12 @@ test.beforeEach(async ({ adminPage: page }) => {
   created = await createEventWithSlots(page, {
     name: uniqueName('E2E Booking Event'),
     location: 'Room A',
+    status: 'published',
     startTime: '10:00',
     endTime: '12:00',
     slotDuration: 60,
     peoplePerSlot: 5,
   })
-  await publishEvent(page, created.event.id)
   slots = await listSlots(page, created.event.id)
 })
 
@@ -74,6 +71,7 @@ test.describe('My Bookings – page structure', () => {
 
 test.describe('My Bookings – with data', () => {
   test('booked slot appears in bookings list', async ({ adminPage: page }) => {
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (slots.length === 0) return
 
     await bookSlot(page, slots[0].id)
@@ -84,6 +82,7 @@ test.describe('My Bookings – with data', () => {
   })
 
   test('can cancel a booking from bookings page', async ({ adminPage: page }) => {
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (slots.length === 0) return
 
     await bookSlot(page, slots[0].id)
@@ -98,6 +97,7 @@ test.describe('My Bookings – with data', () => {
     const cancelBtn = card.locator(
       'button[class*="destructive"], button:has(svg.text-destructive), button:has(svg[class*="text-destructive"])',
     )
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (await cancelBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await cancelBtn.click()
     }
@@ -119,6 +119,7 @@ test.describe('My Bookings – filters', () => {
 
 test.describe('My Bookings – grouping', () => {
   test('grouping buttons are visible', async ({ adminPage: page }) => {
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (slots.length === 0) return
 
     await bookSlot(page, slots[0].id)

@@ -1,15 +1,15 @@
 import { authGuard as _authGuard } from '@auth0/auth0-vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { useAuthStore } from '@/stores/auth'
+import type { BreadcrumbItem } from '@/stores/breadcrumb'
+
 // In E2E bypass mode, skip Auth0's authGuard entirely since the fake plugin
 // doesn't set the module-level client ref that authGuard reads.
 const authGuard =
   import.meta.env.VITE_E2E_AUTH_BYPASS === 'true' && document.cookie.includes('e2e_bypass=1')
     ? () => true
     : _authGuard
-
-import { useAuthStore } from '@/stores/auth'
-import type { BreadcrumbItem } from '@/stores/breadcrumb'
 
 // Extend route meta to include breadcrumbs and layout
 declare module 'vue-router' {
@@ -90,10 +90,12 @@ const router = createRouter({
           },
         },
         {
-          path: 'event-groups/:groupId',
+          path: 'event-groups/:groupId/:section?',
           name: 'event-group-detail',
           component: () => import('@/views/event-groups/EventGroupDetailView.vue'),
           meta: {
+            routerViewKey: (route: { params: { groupId?: string } }) =>
+              `event-group-${route.params.groupId}`,
             breadcrumbs: [
               {
                 title: 'Event Groups',
@@ -117,7 +119,7 @@ const router = createRouter({
           name: 'event-create',
           component: () => import('@/views/events/EventCreateView.vue'),
           meta: {
-            requiresRole: 'admin',
+            requiresRole: ['admin', 'event_manager'],
             breadcrumbs: [
               { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
               { title: 'Create Event', titleKey: 'duties.events.createView.title' },
@@ -129,7 +131,7 @@ const router = createRouter({
           name: 'event-edit',
           component: () => import('@/views/events/EventEditView.vue'),
           meta: {
-            requiresRole: 'admin',
+            requiresRole: ['admin', 'event_manager'],
             breadcrumbs: [
               { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
               { title: 'Edit Event', titleKey: 'duties.events.editView.title' },
@@ -141,7 +143,7 @@ const router = createRouter({
           name: 'event-add-slots',
           component: () => import('@/views/events/EventAddSlotsView.vue'),
           meta: {
-            requiresRole: 'admin',
+            requiresRole: ['admin', 'event_manager'],
             breadcrumbs: [
               { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
               { title: 'Add Slots', titleKey: 'duties.events.addSlotsView.title' },
@@ -223,11 +225,11 @@ const router = createRouter({
           },
         },
         {
-          path: 'admin/reporting',
-          name: 'admin-reporting',
+          path: 'reporting',
+          name: 'reporting',
           component: () => import('@/views/admin/ReportingView.vue'),
           meta: {
-            requiresRole: 'admin',
+            requiresRole: ['admin', 'event_manager'],
             breadcrumbs: [
               { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
               { title: 'Reports', titleKey: 'admin.reporting.title' },
@@ -346,8 +348,11 @@ router.beforeEach(async (to) => {
   if (!authStore.isAuthenticated) return true
 
   const requiredRoles = normalizeRoles(to.meta.requiresRole)
-  const hasAllRoles = requiredRoles.every((role) => authStore.roles.includes(role))
-  if (!hasAllRoles) {
+  const hasRole = requiredRoles.some((role) => authStore.roles.includes(role))
+  // Scoped group managers are allowed on routes that accept event_manager
+  const groupManagerAllowed =
+    !hasRole && requiredRoles.includes('event_manager') && authStore.isGroupManager
+  if (!hasRole && !groupManagerAllowed) {
     return { name: 'home' }
   }
 

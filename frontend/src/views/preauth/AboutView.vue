@@ -30,7 +30,9 @@ const backendItems = computed(() =>
   <div class="space-y-6">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between">
       <div class="space-y-2">
-        <h1 data-testid="page-heading" class="text-3xl font-bold">{{ $t('preauth.about.title') }}</h1>
+        <h1 data-testid="page-heading" class="text-3xl font-bold">
+          {{ $t('preauth.about.title') }}
+        </h1>
         <p class="text-muted-foreground">
           {{ $t('preauth.about.subtitle') }}
         </p>

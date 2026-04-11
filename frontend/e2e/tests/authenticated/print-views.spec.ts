@@ -9,7 +9,6 @@ import {
   createGroup,
   deleteEvent,
   deleteGroup,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -21,13 +20,13 @@ test.beforeEach(async ({ adminPage: page }) => {
   group = await createGroup(page, uniqueName('E2E Print Group'))
   created = await createEventWithSlots(page, {
     name: uniqueName('E2E Print Event'),
+    status: 'published',
     startTime: '09:00',
     endTime: '12:00',
     slotDuration: 60,
     peoplePerSlot: 2,
     eventGroupId: group.id,
   })
-  await publishEvent(page, created.event.id)
 })
 
 test.afterEach(async ({ adminPage: page }) => {

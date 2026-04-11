@@ -78,6 +78,9 @@ const { get, post, patch, delete: del } = useAuthenticatedClient()
 const { confirm, confirmDestructive } = useDialog()
 
 const eventId = computed(() => route.params.eventId as string)
+
+const canManage = computed(() => authStore.canManageGroup(event.value?.event_group_id))
+
 const event = ref<EventRead | null>(null)
 const dutySlots = ref<DutySlotRead[]>([])
 const myBookings = ref<BookingRead[]>([])
@@ -296,17 +299,41 @@ const handleSlotClick = async (slot: DutySlotRead) => {
       const confirmed = await confirmDestructive(t('duties.bookings.cancelConfirm'))
       if (!confirmed) return
       await del({ url: `/bookings/${booking.id}` })
+      // Optimistic update: decrement count and remove from my bookings
+      const idx = dutySlots.value.findIndex((s) => s.id === slot.id)
+      if (idx !== -1) {
+        dutySlots.value[idx].current_bookings = Math.max(
+          0,
+          (dutySlots.value[idx].current_bookings ?? 1) - 1,
+        )
+        dutySlots.value[idx].is_booked_by_me = false
+      }
+      myBookings.value = myBookings.value.filter((b) => b.id !== booking.id)
       toast.success(t('duties.bookings.cancelSuccess'))
     } else {
       if (isSlotFull(slot)) return
       const confirmed = await confirm(t('duties.bookings.bookConfirm'))
       if (!confirmed) return
-      await post({ url: '/bookings/', body: { duty_slot_id: slot.id } })
+      const res = await post<{ data: BookingRead }>({
+        url: '/bookings/',
+        body: { duty_slot_id: slot.id },
+      })
+      // Optimistic update: increment count and add to my bookings
+      const idx = dutySlots.value.findIndex((s) => s.id === slot.id)
+      if (idx !== -1) {
+        dutySlots.value[idx].current_bookings = (dutySlots.value[idx].current_bookings ?? 0) + 1
+        dutySlots.value[idx].is_booked_by_me = true
+      }
+      myBookings.value.push({
+        ...res.data,
+        duty_slot: null,
+      } as MyBookingsListResponse['items'][number])
       toast.success(t('duties.bookings.bookSuccess'))
     }
-    await Promise.all([loadDutySlots(), loadMyBookings()])
   } catch (error) {
     toastApiError(error)
+    // Refetch on error to restore correct state
+    await Promise.all([loadDutySlots(), loadMyBookings()])
   } finally {
     busySlotId.value = null
   }
@@ -491,7 +518,12 @@ onMounted(async () => {
     <template v-else-if="event">
       <!-- Back button + Header -->
       <div class="space-y-4">
-        <Button data-testid="btn-back" variant="ghost" size="sm" @click="router.push({ name: 'events' })">
+        <Button
+          data-testid="btn-back"
+          variant="ghost"
+          size="sm"
+          @click="router.push({ name: 'events' })"
+        >
           <ArrowLeft class="mr-2 h-4 w-4" />
           {{ t('common.actions.back') }}
         </Button>
@@ -511,12 +543,14 @@ onMounted(async () => {
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0 flex-1 space-y-2">
             <div class="flex items-center gap-3 flex-wrap">
-              <h1 data-testid="page-heading" class="text-3xl font-bold line-clamp-2 break-words">{{ event.name }}</h1>
+              <h1 data-testid="page-heading" class="text-3xl font-bold line-clamp-2 break-words">
+                {{ event.name }}
+              </h1>
               <StatusDropdown
                 data-testid="event-status"
                 :status="event.status"
                 i18n-prefix="duties.events.statuses"
-                :editable="authStore.isAdmin"
+                :editable="canManage"
                 @change="handleStatusChange"
               />
             </div>
@@ -548,7 +582,7 @@ onMounted(async () => {
               <Printer class="h-4 w-4" />
             </Button>
             <Button
-              v-if="authStore.isAdmin && !hasBatches"
+              v-if="canManage && !hasBatches"
               data-testid="btn-edit-event"
               variant="outline"
               @click="router.push({ name: 'event-edit', params: { eventId: event.id } })"
@@ -556,7 +590,7 @@ onMounted(async () => {
               <Pencil class="mr-2 h-4 w-4" />
               {{ t('duties.events.edit') }}
             </Button>
-            <template v-if="authStore.isAdmin">
+            <template v-if="canManage">
               <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                   <Button data-testid="btn-add-slots">
@@ -578,7 +612,12 @@ onMounted(async () => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button data-testid="btn-delete-event" variant="destructive" size="icon" @click="handleDeleteEvent">
+              <Button
+                data-testid="btn-delete-event"
+                variant="destructive"
+                size="icon"
+                @click="handleDeleteEvent"
+              >
                 <Trash2 class="h-4 w-4" />
               </Button>
             </template>
@@ -599,7 +638,7 @@ onMounted(async () => {
                   <Printer class="mr-2 h-4 w-4" />
                   {{ t('print.printEvent') }}
                 </DropdownMenuItem>
-                <template v-if="authStore.isAdmin">
+                <template v-if="canManage">
                   <DropdownMenuItem
                     v-if="!hasBatches"
                     @click="router.push({ name: 'event-edit', params: { eventId: event.id } })"
@@ -789,7 +828,7 @@ onMounted(async () => {
                     </Badge>
                   </template>
                 </div>
-                <div v-if="authStore.isAdmin && group.batch" class="flex gap-1">
+                <div v-if="canManage && group.batch" class="flex gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -904,7 +943,7 @@ onMounted(async () => {
 
                       <!-- Admin delete (stop propagation so it doesn't trigger booking) -->
                       <Button
-                        v-if="authStore.isAdmin"
+                        v-if="canManage"
                         variant="ghost"
                         size="icon"
                         class="absolute bottom-0.5 right-0.5 h-5 w-5"

@@ -2,8 +2,9 @@ import { ref } from 'vue'
 
 import { defineStore } from 'pinia'
 
-import type { CalendarFeedRead } from '@/client/types.gen'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+
+import type { CalendarFeedRead } from '@/client/types.gen'
 
 export const useCalendarFeedStore = defineStore('calendarFeed', () => {
   const { get, post, delete: del } = useAuthenticatedClient()

@@ -31,7 +31,7 @@ Local URLs: frontend `http://localhost:5173`, backend `http://localhost:8000`, O
 
 ```bash
 just lint                     # Both backend + frontend
-just lint-backend             # uv run ruff check . && uv run basedpyright .
+just lint-backend             # ruff + basedpyright
 just lint-frontend            # ESLint
 just format                   # Both
 ```
@@ -123,6 +123,10 @@ Two layouts: `PreAuthLayout` (public pages) and `PostAuthLayout` (authenticated 
 - Frontend reads `VITE_API_URL` (set to `http://localhost:8000/api/v1` locally)
 - Auto-generated client in `src/client/` handles auth tokens and typed requests
 
+## Shell Commands
+
+- **Never use `cd <dir> && <command>`** — this triggers an extra permission prompt. Instead use `--prefix`, `--cwd`, or run the command with an absolute/relative path directly (e.g., `pnpm --prefix frontend generate-changelog`, `uv run --directory backend pytest`).
+
 ## Key Rules
 
 - **Tailwind CSS v4:** Config is CSS-only in `src/index.css` — do not create `tailwind.config.js`
@@ -130,6 +134,7 @@ Two layouts: `PreAuthLayout` (public pages) and `PostAuthLayout` (authenticated 
 - **i18n:** All user-facing strings must have keys in both `src/locales/en/` and `src/locales/de/`
 - **Generated client:** Never edit `frontend/src/client/` — regenerate with `just generate-client` instead
 - **API path:** `API_V1_STR = "/api/v1"` in `backend/app/core/config.py`
+- **basedpyright:** Run `uv run basedpyright` (no arguments) inside `backend/` — never pass `.` as it bypasses the `include` config and crawls `.venv`
 
 ## Environment
 

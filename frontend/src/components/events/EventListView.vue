@@ -40,7 +40,7 @@ const authStore = useAuthStore()
       <CardHeader class="pb-3">
         <div class="flex items-start justify-between">
           <CardTitle class="text-lg line-clamp-1 break-words">{{ event.name }}</CardTitle>
-          <Badge v-if="authStore.isAdmin" :variant="statusVariant(event.status)">
+          <Badge v-if="authStore.isManager" :variant="statusVariant(event.status)">
             {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
           </Badge>
         </div>
@@ -52,7 +52,7 @@ const authStore = useAuthStore()
         <div class="flex items-center justify-between text-sm text-muted-foreground">
           <span>{{ formatDate(event.start_date) }} – {{ formatDate(event.end_date) }}</span>
           <Button
-            v-if="authStore.isAdmin"
+            v-if="authStore.isManager"
             variant="ghost"
             size="icon"
             class="h-8 w-8"

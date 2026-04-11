@@ -1,13 +1,18 @@
+import uuid
+
 from fastapi import APIRouter, BackgroundTasks, Query
 from sqlalchemy import select
 from sqlmodel import col
 
-from app.api.deps import CurrentSuperuser, CurrentUser, DBDep
+from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.event import event as crud_event
+from app.crud.event_group_manager import event_group_manager as crud_egm
+from app.logic.permissions import require_event_group_access
 from app.models.duty_slot import DutySlot
 from app.models.event import Event
+from app.models.event_group_manager import EventGroupManager
 from app.schemas.booking import EventBookingEntry
 from app.schemas.event import (
     EventCreate,
@@ -30,10 +35,29 @@ async def list_events(
     status: EventStatus | None = None,
     my_bookings: bool = Query(default=False),
 ) -> EventListResponse:
-    """List published events (all users) or all events (admin)."""
+    """List published events (all users) or all events (admin/manager).
+
+    Scoped group managers see published events plus events in their managed groups.
+    """
     effective_status = status
-    if not current_user.is_admin and effective_status is None:
-        effective_status = "published"
+    also_include_group_ids = None
+
+    if current_user.is_manager:
+        # Global admin/event_manager — see everything
+        pass
+    else:
+        # Check for scoped group manager
+        result = await session.execute(
+            select(col(EventGroupManager.event_group_id)).where(
+                col(EventGroupManager.user_id) == current_user.id
+            )
+        )
+        managed_ids: list[uuid.UUID] = list(result.scalars().all())
+
+        if effective_status is None:
+            effective_status = "published"
+        if managed_ids:
+            also_include_group_ids = managed_ids
 
     booked_by_user_id = str(current_user.id) if my_bookings else None
 
@@ -44,12 +68,14 @@ async def list_events(
         search=search,
         status=effective_status,
         booked_by_user_id=booked_by_user_id,
+        also_include_group_ids=also_include_group_ids,
     )
     total = await crud_event.get_count_filtered(
         session,
         search=search,
         status=effective_status,
         booked_by_user_id=booked_by_user_id,
+        also_include_group_ids=also_include_group_ids,
     )
     return EventListResponse(
         items=[EventRead.model_validate(i) for i in items],
@@ -66,8 +92,14 @@ async def get_event(
     current_user: CurrentUser,
 ) -> Event:
     db_event = await crud_event.get(session, event_id, raise_404_error=True)
-    if not current_user.is_admin and db_event.status != "published":
-        raise_problem(403, code="event.not_published", detail="Event is not published")
+    if not current_user.is_manager and db_event.status != "published":
+        # Allow scoped group managers to see their unpublished events
+        if not db_event.event_group_id or not await crud_egm.is_manager(
+            session, user_id=current_user.id, event_group_id=db_event.event_group_id
+        ):
+            raise_problem(
+                403, code="event.not_published", detail="Event is not published"
+            )
     return db_event
 
 
@@ -75,8 +107,9 @@ async def get_event(
 async def create_event(
     event_in: EventCreate,
     session: DBDep,
-    current_user: CurrentSuperuser,
+    current_user: CurrentUser,
 ) -> Event:
+    await require_event_group_access(current_user, session, event_in.event_group_id)
     event_in.created_by_id = current_user.id
     return await crud_event.create(session, obj_in=event_in)
 
@@ -86,10 +119,11 @@ async def update_event(
     event_id: str,
     event_in: EventUpdate,
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentUser,
     background_tasks: BackgroundTasks,
 ) -> Event:
     db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, db_event.event_group_id)
     old_status = db_event.status
     updated = await crud_event.update(session, db_obj=db_event, obj_in=event_in)
 
@@ -135,10 +169,11 @@ async def list_event_bookings(
 async def delete_event(
     event_id: str,
     session: DBDep,
-    _current_user: CurrentSuperuser,
+    current_user: CurrentUser,
     cancellation_reason: str | None = Query(default=None),
 ) -> None:
     db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_group_access(current_user, session, db_event.event_group_id)
 
     # Collect all slot IDs for this event
     stmt = select(col(DutySlot.id)).where(col(DutySlot.event_id) == db_event.id)

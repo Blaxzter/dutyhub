@@ -143,10 +143,16 @@ onMounted(loadGroups)
     <!-- Header -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <h1 data-testid="page-heading" class="text-3xl font-bold">{{ t('duties.eventGroups.title') }}</h1>
+        <h1 data-testid="page-heading" class="text-3xl font-bold">
+          {{ t('duties.eventGroups.title') }}
+        </h1>
         <p class="text-muted-foreground">{{ t('duties.eventGroups.subtitle') }}</p>
       </div>
-      <Button v-if="authStore.isAdmin" data-testid="btn-create-group" @click="showCreateDialog = true">
+      <Button
+        v-if="authStore.isAdmin || authStore.isEventManager"
+        data-testid="btn-create-group"
+        @click="showCreateDialog = true"
+      >
         <Plus class="mr-2 h-4 w-4" />
         {{ t('duties.eventGroups.create') }}
       </Button>
@@ -156,7 +162,12 @@ onMounted(loadGroups)
     <div class="flex flex-wrap items-center gap-4">
       <div class="relative flex-1">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input v-model="searchQuery" data-testid="input-search" :placeholder="t('common.actions.search')" class="pl-10" />
+        <Input
+          v-model="searchQuery"
+          data-testid="input-search"
+          :placeholder="t('common.actions.search')"
+          class="pl-10"
+        />
       </div>
       <DateRangePicker
         :date-from="dateFrom"
@@ -200,7 +211,7 @@ onMounted(loadGroups)
             <div class="flex items-center justify-between text-sm text-muted-foreground">
               <span>{{ formatDate(group.start_date) }} – {{ formatDate(group.end_date) }}</span>
               <Button
-                v-if="authStore.isAdmin"
+                v-if="authStore.canManageGroup(group.id)"
                 variant="ghost"
                 size="icon"
                 class="h-8 w-8"

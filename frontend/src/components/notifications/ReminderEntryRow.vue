@@ -56,13 +56,20 @@ function onConfirmRemove() {
 </script>
 
 <template>
-  <div class="flex items-center gap-3 rounded-lg border p-3" :class="{ 'border-dashed opacity-50': readonly }">
+  <div
+    class="flex items-center gap-3 rounded-lg border p-3"
+    :class="{ 'border-dashed opacity-50': readonly }"
+  >
     <div class="flex-1 text-sm" :class="readonly ? '' : 'font-medium'">
       {{ offsetLabel }}
     </div>
 
     <!-- Channel toggle buttons (interactive) -->
-    <div v-if="!readonly" class="flex items-center gap-1.5" :class="{ 'pointer-events-none opacity-50': loading }">
+    <div
+      v-if="!readonly"
+      class="flex items-center gap-1.5"
+      :class="{ 'pointer-events-none opacity-50': loading }"
+    >
       <template v-for="ch in availableChannels" :key="ch">
         <!-- Last remaining channel: looks active, tooltip describes effect, toast on click -->
         <TooltipProvider v-if="channels.includes(ch) && channels.length === 1">
@@ -79,7 +86,12 @@ function onConfirmRemove() {
               </button>
             </TooltipTrigger>
             <TooltipContent>
-              {{ t('notifications.reminders.channelActiveHint', { channel: t(`notifications.channels.${ch}`), offset: offsetLabel }) }}
+              {{
+                t('notifications.reminders.channelActiveHint', {
+                  channel: t(`notifications.channels.${ch}`),
+                  offset: offsetLabel,
+                })
+              }}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -94,9 +106,14 @@ function onConfirmRemove() {
               ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground hover:bg-muted/80',
           ]"
-          :title="channels.includes(ch)
-            ? t('notifications.reminders.channelActiveHint', { channel: t(`notifications.channels.${ch}`), offset: offsetLabel })
-            : t(`notifications.channels.${ch}`)"
+          :title="
+            channels.includes(ch)
+              ? t('notifications.reminders.channelActiveHint', {
+                  channel: t(`notifications.channels.${ch}`),
+                  offset: offsetLabel,
+                })
+              : t(`notifications.channels.${ch}`)
+          "
           @click="$emit('toggle-channel', ch)"
         >
           <Mail v-if="ch === 'email'" :size="14" />
@@ -122,10 +139,7 @@ function onConfirmRemove() {
     </div>
 
     <!-- Status badge for past reminders -->
-    <span
-      v-if="readonly && statusLabel"
-      class="rounded-full border px-2 py-0.5 text-xs"
-    >
+    <span v-if="readonly && statusLabel" class="rounded-full border px-2 py-0.5 text-xs">
       {{ statusLabel }}
     </span>
 
@@ -182,7 +196,12 @@ function onConfirmRemove() {
         <DropdownMenuItem
           v-if="!confirmingDelete"
           variant="destructive"
-          @select="(e: Event) => { e.preventDefault(); confirmingDelete = true }"
+          @select="
+            (e: Event) => {
+              e.preventDefault()
+              confirmingDelete = true
+            }
+          "
         >
           <Trash2 :size="14" />
           {{ t('notifications.reminders.remove') }}
@@ -190,15 +209,17 @@ function onConfirmRemove() {
 
         <!-- Delete: confirm state -->
         <template v-else>
-          <DropdownMenuItem
-            variant="destructive"
-            @select="onConfirmRemove"
-          >
+          <DropdownMenuItem variant="destructive" @select="onConfirmRemove">
             <Check :size="14" />
             {{ t('notifications.reminders.removeConfirm') }}
           </DropdownMenuItem>
           <DropdownMenuItem
-            @select="(e: Event) => { e.preventDefault(); confirmingDelete = false }"
+            @select="
+              (e: Event) => {
+                e.preventDefault()
+                confirmingDelete = false
+              }
+            "
           >
             <X :size="14" />
             {{ t('common.actions.cancel') }}

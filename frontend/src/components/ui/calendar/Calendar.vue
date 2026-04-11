@@ -27,6 +27,15 @@ import {
   CalendarPrevButton,
 } from '.'
 
+export type MarkerVariant = 'default' | 'start' | 'end' | 'today'
+
+const markerColors: Record<MarkerVariant, string> = {
+  default: 'bg-primary',
+  start: 'bg-green-500',
+  end: 'bg-red-500',
+  today: 'bg-blue-500',
+}
+
 const props = withDefaults(
   defineProps<
     CalendarRootProps & {
@@ -34,20 +43,44 @@ const props = withDefaults(
       layout?: LayoutTypes
       yearRange?: DateValue[]
       highlight?: DateValue
+      /** Set of ISO date strings (YYYY-MM-DD) to show dot indicators on */
+      markedDays?: Set<string>
+      /** Map of ISO date strings to marker variants for colored dots */
+      markers?: Map<string, MarkerVariant>
     }
   >(),
   {
     modelValue: undefined,
     layout: undefined,
     highlight: undefined,
+    markedDays: undefined,
+    markers: undefined,
   },
 )
 const emits = defineEmits<CalendarRootEmits>()
 
-const delegatedProps = reactiveOmit(props, 'class', 'layout', 'placeholder', 'highlight')
+const delegatedProps = reactiveOmit(props, 'class', 'layout', 'placeholder', 'highlight', 'markedDays', 'markers')
 
 function isHighlighted(date: DateValue): boolean {
   return !!props.highlight && date.compare(props.highlight) === 0
+}
+
+function toIso(date: DateValue): string {
+  return `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`
+}
+
+function isMarked(date: DateValue): boolean {
+  if (props.markers) return props.markers.has(toIso(date))
+  if (!props.markedDays) return false
+  return props.markedDays.has(toIso(date))
+}
+
+function markerColor(date: DateValue): string {
+  if (props.markers) {
+    const variant = props.markers.get(toIso(date))
+    return variant ? markerColors[variant] : markerColors.default
+  }
+  return markerColors.default
 }
 
 const placeholder = useVModel(props, 'placeholder', emits, {
@@ -210,6 +243,11 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
                 :day="weekDate"
                 :month="month.value"
                 :class="isHighlighted(weekDate) ? 'bg-accent text-accent-foreground' : undefined"
+              />
+              <span
+                v-if="isMarked(weekDate) && weekDate.month === month.value.month"
+                class="absolute bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full pointer-events-none"
+                :class="markerColor(weekDate)"
               />
             </CalendarCell>
           </CalendarGridRow>

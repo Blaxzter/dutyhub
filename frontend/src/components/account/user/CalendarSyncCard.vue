@@ -85,11 +85,7 @@
                   {{ t('user.settings.calendarSync.feedUrl') }}
                 </label>
                 <div class="flex gap-2">
-                  <Input
-                    :model-value="feedSettings.feed_url"
-                    readonly
-                    class="font-mono text-xs"
-                  />
+                  <Input :model-value="feedSettings.feed_url" readonly class="font-mono text-xs" />
                   <Button variant="outline" size="icon" class="shrink-0" @click="copyUrl">
                     <CheckIcon v-if="copied" class="h-4 w-4 text-green-600" />
                     <CopyIcon v-else class="h-4 w-4" />
@@ -100,16 +96,28 @@
               <!-- Instructions -->
               <div class="space-y-3 rounded-lg border p-4 text-sm">
                 <div>
-                  <p class="font-medium">{{ t('user.settings.calendarSync.instructions.googleCalendar') }}</p>
-                  <p class="text-muted-foreground">{{ t('user.settings.calendarSync.instructions.googleSteps') }}</p>
+                  <p class="font-medium">
+                    {{ t('user.settings.calendarSync.instructions.googleCalendar') }}
+                  </p>
+                  <p class="text-muted-foreground">
+                    {{ t('user.settings.calendarSync.instructions.googleSteps') }}
+                  </p>
                 </div>
                 <div>
-                  <p class="font-medium">{{ t('user.settings.calendarSync.instructions.appleCalendar') }}</p>
-                  <p class="text-muted-foreground">{{ t('user.settings.calendarSync.instructions.appleSteps') }}</p>
+                  <p class="font-medium">
+                    {{ t('user.settings.calendarSync.instructions.appleCalendar') }}
+                  </p>
+                  <p class="text-muted-foreground">
+                    {{ t('user.settings.calendarSync.instructions.appleSteps') }}
+                  </p>
                 </div>
                 <div>
-                  <p class="font-medium">{{ t('user.settings.calendarSync.instructions.outlook') }}</p>
-                  <p class="text-muted-foreground">{{ t('user.settings.calendarSync.instructions.outlookSteps') }}</p>
+                  <p class="font-medium">
+                    {{ t('user.settings.calendarSync.instructions.outlook') }}
+                  </p>
+                  <p class="text-muted-foreground">
+                    {{ t('user.settings.calendarSync.instructions.outlookSteps') }}
+                  </p>
                 </div>
               </div>
 
@@ -124,7 +132,9 @@
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>{{ t('user.settings.calendarSync.regenerateConfirmTitle') }}</DialogTitle>
+                      <DialogTitle>{{
+                        t('user.settings.calendarSync.regenerateConfirmTitle')
+                      }}</DialogTitle>
                       <DialogDescription>
                         {{ t('user.settings.calendarSync.regenerateConfirmDescription') }}
                       </DialogDescription>
@@ -169,15 +179,12 @@ import {
   LoaderIcon,
   RefreshCwIcon,
 } from 'lucide-vue-next'
-import { siApple, siGoogle } from 'simple-icons'
 import { storeToRefs } from 'pinia'
+import { siApple, siGoogle } from 'simple-icons'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
 import { useCalendarFeedStore } from '@/stores/calendarFeed'
-
-import MicrosoftIcon from '@/components/icons/MicrosoftIcon.vue'
-import SimpleIcon from '@/components/utils/SimpleIcon.vue'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -193,6 +200,9 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+
+import MicrosoftIcon from '@/components/icons/MicrosoftIcon.vue'
+import SimpleIcon from '@/components/utils/SimpleIcon.vue'
 
 const { t } = useI18n()
 const store = useCalendarFeedStore()

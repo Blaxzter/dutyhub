@@ -241,7 +241,9 @@ onMounted(loadEvents)
     <!-- Header -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <h1 data-testid="page-heading" class="text-3xl font-bold">{{ t('duties.events.title') }}</h1>
+        <h1 data-testid="page-heading" class="text-3xl font-bold">
+          {{ t('duties.events.title') }}
+        </h1>
         <p class="text-muted-foreground">{{ t('duties.events.subtitle') }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -317,7 +319,7 @@ onMounted(loadEvents)
           </Button>
         </div>
 
-        <TooltipProvider v-if="authStore.isAdmin">
+        <TooltipProvider v-if="authStore.isManager">
           <Tooltip>
             <TooltipTrigger as-child>
               <Button data-testid="btn-create-event" @click="router.push({ name: 'event-create' })">

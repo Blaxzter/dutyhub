@@ -28,7 +28,9 @@ function mount() {
 
   // The Telegram widget calls this global callback on success
   const callbackName = `__telegramLoginCallback_${Date.now()}`
-  ;(window as unknown as Record<string, unknown>)[callbackName] = (user: Record<string, unknown>) => {
+  ;(window as unknown as Record<string, unknown>)[callbackName] = (
+    user: Record<string, unknown>,
+  ) => {
     emit('auth', user as Parameters<typeof emit>[1])
     delete (window as unknown as Record<string, unknown>)[callbackName]
   }

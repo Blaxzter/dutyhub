@@ -131,9 +131,7 @@ onUnmounted(() => stopTelegramPolling())
     v-if="telegramConfigured"
     :class="[
       'transition-colors duration-300',
-      enabled
-        ? 'border-sky-200 bg-sky-50/50 dark:border-sky-900 dark:bg-sky-950/20'
-        : '',
+      enabled ? 'border-sky-200 bg-sky-50/50 dark:border-sky-900 dark:bg-sky-950/20' : '',
     ]"
   >
     <CardHeader>
@@ -143,17 +141,11 @@ onUnmounted(() => stopTelegramPolling())
             ref="iconRef"
             :size="20"
             :use-color="enabled"
-            :class="[
-              'transition-colors duration-300',
-              enabled ? '' : 'text-muted-foreground',
-            ]"
+            :class="['transition-colors duration-300', enabled ? '' : 'text-muted-foreground']"
           />
           <CardTitle>{{ t('notifications.telegram.title') }}</CardTitle>
         </div>
-        <Switch
-          :model-value="enabled"
-          @update:model-value="handleToggle"
-        />
+        <Switch :model-value="enabled" @update:model-value="handleToggle" />
       </div>
       <CardDescription>
         {{ t('notifications.telegram.description') }}

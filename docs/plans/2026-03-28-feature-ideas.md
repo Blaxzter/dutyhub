@@ -28,17 +28,6 @@ True recurrence engine (weekly service, monthly meeting) that auto-creates event
 - Edit options: single instance vs all future instances
 - **Why:** Saves admins significant repetitive work for regular volunteer activities
 
-### 3. Reporting & Statistics Dashboard (Admin)
-
-The data already exists (bookings, cancellations, availability) but there's no analytics view.
-
-- Volunteer participation rates (bookings per user over time)
-- Slot fill rates per event, category, or time window
-- No-show / cancellation patterns
-- Busiest time slots and locations
-- CSV export for all reports
-- **Why:** Helps admins make data-driven scheduling decisions and identify engagement issues
-
 ### 4. Automatic Booking Cancellation Notifications
 
 Already partially built (see `TODO.md`). When admins regenerate duty slots and cancel affected bookings, users should be notified automatically.
@@ -59,15 +48,6 @@ When a duty slot hits `max_bookings`, let users join a waitlist. Auto-promote wh
 - Auto-promote first in queue on cancellation, with notification
 - User can leave waitlist at any time
 - **Why:** Captures demand that's currently lost and improves slot fill rates
-
-### 6. Shift Reminders
-
-Send a reminder X hours before a booked slot starts. Notification infrastructure already exists — needs a scheduled task.
-
-- Configurable reminder window per user (e.g. 24h, 2h before)
-- Uses existing channels (email, push, telegram)
-- Background job / cron that queries upcoming bookings
-- **Why:** Reduces no-shows with minimal implementation effort
 
 ### 7. Bulk Booking for Admins
 
@@ -152,18 +132,18 @@ Beyond the existing iCal feed: broader export and sharing options.
 
 Based on effort-to-value ratio and existing infrastructure:
 
-| Priority | Feature | Reason |
-|----------|---------|--------|
-| 1 | #4 Booking cancellation notifications | Already partially built, minimal effort |
-| 2 | #6 Shift reminders | Leverages existing notification system |
-| 3 | #1 Slot swap / trade | Solves real volunteer pain point |
-| 4 | #5 Waitlist | Natural extension of booking system |
-| 5 | #3 Reporting dashboard | High admin value, data already exists |
+| Priority | Feature                               | Reason                                  |
+| -------- | ------------------------------------- | --------------------------------------- |
+| 1        | #4 Booking cancellation notifications | Already partially built, minimal effort |
+| 2        | #6 Shift reminders                    | Leverages existing notification system  |
+| 3        | #1 Slot swap / trade                  | Solves real volunteer pain point        |
+| 4        | #5 Waitlist                           | Natural extension of booking system     |
+| 5        | #3 Reporting dashboard                | High admin value, data already exists   |
 
 ---
 
 ## Decision Log
 
-| Date | Decision |
-|------|----------|
+| Date       | Decision                                                            |
+| ---------- | ------------------------------------------------------------------- |
 | 2026-03-28 | Ideas captured from codebase analysis. Not yet prioritized by team. |

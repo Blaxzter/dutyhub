@@ -10,3 +10,4 @@ __pycache__
 .playwright-mcp/
 .env.production
 e2e/.auth/user.json
+e2e-logs/

@@ -101,32 +101,35 @@ test.describe('Member – availability', () => {
   })
 
   test('member sees Register Availability button when none set', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}`)
+    await member.goto(`/app/event-groups/${group.id}/availability`)
     await clearAvailability(member, group.id).catch(() => {})
     await member.reload()
-    await expect(member.getByTestId('btn-availability')).toBeVisible()
+    const section = member.getByTestId('section-availability')
+    await expect(section.getByTestId('btn-availability')).toBeVisible()
   })
 
   test('member can register as fully available', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}`)
+    await member.goto(`/app/event-groups/${group.id}/availability`)
     await clearAvailability(member, group.id).catch(() => {})
     await member.reload()
-    await member.getByTestId('btn-availability').click()
+    const section = member.getByTestId('section-availability')
+    await section.getByTestId('btn-availability').click()
     await member.getByTestId('availability-type-fully_available').click()
     await member.getByTestId('btn-save').click()
 
     await expect(member.getByTestId('dialog-availability')).toBeHidden()
-    await expect(member.getByText(/open to be requested|fully.?available/i)).toBeVisible()
-    await expect(member.getByTestId('btn-availability')).toBeVisible()
-    await expect(member.getByTestId('btn-remove-availability')).toBeVisible()
+    await expect(section.getByText(/open to be requested|fully.?available/i)).toBeVisible()
+    await expect(section.getByTestId('btn-availability')).toBeVisible()
+    await expect(section.getByTestId('btn-remove-availability')).toBeVisible()
     await clearAvailability(member, group.id).catch(() => {})
   })
 
   test('member can register availability for specific dates', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}`)
+    await member.goto(`/app/event-groups/${group.id}/availability`)
     await clearAvailability(member, group.id).catch(() => {})
     await member.reload()
-    await member.getByTestId('btn-availability').click()
+    const section = member.getByTestId('section-availability')
+    await section.getByTestId('btn-availability').click()
     await member.getByTestId('availability-type-specific_dates').click()
     await member.getByTestId('btn-add-date').click()
     await pickDate(
@@ -136,35 +139,37 @@ test.describe('Member – availability', () => {
     await member.getByTestId('btn-save').click()
 
     await expect(member.getByTestId('dialog-availability')).toBeHidden()
-    await expect(member.getByText(/specific dates/i)).toBeVisible()
+    await expect(section.getByText(/specific dates/i)).toBeVisible()
     await clearAvailability(member, group.id).catch(() => {})
   })
 
   test('member can update their availability', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}`)
+    await member.goto(`/app/event-groups/${group.id}/availability`)
     await api(member, 'POST', `/event-groups/${group.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
     })
     await member.reload()
-    await member.getByTestId('btn-availability').click()
+    const section = member.getByTestId('section-availability')
+    await section.getByTestId('btn-availability').click()
     await member.getByTestId('availability-type-specific_dates').click()
     await member.getByTestId('btn-save').click()
 
     await expect(member.getByTestId('dialog-availability')).toBeHidden()
-    await expect(member.getByText(/specific dates/i)).toBeVisible()
+    await expect(section.getByText(/specific dates/i)).toBeVisible()
     await clearAvailability(member, group.id).catch(() => {})
   })
 
   test('member can remove their availability', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}`)
+    await member.goto(`/app/event-groups/${group.id}/availability`)
     await api(member, 'POST', `/event-groups/${group.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
     })
     await member.reload()
+    const section = member.getByTestId('section-availability')
     member.on('dialog', (d) => d.accept())
-    await member.getByTestId('btn-remove-availability').click()
-    await expect(member.getByTestId('btn-availability')).toBeVisible()
+    await section.getByTestId('btn-remove-availability').click()
+    await expect(section.getByTestId('btn-availability')).toBeVisible()
   })
 })

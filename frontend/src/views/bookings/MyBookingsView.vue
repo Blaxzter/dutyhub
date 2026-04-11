@@ -13,9 +13,8 @@ import {
   XCircle,
 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { toast } from 'vue-sonner'
-
 import { useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
@@ -286,7 +285,9 @@ onMounted(loadBookings)
     <!-- Header -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <h1 data-testid="page-heading" class="text-3xl font-bold">{{ t('duties.bookings.title') }}</h1>
+        <h1 data-testid="page-heading" class="text-3xl font-bold">
+          {{ t('duties.bookings.title') }}
+        </h1>
         <p class="text-muted-foreground">{{ t('duties.bookings.subtitle') }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -319,7 +320,12 @@ onMounted(loadBookings)
     <div class="flex flex-wrap items-center gap-4">
       <div class="relative flex-1">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input v-model="searchQuery" data-testid="input-search" :placeholder="t('common.actions.search')" class="pl-10" />
+        <Input
+          v-model="searchQuery"
+          data-testid="input-search"
+          :placeholder="t('common.actions.search')"
+          class="pl-10"
+        />
       </div>
       <DateRangePicker
         :date-from="dateFrom"
@@ -493,6 +499,5 @@ onMounted(loadBookings)
         </div>
       </section>
     </div>
-
   </div>
 </template>

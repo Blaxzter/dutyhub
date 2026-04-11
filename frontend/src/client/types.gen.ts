@@ -877,6 +877,10 @@ export type EventCreateWithSlots = {
    */
   end_date: string
   /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
    * Location
    */
   location?: string | null
@@ -1877,6 +1881,16 @@ export type SelfApproveRequest = {
 }
 
 /**
+ * ShiftDatesRequest
+ */
+export type ShiftDatesRequest = {
+  /**
+   * New Start Date
+   */
+  new_start_date: string
+}
+
+/**
  * SidebarBooking
  */
 export type SidebarBooking = {
@@ -1919,6 +1933,10 @@ export type SidebarEvent = {
    */
   name: string
   /**
+   * Status
+   */
+  status?: string
+  /**
    * Open Slots
    */
   open_slots: number
@@ -1944,6 +1962,10 @@ export type SidebarEventGroup = {
    * Name
    */
   name: string
+  /**
+   * Status
+   */
+  status?: string
 }
 
 /**
@@ -2635,6 +2657,11 @@ export type UserProfile = {
    */
   is_admin?: boolean
   /**
+   * Is Event Manager
+   * Whether user has event_manager role
+   */
+  is_event_manager?: boolean
+  /**
    * Is Active
    * Whether user is active
    */
@@ -2644,6 +2671,11 @@ export type UserProfile = {
    * Reason for account rejection
    */
   rejection_reason?: string | null
+  /**
+   * Managed Event Group Ids
+   * IDs of event groups this user manages (via event_group_managers)
+   */
+  managed_event_group_ids?: Array<string>
 }
 
 /**
@@ -6219,6 +6251,129 @@ export type EventGroupsUpdateEventGroupResponses = {
 export type EventGroupsUpdateEventGroupResponse =
   EventGroupsUpdateEventGroupResponses[keyof EventGroupsUpdateEventGroupResponses]
 
+export type EventGroupsGetEventDateBoundsData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/event-date-bounds'
+}
+
+export type EventGroupsGetEventDateBoundsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsGetEventDateBoundsError =
+  EventGroupsGetEventDateBoundsErrors[keyof EventGroupsGetEventDateBoundsErrors]
+
+export type EventGroupsGetEventDateBoundsResponses = {
+  /**
+   * Response Event-Groups-Get Event Date Bounds
+   * Successful Response
+   */
+  200: {
+    [key: string]: string | null
+  }
+}
+
+export type EventGroupsGetEventDateBoundsResponse =
+  EventGroupsGetEventDateBoundsResponses[keyof EventGroupsGetEventDateBoundsResponses]
+
+export type EventGroupsShiftEventGroupDatesData = {
+  body: ShiftDatesRequest
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/shift-dates'
+}
+
+export type EventGroupsShiftEventGroupDatesErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsShiftEventGroupDatesError =
+  EventGroupsShiftEventGroupDatesErrors[keyof EventGroupsShiftEventGroupDatesErrors]
+
+export type EventGroupsShiftEventGroupDatesResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventGroupRead
+}
+
+export type EventGroupsShiftEventGroupDatesResponse =
+  EventGroupsShiftEventGroupDatesResponses[keyof EventGroupsShiftEventGroupDatesResponses]
+
 export type EventGroupsListGroupAvailabilitiesData = {
   body?: never
   path: {
@@ -6468,6 +6623,195 @@ export type EventGroupsSetMyAvailabilityResponses = {
 
 export type EventGroupsSetMyAvailabilityResponse =
   EventGroupsSetMyAvailabilityResponses[keyof EventGroupsSetMyAvailabilityResponses]
+
+export type EventGroupsListGroupManagersData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/managers'
+}
+
+export type EventGroupsListGroupManagersErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsListGroupManagersError =
+  EventGroupsListGroupManagersErrors[keyof EventGroupsListGroupManagersErrors]
+
+export type EventGroupsListGroupManagersResponses = {
+  /**
+   * Response Event-Groups-List Group Managers
+   * Successful Response
+   */
+  200: Array<UserRead>
+}
+
+export type EventGroupsListGroupManagersResponse =
+  EventGroupsListGroupManagersResponses[keyof EventGroupsListGroupManagersResponses]
+
+export type EventGroupsRemoveGroupManagerData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+    /**
+     * User Id
+     */
+    user_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/managers/{user_id}'
+}
+
+export type EventGroupsRemoveGroupManagerErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsRemoveGroupManagerError =
+  EventGroupsRemoveGroupManagerErrors[keyof EventGroupsRemoveGroupManagerErrors]
+
+export type EventGroupsRemoveGroupManagerResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type EventGroupsRemoveGroupManagerResponse =
+  EventGroupsRemoveGroupManagerResponses[keyof EventGroupsRemoveGroupManagerResponses]
+
+export type EventGroupsAssignGroupManagerData = {
+  body?: never
+  path: {
+    /**
+     * Group Id
+     */
+    group_id: string
+    /**
+     * User Id
+     */
+    user_id: string
+  }
+  query?: never
+  url: '/api/v1/event-groups/{group_id}/managers/{user_id}'
+}
+
+export type EventGroupsAssignGroupManagerErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventGroupsAssignGroupManagerError =
+  EventGroupsAssignGroupManagerErrors[keyof EventGroupsAssignGroupManagerErrors]
+
+export type EventGroupsAssignGroupManagerResponses = {
+  /**
+   * Successful Response
+   */
+  201: UserRead
+}
+
+export type EventGroupsAssignGroupManagerResponse =
+  EventGroupsAssignGroupManagerResponses[keyof EventGroupsAssignGroupManagerResponses]
 
 export type NotificationsListNotificationTypesData = {
   body?: never

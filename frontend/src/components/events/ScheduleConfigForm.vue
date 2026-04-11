@@ -153,7 +153,9 @@ watch(
           @click="addOverride"
         >
           <Plus class="sm:mr-1.5 h-4 w-4" />
-          <span class="hidden sm:inline">{{ t('duties.events.createView.schedule.addException') }}</span>
+          <span class="hidden sm:inline">{{
+            t('duties.events.createView.schedule.addException')
+          }}</span>
         </Button>
       </div>
 

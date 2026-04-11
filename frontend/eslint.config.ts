@@ -29,6 +29,15 @@ export default defineConfigWithVueTs(
   },
 
   {
+    name: 'app/animated-icons',
+    files: ['src/components/icons/lucide-animated/**/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+      'vue/no-parsing-error': ['error', { 'x-invalid-namespace': false }],
+    },
+  },
+
+  {
     ...pluginPlaywright.configs['flat/recommended'],
     files: ['e2e/**/*.{test,spec}.{js,ts,jsx,tsx}'],
   },

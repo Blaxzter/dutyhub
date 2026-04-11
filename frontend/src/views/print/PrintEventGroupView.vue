@@ -87,17 +87,6 @@ const eventShowLocationColumn = (eventId: string) => {
   return showLocation.value && eventHasLocationData(eventId)
 }
 
-// Check across all events if any has multiple titles/locations (for toolbar visibility)
-const anyEventHasMultipleTitles = computed(() => {
-  return events.value.some((ev) => {
-    const slots = eventSlots.value.get(ev.id) ?? []
-    return new Set(slots.map((s) => s.title)).size > 1
-  })
-})
-const anyEventHasMultipleLocations = computed(() => {
-  return events.value.some((ev) => eventHasLocationData(ev.id))
-})
-
 interface BatchGroup {
   batch: SlotBatchRead | null
   slots: DutySlotRead[]
@@ -288,7 +277,11 @@ onMounted(async () => {
 <template>
   <div class="print-page mx-auto max-w-5xl w-full space-y-4 p-4 print:p-0">
     <!-- Floating toolbar -->
-    <PrintToolbar data-testid="print-toolbar" :disabled="loading || bookingsLoading" @print="handlePrint">
+    <PrintToolbar
+      data-testid="print-toolbar"
+      :disabled="loading || bookingsLoading"
+      @print="handlePrint"
+    >
       <template v-if="mode === 'all'">
         <!-- Column toggles -->
         <label class="flex items-center gap-2 cursor-pointer">

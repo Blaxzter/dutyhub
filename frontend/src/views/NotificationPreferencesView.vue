@@ -1,25 +1,24 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { Check, LoaderCircle } from 'lucide-vue-next'
 import { useDebounceFn } from '@vueuse/core'
+import { Check, LoaderCircle } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
-import type { NotificationSubscription, NotificationType } from '@/stores/notification'
-import { useNotificationStore } from '@/stores/notification'
 import type { ReminderOffsetEntry } from '@/stores/bookingReminder'
 import { useBookingReminderStore } from '@/stores/bookingReminder'
+import type { NotificationSubscription, NotificationType } from '@/stores/notification'
+import { useNotificationStore } from '@/stores/notification'
 
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 
+import AnimatedMail from '@/components/icons/lucide-animated/Mail.vue'
 import DefaultRemindersCard from '@/components/notifications/DefaultRemindersCard.vue'
 import PerTypePreferencesSection from '@/components/notifications/PerTypePreferencesSection.vue'
 import PushChannelCard from '@/components/notifications/PushChannelCard.vue'
 import TelegramChannelCard from '@/components/notifications/TelegramChannelCard.vue'
-
-import AnimatedMail from '@/components/icons/lucide-animated/Mail.vue'
 
 const { t } = useI18n()
 const notificationStore = useNotificationStore()
@@ -93,7 +92,9 @@ async function doSavePreferences() {
     await notificationStore.updatePreferences(prefs)
     autoSaveStatus.value = 'saved'
     if (savedResetTimer) clearTimeout(savedResetTimer)
-    savedResetTimer = setTimeout(() => { autoSaveStatus.value = 'idle' }, 2500)
+    savedResetTimer = setTimeout(() => {
+      autoSaveStatus.value = 'idle'
+    }, 2500)
   } catch {
     autoSaveStatus.value = 'error'
     toast.error(t('notifications.preferences.saveFailed'))
@@ -196,7 +197,9 @@ onMounted(async () => {
                 :size="20"
                 :class="[
                   'transition-colors duration-300',
-                  globalChannelSettings.notify_email ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground',
+                  globalChannelSettings.notify_email
+                    ? 'text-blue-600 dark:text-blue-400'
+                    : 'text-muted-foreground',
                 ]"
               />
               <CardTitle>{{ t('notifications.email.title') }}</CardTitle>

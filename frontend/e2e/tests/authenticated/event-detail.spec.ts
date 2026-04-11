@@ -9,7 +9,6 @@ import {
   createEventWithSlots,
   deleteEvent,
   listSlots,
-  publishEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -23,12 +22,12 @@ test.beforeEach(async ({ adminPage: page }) => {
     description: 'E2E test description',
     location: 'Main Hall',
     category: 'Sound',
+    status: 'published',
     startTime: '09:00',
     endTime: '11:00',
     slotDuration: 60,
     peoplePerSlot: 3,
   })
-  await publishEvent(page, created.event.id)
   slots = await listSlots(page, created.event.id)
 })
 
@@ -92,6 +91,7 @@ test.describe('Event Detail – booking', () => {
 
     // Handle booking confirmation dialog if it appears
     const confirmBtn = page.getByRole('button', { name: /confirm|bestätigen/i })
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await confirmBtn.click()
     }
@@ -102,6 +102,7 @@ test.describe('Event Detail – booking', () => {
 
   test('booked slot shows in My Bookings summary', async ({ adminPage: page }) => {
     // Pre-book via API
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (slots.length > 0) {
       await bookSlot(page, slots[0].id)
     }
@@ -118,6 +119,7 @@ test.describe('Event Detail – booking', () => {
 
   test('clicking a booked slot cancels it', async ({ adminPage: page }) => {
     // Pre-book via API
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (slots.length > 0) {
       await bookSlot(page, slots[0].id)
     }
@@ -131,6 +133,7 @@ test.describe('Event Detail – booking', () => {
 
     // Handle confirmation dialog (app-level dialog, not browser dialog)
     const confirmBtn = page.getByRole('button', { name: /confirm|bestätigen/i })
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await confirmBtn.click()
     }
@@ -169,8 +172,7 @@ test.describe('Event Detail – admin actions', () => {
   })
 
   test('admin can delete event', async ({ adminPage: page }) => {
-    const toDelete = await createEventWithSlots(page, { name: uniqueName('E2E Delete Me') })
-    await publishEvent(page, toDelete.event.id)
+    const toDelete = await createEventWithSlots(page, { name: uniqueName('E2E Delete Me'), status: 'published' })
 
     await page.goto(`/app/events/${toDelete.event.id}`)
     await page.getByTestId('btn-delete-event').click()

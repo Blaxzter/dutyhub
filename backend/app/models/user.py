@@ -88,3 +88,13 @@ class User(Base, table=True):
     def is_admin(self) -> bool:
         """Check if user has admin role."""
         return "admin" in self.roles
+
+    @property
+    def is_event_manager(self) -> bool:
+        """Check if user has event_manager role."""
+        return "event_manager" in self.roles
+
+    @property
+    def is_manager(self) -> bool:
+        """Check if user has admin or event_manager role."""
+        return self.is_admin or self.is_event_manager

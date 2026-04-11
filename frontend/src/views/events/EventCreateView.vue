@@ -8,6 +8,8 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
+import { useAuthStore } from '@/stores/auth'
+
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useFormatters } from '@/composables/useFormatters'
 import {
@@ -48,6 +50,7 @@ const { formatDateLabel } = useFormatters()
 const route = useRoute()
 const router = useRouter()
 const { get, post } = useAuthenticatedClient()
+const authStore = useAuthStore()
 
 // Prefill event group from query param (e.g. when creating from EventGroupDetailView)
 const prefillGroupId = route.query.groupId as string | undefined
@@ -59,7 +62,12 @@ const location = ref('')
 const category = ref('')
 
 // Event group
-const eventGroupMode = ref<'none' | 'existing' | 'new'>('none')
+const isScopedManagerOnly = computed(
+  () => !authStore.isAdmin && !authStore.isEventManager && authStore.isGroupManager,
+)
+const eventGroupMode = ref<'none' | 'existing' | 'new'>(
+  isScopedManagerOnly.value ? 'existing' : 'none',
+)
 const selectedEventGroupId = ref<string>('')
 const eventGroups = ref<EventGroupRead[]>([])
 const newGroupName = ref('')
@@ -255,7 +263,15 @@ const loadEventGroups = async () => {
       url: '/event-groups/',
       query: { limit: 100 },
     })
-    eventGroups.value = response.data.items
+    let items = response.data.items
+
+    // Scoped group managers can only create events in their managed groups
+    const managedIds = authStore.managedEventGroupIds
+    if (!authStore.isAdmin && !authStore.isEventManager && managedIds.length > 0) {
+      items = items.filter((g) => managedIds.includes(g.id))
+    }
+
+    eventGroups.value = items
 
     // Prefill event group selection if groupId query param is present
     if (prefillGroupId && eventGroups.value.some((g) => g.id === prefillGroupId)) {
@@ -369,11 +385,19 @@ const handleSubmit = async () => {
   <div class="mx-auto max-w-3xl space-y-6">
     <!-- Header -->
     <div class="space-y-2">
-      <Button data-testid="btn-back" variant="ghost" size="sm" class="-ml-2" @click="router.push({ name: 'events' })">
+      <Button
+        data-testid="btn-back"
+        variant="ghost"
+        size="sm"
+        class="-ml-2"
+        @click="router.push({ name: 'events' })"
+      >
         <ArrowLeft class="mr-1.5 h-4 w-4" />
         {{ t('common.actions.back') }}
       </Button>
-      <h1 data-testid="page-heading" class="text-3xl font-bold">{{ t('duties.events.createView.title') }}</h1>
+      <h1 data-testid="page-heading" class="text-3xl font-bold">
+        {{ t('duties.events.createView.title') }}
+      </h1>
       <p class="text-muted-foreground">{{ t('duties.events.createView.subtitle') }}</p>
     </div>
 
@@ -435,7 +459,7 @@ const handleSubmit = async () => {
         </AccordionTrigger>
         <AccordionContent class="px-6 pb-6">
           <RadioGroup v-model="eventGroupMode" class="space-y-3">
-            <div class="flex items-center gap-2">
+            <div v-if="!isScopedManagerOnly" class="flex items-center gap-2">
               <RadioGroupItem value="none" id="eg-none" />
               <Label for="eg-none">{{ t('duties.events.createView.eventGroupOption.none') }}</Label>
             </div>
@@ -445,7 +469,7 @@ const handleSubmit = async () => {
                 t('duties.events.createView.eventGroupOption.existing')
               }}</Label>
             </div>
-            <div class="flex items-center gap-2">
+            <div v-if="!isScopedManagerOnly" class="flex items-center gap-2">
               <RadioGroupItem value="new" id="eg-new" />
               <Label for="eg-new">{{ t('duties.events.createView.eventGroupOption.new') }}</Label>
             </div>
@@ -703,10 +727,18 @@ const handleSubmit = async () => {
             />
           </div>
           <div class="mt-4 flex justify-end gap-3">
-            <Button data-testid="btn-cancel" variant="outline" @click="router.push({ name: 'events' })">
+            <Button
+              data-testid="btn-cancel"
+              variant="outline"
+              @click="router.push({ name: 'events' })"
+            >
               {{ t('common.actions.cancel') }}
             </Button>
-            <Button data-testid="btn-submit" :disabled="!isValid || submitting" @click="handleSubmit">
+            <Button
+              data-testid="btn-submit"
+              :disabled="!isValid || submitting"
+              @click="handleSubmit"
+            >
               <CalendarPlus class="mr-2 h-4 w-4" />
               {{ submitting ? t('common.states.saving') : t('duties.events.createView.submit') }}
             </Button>

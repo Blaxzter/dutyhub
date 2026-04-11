@@ -46,10 +46,10 @@ class TestGetComparison:
     def test_gt_inverted(self):
         """Test inverted greater-than becomes less-than-or-equal."""
         expr = get_comparison(
-            User.created_at,
+            User.created_at,  # type: ignore[reportArgumentType]
             "2026-01-01",
             is_not=True,
-            greater_then_comp="gt",  # type: ignore[reportArgumentType]
+            greater_then_comp="gt",
         )
         compiled = str(expr.compile(compile_kwargs={"literal_binds": True}))
         assert "<=" in compiled
@@ -57,10 +57,10 @@ class TestGetComparison:
     def test_le_inverted(self):
         """Test inverted less-than-or-equal becomes greater-than."""
         expr = get_comparison(
-            User.created_at,
+            User.created_at,  # type: ignore[reportArgumentType]
             "2026-01-01",
             is_not=True,
-            greater_then_comp="le",  # type: ignore[reportArgumentType]
+            greater_then_comp="le",
         )
         compiled = str(expr.compile(compile_kwargs={"literal_binds": True}))
         assert ">" in compiled

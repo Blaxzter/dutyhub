@@ -1,58 +1,60 @@
 <template>
-  <div>
-    <!-- Header — always centered -->
-    <div class="mx-auto max-w-3xl pb-2">
-      <h1 data-testid="page-heading" class="text-3xl font-bold tracking-tight">{{ $t('user.settings.title') }}</h1>
+  <!-- Define section content once, reuse in both mobile and desktop layouts -->
+  <DefineSectionContent v-slot="{ id }">
+    <div class="space-y-6" :data-testid="`section-${id}`">
+      <template v-if="id === 'profile'">
+        <CurrentProfileCard :user="user" />
+        <EditProfileForm
+          :user="user"
+          :can-edit-profile-picture="canEditProfilePicture"
+          :auth-provider-name="authProvider.name"
+          @profile-updated="handleProfileUpdated"
+        />
+      </template>
+
+      <template v-if="id === 'security'">
+        <PasswordResetCard />
+      </template>
+
+      <template v-if="id === 'notifications'">
+        <NotificationSettingsCard />
+      </template>
+
+      <template v-if="id === 'calendar'">
+        <CalendarSyncCard />
+      </template>
+
+      <template v-if="id === 'language'">
+        <LanguageSettingsCard />
+      </template>
+
+      <template v-if="id === 'dataPrivacy'">
+        <DataExportCard />
+        <DeleteAccountCard />
+      </template>
+    </div>
+  </DefineSectionContent>
+
+  <div :class="{ 'grid grid-cols-[1fr_48rem_1fr] gap-y-8': isDesktop }">
+    <!-- Header -->
+    <div :class="isDesktop ? 'col-start-2 pb-2' : 'mx-auto max-w-3xl pb-2'">
+      <h1 data-testid="page-heading" class="text-3xl font-bold tracking-tight">
+        {{ $t('user.settings.title') }}
+      </h1>
       <p class="text-muted-foreground mt-2">
         {{ $t('user.settings.subtitle') }}
       </p>
     </div>
 
     <!-- ==================== MOBILE / TABLET (<xl) ==================== -->
-    <div class="xl:hidden">
+    <div v-if="!isDesktop">
       <ChipNav v-model="mobileSlide" :items="chipItems" class="mb-4" />
 
-      <!-- Swipeable sections -->
       <div class="mx-auto max-w-3xl">
         <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
           <CarouselContent class="items-start">
-            <CarouselItem
-              v-for="item in visibleNavItems"
-              :key="item.id"
-              class="basis-full"
-            >
-              <div class="space-y-6">
-                <template v-if="item.id === 'profile'">
-                  <CurrentProfileCard :user="user" />
-                  <EditProfileForm
-                    :user="user"
-                    :can-edit-profile-picture="canEditProfilePicture"
-                    :auth-provider-name="authProvider.name"
-                    @profile-updated="handleProfileUpdated"
-                  />
-                </template>
-
-                <template v-if="item.id === 'security'">
-                  <PasswordResetCard />
-                </template>
-
-                <template v-if="item.id === 'notifications'">
-                  <NotificationSettingsCard />
-                </template>
-
-                <template v-if="item.id === 'calendar'">
-                  <CalendarSyncCard />
-                </template>
-
-                <template v-if="item.id === 'language'">
-                  <LanguageSettingsCard />
-                </template>
-
-                <template v-if="item.id === 'dataPrivacy'">
-                  <DataExportCard />
-                  <DeleteAccountCard />
-                </template>
-              </div>
+            <CarouselItem v-for="item in visibleNavItems" :key="item.id" class="basis-full">
+              <SectionContent :id="item.id" />
             </CarouselItem>
           </CarouselContent>
         </Carousel>
@@ -60,9 +62,9 @@
     </div>
 
     <!-- ==================== DESKTOP (xl+) ==================== -->
-    <div class="hidden xl:grid grid-cols-[1fr_48rem_1fr] mt-8">
+    <template v-if="isDesktop">
       <!-- Nav in left gutter -->
-      <div class="flex justify-end pr-8">
+      <div class="row-start-2 flex justify-end pr-8">
         <nav class="w-44 sticky top-8 self-start space-y-1">
           <button
             v-for="item in visibleNavItems"
@@ -82,56 +84,21 @@
       </div>
 
       <!-- Content -->
-      <div class="space-y-6">
-        <div v-if="activeSection === 'profile'" data-testid="section-profile" class="space-y-6">
-          <CurrentProfileCard :user="user" />
-          <EditProfileForm
-            :user="user"
-            :can-edit-profile-picture="canEditProfilePicture"
-            :auth-provider-name="authProvider.name"
-            @profile-updated="handleProfileUpdated"
-          />
-        </div>
-
-        <div v-if="activeSection === 'security'" data-testid="section-security" class="space-y-6">
-          <PasswordResetCard v-if="authProvider.isAuth0" />
-        </div>
-
-        <div v-if="activeSection === 'notifications'" data-testid="section-notifications" class="space-y-6">
-          <NotificationSettingsCard />
-        </div>
-
-        <div v-if="activeSection === 'calendar'" data-testid="section-calendar" class="space-y-6">
-          <CalendarSyncCard />
-        </div>
-
-        <div v-if="activeSection === 'language'" data-testid="section-language" class="space-y-6">
-          <LanguageSettingsCard />
-        </div>
-
-        <div v-if="activeSection === 'dataPrivacy'" data-testid="section-data" class="space-y-6">
-          <DataExportCard />
-          <DeleteAccountCard />
-        </div>
+      <div class="row-start-2">
+        <SectionContent :id="activeSection" />
       </div>
 
       <!-- Right spacer for symmetry -->
-      <div aria-hidden="true" />
-    </div>
+      <div class="row-start-2" aria-hidden="true" />
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, type Component } from 'vue'
+import { type Component, computed, ref, watch } from 'vue'
 
-import {
-  Bell,
-  CalendarDays,
-  GlobeIcon,
-  KeyRound,
-  ShieldIcon,
-  UserIcon,
-} from 'lucide-vue-next'
+import { Bell, CalendarDays, GlobeIcon, KeyRound, ShieldIcon, UserIcon } from 'lucide-vue-next'
+import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -139,9 +106,8 @@ import { useAuthStore } from '@/stores/auth'
 
 import { useAdaptiveCarouselHeight } from '@/composables/useAdaptiveCarouselHeight'
 
-import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
-
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
+import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
 
 import CalendarSyncCard from '@/components/account/user/CalendarSyncCard.vue'
 import CurrentProfileCard from '@/components/account/user/CurrentProfileCard.vue'
@@ -151,8 +117,8 @@ import EditProfileForm from '@/components/account/user/EditProfileForm.vue'
 import LanguageSettingsCard from '@/components/account/user/LanguageSettingsCard.vue'
 import NotificationSettingsCard from '@/components/account/user/NotificationSettingsCard.vue'
 import PasswordResetCard from '@/components/account/user/PasswordResetCard.vue'
-import ChipNav from '@/components/utils/ChipNav.vue'
 import { useAuthProvider } from '@/components/account/user/useAuthProvider.ts'
+import ChipNav from '@/components/utils/ChipNav.vue'
 
 interface NavItem {
   id: string
@@ -166,6 +132,9 @@ const authStore = useAuthStore()
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const isDesktop = useMediaQuery('(min-width: 1280px)')
+
+const [DefineSectionContent, SectionContent] = createReusableTemplate<{ id: string }>()
 
 // Computed properties
 const user = computed(() => authStore.user)

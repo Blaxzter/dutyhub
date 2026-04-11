@@ -13,7 +13,9 @@ test.describe('Admin Users – approval password', () => {
   test('approval password section has input and save button', async ({ adminPage: page }) => {
     await page.goto('/app/admin/users')
     const section = page.getByTestId('section-approval-password')
+    // eslint-disable-next-line playwright/no-conditional-in-test
     if (await section.isVisible({ timeout: 3000 }).catch(() => false)) {
+      // eslint-disable-next-line playwright/no-conditional-expect
       await expect(
         section.locator('input[type="password"], input[type="text"]').first()
           .or(section.getByRole('button').first()),

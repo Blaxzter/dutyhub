@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 
 import {
   CalendarDate,
@@ -83,7 +83,9 @@ const rangeValue = shallowRef<DateRange | undefined>(
     : undefined,
 )
 
-const placeholder = shallowRef<DateValue>(props.dateFrom ? toCalendarDate(props.dateFrom) : todayVal)
+const placeholder = shallowRef<DateValue>(
+  props.dateFrom ? toCalendarDate(props.dateFrom) : todayVal,
+)
 
 const formatter = useDateFormatter(locale.value)
 
@@ -122,7 +124,10 @@ function isMarked(date: DateValue): boolean {
 function isEndpoint(date: DateValue): boolean {
   if (!rangeValue.value) return false
   const { start, end } = rangeValue.value
-  return (!!start && date.compare(start as DateValue) === 0) || (!!end && date.compare(end as DateValue) === 0)
+  return (
+    (!!start && date.compare(start as DateValue) === 0) ||
+    (!!end && date.compare(end as DateValue) === 0)
+  )
 }
 
 // Display label

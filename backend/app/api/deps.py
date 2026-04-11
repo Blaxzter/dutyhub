@@ -3,11 +3,14 @@ from typing import Annotated, Any, cast
 
 from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi_plugin import Auth0FastAPI  # type: ignore[import-untyped]
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import col
 
 from app.core.config import settings
 from app.core.db import async_session
 from app.crud.user import user as crud_user
+from app.models.event_group_manager import EventGroupManager
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -161,9 +164,41 @@ async def get_or_create_user(
 def current_user(
     required_roles: str | Iterable[str] | None = None,
     *,
+    any_of_roles: str | Iterable[str] | None = None,
     require_active: bool = True,
+    allow_group_managers: bool = False,
 ) -> _CurrentUserDep:
     required_roles_list = _normalize_required_roles(required_roles)
+    any_of_roles_list = _normalize_required_roles(any_of_roles)
+
+    async def _is_any_group_manager(session: AsyncSession, user: User) -> bool:
+        """Check if user manages at least one event group."""
+        result = await session.execute(
+            select(col(EventGroupManager.id))
+            .where(col(EventGroupManager.user_id) == user.id)
+            .limit(1)
+        )
+        return result.scalar_one_or_none() is not None
+
+    async def _check_roles(session: AsyncSession, user: User) -> None:
+        if required_roles_list and not set(required_roles_list).issubset(
+            set(user.roles)
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions",
+            )
+
+        if any_of_roles_list and not set(any_of_roles_list).intersection(
+            set(user.roles)
+        ):
+            # Before rejecting, check if scoped group managers are allowed
+            if allow_group_managers and await _is_any_group_manager(session, user):
+                return
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions",
+            )
 
     async def _current_user(
         request: Request,
@@ -185,13 +220,7 @@ def current_user(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail="Inactive user",
                     )
-                if required_roles_list and not set(required_roles_list).issubset(
-                    set(user.roles)
-                ):
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="Not enough permissions",
-                    )
+                await _check_roles(session, user)
                 return user
 
         user = await get_or_create_user(session, claims)
@@ -202,13 +231,7 @@ def current_user(
                 detail="Inactive user",
             )
 
-        if required_roles_list and not set(required_roles_list).issubset(
-            set(user.roles)
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not enough permissions",
-            )
+        await _check_roles(session, user)
 
         return user
 
@@ -217,6 +240,15 @@ def current_user(
 
 CurrentUser = Annotated[User, Depends(current_user())]
 CurrentSuperuser = Annotated[User, Depends(current_user("admin"))]
+CurrentGlobalManager = Annotated[
+    User, Depends(current_user(any_of_roles=["admin", "event_manager"]))
+]
+CurrentManager = Annotated[
+    User,
+    Depends(
+        current_user(any_of_roles=["admin", "event_manager"], allow_group_managers=True)
+    ),
+]
 AnyUser = Annotated[User, Depends(current_user(require_active=False))]
 
 

@@ -7,9 +7,9 @@
  * header. The user object is read from the localStorage cache seeded by the
  * Playwright fixture so that the email matches the seeded test user.
  */
-
 import { ref } from 'vue'
 import type { App } from 'vue'
+
 import { AUTH0_INJECTION_KEY } from '@auth0/auth0-vue'
 
 function getUserFromCache() {
@@ -19,7 +19,9 @@ function getUserFromCache() {
       const raw = JSON.parse(localStorage.getItem(key) ?? '{}')
       const user = raw?.body?.decodedToken?.user
       if (user) return user
-    } catch { /* fall through to default */ }
+    } catch {
+      /* fall through to default */
+    }
   }
   return {
     sub: 'test|default@test.example.com',
@@ -32,6 +34,7 @@ function getUserFromCache() {
 
 const fakeUser = getUserFromCache()
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fakeAuth0: any = {
   isAuthenticated: ref(true),
   isLoading: ref(false),

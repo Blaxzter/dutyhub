@@ -17,6 +17,7 @@ if __name__ != "__main__":
 
 class DutySlot(Base, table=True):
     __tablename__ = "duty_slots"  # type: ignore[assignment]
+    __table_args__ = (sa.Index("ix_duty_slots_event_id_date", "event_id", "date"),)
 
     event_id: uuid.UUID = Field(
         sa_column=sa.Column(

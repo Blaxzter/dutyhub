@@ -402,3 +402,107 @@ class TestRoleNormalization:
 
         result = _normalize_required_roles(("admin", "user"))
         assert result == ["admin", "user"]
+
+
+@pytest.mark.asyncio
+class TestCurrentUserAnyOfRoles:
+    """Test suite for any_of_roles OR-semantics in current_user dependency."""
+
+    async def test_first_role_matches(
+        self,
+        db_session: AsyncSession,
+        test_admin_user: User,
+        mock_request: MagicMock,
+    ):
+        """Test that first matching role grants access."""
+        claims = {"sub": test_admin_user.auth0_sub, "email": test_admin_user.email}
+        dependency = current_user(any_of_roles=["admin", "event_manager"])
+
+        user = await dependency(request=mock_request, session=db_session, claims=claims)
+
+        assert user.id == test_admin_user.id
+
+    async def test_second_role_matches(
+        self,
+        db_session: AsyncSession,
+        test_event_manager_user: User,
+        mock_request: MagicMock,
+    ):
+        """Test that second matching role grants access."""
+        claims = {
+            "sub": test_event_manager_user.auth0_sub,
+            "email": test_event_manager_user.email,
+        }
+        dependency = current_user(any_of_roles=["admin", "event_manager"])
+
+        user = await dependency(request=mock_request, session=db_session, claims=claims)
+
+        assert user.id == test_event_manager_user.id
+
+    async def test_neither_role_matches_raises_403(
+        self,
+        db_session: AsyncSession,
+        test_user: User,
+        mock_request: MagicMock,
+    ):
+        """Test that user with no matching role is rejected."""
+        claims = {"sub": test_user.auth0_sub, "email": test_user.email}
+        dependency = current_user(any_of_roles=["admin", "event_manager"])
+
+        with pytest.raises(HTTPException) as exc_info:
+            await dependency(request=mock_request, session=db_session, claims=claims)
+
+        assert exc_info.value.status_code == 403
+        assert "Not enough permissions" in str(exc_info.value.detail)
+
+    async def test_current_manager_annotated_allows_admin(
+        self,
+        db_session: AsyncSession,
+        test_admin_user: User,
+        mock_request: MagicMock,
+    ):
+        """Test CurrentManager annotated dep allows admin users."""
+        from app.api.deps import CurrentManager
+
+        claims = {"sub": test_admin_user.auth0_sub, "email": test_admin_user.email}
+        dep = get_args(CurrentManager)[1].dependency
+
+        user = await dep(request=mock_request, session=db_session, claims=claims)
+
+        assert user.id == test_admin_user.id
+
+    async def test_current_manager_annotated_allows_event_manager(
+        self,
+        db_session: AsyncSession,
+        test_event_manager_user: User,
+        mock_request: MagicMock,
+    ):
+        """Test CurrentManager annotated dep allows event_manager users."""
+        from app.api.deps import CurrentManager
+
+        claims = {
+            "sub": test_event_manager_user.auth0_sub,
+            "email": test_event_manager_user.email,
+        }
+        dep = get_args(CurrentManager)[1].dependency
+
+        user = await dep(request=mock_request, session=db_session, claims=claims)
+
+        assert user.id == test_event_manager_user.id
+
+    async def test_current_manager_annotated_rejects_plain_user(
+        self,
+        db_session: AsyncSession,
+        test_user: User,
+        mock_request: MagicMock,
+    ):
+        """Test CurrentManager annotated dep rejects plain users."""
+        from app.api.deps import CurrentManager
+
+        claims = {"sub": test_user.auth0_sub, "email": test_user.email}
+        dep = get_args(CurrentManager)[1].dependency
+
+        with pytest.raises(HTTPException) as exc_info:
+            await dep(request=mock_request, session=db_session, claims=claims)
+
+        assert exc_info.value.status_code == 403

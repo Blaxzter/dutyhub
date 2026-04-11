@@ -1,0 +1,93 @@
+# Docker Compose for E2E testing.
+# Used by scripts/run-e2e-docker.mjs — not meant to be run directly.
+#
+# Reads Auth0 + other secrets from .env, then overrides DB/SMTP/networking
+# so services talk to each other inside Docker while Playwright connects
+# from the host via exposed ports.
+
+services:
+  db:
+    image: postgres:16.9
+    restart: "no"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-app}",
+        ]
+      interval: 5s
+      retries: 10
+      start_period: 10s
+      timeout: 5s
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-app}
+      - POSTGRES_USER=${POSTGRES_USER:-app}
+      - POSTGRES_DB=${POSTGRES_DB:-app}
+    # RAM-backed storage — faster, no leftover volumes
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  prestart:
+    build:
+      context: ./backend
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: bash scripts/prestart.sh
+    env_file: .env
+    environment:
+      - TESTING=true
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - SMTP_HOST=mailcatcher
+      - SMTP_PORT=1025
+      - SMTP_TLS=False
+      - SMTP_SSL=False
+
+  backend:
+    build:
+      context: ./backend
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      prestart:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      - TESTING=true
+      - POSTGRES_SERVER=db
+      - POSTGRES_PORT=5432
+      - BACKEND_CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:4173
+      - SMTP_HOST=mailcatcher
+      - SMTP_PORT=1025
+      - SMTP_TLS=False
+      - SMTP_SSL=False
+      - FRONTEND_HOST=http://localhost:5173
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    restart: "no"
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api/v1
+      - VITE_E2E_AUTH_BYPASS=true
+
+  mailcatcher:
+    image: schickling/mailcatcher
+    restart: "no"
+    ports:
+      - "1080:1080"
+      - "1025:1025"

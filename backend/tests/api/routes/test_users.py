@@ -10,20 +10,24 @@ from app.schemas.users import UserProfileUpdate
 
 @pytest.mark.asyncio
 class TestUserRoutes:
-    async def test_list_users(self, async_client: AsyncClient, test_user: User):
+    async def test_list_users(
+        self, async_client: AsyncClient, test_user: User, as_admin: None
+    ):
         response = await async_client.get("/api/v1/users/")
         assert response.status_code == 200
         data = response.json()
         assert any(item["id"] == str(test_user.id) for item in data)
 
-    async def test_get_user(self, async_client: AsyncClient, test_user: User):
+    async def test_get_user(
+        self, async_client: AsyncClient, test_user: User, as_admin: None
+    ):
         response = await async_client.get(f"/api/v1/users/{test_user.id}")
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == str(test_user.id)
         assert data["email"] == test_user.email
 
-    async def test_create_user(self, async_client: AsyncClient):
+    async def test_create_user(self, async_client: AsyncClient, as_admin: None):
         payload = {
             "auth0_sub": "auth0|created123",
             "email": "created@example.com",
@@ -39,7 +43,9 @@ class TestUserRoutes:
         assert data["name"] == payload["name"]
         assert data["roles"] == ["user"]
 
-    async def test_update_user(self, async_client: AsyncClient, test_user: User):
+    async def test_update_user(
+        self, async_client: AsyncClient, test_user: User, as_admin: None
+    ):
         payload = {"name": "Updated User", "email": "updated@example.com"}
         response = await async_client.patch(
             f"/api/v1/users/{test_user.id}",
@@ -56,6 +62,7 @@ class TestUserRoutes:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
+        as_admin: None,
     ):
         response = await async_client.delete(f"/api/v1/users/{test_user.id}")
         assert response.status_code == 200
@@ -94,6 +101,7 @@ class TestUserRouteHelpers:
     async def test_update_user_profile(
         self,
         monkeypatch: pytest.MonkeyPatch,
+        db_session: AsyncSession,
         test_user: User,
     ):
         called = {}
@@ -112,6 +120,7 @@ class TestUserRouteHelpers:
         profile = await update_user_profile(
             user_update=update,
             current_user=test_user,
+            session=db_session,
         )
 
         assert profile.name == "Updated Name"

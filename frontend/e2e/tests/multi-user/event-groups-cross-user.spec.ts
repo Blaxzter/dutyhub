@@ -58,16 +58,17 @@ test.describe('Cross-user – availability flow', () => {
 
   test('member availability appears in admin member table', async ({ adminPage, memberPage }) => {
     // Member registers availability via UI
-    await memberPage.goto(`/app/event-groups/${group.id}`)
-    await memberPage.getByTestId('btn-availability').click()
+    await memberPage.goto(`/app/event-groups/${group.id}/availability`)
+    const memberSection = memberPage.getByTestId('section-availability')
+    await memberSection.getByTestId('btn-availability').click()
     await memberPage.getByTestId('availability-type-fully_available').click()
     await memberPage.getByTestId('btn-save').click()
-    await expect(memberPage.getByTestId('btn-availability')).toBeVisible()
+    await expect(memberSection.getByTestId('btn-availability')).toBeVisible()
 
     // Admin sees the entry in the member availability table
-    await adminPage.goto(`/app/event-groups/${group.id}`)
-    const adminTable = adminPage.getByTestId('section-admin-availabilities')
-    await expect(adminTable.getByText(/fully.?available|open to be requested/i)).toBeVisible()
+    await adminPage.goto(`/app/event-groups/${group.id}/availability`)
+    const adminSection = adminPage.getByTestId('section-availability')
+    await expect(adminSection.getByTestId('section-admin-availabilities').getByText(/fully.?available|open to be requested/i)).toBeVisible()
 
     await clearAvailability(memberPage, group.id).catch(() => {})
   })
@@ -77,7 +78,7 @@ test.describe('Cross-user – availability flow', () => {
     memberPage,
   }) => {
     // Pre-seed availability as member via API
-    await memberPage.goto(`/app/event-groups/${group.id}`)
+    await memberPage.goto(`/app/event-groups/${group.id}/availability`)
     await api(memberPage, 'POST', `/event-groups/${group.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
@@ -85,31 +86,29 @@ test.describe('Cross-user – availability flow', () => {
 
     // Member removes it via UI
     await memberPage.reload()
-    await memberPage.getByTestId('btn-remove-availability').click()
+    const memberSection = memberPage.getByTestId('section-availability')
+    await memberSection.getByTestId('btn-remove-availability').click()
 
     // Handle app-level confirmation dialog
-    const confirmBtn = memberPage.getByRole('button', { name: /confirm|bestätigen/i })
-    if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await confirmBtn.click()
-    }
-    await expect(memberPage.getByTestId('btn-availability')).toBeVisible()
+    await memberPage.getByTestId('btn-dialog-confirm').click()
+    await expect(memberSection.getByTestId('btn-availability')).toBeVisible()
 
     // Admin table shows empty state
-    await adminPage.goto(`/app/event-groups/${group.id}`)
-    const adminTable = adminPage.getByTestId('section-admin-availabilities')
-    await expect(adminTable.getByText(/no.*(members|registrations|availability)/i)).toBeVisible()
+    await adminPage.goto(`/app/event-groups/${group.id}/availability`)
+    const adminSection2 = adminPage.getByTestId('section-availability')
+    await expect(adminSection2.getByTestId('section-admin-availabilities').getByText(/no.*(members|registrations|availability)/i)).toBeVisible()
   })
 
   test('multiple members availability visible to admin', async ({ adminPage, memberPage }) => {
     // Admin registers as fully available
-    await adminPage.goto(`/app/event-groups/${group.id}`)
+    await adminPage.goto(`/app/event-groups/${group.id}/availability`)
     await api(adminPage, 'POST', `/event-groups/${group.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
     })
 
     // Member registers with specific dates
-    await memberPage.goto(`/app/event-groups/${group.id}`)
+    await memberPage.goto(`/app/event-groups/${group.id}/availability`)
     await api(memberPage, 'POST', `/event-groups/${group.id}/availability`, {
       availability_type: 'specific_dates',
       dates: [futureDate(30), futureDate(31)],
@@ -117,8 +116,8 @@ test.describe('Cross-user – availability flow', () => {
 
     // Admin sees both entries in the table
     await adminPage.reload()
-    const adminTable = adminPage.getByTestId('section-admin-availabilities')
-    const rows = adminTable.getByText(/fully.?available|specific.?dates/i)
+    const adminSection = adminPage.getByTestId('section-availability')
+    const rows = adminSection.getByTestId('section-admin-availabilities').getByText(/fully.?available|specific.?dates/i)
     await expect(rows).toHaveCount(2)
 
     await clearAvailability(adminPage, group.id).catch(() => {})

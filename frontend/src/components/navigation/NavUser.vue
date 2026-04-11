@@ -119,11 +119,17 @@ const initials = computed(() => {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem data-testid="nav-user-settings" @click="$router.push({ name: 'settings' })">
+            <DropdownMenuItem
+              data-testid="nav-user-settings"
+              @click="$router.push({ name: 'settings' })"
+            >
               <BadgeCheck />
               {{ $t('navigation.user.actions.account') }}
             </DropdownMenuItem>
-            <DropdownMenuItem data-testid="nav-user-notifications" @click="$router.push({ name: 'notification-preferences' })">
+            <DropdownMenuItem
+              data-testid="nav-user-notifications"
+              @click="$router.push({ name: 'notification-preferences' })"
+            >
               <Bell />
               {{ $t('navigation.user.actions.notifications') }}
             </DropdownMenuItem>

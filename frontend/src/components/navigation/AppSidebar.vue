@@ -75,6 +75,14 @@ router.afterEach(() => {
  * - Today → default (primary)
  * - Otherwise → secondary (neutral)
  */
+function statusBadge(status: string): NavSubItem['badge'] {
+  return {
+    text: t(`duties.events.statuses.${status}`),
+    tooltip: t('navigation.sidebar.badges.managersOnly'),
+    variant: 'secondary',
+  }
+}
+
 function eventBadge(
   openSlots: number,
   nextDate: string | null,
@@ -113,13 +121,17 @@ const navMain = computed(() => {
     title: g.name,
     routeName: 'event-group-detail',
     routeParams: { groupId: g.id },
+    badge: g.status && g.status !== 'published' ? statusBadge(g.status) : undefined,
   }))
 
   const eventItems: NavSubItem[] = sidebarStore.events.map((e) => ({
     title: e.name,
     routeName: 'event-detail',
     routeParams: { eventId: e.id },
-    badge: eventBadge(e.open_slots, e.next_slot_date ?? null, e.next_slot_start_time ?? null),
+    badge:
+      e.status && e.status !== 'published'
+        ? statusBadge(e.status)
+        : eventBadge(e.open_slots, e.next_slot_date ?? null, e.next_slot_start_time ?? null),
   }))
 
   const bookingItems: NavSubItem[] = sidebarStore.bookings.map((b) => ({
@@ -156,6 +168,19 @@ const navMain = computed(() => {
   ]
 })
 
+const navManager = computed(() => {
+  const items = []
+  if (authStore.isManager) {
+    items.push({
+      title: 'Reports',
+      titleKey: 'admin.reporting.title',
+      icon: BarChart3,
+      routeName: 'reporting',
+    })
+  }
+  return items
+})
+
 const navAdmin = computed(() =>
   authStore.isAdmin
     ? [
@@ -164,12 +189,6 @@ const navAdmin = computed(() =>
           titleKey: 'admin.users.title',
           icon: Users,
           routeName: 'admin-users',
-        },
-        {
-          title: 'Reports',
-          titleKey: 'admin.reporting.title',
-          icon: BarChart3,
-          routeName: 'admin-reporting',
         },
         {
           title: 'Demo Data',
@@ -219,6 +238,13 @@ const navAdmin = computed(() =>
       </SidebarMenu>
       <NavMain :items="navMain" :open="props.open" />
     </SidebarContent>
+    <NavMain
+      v-if="navManager.length > 0"
+      :items="navManager"
+      :open="props.open"
+      group-label-key="navigation.sidebar.items.management.label"
+      class="shrink-0 px-2 pb-2"
+    />
     <NavMain
       v-if="navAdmin.length > 0"
       :items="navAdmin"
