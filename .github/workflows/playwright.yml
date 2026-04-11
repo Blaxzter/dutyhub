@@ -3,7 +3,7 @@ name: Playwright Tests
 on:
     push:
         branches:
-            - master
+            - main
         paths:
             - "backend/**"
             - "frontend/**"
