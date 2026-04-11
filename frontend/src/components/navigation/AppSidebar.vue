@@ -14,6 +14,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
+import logoIcon from '@/assets/logo/logo.svg'
 import wirksamDarkLogo from '@/assets/logo/wirksam-dark.svg'
 import wirksamLightLogo from '@/assets/logo/wirksam-light.svg'
 
@@ -51,7 +52,7 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
 const { t } = useI18n()
 const authStore = useAuthStore()
 const sidebarStore = useSidebarStore()
-const { isMobile, setOpenMobile } = useSidebar()
+const { isMobile, setOpenMobile, state } = useSidebar()
 const router = useRouter()
 const route = useRoute()
 const mode = useColorMode()
@@ -213,7 +214,18 @@ const navAdmin = computed(() =>
         :to="{ name: 'home' }"
         class="flex items-center gap-2 px-2 py-3 hover:opacity-80 transition-opacity"
       >
-        <img :src="currentLogo" alt="WirkSam" class="w-auto" />
+        <img
+          v-if="state === 'collapsed'"
+          :src="logoIcon"
+          alt="WirkSam"
+          class="size-8"
+        />
+        <img
+          v-else
+          :src="currentLogo"
+          alt="WirkSam"
+          class="w-auto"
+        />
       </RouterLink>
     </SidebarHeader>
     <SidebarContent>
