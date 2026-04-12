@@ -213,19 +213,10 @@ const navAdmin = computed(() =>
       <RouterLink
         :to="{ name: 'home' }"
         class="flex items-center gap-2 px-2 py-3 hover:opacity-80 transition-opacity"
+        :class="{ 'px-0!': state === 'collapsed' }"
       >
-        <img
-          v-if="state === 'collapsed'"
-          :src="logoIcon"
-          alt="WirkSam"
-          class="size-8"
-        />
-        <img
-          v-else
-          :src="currentLogo"
-          alt="WirkSam"
-          class="w-auto"
-        />
+        <img v-if="state === 'collapsed'" :src="logoIcon" alt="WirkSam" class="size-8" />
+        <img v-else :src="currentLogo" alt="WirkSam" class="w-auto" />
       </RouterLink>
     </SidebarHeader>
     <SidebarContent>
