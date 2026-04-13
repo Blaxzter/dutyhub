@@ -83,6 +83,21 @@ ignore = [
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
 
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/api/routes/demo_data.py",
+    "app/api/routes/debug.py",
+    "app/api/routes/testing.py",
+    "app/api/routes/notifications/telegram.py",
+    "app/crud/telegram_binding.py",
+    "app/logic/notifications/channels/telegram.py",
+    "app/logic/notifications/channels/email.py",
+    "app/logic/notifications/channels/push.py",
+    "app/logic/auth0/auth0_service.py",
+    "app/main.py",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

@@ -146,3 +146,31 @@ class TestNotificationRoutes:
 
         r = await async_client.delete(f"/api/v1/notifications/{notif.id}")
         assert r.status_code == 403
+
+    async def test_dismiss_all_notifications(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        test_user: User,
+    ):
+        """Test deleting all notifications for the current user."""
+        for i in range(3):
+            await self._create_notification(db_session, test_user.id, f"N{i}")
+
+        r = await async_client.post("/api/v1/notifications/dismiss-all")
+
+        assert r.status_code == 200
+        assert r.json()["dismissed_count"] >= 3
+
+        count_r = await async_client.get("/api/v1/notifications/unread-count")
+        assert count_r.json()["unread_count"] == 0
+
+    async def test_mark_all_read_with_none(
+        self,
+        async_client: AsyncClient,
+        test_user: User,
+    ):
+        """Marking all read with no notifications returns 0."""
+        r = await async_client.post("/api/v1/notifications/mark-all-read")
+        assert r.status_code == 200
+        assert r.json()["marked_count"] == 0
