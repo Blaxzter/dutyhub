@@ -16,6 +16,11 @@
         "sectionTitle": "Zustellkanaele",
         "telegram": "Telegram"
     },
+    "deleteAll": "Alle löschen",
+    "deleteAllConfirm": "Dadurch werden alle deine Benachrichtigungen dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
+    "deleteAllFailed": "Benachrichtigungen konnten nicht gelöscht werden",
+    "deleteAllTitle": "Alle Benachrichtigungen löschen?",
+    "deletedAll": "Alle Benachrichtigungen gelöscht",
     "dismiss": "Verwerfen",
     "email": {
         "description": "Benachrichtigungen per E-Mail erhalten.",
@@ -194,5 +199,6 @@
                 "name": "Konto abgelehnt"
             }
         }
-    }
+    },
+    "viewAll": "Alle anzeigen"
 }

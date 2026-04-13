@@ -4,9 +4,7 @@
  * Build Docker services, start the full stack, and run Playwright E2E tests.
  *
  * Usage:
- *   node scripts/run-e2e-docker.mjs                    # full run (parallel + serial)
- *   node scripts/run-e2e-docker.mjs --parallel          # parallel tests only
- *   node scripts/run-e2e-docker.mjs --serial            # serial tests only
+ *   node scripts/run-e2e-docker.mjs                    # full run
  *   node scripts/run-e2e-docker.mjs --grep "login"      # run matching tests
  *   node scripts/run-e2e-docker.mjs --up-only           # start services, skip tests
  *   node scripts/run-e2e-docker.mjs --down              # stop services
@@ -30,7 +28,6 @@ const BACKEND_PORT = 8000;
 // ── Parse CLI args ───────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
-let testMode = 'all'; // all | parallel | serial
 let grep = '';
 let noBuild = false;
 let noTeardown = false;
@@ -39,8 +36,6 @@ let down = false;
 
 for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
-        case '--parallel':    testMode = 'parallel'; break;
-        case '--serial':      testMode = 'serial'; break;
         case '--grep':        grep = args[++i] || ''; break;
         case '--up-only':     upOnly = true; noTeardown = true; break;
         case '--down':        down = true; break;
@@ -233,7 +228,6 @@ try {
     };
 
     if (grep) {
-        // Custom grep — single batch
         console.log(`\n==> Running tests matching '${grep}' ...`);
         const code = runForExitCode(`npx playwright test --grep "${grep}"`, {
             cwd: frontendDir,
@@ -241,27 +235,12 @@ try {
         });
         if (code !== 0) failed = true;
     } else {
-        // Phase 1: parallel (everything except @serial)
-        if (testMode === 'all' || testMode === 'parallel') {
-            console.log('\n==> Phase 1: Running parallel tests (excluding @serial) ...');
-            const code = runForExitCode('npx playwright test --grep-invert @serial', {
-                cwd: frontendDir,
-                env: testEnv,
-            });
-            if (code !== 0) failed = true;
-        }
-
-        // Phase 2: serial (@serial with --workers=1)
-        if (!failed && (testMode === 'all' || testMode === 'serial')) {
-            console.log('\n==> Phase 2: Running serial tests (@serial, workers=1) ...');
-            const code = runForExitCode('npx playwright test --grep @serial --workers=1', {
-                cwd: frontendDir,
-                env: testEnv,
-            });
-            if (code !== 0) failed = true;
-        } else if (failed && testMode === 'all') {
-            console.log('\n==> Skipping serial tests because parallel tests failed');
-        }
+        console.log('\n==> Running Playwright tests ...');
+        const code = runForExitCode('npx playwright test', {
+            cwd: frontendDir,
+            env: testEnv,
+        });
+        if (code !== 0) failed = true;
     }
 
     if (failed) {

@@ -165,8 +165,12 @@ test.describe('Event Group Detail – page structure', () => {
 
   test('shows date range in header', async ({ adminPage: page }) => {
     await page.goto(`/app/event-groups/${group.id}`)
-    // The group's date range appears somewhere on the page
-    await expect(page.getByText(new RegExp(new Date().getFullYear().toString()))).toBeVisible()
+    // The group's date range appears somewhere on the page.
+    // EventGroupHeader renders both a mobile (xl:hidden) and a desktop (hidden xl:flex) block;
+    // at the default Desktop Chrome viewport (1280) the desktop block (last in DOM) is the visible one.
+    await expect(
+      page.getByText(new RegExp(new Date().getFullYear().toString())).last(),
+    ).toBeVisible()
   })
 
   test('shows My Availability section', async ({ adminPage: page }) => {
@@ -395,7 +399,9 @@ test.describe('Admin – member availability table', () => {
     await page.goto(`/app/event-groups/${group.id}/availability`)
     // Match both EN "No members have registered" and DE "Noch keine Mitglieder haben Verfügbarkeit registriert"
     await expect(
-      page.getByText(/no.*(members|registrations|availability)|keine.*mitglieder.*verfügbarkeit/i),
+      page
+        .getByTestId('section-admin-availabilities')
+        .getByText(/no members have registered|keine mitglieder.*verfügbarkeit/i),
     ).toBeVisible()
   })
 

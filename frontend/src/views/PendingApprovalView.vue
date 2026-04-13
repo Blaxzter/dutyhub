@@ -98,7 +98,7 @@ onMounted(loadApprovalPasswordStatus)
           <Clock v-else class="h-12 w-12 text-muted-foreground" />
         </div>
       </div>
-      <h1 data-testid="page-heading" class="text-3xl font-bold">
+      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
         {{
           isRejected ? t('common.pendingApproval.rejectedTitle') : t('common.pendingApproval.title')
         }}

@@ -484,13 +484,13 @@ onMounted(loadEvent)
           data-testid="btn-back"
           variant="ghost"
           size="sm"
-          class="-ml-2"
+          class="-ml-2 max-xl:hidden"
           @click="router.push({ name: 'event-detail', params: { eventId: eventId } })"
         >
           <ArrowLeft class="mr-1.5 h-4 w-4" />
           {{ t('common.actions.back') }}
         </Button>
-        <h1 data-testid="page-heading" class="text-3xl font-bold">
+        <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
           {{
             isBatchMode ? t('duties.events.editView.editBatch') : t('duties.events.editView.title')
           }}

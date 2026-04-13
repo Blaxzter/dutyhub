@@ -189,6 +189,20 @@ export const useNotificationStore = defineStore('notification', () => {
     }
   }
 
+  async function dismissAllNotifications() {
+    try {
+      await post<{ dismissed_count: number }>({
+        url: '/notifications/dismiss-all',
+      })
+      notifications.value = []
+      unreadCount.value = 0
+      total.value = 0
+    } catch (error) {
+      console.error('Failed to dismiss all notifications:', error)
+      throw error
+    }
+  }
+
   // ── Notification types ─────────────────────────────────────────
 
   async function fetchNotificationTypes() {
@@ -526,6 +540,7 @@ export const useNotificationStore = defineStore('notification', () => {
     markAsRead,
     markAllAsRead,
     dismissNotification,
+    dismissAllNotifications,
 
     // Types
     fetchNotificationTypes,

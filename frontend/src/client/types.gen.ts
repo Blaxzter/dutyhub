@@ -7168,6 +7168,64 @@ export type NotificationsMarkAllNotificationsReadResponses = {
 export type NotificationsMarkAllNotificationsReadResponse =
   NotificationsMarkAllNotificationsReadResponses[keyof NotificationsMarkAllNotificationsReadResponses]
 
+export type NotificationsDismissAllNotificationsData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/dismiss-all'
+}
+
+export type NotificationsDismissAllNotificationsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsDismissAllNotificationsError =
+  NotificationsDismissAllNotificationsErrors[keyof NotificationsDismissAllNotificationsErrors]
+
+export type NotificationsDismissAllNotificationsResponses = {
+  /**
+   * Response Notifications-Dismiss All Notifications
+   * Successful Response
+   */
+  200: {
+    [key: string]: number
+  }
+}
+
+export type NotificationsDismissAllNotificationsResponse =
+  NotificationsDismissAllNotificationsResponses[keyof NotificationsDismissAllNotificationsResponses]
+
 export type NotificationsDismissNotificationData = {
   body?: never
   path: {

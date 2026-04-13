@@ -389,13 +389,13 @@ const handleSubmit = async () => {
         data-testid="btn-back"
         variant="ghost"
         size="sm"
-        class="-ml-2"
+        class="-ml-2 max-xl:hidden"
         @click="router.push({ name: 'events' })"
       >
         <ArrowLeft class="mr-1.5 h-4 w-4" />
         {{ t('common.actions.back') }}
       </Button>
-      <h1 data-testid="page-heading" class="text-3xl font-bold">
+      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
         {{ t('duties.events.createView.title') }}
       </h1>
       <p class="text-muted-foreground">{{ t('duties.events.createView.subtitle') }}</p>

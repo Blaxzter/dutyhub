@@ -285,7 +285,7 @@ onMounted(loadBookings)
     <!-- Header -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <h1 data-testid="page-heading" class="text-3xl font-bold">
+        <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
           {{ t('duties.bookings.title') }}
         </h1>
         <p class="text-muted-foreground">{{ t('duties.bookings.subtitle') }}</p>

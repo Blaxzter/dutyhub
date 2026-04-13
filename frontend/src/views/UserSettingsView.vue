@@ -38,7 +38,7 @@
   <div :class="{ 'grid grid-cols-[1fr_48rem_1fr] gap-y-8': isDesktop }">
     <!-- Header -->
     <div :class="isDesktop ? 'col-start-2 pb-2' : 'mx-auto max-w-3xl pb-2'">
-      <h1 data-testid="page-heading" class="text-3xl font-bold tracking-tight">
+      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold tracking-tight">
         {{ $t('user.settings.title') }}
       </h1>
       <p class="text-muted-foreground mt-2">

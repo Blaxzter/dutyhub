@@ -64,17 +64,9 @@ test-e2e *args:
 
 # ── Docker E2E (full stack) ──────────────────────────────────────
 
-# Run E2E tests against full Docker stack (parallel + serial)
+# Run E2E tests against full Docker stack
 e2e *args:
     node scripts/run-e2e-docker.mjs {{args}}
-
-# Run E2E tests — parallel only
-e2e-parallel *args:
-    node scripts/run-e2e-docker.mjs --parallel {{args}}
-
-# Run E2E tests — serial only
-e2e-serial *args:
-    node scripts/run-e2e-docker.mjs --serial {{args}}
 
 # Start Docker E2E stack without running tests
 e2e-up:

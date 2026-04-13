@@ -60,7 +60,7 @@ test.describe('Event Group Edit – details section', () => {
 
     // After saving, should navigate away from details (to events section)
     // and the header should show the updated name
-    await expect(page.getByText(newName)).toBeVisible()
+    await expect(page.getByTestId('page-heading')).toHaveText(newName)
   })
 
   test('can update group description', async ({ adminPage: page }) => {

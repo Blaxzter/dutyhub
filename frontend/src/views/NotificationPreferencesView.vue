@@ -161,7 +161,7 @@ onMounted(async () => {
   <div class="mx-auto max-w-5xl space-y-6">
     <!-- Header -->
     <div class="pb-3">
-      <h1 data-testid="page-heading" class="text-3xl font-bold tracking-tight break-words">
+      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold tracking-tight break-words">
         {{ t('notifications.preferences.title') }}
       </h1>
       <p class="text-muted-foreground mt-2">

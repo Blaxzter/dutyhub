@@ -2316,6 +2316,22 @@ export const zNotificationsMarkAllNotificationsReadResponse = z
     description: 'Successful Response',
   })
 
+export const zNotificationsDismissAllNotificationsData = z.object({
+  body: z.optional(z.never()),
+  path: z.optional(z.never()),
+  query: z.optional(z.never()),
+})
+
+/**
+ * Response Notifications-Dismiss All Notifications
+ * Successful Response
+ */
+export const zNotificationsDismissAllNotificationsResponse = z
+  .object({})
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
+
 export const zNotificationsDismissNotificationData = z.object({
   body: z.optional(z.never()),
   path: z.object({

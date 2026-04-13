@@ -16,6 +16,11 @@
         "sectionTitle": "Delivery Channels",
         "telegram": "Telegram"
     },
+    "deleteAll": "Delete all",
+    "deleteAllConfirm": "This will permanently delete all your notifications. This cannot be undone.",
+    "deleteAllFailed": "Failed to delete notifications",
+    "deleteAllTitle": "Delete all notifications?",
+    "deletedAll": "All notifications deleted",
     "dismiss": "Dismiss",
     "email": {
         "description": "Receive notifications via email.",
@@ -194,5 +199,6 @@
                 "name": "Account Rejected"
             }
         }
-    }
+    },
+    "viewAll": "View all"
 }

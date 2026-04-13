@@ -7,7 +7,7 @@ Instead of running Playwright inside a Docker container (`docker compose run --r
 - A reproducible, isolated backend (fresh DB every run, no leftover state)
 - RAM-backed PostgreSQL (tmpfs) for faster test execution
 - Full debugging capabilities (--headed, traces, DevTools) since Playwright runs on the host
-- Parallel + serial test phases with log collection on teardown
+- Log collection on teardown
 - A separate Docker project (`wirksam-e2e`) that doesn't interfere with the dev stack
 
 ## Architecture
@@ -57,10 +57,6 @@ just e2e-rerun --grep "settings"
 # Stop the stack
 just e2e-down
 
-# Run only parallel or serial phase
-just e2e-parallel
-just e2e-serial
-
 # Pass any Playwright flags through
 just e2e --grep "login"
 
@@ -77,7 +73,7 @@ just e2e-logs backend --follow
 just e2e
 ```
 
-Builds images, starts everything, runs parallel tests (excluding `@serial`), then serial tests (`@serial` with `--workers=1`), collects container logs to `e2e-logs/`, and tears down. Exit code reflects test results.
+Builds images, starts everything, runs all Playwright tests, collects container logs to `e2e-logs/`, and tears down. Exit code reflects test results.
 
 ### Iterative development
 
@@ -135,25 +131,6 @@ The `docker-compose.e2e.yml` file is **standalone** — it does not layer on top
 - `VITE_E2E_AUTH_BYPASS=true` (frontend skips real Auth0)
 
 The database uses `tmpfs` instead of a named volume — data lives in RAM and is discarded on container stop. This makes tests faster and guarantees a clean slate every run.
-
-## Adding @serial Tests
-
-When you have tests that must run sequentially (e.g., they mutate shared state), tag them:
-
-```typescript
-test.describe("@serial admin settings", () => {
-  // These run with --workers=1 in the serial phase
-  test("reset all notifications", async ({ adminPage }) => {
-    // ...
-  });
-});
-```
-
-The script automatically splits execution:
-1. **Parallel phase**: `--grep-invert @serial` (all tests except serial, full parallelism)
-2. **Serial phase**: `--grep @serial --workers=1` (sequential)
-
-If parallel tests fail, the serial phase is skipped.
 
 ## Troubleshooting
 

@@ -44,8 +44,30 @@ const router = useRouter()
     </AlertDescription>
   </Alert>
 
-  <!-- Group Header -->
-  <div class="flex flex-wrap items-start justify-between gap-4">
+  <!-- Mobile header (<xl): stacked -->
+  <div class="space-y-2 xl:hidden">
+    <h1 class="text-2xl sm:text-3xl font-bold leading-tight">
+      {{ props.group.name }}
+    </h1>
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+      <StatusDropdown
+        :status="props.group.status"
+        i18n-prefix="duties.eventGroups.statuses"
+        :editable="props.canManage"
+        @change="emit('statusChange', $event)"
+      />
+      <p class="text-sm text-muted-foreground">
+        <CalendarDays class="mr-1 inline h-3.5 w-3.5" />
+        {{ formatDate(props.group.start_date) }} – {{ formatDate(props.group.end_date) }}
+      </p>
+    </div>
+    <p v-if="props.group.description" class="text-muted-foreground">
+      {{ props.group.description }}
+    </p>
+  </div>
+
+  <!-- Desktop header (xl+): title + badge inline, print on right -->
+  <div class="hidden xl:flex flex-wrap items-start justify-between gap-4">
     <div class="space-y-1">
       <div class="flex items-center gap-3">
         <h1 data-testid="page-heading" class="text-3xl font-bold">{{ props.group.name }}</h1>

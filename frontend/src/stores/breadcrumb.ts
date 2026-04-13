@@ -9,6 +9,13 @@ export interface BreadcrumbItem {
   titleKey?: string
   to?: string | { name: string; params?: RouteParamsRawGeneric }
   disabled?: boolean
+  /**
+   * When true, the mobile parent-link walker skips this item and looks
+   * further up the chain. Useful for crumbs that represent the same
+   * routed page as the current section (e.g. a group-detail root whose
+   * sub-tabs are internal sections).
+   */
+  mobileSkip?: boolean
 }
 
 export const useBreadcrumbStore = defineStore('breadcrumb', () => {
@@ -58,14 +65,16 @@ export const useBreadcrumbStore = defineStore('breadcrumb', () => {
   }
 
   const updateCurrentRoute = (route: RouteLocationNormalized) => {
+    const prevName = currentRoute.value?.name
     currentRoute.value = route
-    // Clear dynamic breadcrumbs when route changes (unless you want to keep them)
-    // This ensures automatic breadcrumb updates on navigation
-    if (dynamicBreadcrumbs.value.length > 0) {
-      // Only clear if the new route has its own breadcrumb meta
-      if (route.meta?.breadcrumbs) {
-        dynamicBreadcrumbs.value = []
-      }
+    // Only wipe dynamic breadcrumbs when navigating to a different route (by name).
+    // Param-only changes (e.g. /:section) keep the dynamic title intact.
+    if (
+      dynamicBreadcrumbs.value.length > 0 &&
+      route.meta?.breadcrumbs &&
+      prevName !== route.name
+    ) {
+      dynamicBreadcrumbs.value = []
     }
   }
 
