@@ -48,9 +48,9 @@ repos:
 
           - id: vue-tsc
             name: vue-tsc
-            entry: bash -c "cd frontend && pnpm vue-tsc --noEmit --project tsconfig.app.json"
+            entry: pnpm --dir frontend exec vue-tsc --noEmit --project tsconfig.app.json
             language: system
-            files: ^frontend/src/.*\.(ts|vue)$
+            files: ^frontend/(src/.*\.(ts|vue)|package\.json|pnpm-lock\.yaml)$
             pass_filenames: false
 
           - id: sort-locales
