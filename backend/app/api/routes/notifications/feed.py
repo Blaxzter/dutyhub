@@ -189,6 +189,21 @@ async def mark_all_notifications_read(
     return {"marked_count": count}
 
 
+@router.post("/dismiss-all", response_model=dict[str, int])
+async def dismiss_all_notifications(
+    session: DBDep,
+    current_user: CurrentUser,
+) -> dict[str, int]:
+    """Permanently delete all of the current user's notifications."""
+    count = await crud_notification.delete_all_by_recipient(
+        session, user_id=current_user.id
+    )
+
+    await sse_manager.broadcast(current_user.id, "unread_count", {"unread_count": 0})
+
+    return {"dismissed_count": count}
+
+
 @router.delete("/{notification_id}", status_code=204)
 async def dismiss_notification(
     notification_id: str,

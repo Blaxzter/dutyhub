@@ -522,6 +522,7 @@ onMounted(async () => {
           data-testid="btn-back"
           variant="ghost"
           size="sm"
+          class="max-xl:hidden"
           @click="router.push({ name: 'events' })"
         >
           <ArrowLeft class="mr-2 h-4 w-4" />
@@ -543,7 +544,7 @@ onMounted(async () => {
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0 flex-1 space-y-2">
             <div class="flex items-center gap-3 flex-wrap">
-              <h1 data-testid="page-heading" class="text-3xl font-bold line-clamp-2 break-words">
+              <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold line-clamp-2 break-words">
                 {{ event.name }}
               </h1>
               <StatusDropdown

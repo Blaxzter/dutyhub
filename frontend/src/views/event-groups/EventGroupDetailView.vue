@@ -2,7 +2,15 @@
 import { type Component, computed, onMounted, ref, watch } from 'vue'
 
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
-import { ArrowLeft, CalendarCheck, ListTodo, Pencil, ShieldCheck } from 'lucide-vue-next'
+import {
+  ArrowLeft,
+  CalendarCheck,
+  ListTodo,
+  Pencil,
+  Plus,
+  Printer,
+  ShieldCheck,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -23,6 +31,7 @@ import EventGroupEditForm from '@/components/event-groups/EventGroupEditForm.vue
 import EventGroupEvents from '@/components/event-groups/EventGroupEvents.vue'
 import EventGroupHeader from '@/components/event-groups/EventGroupHeader.vue'
 import EventGroupManagers from '@/components/event-groups/EventGroupManagers.vue'
+import EventGroupPrint from '@/components/event-groups/EventGroupPrint.vue'
 import AvailabilityDialog from '@/components/events/AvailabilityDialog.vue'
 import ChipNav from '@/components/utils/ChipNav.vue'
 
@@ -41,6 +50,7 @@ interface NavItem {
   label: string
   icon: Component
   adminOnly?: boolean
+  mobileOnly?: boolean
 }
 
 const { t } = useI18n()
@@ -76,6 +86,12 @@ const navItems = computed<NavItem[]>(() => [
     icon: CalendarCheck,
   },
   {
+    id: 'print',
+    label: t('duties.eventGroups.detail.nav.print'),
+    icon: Printer,
+    mobileOnly: true,
+  },
+  {
     id: 'details',
     label: t('duties.eventGroups.detail.nav.details'),
     icon: Pencil,
@@ -90,7 +106,10 @@ const navItems = computed<NavItem[]>(() => [
 ])
 
 const visibleNavItems = computed(() =>
-  navItems.value.filter((item) => !item.adminOnly || canManageGroup.value),
+  navItems.value.filter(
+    (item) =>
+      (!item.adminOnly || canManageGroup.value) && (!item.mobileOnly || !isDesktop.value),
+  ),
 )
 
 const chipItems = computed(() =>
@@ -152,11 +171,42 @@ watch(activeSection, (id) => {
   }
 })
 
+// ── Breadcrumbs ──
+// Drive a 3-element trail ("Event Groups > Group Name > Section") reactively.
+// The group crumb is marked mobileSkip so mobile back-link walks past it
+// to "Event Groups" instead of self-linking the same page.
+const breadcrumbItems = computed(() => {
+  if (!group.value) return null
+  return [
+    {
+      title: 'Event Groups',
+      titleKey: 'duties.eventGroups.title',
+      to: { name: 'event-groups' },
+    },
+    {
+      title: group.value.name,
+      mobileSkip: true,
+      to: { name: 'event-group-detail', params: { groupId: groupId.value } },
+    },
+    {
+      title: '',
+      titleKey: `duties.eventGroups.detail.nav.${activeSection.value}`,
+    },
+  ]
+})
+
+watch(
+  breadcrumbItems,
+  (items) => {
+    if (items) breadcrumbStore.setBreadcrumbs(items)
+  },
+  { immediate: true },
+)
+
 // ── Data loading ──
 const handleGroupUpdated = (updated: EventGroupRead) => {
   group.value = updated
   activeSection.value = 'events'
-  breadcrumbStore.setDynamicTitle(updated.name)
 }
 
 const handleStatusChange = async (status: 'draft' | 'published' | 'archived') => {
@@ -197,7 +247,6 @@ const loadGroup = async () => {
       (e: EventRead) => e.event_group_id === groupId.value,
     )
 
-    breadcrumbStore.setDynamicTitle(group.value.name)
 
     try {
       const availRes = await get<{ data: UserAvailabilityRead }>({
@@ -306,6 +355,8 @@ onMounted(loadGroup)
         @remove="handleRemoveAvailability"
       />
 
+      <EventGroupPrint v-if="id === 'print'" :group-id="groupId" />
+
       <EventGroupEditForm
         v-if="id === 'details'"
         :group="group!"
@@ -329,6 +380,7 @@ onMounted(loadGroup)
     <!-- Back + header -->
     <div :class="isDesktop ? 'col-start-2 space-y-6 pb-6' : 'mx-auto max-w-4xl space-y-6 pb-6'">
       <Button
+        v-if="isDesktop"
         variant="ghost"
         size="sm"
         data-testid="btn-back"
@@ -364,6 +416,18 @@ onMounted(loadGroup)
         </CarouselContent>
       </Carousel>
     </div>
+
+    <!-- Mobile FAB: create event (events section only) -->
+    <Button
+      v-if="!loading && group && !isDesktop && canManageGroup && activeSection === 'events'"
+      size="icon"
+      class="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
+      data-testid="fab-create-event"
+      :aria-label="t('duties.events.create')"
+      @click="router.push({ name: 'event-create', query: { groupId } })"
+    >
+      <Plus class="size-7" :stroke-width="2.5" />
+    </Button>
 
     <!-- ==================== DESKTOP (xl+) ==================== -->
     <template v-if="!loading && group && isDesktop">

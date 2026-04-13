@@ -156,8 +156,10 @@
                 "availability": "Verfügbarkeit",
                 "details": "Details",
                 "events": "Veranstaltungen",
-                "management": "Verwaltung"
+                "management": "Verwaltung",
+                "print": "Drucken"
             },
+            "printDescription": "Druckbare Übersichtsblätter oder vollständige Veranstaltungsdetails für diese Gruppe erstellen.",
             "roleEventManager": "Veranstaltungsverwalter",
             "shiftApply": "Alle Termine verschieben",
             "shiftBackward": "zurück",

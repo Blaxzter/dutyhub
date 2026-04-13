@@ -1,7 +1,9 @@
 import { useAuth0 } from '@auth0/auth0-vue'
 
 import { client } from '@/client/client.gen'
-import type { Auth } from '@/client/core/auth'
+import type { Auth } from '@/client/core/auth.gen'
+
+type HttpVerb = 'get' | 'post' | 'put' | 'delete' | 'patch'
 
 /**
  * Composable for making authenticated API calls
@@ -40,15 +42,13 @@ export function useAuthenticatedClient() {
   /**
    * Generic authenticated request function
    */
-  const makeAuthenticatedRequest = async <T>(
-    method: keyof typeof client,
-    options: Parameters<(typeof client)[typeof method]>[0],
+  const makeAuthenticatedRequest = async <T, M extends HttpVerb>(
+    method: M,
+    options: Parameters<(typeof client)[M]>[0],
   ): Promise<T> => {
-    type ClientMethodOptions = Parameters<(typeof client)[typeof method]>[0]
-    type ClientMethod = (opts: ClientMethodOptions) => Promise<T>
-    const clientMethod = client[method] as ClientMethod
+    type ClientMethodOptions = Parameters<(typeof client)[M]>[0]
+    const clientMethod = client[method] as (opts: ClientMethodOptions) => Promise<T>
 
-    // Handle the case where options might be a string (URL) or an object
     const requestOptions: ClientMethodOptions =
       typeof options === 'string'
         ? ({ url: options, security: [bearerAuth], auth: authCallback } as ClientMethodOptions)
@@ -62,19 +62,19 @@ export function useAuthenticatedClient() {
    * Usage: await get<{ data: UserProfile[] }>({ url: '/users/' })
    */
   const get = async <T>(options: Parameters<typeof client.get>[0]): Promise<T> =>
-    makeAuthenticatedRequest<T>('get', options)
+    makeAuthenticatedRequest<T, 'get'>('get', options)
 
   const post = async <T>(options: Parameters<typeof client.post>[0]): Promise<T> =>
-    makeAuthenticatedRequest<T>('post', options)
+    makeAuthenticatedRequest<T, 'post'>('post', options)
 
   const put = async <T>(options: Parameters<typeof client.put>[0]): Promise<T> =>
-    makeAuthenticatedRequest<T>('put', options)
+    makeAuthenticatedRequest<T, 'put'>('put', options)
 
   const del = async <T = void>(options: Parameters<typeof client.delete>[0]): Promise<T> =>
-    makeAuthenticatedRequest<T>('delete', options)
+    makeAuthenticatedRequest<T, 'delete'>('delete', options)
 
   const patch = async <T>(options: Parameters<typeof client.patch>[0]): Promise<T> =>
-    makeAuthenticatedRequest<T>('patch', options)
+    makeAuthenticatedRequest<T, 'patch'>('patch', options)
 
   return {
     getAuthToken,

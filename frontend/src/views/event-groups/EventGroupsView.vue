@@ -143,7 +143,7 @@ onMounted(loadGroups)
     <!-- Header -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <h1 data-testid="page-heading" class="text-3xl font-bold">
+        <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
           {{ t('duties.eventGroups.title') }}
         </h1>
         <p class="text-muted-foreground">{{ t('duties.eventGroups.subtitle') }}</p>
@@ -151,6 +151,7 @@ onMounted(loadGroups)
       <Button
         v-if="authStore.isAdmin || authStore.isEventManager"
         data-testid="btn-create-group"
+        class="max-xl:hidden"
         @click="showCreateDialog = true"
       >
         <Plus class="mr-2 h-4 w-4" />
@@ -260,5 +261,17 @@ onMounted(loadGroups)
         </form>
       </DialogContent>
     </Dialog>
+
+    <!-- Mobile FAB: create group -->
+    <Button
+      v-if="authStore.isAdmin || authStore.isEventManager"
+      size="icon"
+      class="xl:hidden fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
+      data-testid="fab-create-group"
+      :aria-label="t('duties.eventGroups.create')"
+      @click="showCreateDialog = true"
+    >
+      <Plus class="size-7" :stroke-width="2.5" />
+    </Button>
   </div>
 </template>

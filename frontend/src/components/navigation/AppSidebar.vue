@@ -4,6 +4,7 @@ import { computed, onMounted } from 'vue'
 import { useColorMode } from '@vueuse/core'
 import {
   BarChart3,
+  Bell,
   BookCheck,
   CalendarDays,
   CalendarRange,
@@ -14,10 +15,12 @@ import {
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
+import logoIcon from '@/assets/logo/logo.svg'
 import wirksamDarkLogo from '@/assets/logo/wirksam-dark.svg'
 import wirksamLightLogo from '@/assets/logo/wirksam-light.svg'
 
 import { useAuthStore } from '@/stores/auth'
+import { useNotificationStore } from '@/stores/notification'
 import { useSidebarStore } from '@/stores/sidebar'
 
 import { useChangelogStatus } from '@/composables/useChangelogStatus'
@@ -51,7 +54,13 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
 const { t } = useI18n()
 const authStore = useAuthStore()
 const sidebarStore = useSidebarStore()
-const { isMobile, setOpenMobile } = useSidebar()
+const notificationStore = useNotificationStore()
+
+const notificationDisplayCount = computed(() => {
+  if (notificationStore.unreadCount > 99) return '99+'
+  return notificationStore.unreadCount.toString()
+})
+const { isMobile, setOpenMobile, state } = useSidebar()
 const router = useRouter()
 const route = useRoute()
 const mode = useColorMode()
@@ -212,8 +221,10 @@ const navAdmin = computed(() =>
       <RouterLink
         :to="{ name: 'home' }"
         class="flex items-center gap-2 px-2 py-3 hover:opacity-80 transition-opacity"
+        :class="{ 'px-0!': state === 'collapsed' }"
       >
-        <img :src="currentLogo" alt="WirkSam" class="w-auto" />
+        <img v-if="state === 'collapsed'" :src="logoIcon" alt="WirkSam" class="size-8" />
+        <img v-else :src="currentLogo" alt="WirkSam" class="w-auto" />
       </RouterLink>
     </SidebarHeader>
     <SidebarContent>
@@ -230,6 +241,28 @@ const navAdmin = computed(() =>
               <span>{{ t('navigation.sidebar.items.home.label') }}</span>
               <span
                 v-if="route.name === 'home'"
+                class="ml-auto size-1.5 rounded-full bg-foreground"
+              />
+            </RouterLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            :tooltip="t('notifications.title')"
+            :is-active="route.name === 'notifications'"
+            as-child
+          >
+            <RouterLink :to="{ name: 'notifications' }" data-testid="sidebar-link-notifications">
+              <Bell />
+              <span>{{ t('notifications.title') }}</span>
+              <span
+                v-if="notificationStore.hasUnread"
+                class="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-red-700 px-1 text-[10px] font-bold text-white"
+              >
+                {{ notificationDisplayCount }}
+              </span>
+              <span
+                v-else-if="route.name === 'notifications'"
                 class="ml-auto size-1.5 rounded-full bg-foreground"
               />
             </RouterLink>

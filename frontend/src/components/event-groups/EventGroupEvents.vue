@@ -32,6 +32,7 @@ const navigateToEvent = (event: EventRead) => {
       <Button
         v-if="canManage"
         size="sm"
+        class="max-xl:hidden"
         @click="router.push({ name: 'event-create', query: { groupId } })"
       >
         <Plus class="mr-1.5 h-4 w-4" />

@@ -197,6 +197,17 @@ const router = createRouter({
           },
         },
         {
+          path: 'notifications',
+          name: 'notifications',
+          component: () => import('@/views/NotificationsView.vue'),
+          meta: {
+            breadcrumbs: [
+              { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
+              { title: 'Notifications', titleKey: 'notifications.title' },
+            ],
+          },
+        },
+        {
           path: 'settings/notification-preferences',
           name: 'notification-preferences',
           component: () => import('@/views/NotificationPreferencesView.vue'),

@@ -156,8 +156,10 @@
                 "availability": "Availability",
                 "details": "Details",
                 "events": "Events",
-                "management": "Management"
+                "management": "Management",
+                "print": "Print"
             },
+            "printDescription": "Generate printable overview sheets or full event details for this group.",
             "roleEventManager": "Event Manager",
             "shiftApply": "Shift all dates",
             "shiftBackward": "backward",

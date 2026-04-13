@@ -402,7 +402,7 @@ onMounted(() => {
 <template>
   <div class="mx-auto max-w-5xl space-y-6">
     <div class="space-y-2">
-      <h1 data-testid="page-heading" class="text-3xl font-bold">{{ t('admin.users.title') }}</h1>
+      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">{{ t('admin.users.title') }}</h1>
       <p class="text-muted-foreground">{{ t('admin.users.subtitle') }}</p>
     </div>
 

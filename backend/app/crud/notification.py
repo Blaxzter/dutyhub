@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from datetime import datetime, timezone
 
 from pydantic import BaseModel
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
@@ -112,6 +112,17 @@ class CRUDNotification(
             )
             .values(is_read=True, read_at=now)
         )
+        result = await db.execute(stmt)
+        await db.flush()
+        return result.rowcount  # type: ignore[return-value]
+
+    async def delete_all_by_recipient(
+        self,
+        db: AsyncSession,
+        *,
+        user_id: uuid.UUID,
+    ) -> int:
+        stmt = delete(Notification).where(col(Notification.recipient_id) == user_id)
         result = await db.execute(stmt)
         await db.flush()
         return result.rowcount  # type: ignore[return-value]

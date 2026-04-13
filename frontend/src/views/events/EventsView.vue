@@ -241,7 +241,7 @@ onMounted(loadEvents)
     <!-- Header -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <h1 data-testid="page-heading" class="text-3xl font-bold">
+        <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
           {{ t('duties.events.title') }}
         </h1>
         <p class="text-muted-foreground">{{ t('duties.events.subtitle') }}</p>
@@ -319,19 +319,15 @@ onMounted(loadEvents)
           </Button>
         </div>
 
-        <TooltipProvider v-if="authStore.isManager">
-          <Tooltip>
-            <TooltipTrigger as-child>
-              <Button data-testid="btn-create-event" @click="router.push({ name: 'event-create' })">
-                <Plus class="h-4 w-4" />
-                <span class="hidden sm:inline">{{ t('duties.events.create') }}</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent class="sm:hidden">
-              {{ t('duties.events.create') }}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          v-if="authStore.isManager"
+          data-testid="btn-create-event"
+          class="max-xl:hidden"
+          @click="router.push({ name: 'event-create' })"
+        >
+          <Plus class="mr-2 h-4 w-4" />
+          {{ t('duties.events.create') }}
+        </Button>
       </div>
     </div>
 
@@ -400,5 +396,17 @@ onMounted(loadEvents)
       :message="t('duties.events.deleteConfirm')"
       @confirm="confirmDeleteEvent"
     />
+
+    <!-- Mobile FAB: create event -->
+    <Button
+      v-if="authStore.isManager"
+      size="icon"
+      class="xl:hidden fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
+      data-testid="fab-create-event"
+      :aria-label="t('duties.events.create')"
+      @click="router.push({ name: 'event-create' })"
+    >
+      <Plus class="size-7" :stroke-width="2.5" />
+    </Button>
   </div>
 </template>

@@ -278,7 +278,7 @@ onMounted(loadData)
         data-testid="btn-back"
         variant="ghost"
         size="sm"
-        class="mb-2 -ml-2 text-muted-foreground"
+        class="mb-2 -ml-2 text-muted-foreground max-xl:hidden"
         @click="router.push({ name: 'my-bookings' })"
       >
         <ArrowLeft class="mr-1.5 h-4 w-4" />
