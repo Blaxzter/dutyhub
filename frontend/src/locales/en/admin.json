@@ -106,6 +106,7 @@
             "savedAndCopied": "Approval password saved and copied to clipboard.",
             "title": "Approval Password"
         },
+        "approve": "Approve",
         "columns": {
             "actions": "Actions",
             "email": "Email",
@@ -120,9 +121,15 @@
         "deleteDialogDescription": "Are you sure you want to permanently delete {name}'s account? This action cannot be undone.",
         "deleteDialogTitle": "Delete User",
         "deletedToast": "Deleted account for {name}.",
+        "empty": "No users to show.",
+        "filters": {
+            "active": "Active",
+            "all": "All",
+            "pending": "Pending",
+            "rejected": "Rejected"
+        },
         "grantedAdmin": "Granted admin role to {name}.",
         "grantedEventManager": "Granted event manager role to {name}.",
-        "hideRejected": "Hide Rejected",
         "inactive": "Inactive",
         "makeAdmin": "Make Admin",
         "makeEventManager": "Make Event Manager",
@@ -137,7 +144,13 @@
         "removeEventManager": "Remove Event Manager",
         "removedAdmin": "Removed admin role from {name}.",
         "removedEventManager": "Removed event manager role from {name}.",
-        "showRejected": "Show Rejected",
+        "searchPlaceholder": "Search by name or email...",
+        "sections": {
+            "active": "Active Members",
+            "all": "Members",
+            "pending": "Pending Approval",
+            "rejected": "Rejected"
+        },
         "statsTotal": "Total Users",
         "subtitle": "View and manage platform users and their roles.",
         "title": "User Management"

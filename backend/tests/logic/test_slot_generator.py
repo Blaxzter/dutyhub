@@ -6,7 +6,7 @@ from datetime import date, time
 import pytest
 
 from app.logic.slot_generator import generate_duty_slots
-from app.schemas.event import ScheduleOverride
+from app.schemas.event import ExcludedSlot, ScheduleOverride
 
 
 class TestSlotGenerator:
@@ -137,3 +137,95 @@ class TestSlotGenerator:
         )
 
         assert len(slots) == 4
+
+    def test_remainder_mode_short_adds_shorter_final_slot(self):
+        """10:00-11:15 with 30min slots + 'short' = 2 full + 1 shorter slot."""
+        slots = generate_duty_slots(
+            event_id=self._event_id(),
+            event_name="Bierstand",
+            start_date=date(2026, 6, 1),
+            end_date=date(2026, 6, 1),
+            default_start_time=time(10, 0),
+            default_end_time=time(11, 15),
+            slot_duration_minutes=30,
+            remainder_mode="short",
+        )
+
+        assert len(slots) == 3
+        assert slots[0].start_time == time(10, 0)
+        assert slots[0].end_time == time(10, 30)
+        assert slots[-1].start_time == time(11, 0)
+        assert slots[-1].end_time == time(11, 15)
+        assert slots[-1].title == "Bierstand 11:00-11:15"
+
+    def test_remainder_mode_extend_lengthens_last_slot(self):
+        """10:00-11:15 with 30min slots + 'extend' = 2 slots; last runs 10:30-11:15."""
+        slots = generate_duty_slots(
+            event_id=self._event_id(),
+            event_name="Bierstand",
+            start_date=date(2026, 6, 1),
+            end_date=date(2026, 6, 1),
+            default_start_time=time(10, 0),
+            default_end_time=time(11, 15),
+            slot_duration_minutes=30,
+            remainder_mode="extend",
+        )
+
+        assert len(slots) == 2
+        assert slots[-1].start_time == time(10, 30)
+        assert slots[-1].end_time == time(11, 15)
+        assert slots[-1].title == "Bierstand 10:30-11:15"
+
+    def test_remainder_mode_extend_noop_when_no_prior_slot(self):
+        """Window shorter than duration + 'extend' produces no slots."""
+        slots = generate_duty_slots(
+            event_id=self._event_id(),
+            event_name="Test",
+            start_date=date(2026, 6, 1),
+            end_date=date(2026, 6, 1),
+            default_start_time=time(10, 0),
+            default_end_time=time(10, 15),
+            slot_duration_minutes=30,
+            remainder_mode="extend",
+        )
+
+        assert slots == []
+
+    def test_remainder_mode_drop_default_matches_legacy_behavior(self):
+        """'drop' is the default; remainder is discarded."""
+        slots = generate_duty_slots(
+            event_id=self._event_id(),
+            event_name="Test",
+            start_date=date(2026, 6, 1),
+            end_date=date(2026, 6, 1),
+            default_start_time=time(10, 0),
+            default_end_time=time(11, 15),
+            slot_duration_minutes=30,
+            remainder_mode="drop",
+        )
+
+        assert len(slots) == 2
+        assert slots[-1].end_time == time(11, 0)
+
+    def test_excluded_slots_are_filtered(self):
+        """Slots matching (date, start, end) in excluded_slots are removed."""
+        event_id = self._event_id()
+        slots = generate_duty_slots(
+            event_id=event_id,
+            event_name="Test",
+            start_date=date(2026, 6, 1),
+            end_date=date(2026, 6, 1),
+            default_start_time=time(10, 0),
+            default_end_time=time(12, 0),
+            slot_duration_minutes=30,
+            excluded_slots=[
+                ExcludedSlot(
+                    date=date(2026, 6, 1),
+                    start_time=time(10, 30),
+                    end_time=time(11, 0),
+                )
+            ],
+        )
+
+        assert len(slots) == 3
+        assert all(s.start_time != time(10, 30) for s in slots)

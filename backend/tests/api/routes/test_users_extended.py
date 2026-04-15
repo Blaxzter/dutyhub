@@ -19,9 +19,11 @@ class TestUserAdminRoutes:
         r = await async_client.get("/api/v1/users/")
 
         assert r.status_code == 200
-        data: list[dict[str, Any]] = r.json()
-        assert isinstance(data, list)
-        assert len(data) >= 2  # test_user + test_admin_user
+        data: dict[str, Any] = r.json()
+        items: list[dict[str, Any]] = data["items"]
+        assert isinstance(items, list)
+        assert data["counts"]["all"] >= 2  # test_user + test_admin_user
+        assert len(items) >= 2
 
     async def test_get_user_by_id(
         self, async_client: AsyncClient, as_admin: None, test_user: User

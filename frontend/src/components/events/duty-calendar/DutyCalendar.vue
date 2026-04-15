@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, List } from 'lucide-vue-next'
+import {
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  List,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -194,6 +201,64 @@ const goToToday = () => {
   calendarDate.value = new Date()
 }
 
+// ── Month picker ──
+
+const pickerOpen = ref(false)
+const monthPickerScroll = ref<HTMLElement>()
+const activeMonthBtn = ref<HTMLElement | null>(null)
+
+const monthNamesShort = computed(() => {
+  const fmt = new Intl.DateTimeFormat(locale.value, { month: 'short' })
+  return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(2024, i, 1)))
+})
+
+type MonthPickerEntry =
+  | { kind: 'year'; key: string; year: number }
+  | {
+      kind: 'month'
+      key: string
+      year: number
+      month: number
+      label: string
+      isActive: boolean
+    }
+
+const monthPickerItems = computed<MonthPickerEntry[]>(() => {
+  const activeYear = calendarDate.value.getFullYear()
+  const activeMonth = calendarDate.value.getMonth()
+  const startYear = activeYear - 3
+  const endYear = activeYear + 3
+  const entries: MonthPickerEntry[] = []
+  for (let y = startYear; y <= endYear; y++) {
+    entries.push({ kind: 'year', key: `y-${y}`, year: y })
+    for (let m = 0; m < 12; m++) {
+      entries.push({
+        kind: 'month',
+        key: `m-${y}-${m}`,
+        year: y,
+        month: m,
+        label: monthNamesShort.value[m] ?? '',
+        isActive: y === activeYear && m === activeMonth,
+      })
+    }
+  }
+  return entries
+})
+
+const selectMonth = (year: number, month: number) => {
+  const d = new Date(calendarDate.value)
+  d.setFullYear(year)
+  d.setMonth(month)
+  calendarDate.value = d
+  pickerOpen.value = false
+}
+
+watch(pickerOpen, async (open) => {
+  if (!open) return
+  await nextTick()
+  activeMonthBtn.value?.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' })
+})
+
 const goToDay = (day: CalendarDayType) => {
   if (!day.date) return
   calendarDate.value = new Date(day.date)
@@ -238,29 +303,29 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
       <Button
         :variant="viewMode === 'month' ? 'default' : 'ghost'"
         size="sm"
-        class="rounded-none border-0"
+        class="flex-1 rounded-none border-0 sm:flex-none"
         @click="viewMode = 'month'"
       >
         <CalendarDays class="mr-1.5 h-4 w-4" />
-        <span class="hidden sm:inline">{{ t('duties.events.calendar.views.month') }}</span>
+        {{ t('duties.events.calendar.views.month') }}
       </Button>
       <Button
         :variant="viewMode === 'week' ? 'default' : 'ghost'"
         size="sm"
-        class="rounded-none border-0 border-l"
+        class="flex-1 rounded-none border-0 border-l sm:flex-none"
         @click="viewMode = 'week'"
       >
         <List class="mr-1.5 h-4 w-4" />
-        <span class="hidden sm:inline">{{ t('duties.events.calendar.views.week') }}</span>
+        {{ t('duties.events.calendar.views.week') }}
       </Button>
       <Button
         :variant="viewMode === 'day' ? 'default' : 'ghost'"
         size="sm"
-        class="rounded-none border-0 border-l"
+        class="flex-1 rounded-none border-0 border-l sm:flex-none"
         @click="viewMode = 'day'"
       >
         <Clock class="mr-1.5 h-4 w-4" />
-        <span class="hidden sm:inline">{{ t('duties.events.calendar.views.day') }}</span>
+        {{ t('duties.events.calendar.views.day') }}
       </Button>
     </div>
 
@@ -269,16 +334,66 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
       <Button variant="outline" size="sm" @click="goToToday">
         {{ t('duties.events.calendar.today') }}
       </Button>
-      <Button variant="outline" size="icon" class="h-8 w-8" @click="navigatePrev">
+      <Button
+        variant="outline"
+        size="icon"
+        class="hidden h-8 w-8 sm:inline-flex"
+        @click="navigatePrev"
+      >
         <ChevronLeft class="h-4 w-4" />
       </Button>
-      <h2 class="min-w-[140px] text-center text-base font-semibold capitalize sm:text-lg">
-        {{ headerTitle }}
-      </h2>
-      <Button variant="outline" size="icon" class="h-8 w-8" @click="navigateNext">
+      <Button
+        variant="outline"
+        size="sm"
+        class="min-w-[160px] flex-1 justify-between gap-2 capitalize sm:flex-none"
+        :aria-expanded="pickerOpen"
+        @click="pickerOpen = !pickerOpen"
+      >
+        <span>{{ headerTitle }}</span>
+        <ChevronDown
+          class="h-4 w-4 shrink-0 transition-transform duration-200"
+          :class="pickerOpen ? 'rotate-180' : ''"
+        />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        class="hidden h-8 w-8 sm:inline-flex"
+        @click="navigateNext"
+      >
         <ChevronRight class="h-4 w-4" />
       </Button>
     </div>
+  </div>
+
+  <!-- Inline month picker -->
+  <div
+    v-if="pickerOpen"
+    ref="monthPickerScroll"
+    class="flex items-center gap-2 overflow-x-auto no-scrollbar touch-pan-x rounded-md border bg-muted/30 p-2"
+  >
+    <template v-for="entry in monthPickerItems" :key="entry.key">
+      <div
+        v-if="entry.kind === 'year'"
+        class="shrink-0 px-1 text-xs font-semibold text-muted-foreground"
+      >
+        {{ entry.year }}
+      </div>
+      <button
+        v-else
+        :ref="(el) => { if (entry.isActive) activeMonthBtn = el as HTMLElement }"
+        type="button"
+        class="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-all"
+        :class="
+          entry.isActive
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'bg-background text-muted-foreground hover:bg-background/80'
+        "
+        @click="selectMonth(entry.year, entry.month)"
+      >
+        {{ entry.label }}
+      </button>
+    </template>
   </div>
 
   <!-- View components -->
@@ -318,3 +433,13 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
     @navigate-booking="emit('navigateBooking', $event)"
   />
 </template>
+
+<style scoped>
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+</style>

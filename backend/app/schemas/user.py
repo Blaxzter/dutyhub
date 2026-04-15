@@ -53,3 +53,17 @@ class UserRead(BaseModel):
     rejection_reason: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class UserCounts(BaseModel):
+    all: int
+    active: int
+    pending: int
+    rejected: int
+
+
+class UserListResponse(BaseModel):
+    items: list[UserRead]
+    skip: int
+    limit: int
+    counts: UserCounts

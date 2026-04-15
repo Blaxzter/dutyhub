@@ -1206,6 +1206,16 @@ export const zUserAvailabilityWithUser = z
   })
 
 /**
+ * UserCounts
+ */
+export const zUserCounts = z.object({
+  all: z.int(),
+  active: z.int(),
+  pending: z.int(),
+  rejected: z.int(),
+})
+
+/**
  * UserCreate
  */
 export const zUserCreate = z.object({
@@ -1327,6 +1337,16 @@ export const zUserRead = z.object({
 })
 
 /**
+ * UserListResponse
+ */
+export const zUserListResponse = z.object({
+  items: z.array(zUserRead),
+  skip: z.int(),
+  limit: z.int(),
+  counts: zUserCounts,
+})
+
+/**
  * UserUpdate
  */
 export const zUserUpdate = z.object({
@@ -1408,18 +1428,16 @@ export const zUsersGetAuth0ManagementUrlResponse = z
   })
 
 export const zUsersListUsersQuery = z.object({
+  q: z.string().nullish(),
+  status_filter: z.enum(['all', 'active', 'pending', 'rejected']).optional().default('all'),
   skip: z.int().optional().default(0),
-  limit: z.int().optional().default(100),
+  limit: z.int().optional().default(20),
 })
 
 /**
- * Response Users-List Users
- *
  * Successful Response
  */
-export const zUsersListUsersResponse = z.array(zUserRead).register(z.globalRegistry, {
-  description: 'Successful Response',
-})
+export const zUsersListUsersResponse = zUserListResponse
 
 export const zUsersCreateUserBody = zUserCreate
 

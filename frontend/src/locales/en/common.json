@@ -7,12 +7,14 @@
         "create": "Create",
         "delete": "Delete",
         "edit": "Edit",
+        "hide": "Hide",
         "next": "Next",
         "previous": "Previous",
         "publish": "Publish",
         "reset": "Reset",
         "save": "Save",
         "search": "Search...",
+        "show": "Show",
         "submit": "Submit"
     },
     "dialog": {

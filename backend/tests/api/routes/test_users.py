@@ -16,7 +16,77 @@ class TestUserRoutes:
         response = await async_client.get("/api/v1/users/")
         assert response.status_code == 200
         data = response.json()
-        assert any(item["id"] == str(test_user.id) for item in data)
+        assert any(item["id"] == str(test_user.id) for item in data["items"])
+        assert data["counts"]["all"] >= 1
+
+    async def test_list_users_search(
+        self, async_client: AsyncClient, test_user: User, as_admin: None
+    ):
+        assert test_user.email is not None
+        q = test_user.email.split("@")[0]
+        response = await async_client.get(f"/api/v1/users/?q={q}")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["counts"]["all"] >= 1
+        assert all(
+            q.lower() in (item["email"] or "").lower()
+            or q.lower() in (item["name"] or "").lower()
+            for item in data["items"]
+        )
+
+    async def test_list_users_status_filter_and_counts(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        as_admin: None,
+    ):
+        pending = User(
+            auth0_sub="auth0|pending_filter_test",
+            email="pending-filter@example.com",
+            name="Pending Filter",
+            is_active=False,
+            rejection_reason=None,
+        )
+        rejected = User(
+            auth0_sub="auth0|rejected_filter_test",
+            email="rejected-filter@example.com",
+            name="Rejected Filter",
+            is_active=False,
+            rejection_reason="spam",
+        )
+        db_session.add_all([pending, rejected])
+        await db_session.commit()
+
+        r_pending = await async_client.get("/api/v1/users/?status_filter=pending")
+        assert r_pending.status_code == 200
+        pending_body = r_pending.json()
+        pending_ids = {item["id"] for item in pending_body["items"]}
+        assert str(pending.id) in pending_ids
+        assert str(rejected.id) not in pending_ids
+        # counts ignore status_filter — they reflect all statuses
+        assert pending_body["counts"]["pending"] >= 1
+        assert pending_body["counts"]["rejected"] >= 1
+        assert pending_body["counts"]["active"] >= 1
+        assert pending_body["counts"]["all"] == (
+            pending_body["counts"]["active"]
+            + pending_body["counts"]["pending"]
+            + pending_body["counts"]["rejected"]
+        )
+
+        r_rejected = await async_client.get("/api/v1/users/?status_filter=rejected")
+        rejected_ids = {item["id"] for item in r_rejected.json()["items"]}
+        assert str(rejected.id) in rejected_ids
+        assert str(pending.id) not in rejected_ids
+
+    async def test_list_users_pagination(
+        self, async_client: AsyncClient, as_admin: None
+    ):
+        response = await async_client.get("/api/v1/users/?skip=0&limit=1")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["items"]) <= 1
+        assert data["skip"] == 0
+        assert data["limit"] == 1
 
     async def test_get_user(
         self, async_client: AsyncClient, test_user: User, as_admin: None
