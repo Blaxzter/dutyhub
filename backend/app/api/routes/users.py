@@ -1,8 +1,7 @@
 import logging
 import uuid
-from collections.abc import Sequence
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
@@ -26,7 +25,13 @@ from app.models.notification import NotificationSubscription
 from app.models.user import User
 from app.models.user_availability import UserAvailability, UserAvailabilityDate
 from app.schemas.site_settings import SelfApproveRequest
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+from app.schemas.user import (
+    UserCounts,
+    UserCreate,
+    UserListResponse,
+    UserRead,
+    UserUpdate,
+)
 from app.schemas.users import ProfileInit, UserProfile, UserProfileUpdate
 
 logger = logging.getLogger(__name__)
@@ -209,14 +214,24 @@ async def get_auth0_management_url(
     }
 
 
-@router.get("/", response_model=list[UserRead])
+@router.get("/", response_model=UserListResponse)
 async def list_users(
     session: DBDep,
     _: CurrentSuperuser,
+    q: str | None = None,
+    status_filter: Literal["all", "active", "pending", "rejected"] = "all",
     skip: int = 0,
-    limit: int = 100,
-) -> Sequence[User]:
-    return await crud_user.get_multi(session, skip=skip, limit=limit)
+    limit: int = 20,
+) -> UserListResponse:
+    items, counts = await crud_user.search(
+        session, q=q, status=status_filter, skip=skip, limit=limit
+    )
+    return UserListResponse(
+        items=[UserRead.model_validate(u) for u in items],
+        skip=skip,
+        limit=limit,
+        counts=UserCounts(**counts),
+    )
 
 
 @router.get("/{user_id}", response_model=UserRead)

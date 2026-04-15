@@ -2587,6 +2587,28 @@ export type UserAvailabilityWithUser = {
 }
 
 /**
+ * UserCounts
+ */
+export type UserCounts = {
+  /**
+   * All
+   */
+  all: number
+  /**
+   * Active
+   */
+  active: number
+  /**
+   * Pending
+   */
+  pending: number
+  /**
+   * Rejected
+   */
+  rejected: number
+}
+
+/**
  * UserCreate
  */
 export type UserCreate = {
@@ -2638,6 +2660,25 @@ export type UserCreate = {
    * Preferred language
    */
   preferred_language?: string
+}
+
+/**
+ * UserListResponse
+ */
+export type UserListResponse = {
+  /**
+   * Items
+   */
+  items: Array<UserRead>
+  /**
+   * Skip
+   */
+  skip: number
+  /**
+   * Limit
+   */
+  limit: number
+  counts: UserCounts
 }
 
 /**
@@ -3318,6 +3359,14 @@ export type UsersListUsersData = {
   path?: never
   query?: {
     /**
+     * Q
+     */
+    q?: string | null
+    /**
+     * Status Filter
+     */
+    status_filter?: 'all' | 'active' | 'pending' | 'rejected'
+    /**
      * Skip
      */
     skip?: number
@@ -3368,11 +3417,9 @@ export type UsersListUsersError = UsersListUsersErrors[keyof UsersListUsersError
 
 export type UsersListUsersResponses = {
   /**
-   * Response Users-List Users
-   *
    * Successful Response
    */
-  200: Array<UserRead>
+  200: UserListResponse
 }
 
 export type UsersListUsersResponse = UsersListUsersResponses[keyof UsersListUsersResponses]

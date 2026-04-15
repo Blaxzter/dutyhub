@@ -106,6 +106,7 @@
             "savedAndCopied": "Freigabe-Passwort gespeichert und in die Zwischenablage kopiert.",
             "title": "Freigabe-Passwort"
         },
+        "approve": "Freigeben",
         "columns": {
             "actions": "Aktionen",
             "email": "E-Mail",
@@ -120,9 +121,15 @@
         "deleteDialogDescription": "Möchten Sie das Konto von {name} wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
         "deleteDialogTitle": "Benutzer löschen",
         "deletedToast": "Konto für {name} gelöscht.",
+        "empty": "Keine Benutzer vorhanden.",
+        "filters": {
+            "active": "Aktiv",
+            "all": "Alle",
+            "pending": "Ausstehend",
+            "rejected": "Abgelehnt"
+        },
         "grantedAdmin": "Adminrolle an {name} vergeben.",
         "grantedEventManager": "Event-Manager-Rolle an {name} vergeben.",
-        "hideRejected": "Abgelehnte ausblenden",
         "inactive": "Inaktiv",
         "makeAdmin": "Admin machen",
         "makeEventManager": "Event-Manager machen",
@@ -137,7 +144,13 @@
         "removeEventManager": "Event-Manager entfernen",
         "removedAdmin": "Adminrolle von {name} entfernt.",
         "removedEventManager": "Event-Manager-Rolle von {name} entfernt.",
-        "showRejected": "Abgelehnte anzeigen",
+        "searchPlaceholder": "Nach Name oder E-Mail suchen...",
+        "sections": {
+            "active": "Aktive Mitglieder",
+            "all": "Mitglieder",
+            "pending": "Wartet auf Freigabe",
+            "rejected": "Abgelehnt"
+        },
         "statsTotal": "Benutzer gesamt",
         "subtitle": "Plattformbenutzer und deren Rollen anzeigen und verwalten.",
         "title": "Benutzerverwaltung"
