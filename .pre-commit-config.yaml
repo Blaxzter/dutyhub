@@ -1,5 +1,8 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
+# Hooks ordered fastest -> slowest with fail_fast so cheap checks
+# (formatting, sorting, lint) fail before expensive ones (type-check, tests).
+fail_fast: true
 repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.4.0
@@ -17,6 +20,21 @@ repos:
                 )$
           - id: trailing-whitespace
             exclude: ^frontend/src/client/.*
+    - repo: local
+      hooks:
+          - id: sort-locales
+            name: Sort locale JSON files
+            entry: node scripts/pre-commit/sort_locales.js
+            language: node
+            files: ^frontend/src/locales/.*/.*\.json$
+            pass_filenames: false
+
+          - id: check-RMPC-comments
+            name: Check for RMPC comments
+            entry: python scripts/pre-commit/check_remove_comments.py
+            language: python
+            files: \.py$
+
     - repo: https://github.com/astral-sh/ruff-pre-commit
       rev: v0.15.0
       hooks:
@@ -24,6 +42,7 @@ repos:
             args:
                 - --fix
           - id: ruff-format
+
     - repo: local
       hooks:
           - id: basedpyright
@@ -33,19 +52,6 @@ repos:
             files: ^backend/.*\.py$
             pass_filenames: false
 
-          - id: pytest
-            name: pytest
-            entry: python scripts/pre-commit/run_tests.py
-            language: system
-            files: ^backend/
-            pass_filenames: false
-
-          - id: check-RMPC-comments
-            name: Check for RMPC comments
-            entry: python scripts/pre-commit/check_remove_comments.py
-            language: python
-            files: \.py$
-
           - id: vue-tsc
             name: vue-tsc
             entry: pnpm --dir frontend exec vue-tsc --noEmit --project tsconfig.app.json
@@ -53,11 +59,11 @@ repos:
             files: ^frontend/(src/.*\.(ts|vue)|package\.json|pnpm-lock\.yaml)$
             pass_filenames: false
 
-          - id: sort-locales
-            name: Sort locale JSON files
-            entry: node scripts/pre-commit/sort_locales.js
-            language: node
-            files: ^frontend/src/locales/.*/.*\.json$
+          - id: pytest
+            name: pytest
+            entry: python scripts/pre-commit/run_tests.py
+            language: system
+            files: ^backend/
             pass_filenames: false
 
 ci:
