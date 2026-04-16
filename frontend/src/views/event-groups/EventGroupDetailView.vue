@@ -240,12 +240,13 @@ const loadGroup = async () => {
   try {
     const [groupRes, eventsRes] = await Promise.all([
       get<{ data: EventGroupRead }>({ url: `/event-groups/${groupId.value}` }),
-      get<{ data: EventListResponse }>({ url: '/events/', query: { limit: 200 } }),
+      get<{ data: EventListResponse }>({
+        url: '/events/',
+        query: { limit: 200, event_group_id: groupId.value },
+      }),
     ])
     group.value = groupRes.data
-    groupEvents.value = eventsRes.data.items.filter(
-      (e: EventRead) => e.event_group_id === groupId.value,
-    )
+    groupEvents.value = eventsRes.data.items
 
 
     try {

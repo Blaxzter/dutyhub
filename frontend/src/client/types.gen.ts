@@ -4067,6 +4067,10 @@ export type EventsListEventsData = {
      * My Bookings
      */
     my_bookings?: boolean
+    /**
+     * Event Group Id
+     */
+    event_group_id?: string | null
   }
   url: '/api/v1/events/'
 }

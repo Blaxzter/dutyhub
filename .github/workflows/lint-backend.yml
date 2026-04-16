@@ -13,8 +13,9 @@ on:
         types:
             - opened
             - synchronize
-        branches-ignore:
-            - "dependabot/**"
+        branches:
+            - main
+            - dev
         paths:
             - "backend/app/**"
             - "backend/tests/**"
@@ -26,6 +27,7 @@ permissions:
 
 jobs:
     lint-backend:
+        if: github.actor != 'dependabot[bot]'
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
