@@ -146,8 +146,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   const checkPendingUsers = async () => {
     try {
-      const usersRes = await get<{ data: UserRead[] }>({ url: '/users/' })
-      const pending = usersRes.data.filter((u) => !u.is_active && !u.rejection_reason)
+      const usersRes = await get<{ data: { items: UserRead[] } }>({ url: '/users/' })
+      const pending = usersRes.data.items.filter((u) => !u.is_active && !u.rejection_reason)
       pendingUserCount.value = pending.length
       if (pending.length > 0) {
         toast.custom(markRaw(ActionToast), {
