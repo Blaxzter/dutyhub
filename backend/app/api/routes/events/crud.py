@@ -34,6 +34,7 @@ async def list_events(
     search: str | None = None,
     status: EventStatus | None = None,
     my_bookings: bool = Query(default=False),
+    event_group_id: uuid.UUID | None = Query(default=None),
 ) -> EventListResponse:
     """List published events (all users) or all events (admin/manager).
 
@@ -69,6 +70,7 @@ async def list_events(
         status=effective_status,
         booked_by_user_id=booked_by_user_id,
         also_include_group_ids=also_include_group_ids,
+        event_group_id=event_group_id,
     )
     total = await crud_event.get_count_filtered(
         session,
@@ -76,6 +78,7 @@ async def list_events(
         status=effective_status,
         booked_by_user_id=booked_by_user_id,
         also_include_group_ids=also_include_group_ids,
+        event_group_id=event_group_id,
     )
     return EventListResponse(
         items=[EventRead.model_validate(i) for i in items],

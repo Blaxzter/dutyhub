@@ -98,12 +98,10 @@ setup('authenticate member with Auth0', async ({ page }) => {
         const listRes = await fetch(`${apiUrl}/users/`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        const users = (await listRes.json()) as Array<{
-          id: string
-          email: string
-          is_active: boolean
-        }>
-        const member = users.find((u) => u.email?.toLowerCase() === email.toLowerCase())
+        const body = (await listRes.json()) as {
+          items: Array<{ id: string; email: string; is_active: boolean }>
+        }
+        const member = body.items.find((u) => u.email?.toLowerCase() === email.toLowerCase())
         if (member && !member.is_active) {
           await fetch(`${apiUrl}/users/${member.id}`, {
             method: 'PATCH',

@@ -21,12 +21,12 @@ async function getMemberId(
   adminPage: import('@playwright/test').Page,
   email: string,
 ): Promise<string> {
-  const users = await api<{ id: string; email: string }[]>(
+  const res = await api<{ items: { id: string; email: string }[] }>(
     adminPage,
     'GET',
     '/users/?limit=200',
   )
-  const member = users.find((u) => u.email === email)
+  const member = res.items.find((u) => u.email === email)
   if (!member) throw new Error(`User ${email} not found`)
   return member.id
 }

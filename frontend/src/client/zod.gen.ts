@@ -1549,6 +1549,7 @@ export const zEventsListEventsQuery = z.object({
   search: z.string().nullish(),
   status: z.enum(['draft', 'published', 'archived']).nullish(),
   my_bookings: z.boolean().optional().default(false),
+  event_group_id: z.uuid().nullish(),
 })
 
 /**

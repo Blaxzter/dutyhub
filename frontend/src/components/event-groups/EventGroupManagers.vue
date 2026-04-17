@@ -58,8 +58,8 @@ const openAddManager = async () => {
   userSearchQuery.value = ''
   if (allUsers.value.length === 0) {
     try {
-      const res = await get<{ data: UserRead[] }>({ url: '/users/', query: { limit: 200 } })
-      allUsers.value = res.data
+      const res = await get<{ data: { items: UserRead[] } }>({ url: '/users/', query: { limit: 200 } })
+      allUsers.value = res.data.items
       updateFilteredUsers()
     } catch {
       allUsers.value = []

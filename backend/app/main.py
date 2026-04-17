@@ -57,6 +57,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:  # noqa: ARG001
         await seed_notification_types(session)
     logger.info("Notification types seeded")
 
+    # Warm Auth0 OIDC discovery + JWKS caches so the first authenticated
+    # request doesn't pay a ~1–2s round-trip to Auth0.
+    async def _warm_auth0_cache() -> None:
+        try:
+            from app.api.deps import auth0
+
+            metadata = await auth0.api_client._discover()  # type: ignore[reportPrivateUsage]
+            jwks_uri = metadata.get("jwks_uri")
+            if jwks_uri:
+                await auth0.api_client._fetch_jwks(jwks_uri)  # type: ignore[reportPrivateUsage]
+            logger.info("Auth0 JWKS cache warmed")
+        except Exception as e:
+            logger.warning(f"Auth0 JWKS warmup failed: {e}")
+
+    asyncio.create_task(_warm_auth0_cache())
+
     # Register signal handlers so SSE connections close BEFORE uvicorn
     # waits for tasks to complete (lifespan teardown runs too late).
     original_handlers: dict[int, Any] = {}

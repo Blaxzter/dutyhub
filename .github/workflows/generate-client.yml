@@ -5,14 +5,16 @@ on:
         types:
             - opened
             - synchronize
-        branches-ignore:
-            - "dependabot/**"
+        branches:
+            - main
+            - dev
         paths:
             - "backend/**"
             - ".github/workflows/generate-client.yml"
 
 jobs:
     generate-client:
+        if: github.actor != 'dependabot[bot]'
         permissions:
             contents: write
         runs-on: ubuntu-latest

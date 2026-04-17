@@ -29,7 +29,10 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         date_to: dt.date | None = None,
         has_future_slots: dt.date | dt.datetime | None = None,
         also_include_group_ids: list[uuid.UUID] | None = None,
+        event_group_id: uuid.UUID | None = None,
     ) -> Select[Any]:
+        if event_group_id is not None:
+            query = query.where(col(Event.event_group_id) == event_group_id)
         if search:
             query = query.where(
                 col(Event.name).ilike(f"%{search}%")
@@ -125,6 +128,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         sort_by: EventSortField = "start_date",
         sort_dir: Literal["asc", "desc"] = "asc",
         also_include_group_ids: list[uuid.UUID] | None = None,
+        event_group_id: uuid.UUID | None = None,
     ) -> list[Event]:
         query = select(Event)
         query = self._apply_common_filters(
@@ -137,6 +141,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
             date_to=date_to,
             has_future_slots=has_future_slots,
             also_include_group_ids=also_include_group_ids,
+            event_group_id=event_group_id,
         )
         order_col = getattr(Event, sort_by)
         query = query.order_by(
@@ -158,6 +163,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         date_to: dt.date | None = None,
         has_future_slots: dt.date | None = None,
         also_include_group_ids: list[uuid.UUID] | None = None,
+        event_group_id: uuid.UUID | None = None,
     ) -> int:
         query = select(func.count()).select_from(Event)
         query = self._apply_common_filters(
@@ -170,6 +176,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
             date_to=date_to,
             has_future_slots=has_future_slots,
             also_include_group_ids=also_include_group_ids,
+            event_group_id=event_group_id,
         )
         result = await db.execute(query)
         return result.scalar_one()
