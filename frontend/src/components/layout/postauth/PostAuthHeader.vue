@@ -19,6 +19,7 @@ import Button from '@/components/ui/button/Button.vue'
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
+import MobileUserMenu from '@/components/navigation/MobileUserMenu.vue'
 import NotificationBell from '@/components/navigation/NotificationBell.vue'
 
 const breadcrumbStore = useBreadcrumbStore()
@@ -86,6 +87,9 @@ const mobileParent = computed(() => {
 
       <div class="ml-auto hidden md:block">
         <NotificationBell />
+      </div>
+      <div class="ml-auto md:hidden">
+        <MobileUserMenu />
       </div>
     </div>
   </header>

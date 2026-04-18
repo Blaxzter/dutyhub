@@ -3,6 +3,11 @@
         "home": "Startseite",
         "settings": "Einstellungen"
     },
+    "mobileBottomNav": {
+        "bookings": "Buchungen",
+        "events": "Events",
+        "inbox": "Posteingang"
+    },
     "sidebar": {
         "badges": {
             "managersOnly": "Nur für Verwalter sichtbar",

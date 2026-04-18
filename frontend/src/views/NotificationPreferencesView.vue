@@ -263,7 +263,7 @@ onMounted(async () => {
     >
       <div
         v-if="autoSaveStatus === 'saving' || autoSaveStatus === 'saved'"
-        class="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
+        class="fixed bottom-24 md:bottom-6 left-1/2 z-50 -translate-x-1/2"
       >
         <div
           :class="[

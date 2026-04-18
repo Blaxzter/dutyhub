@@ -26,6 +26,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 import PostAuthHeader from '@/components/layout/postauth/PostAuthHeader.vue'
 import AppSidebar from '@/components/navigation/AppSidebar.vue'
+import MobileBottomNav from '@/components/navigation/MobileBottomNav.vue'
 import ErrorBoundary from '@/components/utils/ErrorBoundary.vue'
 
 const { t } = useI18n()
@@ -66,7 +67,7 @@ function goToChangelog() {
 <template>
   <SidebarProvider v-model:open="open">
     <AppSidebar :open="open" />
-    <SidebarInset class="flex flex-col">
+    <SidebarInset class="flex flex-col pb-16 md:pb-0">
       <PostAuthHeader />
 
       <div class="flex-1 p-4 pt-0" data-testid="main-content">
@@ -93,6 +94,8 @@ function goToChangelog() {
         </RouterLink>
       </footer>
     </SidebarInset>
+
+    <MobileBottomNav />
 
     <!-- What's New dialog -->
     <Dialog

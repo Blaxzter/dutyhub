@@ -401,7 +401,7 @@ onMounted(loadEvents)
     <Button
       v-if="authStore.isManager"
       size="icon"
-      class="xl:hidden fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
+      class="xl:hidden fixed bottom-24 md:bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
       data-testid="fab-create-event"
       :aria-label="t('duties.events.create')"
       @click="router.push({ name: 'event-create' })"

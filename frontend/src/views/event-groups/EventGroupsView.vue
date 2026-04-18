@@ -266,7 +266,7 @@ onMounted(loadGroups)
     <Button
       v-if="authStore.isAdmin || authStore.isEventManager"
       size="icon"
-      class="xl:hidden fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
+      class="xl:hidden fixed bottom-24 md:bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
       data-testid="fab-create-group"
       :aria-label="t('duties.eventGroups.create')"
       @click="showCreateDialog = true"

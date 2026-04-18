@@ -3,6 +3,11 @@
         "home": "Home",
         "settings": "Settings"
     },
+    "mobileBottomNav": {
+        "bookings": "Bookings",
+        "events": "Events",
+        "inbox": "Inbox"
+    },
     "sidebar": {
         "badges": {
             "managersOnly": "Only visible to managers",

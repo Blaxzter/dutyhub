@@ -175,30 +175,29 @@ watch(activeSection, (id) => {
 // Drive a 3-element trail ("Event Groups > Group Name > Section") reactively.
 // The group crumb is marked mobileSkip so mobile back-link walks past it
 // to "Event Groups" instead of self-linking the same page.
-const breadcrumbItems = computed(() => {
-  if (!group.value) return null
-  return [
-    {
-      title: 'Event Groups',
-      titleKey: 'duties.eventGroups.title',
-      to: { name: 'event-groups' },
-    },
-    {
-      title: group.value.name,
-      mobileSkip: true,
-      to: { name: 'event-group-detail', params: { groupId: groupId.value } },
-    },
-    {
-      title: '',
-      titleKey: `duties.eventGroups.detail.nav.${activeSection.value}`,
-    },
-  ]
-})
+// Published synchronously with an ellipsis placeholder so the structure
+// doesn't flicker against the 2-element meta.breadcrumbs while the group loads.
+const breadcrumbItems = computed(() => [
+  {
+    title: 'Event Groups',
+    titleKey: 'duties.eventGroups.title',
+    to: { name: 'event-groups' },
+  },
+  {
+    title: group.value?.name ?? '…',
+    mobileSkip: true,
+    to: { name: 'event-group-detail', params: { groupId: groupId.value } },
+  },
+  {
+    title: '',
+    titleKey: `duties.eventGroups.detail.nav.${activeSection.value}`,
+  },
+])
 
 watch(
   breadcrumbItems,
   (items) => {
-    if (items) breadcrumbStore.setBreadcrumbs(items)
+    breadcrumbStore.setBreadcrumbs(items)
   },
   { immediate: true },
 )
@@ -422,7 +421,7 @@ onMounted(loadGroup)
     <Button
       v-if="!loading && group && !isDesktop && canManageGroup && activeSection === 'events'"
       size="icon"
-      class="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
+      class="fixed bottom-24 md:bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
       data-testid="fab-create-event"
       :aria-label="t('duties.events.create')"
       @click="router.push({ name: 'event-create', query: { groupId } })"

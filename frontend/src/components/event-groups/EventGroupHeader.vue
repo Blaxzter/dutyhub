@@ -3,7 +3,6 @@ import { CalendarDays, ChevronDown, Info, List, Printer } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import Button from '@/components/ui/button/Button.vue'
 import {
   DropdownMenu,
@@ -11,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 import StatusDropdown from '@/components/events/StatusDropdown.vue'
 
@@ -32,30 +32,34 @@ const router = useRouter()
 </script>
 
 <template>
-  <!-- Draft banner -->
-  <Alert
-    v-if="props.group.status === 'draft'"
-    variant="default"
-    class="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-500/30"
-  >
-    <Info class="h-4 w-4 text-amber-600 dark:text-amber-400" />
-    <AlertDescription>
-      {{ t('duties.eventGroups.draftBanner') }}
-    </AlertDescription>
-  </Alert>
-
   <!-- Mobile header (<xl): stacked -->
   <div class="space-y-2 xl:hidden">
     <h1 class="text-2xl sm:text-3xl font-bold leading-tight">
       {{ props.group.name }}
     </h1>
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-      <StatusDropdown
-        :status="props.group.status"
-        i18n-prefix="duties.eventGroups.statuses"
-        :editable="props.canManage"
-        @change="emit('statusChange', $event)"
-      />
+      <div class="flex items-center gap-1.5">
+        <StatusDropdown
+          :status="props.group.status"
+          i18n-prefix="duties.eventGroups.statuses"
+          :editable="props.canManage"
+          @change="emit('statusChange', $event)"
+        />
+        <Popover v-if="props.group.status === 'draft'">
+          <PopoverTrigger as-child>
+            <button
+              type="button"
+              class="inline-flex h-6 w-6 items-center justify-center rounded-full text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-950/50"
+              :aria-label="t('duties.eventGroups.draftBanner')"
+            >
+              <Info class="h-4 w-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent class="max-w-xs text-sm" side="bottom" align="start">
+            {{ t('duties.eventGroups.draftBanner') }}
+          </PopoverContent>
+        </Popover>
+      </div>
       <p class="text-sm text-muted-foreground">
         <CalendarDays class="mr-1 inline h-3.5 w-3.5" />
         {{ formatDate(props.group.start_date) }} – {{ formatDate(props.group.end_date) }}
@@ -71,13 +75,29 @@ const router = useRouter()
     <div class="space-y-1">
       <div class="flex items-center gap-3">
         <h1 data-testid="page-heading" class="text-3xl font-bold">{{ props.group.name }}</h1>
-        <StatusDropdown
-          data-testid="group-status"
-          :status="props.group.status"
-          i18n-prefix="duties.eventGroups.statuses"
-          :editable="props.canManage"
-          @change="emit('statusChange', $event)"
-        />
+        <div class="flex items-center gap-1.5">
+          <StatusDropdown
+            data-testid="group-status"
+            :status="props.group.status"
+            i18n-prefix="duties.eventGroups.statuses"
+            :editable="props.canManage"
+            @change="emit('statusChange', $event)"
+          />
+          <Popover v-if="props.group.status === 'draft'">
+            <PopoverTrigger as-child>
+              <button
+                type="button"
+                class="inline-flex h-6 w-6 items-center justify-center rounded-full text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-950/50"
+                :aria-label="t('duties.eventGroups.draftBanner')"
+              >
+                <Info class="h-4 w-4" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent class="max-w-xs text-sm" side="bottom" align="start">
+              {{ t('duties.eventGroups.draftBanner') }}
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
       <p v-if="props.group.description" class="text-muted-foreground">
         {{ props.group.description }}

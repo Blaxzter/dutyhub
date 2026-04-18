@@ -5,7 +5,7 @@ export function statusVariant(status?: string | null): NonNullable<BadgeVariants
     case 'published':
       return 'default'
     case 'draft':
-      return 'secondary'
+      return 'warning'
     case 'archived':
       return 'outline'
     default:
