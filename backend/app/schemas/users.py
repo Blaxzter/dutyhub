@@ -41,8 +41,8 @@ class UserProfile(BaseModel):
     email_verified: bool = False
     roles: list[str] = Field(default_factory=list, description="User's roles")
     is_admin: bool = Field(default=False, description="Whether user has admin role")
-    is_event_manager: bool = Field(
-        default=False, description="Whether user has event_manager role"
+    is_task_manager: bool = Field(
+        default=False, description="Whether user has task_manager role"
     )
     is_active: bool = Field(default=True, description="Whether user is active")
     rejection_reason: str | None = Field(
@@ -50,5 +50,5 @@ class UserProfile(BaseModel):
     )
     managed_event_group_ids: list[uuid.UUID] = Field(
         default_factory=list,
-        description="IDs of event groups this user manages (via event_group_managers)",
+        description="IDs of task groups this user manages (via event_group_managers)",
     )

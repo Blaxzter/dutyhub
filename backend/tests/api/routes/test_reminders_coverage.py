@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -54,11 +54,11 @@ class TestReminderCoverage:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test adding a reminder to a cancelled booking fails."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Cancelled Reminder Slot",
             date=date(2026, 8, 1),
             start_time=time(9, 0),
@@ -110,11 +110,11 @@ class TestReminderCoverage:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_admin_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test that a user cannot list reminders for another user's booking."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Other User Reminder Slot",
             date=date(2026, 8, 2),
             start_time=time(10, 0),
@@ -140,11 +140,11 @@ class TestReminderCoverage:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_admin_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test that a user cannot add a reminder to another user's booking."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Other Add Reminder Slot",
             date=date(2026, 8, 3),
             start_time=time(10, 0),
@@ -173,13 +173,13 @@ class TestReminderCoverage:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_admin_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test that a user cannot delete another user's reminder."""
         from app.crud.booking_reminder import booking_reminder as crud_reminder
 
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Other Delete Reminder Slot",
             date=date(2026, 8, 4),
             start_time=time(10, 0),

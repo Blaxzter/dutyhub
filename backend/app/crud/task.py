@@ -10,13 +10,13 @@ from sqlmodel import col
 from app.crud.base import CRUDBase
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
-from app.schemas.event import EventCreate, EventUpdate
+from app.models.task import Task
+from app.schemas.task import TaskCreate, TaskUpdate
 
-EventSortField = Literal["name", "start_date", "end_date", "status", "created_at"]
+TaskSortField = Literal["name", "start_date", "end_date", "status", "created_at"]
 
 
-class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
+class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
     def _apply_common_filters(
         self,
         query: Select[Any],
@@ -32,26 +32,26 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         event_group_id: uuid.UUID | None = None,
     ) -> Select[Any]:
         if event_group_id is not None:
-            query = query.where(col(Event.event_group_id) == event_group_id)
+            query = query.where(col(Task.event_group_id) == event_group_id)
         if search:
             query = query.where(
-                col(Event.name).ilike(f"%{search}%")
-                | col(Event.description).ilike(f"%{search}%")
+                col(Task.name).ilike(f"%{search}%")
+                | col(Task.description).ilike(f"%{search}%")
             )
         if status:
-            status_filter = col(Event.status) == status
+            status_filter = col(Task.status) == status
             if also_include_group_ids:
                 status_filter = or_(
                     status_filter,
-                    col(Event.event_group_id).in_(also_include_group_ids),
+                    col(Task.event_group_id).in_(also_include_group_ids),
                 )
             query = query.where(status_filter)
         if created_by_id:
-            query = query.where(col(Event.created_by_id) == created_by_id)
+            query = query.where(col(Task.created_by_id) == created_by_id)
         if booked_by_user_id:
             query = query.where(
-                col(Event.id).in_(
-                    select(col(DutySlot.event_id))
+                col(Task.id).in_(
+                    select(col(DutySlot.task_id))
                     .join(Booking, col(Booking.duty_slot_id) == col(DutySlot.id))
                     .where(
                         col(Booking.user_id) == booked_by_user_id,
@@ -60,11 +60,11 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
                 )
             )
         if date_from:
-            query = query.where(col(Event.end_date) >= date_from)
+            query = query.where(col(Task.end_date) >= date_from)
         if date_to:
-            query = query.where(col(Event.start_date) <= date_to)
+            query = query.where(col(Task.start_date) <= date_to)
         if has_future_slots:
-            # Only include events that have at least one bookable slot in the future
+            # Only include tasks that have at least one bookable slot in the future
             booking_count_sq = (
                 select(func.count())
                 .select_from(Booking)
@@ -103,8 +103,8 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
                 )
 
             query = query.where(
-                col(Event.id).in_(
-                    select(col(DutySlot.event_id)).where(
+                col(Task.id).in_(
+                    select(col(DutySlot.task_id)).where(
                         future_condition,
                         col(DutySlot.max_bookings) > booking_count_sq,
                     )
@@ -125,12 +125,12 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
         has_future_slots: dt.date | None = None,
-        sort_by: EventSortField = "start_date",
+        sort_by: TaskSortField = "start_date",
         sort_dir: Literal["asc", "desc"] = "asc",
         also_include_group_ids: list[uuid.UUID] | None = None,
         event_group_id: uuid.UUID | None = None,
-    ) -> list[Event]:
-        query = select(Event)
+    ) -> list[Task]:
+        query = select(Task)
         query = self._apply_common_filters(
             query,
             search=search,
@@ -143,7 +143,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
             also_include_group_ids=also_include_group_ids,
             event_group_id=event_group_id,
         )
-        order_col = getattr(Event, sort_by)
+        order_col = getattr(Task, sort_by)
         query = query.order_by(
             col(order_col).asc() if sort_dir == "asc" else col(order_col).desc()
         )
@@ -165,7 +165,7 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         also_include_group_ids: list[uuid.UUID] | None = None,
         event_group_id: uuid.UUID | None = None,
     ) -> int:
-        query = select(func.count()).select_from(Event)
+        query = select(func.count()).select_from(Task)
         query = self._apply_common_filters(
             query,
             search=search,
@@ -182,4 +182,4 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         return result.scalar_one()
 
 
-event = CRUDEvent(Event)
+task = CRUDTask(Task)

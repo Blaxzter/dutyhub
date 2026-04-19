@@ -4,11 +4,11 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-from app.schemas.event import RemainderMode
+from app.schemas.task import RemainderMode
 
 
 class SlotBatchBase(BaseModel):
-    event_id: uuid.UUID
+    task_id: uuid.UUID
     label: str | None = None
     start_date: dt.date
     end_date: dt.date

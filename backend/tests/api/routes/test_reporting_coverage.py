@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -21,22 +21,22 @@ class TestReportingCoverage:
         db_session: AsyncSession,
         test_user: User,
         test_admin_user: User,
-    ) -> Event:
+    ) -> Task:
         """Seed a realistic dataset for reporting tests."""
-        event = Event(
-            name="Reporting Test Event",
+        task = Task(
+            name="Reporting Test Task",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 3),
             status="published",
         )
-        db_session.add(event)
+        db_session.add(task)
         await db_session.flush()
-        await db_session.refresh(event)
+        await db_session.refresh(task)
 
         # Multiple slots with different categories and times
         slots = [
             DutySlot(
-                event_id=event.id,
+                task_id=task.id,
                 title="Morning Security",
                 date=date(2026, 6, 1),
                 start_time=time(8, 0),
@@ -46,7 +46,7 @@ class TestReportingCoverage:
                 location="Gate A",
             ),
             DutySlot(
-                event_id=event.id,
+                task_id=task.id,
                 title="Afternoon Catering",
                 date=date(2026, 6, 1),
                 start_time=time(14, 0),
@@ -56,7 +56,7 @@ class TestReportingCoverage:
                 location="Kitchen",
             ),
             DutySlot(
-                event_id=event.id,
+                task_id=task.id,
                 title="Evening Security",
                 date=date(2026, 6, 2),
                 start_time=time(18, 0),
@@ -97,7 +97,7 @@ class TestReportingCoverage:
         db_session.add_all(bookings)
         await db_session.flush()
 
-        return event
+        return task
 
     async def test_overview_with_rich_data(
         self,
@@ -208,7 +208,7 @@ class TestReportingCoverage:
         assert "hour" in by_hour[0]
         assert "booking_count" in by_hour[0]
 
-    async def test_event_fill_rates(
+    async def test_task_fill_rates(
         self,
         async_client: AsyncClient,
         as_admin: None,
@@ -216,15 +216,15 @@ class TestReportingCoverage:
         test_user: User,
         test_admin_user: User,
     ):
-        """Test event fill rates."""
+        """Test task fill rates."""
         await self._seed_reporting_data(db_session, test_user, test_admin_user)
 
         r = await async_client.get("/api/v1/reporting/overview")
 
         assert r.status_code == 200
-        fill_rates = r.json()["event_fill_rates"]
+        fill_rates = r.json()["task_fill_rates"]
         assert len(fill_rates) >= 1
-        assert "event_name" in fill_rates[0]
+        assert "task_name" in fill_rates[0]
         assert "total_capacity" in fill_rates[0]
         assert "confirmed_bookings" in fill_rates[0]
         assert "fill_rate" in fill_rates[0]
@@ -248,7 +248,7 @@ class TestReportingCoverage:
         # Check header columns
         header = lines[0]
         assert "Slot Title" in header
-        assert "Event Name" in header
+        assert "Task Name" in header
         assert "Location" in header
         assert "Category" in header
 

@@ -35,9 +35,9 @@ def build_calendar(
         event = Event()
         event.add("uid", f"booking-{booking.id}@wirksam")
 
-        # Build summary: "Event Name: Slot Title" or just "Slot Title"
-        event_name = getattr(slot, "event", None) and slot.event.name
-        summary = f"{event_name}: {slot.title}" if event_name else slot.title
+        # Build summary: "Task Name: Slot Title" or just "Slot Title"
+        task_name = getattr(slot, "task", None) and slot.task.name
+        summary = f"{task_name}: {slot.title}" if task_name else slot.title
         event.add("summary", summary)
 
         # Date/time handling
@@ -60,8 +60,8 @@ def build_calendar(
 
         # Description
         desc_parts: list[str] = []
-        if event_name:
-            desc_parts.append(event_name)
+        if task_name:
+            desc_parts.append(task_name)
         if slot.category:
             desc_parts.append(slot.category)
         if booking.notes:

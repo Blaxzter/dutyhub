@@ -1,4 +1,4 @@
-"""Validator coverage for app.schemas.event."""
+"""Validator coverage for app.schemas.task."""
 
 from __future__ import annotations
 
@@ -9,13 +9,13 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.event import (
-    AddSlotsToEvent,
-    EventBase,
-    EventCreateWithSlots,
+from app.schemas.task import (
+    AddSlotsToTask,
     ExcludedSlot,
     ScheduleOverride,
     SlotGenerationConfig,
+    TaskBase,
+    TaskCreateWithSlots,
 )
 
 
@@ -29,9 +29,9 @@ def _schedule(**overrides: Any) -> SlotGenerationConfig:
     )
 
 
-class TestEventBase:
+class TestTaskBase:
     def test_accepts_valid_range(self):
-        e = EventBase(
+        e = TaskBase(
             name="x",
             start_date=dt.date(2026, 1, 1),
             end_date=dt.date(2026, 1, 2),
@@ -40,14 +40,14 @@ class TestEventBase:
 
     def test_rejects_end_before_start(self):
         with pytest.raises(ValidationError, match="end_date"):
-            EventBase(
+            TaskBase(
                 name="x",
                 start_date=dt.date(2026, 1, 2),
                 end_date=dt.date(2026, 1, 1),
             )
 
     def test_same_day_allowed(self):
-        e = EventBase(
+        e = TaskBase(
             name="x",
             start_date=dt.date(2026, 1, 1),
             end_date=dt.date(2026, 1, 1),
@@ -101,9 +101,9 @@ class TestSlotGenerationConfig:
             )
 
 
-class TestEventCreateWithSlots:
+class TestTaskCreateWithSlots:
     def test_valid(self):
-        EventCreateWithSlots(
+        TaskCreateWithSlots(
             name="x",
             start_date=dt.date(2026, 1, 1),
             end_date=dt.date(2026, 1, 2),
@@ -112,7 +112,7 @@ class TestEventCreateWithSlots:
 
     def test_rejects_end_before_start(self):
         with pytest.raises(ValidationError, match="end_date"):
-            EventCreateWithSlots(
+            TaskCreateWithSlots(
                 name="x",
                 start_date=dt.date(2026, 1, 2),
                 end_date=dt.date(2026, 1, 1),
@@ -123,7 +123,7 @@ class TestEventCreateWithSlots:
         from app.schemas.event_group import EventGroupCreate
 
         with pytest.raises(ValidationError, match="event_group_id and new_event_group"):
-            EventCreateWithSlots(
+            TaskCreateWithSlots(
                 name="x",
                 start_date=dt.date(2026, 1, 1),
                 end_date=dt.date(2026, 1, 2),
@@ -137,9 +137,9 @@ class TestEventCreateWithSlots:
             )
 
 
-class TestAddSlotsToEvent:
+class TestAddSlotsToTask:
     def test_valid(self):
-        AddSlotsToEvent(
+        AddSlotsToTask(
             start_date=dt.date(2026, 1, 1),
             end_date=dt.date(2026, 1, 2),
             schedule=_schedule(),
@@ -147,7 +147,7 @@ class TestAddSlotsToEvent:
 
     def test_rejects_end_before_start(self):
         with pytest.raises(ValidationError, match="end_date"):
-            AddSlotsToEvent(
+            AddSlotsToTask(
                 start_date=dt.date(2026, 1, 2),
                 end_date=dt.date(2026, 1, 1),
                 schedule=_schedule(),

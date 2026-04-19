@@ -17,8 +17,8 @@ if __name__ != "__main__":
     from app.models.slot_batch import SlotBatch  # noqa: F401
 
 
-class Event(Base, table=True):
-    __tablename__ = "events"  # type: ignore[assignment]
+class Task(Base, table=True):
+    __tablename__ = "tasks"  # type: ignore[assignment]
 
     name: str = Field(sa_column=sa.Column(sa.String, nullable=False, index=True))
     description: str | None = Field(
@@ -72,11 +72,11 @@ class Event(Base, table=True):
     )
 
     duty_slots: list["DutySlot"] = Relationship(
-        back_populates="event",
+        back_populates="task",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
     slot_batches: list["SlotBatch"] = Relationship(
-        back_populates="event",
+        back_populates="task",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    event_group: "EventGroup" = Relationship(back_populates="events")
+    event_group: "EventGroup" = Relationship(back_populates="tasks")

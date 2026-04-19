@@ -6,14 +6,14 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 
 
 @pytest_asyncio.fixture
-async def test_duty_slot(db_session: AsyncSession, test_event: Event) -> DutySlot:
+async def test_duty_slot(db_session: AsyncSession, test_task: Task) -> DutySlot:
     """Create a test duty slot."""
     slot = DutySlot(
-        event_id=test_event.id,
+        task_id=test_task.id,
         title="Einlasskontrolle",
         description="Einlass am Haupteingang",
         date=date(2026, 5, 24),

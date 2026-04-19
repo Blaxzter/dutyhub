@@ -1,4 +1,4 @@
-"""Event group and user availability fixtures for testing."""
+"""Task group and user availability fixtures for testing."""
 
 import datetime
 
@@ -12,7 +12,7 @@ from app.models.user_availability import UserAvailability, UserAvailabilityDate
 
 @pytest_asyncio.fixture
 async def test_event_group(db_session: AsyncSession, test_user: User) -> EventGroup:
-    """Create a published test event group."""
+    """Create a published test task group."""
     group = EventGroup(
         name="Kirchentags Woche 2026",
         description="Überregionale Kirchentags-Aktionswoche",
@@ -31,7 +31,7 @@ async def test_event_group(db_session: AsyncSession, test_user: User) -> EventGr
 async def test_draft_event_group(
     db_session: AsyncSession, test_user: User
 ) -> EventGroup:
-    """Create a draft test event group."""
+    """Create a draft test task group."""
     group = EventGroup(
         name="Adventskonzert 2026",
         description="Draft group",

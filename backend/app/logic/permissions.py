@@ -12,17 +12,17 @@ async def require_event_group_access(
     session: AsyncSession,
     event_group_id: uuid.UUID | None,
 ) -> None:
-    """Raise 403 unless the user has access to manage the given event group.
+    """Raise 403 unless the user has access to manage the given task group.
 
     Access is granted when ANY of these is true:
     - user.is_admin (global admin)
-    - user.is_event_manager (global event_manager role)
+    - user.is_task_manager (global task_manager role)
     - user is an assigned manager of this specific event_group_id
 
-    If event_group_id is None (event not part of any group), only admins and
-    global event_managers may manage it — scoped group managers cannot.
+    If event_group_id is None (task not part of any group), only admins and
+    global task_managers may manage it — scoped group managers cannot.
     """
-    if user.is_admin or user.is_event_manager:
+    if user.is_admin or user.is_task_manager:
         return
 
     if event_group_id is None:

@@ -9,7 +9,7 @@ class ReportingOverviewStats(BaseModel):
     confirmed_bookings: int
     cancelled_bookings: int
     cancellation_rate: float
-    total_events: int
+    total_tasks: int
     total_slots: int
     total_slot_capacity: int
     filled_slots: int
@@ -44,9 +44,9 @@ class BookingsByHour(BaseModel):
     booking_count: int
 
 
-class EventFillRate(BaseModel):
-    event_id: uuid.UUID
-    event_name: str
+class TaskFillRate(BaseModel):
+    task_id: uuid.UUID
+    task_name: str
     total_capacity: int
     confirmed_bookings: int
     fill_rate: float
@@ -58,4 +58,4 @@ class ReportingResponse(BaseModel):
     top_volunteers: list[TopVolunteer]
     category_breakdown: list[CategoryBreakdown]
     bookings_by_hour: list[BookingsByHour]
-    event_fill_rates: list[EventFillRate]
+    task_fill_rates: list[TaskFillRate]

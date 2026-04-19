@@ -102,22 +102,22 @@ SLOT_TIME_CHANGED = NotificationTypeDef(
     default_channels=["email", "push"],
 )
 
-# ── Event notifications ───────────────────────────────────────────
+# ── Task notifications ───────────────────────────────────────────
 
-EVENT_PUBLISHED = NotificationTypeDef(
-    code="event.published",
-    name="Event Published",
-    description="Notification when a new event is published",
-    category="event",
+TASK_PUBLISHED = NotificationTypeDef(
+    code="task.published",
+    name="Task Published",
+    description="Notification when a new task is published",
+    category="task",
     default_channels=["email"],
 )
 
-# ── Event group notifications ─────────────────────────────────────
+# ── Task group notifications ─────────────────────────────────────
 
 EVENT_GROUP_PUBLISHED = NotificationTypeDef(
     code="event_group.published",
-    name="Event Group Published",
-    description="Notification when a new event group is published",
+    name="Task Group Published",
+    description="Notification when a new task group is published",
     category="event_group",
     default_channels=["email"],
 )
@@ -127,7 +127,7 @@ EVENT_GROUP_PUBLISHED = NotificationTypeDef(
 AVAILABILITY_REMINDER = NotificationTypeDef(
     code="availability.reminder",
     name="Availability Reminder",
-    description="Reminder to submit your availability for a published event group",
+    description="Reminder to submit your availability for a published task group",
     category="availability",
     default_channels=["email", "push"],
 )
@@ -169,7 +169,7 @@ ALL_NOTIFICATION_TYPES: list[NotificationTypeDef] = [
     BOOKING_REMINDER,
     SLOT_STARTING_SOON_UNFILLED,
     SLOT_TIME_CHANGED,
-    EVENT_PUBLISHED,
+    TASK_PUBLISHED,
     EVENT_GROUP_PUBLISHED,
     AVAILABILITY_REMINDER,
     USER_REGISTERED,

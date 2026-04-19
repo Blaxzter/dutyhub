@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -56,11 +56,11 @@ class TestBookingsExtendedRoutes:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test dismissing a cancelled booking."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Dismiss Test",
             date=date(2026, 7, 1),
             start_time=time(8, 0),
@@ -94,11 +94,11 @@ class TestBookingsExtendedRoutes:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_admin_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test that a user cannot view another user's booking."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Other User Slot",
             date=date(2026, 7, 2),
             start_time=time(9, 0),
@@ -124,11 +124,11 @@ class TestBookingsExtendedRoutes:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test rebooking a previously cancelled booking."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Rebook Test",
             date=date(2026, 8, 1),
             start_time=time(10, 0),

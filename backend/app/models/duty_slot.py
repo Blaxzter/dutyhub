@@ -8,8 +8,8 @@ from sqlmodel import Field, Relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.models.event import Event
     from app.models.slot_batch import SlotBatch
+    from app.models.task import Task
 
 if __name__ != "__main__":
     from app.models.booking import Booking  # noqa: F401
@@ -17,12 +17,12 @@ if __name__ != "__main__":
 
 class DutySlot(Base, table=True):
     __tablename__ = "duty_slots"  # type: ignore[assignment]
-    __table_args__ = (sa.Index("ix_duty_slots_event_id_date", "event_id", "date"),)
+    __table_args__ = (sa.Index("ix_duty_slots_task_id_date", "task_id", "date"),)
 
-    event_id: uuid.UUID = Field(
+    task_id: uuid.UUID = Field(
         sa_column=sa.Column(
             sa.Uuid,
-            sa.ForeignKey("events.id", ondelete="CASCADE"),
+            sa.ForeignKey("tasks.id", ondelete="CASCADE"),
             nullable=False,
             index=True,
         )
@@ -57,7 +57,7 @@ class DutySlot(Base, table=True):
         default=1, sa_column=sa.Column(sa.Integer, nullable=False)
     )
 
-    event: "Event" = Relationship(back_populates="duty_slots")
+    task: "Task" = Relationship(back_populates="duty_slots")
     batch: Optional["SlotBatch"] = Relationship(back_populates="duty_slots")
     bookings: list["Booking"] = Relationship(
         back_populates="duty_slot",

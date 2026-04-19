@@ -8,15 +8,15 @@ from app.schemas.slot_batch import SlotBatchCreate, SlotBatchUpdate
 
 
 class CRUDSlotBatch(CRUDBase[SlotBatch, SlotBatchCreate, SlotBatchUpdate]):
-    async def get_by_event(
+    async def get_by_task(
         self,
         db: AsyncSession,
         *,
-        event_id: str,
+        task_id: str,
     ) -> list[SlotBatch]:
         query = (
             select(SlotBatch)
-            .where(col(SlotBatch.event_id) == event_id)
+            .where(col(SlotBatch.task_id) == task_id)
             .order_by(col(SlotBatch.created_at).asc())
         )
         result = await db.execute(query)

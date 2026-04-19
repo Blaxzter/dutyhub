@@ -11,21 +11,21 @@ from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
-from app.crud.event import event as crud_event
 from app.crud.event_group_manager import event_group_manager as crud_egm
+from app.crud.task import task as crud_task
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
 from app.models.event_group_manager import EventGroupManager
-from app.schemas.event import EventRead
+from app.models.task import Task
 from app.schemas.feed import (
-    EventFeedResponse,
-    FeedEventItem,
     FeedFocusMode,
     FeedSlotEntry,
+    FeedTaskItem,
     FeedView,
     SlotWindowResponse,
+    TaskFeedResponse,
 )
+from app.schemas.task import TaskRead
 
 router = APIRouter()
 
@@ -51,7 +51,7 @@ def _slot_select(cnt_sub, my_booking_exists):  # noqa: ANN001, ANN202
     """Base SELECT for duty-slot queries with booking counts."""
     return select(
         col(DutySlot.id),
-        col(DutySlot.event_id),
+        col(DutySlot.task_id),
         col(DutySlot.date),
         col(DutySlot.start_time),
         col(DutySlot.end_time),
@@ -88,20 +88,18 @@ def _my_booking_exists(user_id: uuid.UUID):  # noqa: ANN202
 
 async def _query_slots_with_bookings(
     session: AsyncSession,
-    event_ids: list[uuid.UUID],
+    task_ids: list[uuid.UUID],
     user_id: uuid.UUID,
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
 ) -> list[tuple[uuid.UUID, FeedSlotEntry]]:
-    """Return (event_id, FeedSlotEntry) pairs for slots in the given window."""
-    if not event_ids:
+    """Return (task_id, FeedSlotEntry) pairs for slots in the given window."""
+    if not task_ids:
         return []
 
     cnt_sub = _booking_count_sub()
     my_exists = _my_booking_exists(user_id)
-    query = _slot_select(cnt_sub, my_exists).where(
-        col(DutySlot.event_id).in_(event_ids)
-    )
+    query = _slot_select(cnt_sub, my_exists).where(col(DutySlot.task_id).in_(task_ids))
 
     if date_from is not None:
         query = query.where(col(DutySlot.date) >= date_from)
@@ -110,31 +108,31 @@ async def _query_slots_with_bookings(
 
     query = query.order_by(col(DutySlot.date), col(DutySlot.start_time))
     result = await session.execute(query)
-    return [(row.event_id, _row_to_slot(row)) for row in result.all()]
+    return [(row.task_id, _row_to_slot(row)) for row in result.all()]
 
 
 async def _query_slots_first_available(
     session: AsyncSession,
-    event_ids: list[uuid.UUID],
+    task_ids: list[uuid.UUID],
     user_id: uuid.UUID,
     today: dt.date,
     days: int,
 ) -> tuple[dict[uuid.UUID, list[FeedSlotEntry]], dict[uuid.UUID, dt.date]]:
-    """For first-available mode: per-event 5-day window starting from the first slot date.
+    """For first-available mode: per-task 5-day window starting from the first slot date.
 
-    Returns (slots_by_event, window_starts).
+    Returns (slots_by_task, window_starts).
     """
-    # CTE: first slot date >= today per event
+    # CTE: first slot date >= today per task
     first_dates_cte = (
         select(
-            col(DutySlot.event_id),
+            col(DutySlot.task_id),
             func.min(col(DutySlot.date)).label("first_date"),
         )
         .where(
-            col(DutySlot.event_id).in_(event_ids),
+            col(DutySlot.task_id).in_(task_ids),
             col(DutySlot.date) >= today,
         )
-        .group_by(col(DutySlot.event_id))
+        .group_by(col(DutySlot.task_id))
         .cte("first_dates")
     )
 
@@ -143,7 +141,7 @@ async def _query_slots_first_available(
 
     query = (
         _slot_select(cnt_sub, my_exists)
-        .join(first_dates_cte, col(DutySlot.event_id) == first_dates_cte.c.event_id)
+        .join(first_dates_cte, col(DutySlot.task_id) == first_dates_cte.c.task_id)
         .where(
             col(DutySlot.date) >= first_dates_cte.c.first_date,
             col(DutySlot.date) <= first_dates_cte.c.first_date + (days - 1),
@@ -152,38 +150,38 @@ async def _query_slots_first_available(
     )
 
     result = await session.execute(query)
-    slots_by_event: dict[uuid.UUID, list[FeedSlotEntry]] = defaultdict(list)
+    slots_by_task: dict[uuid.UUID, list[FeedSlotEntry]] = defaultdict(list)
     window_starts: dict[uuid.UUID, dt.date] = {}
     for row in result.all():
-        slots_by_event[row.event_id].append(_row_to_slot(row))
+        slots_by_task[row.task_id].append(_row_to_slot(row))
 
     # Derive window starts from the CTE result (query it once more, lightweight)
     fd_query = select(
-        first_dates_cte.c.event_id,
+        first_dates_cte.c.task_id,
         first_dates_cte.c.first_date,
     )
     fd_result = await session.execute(fd_query)
     for row in fd_result.all():
-        window_starts[row.event_id] = row.first_date
+        window_starts[row.task_id] = row.first_date
 
-    return dict(slots_by_event), window_starts
+    return dict(slots_by_task), window_starts
 
 
 async def _get_aggregated_stats(
     session: AsyncSession,
-    event_ids: list[uuid.UUID],
+    task_ids: list[uuid.UUID],
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
 ) -> dict[uuid.UUID, tuple[int, int]]:
-    """Return {event_id: (total_slots, available_slots)}."""
-    if not event_ids:
+    """Return {task_id: (total_slots, available_slots)}."""
+    if not task_ids:
         return {}
 
     cnt_sub = _booking_count_sub()
 
     query = (
         select(
-            col(DutySlot.event_id),
+            col(DutySlot.task_id),
             func.count().label("total_slots"),
             func.sum(
                 case(
@@ -193,7 +191,7 @@ async def _get_aggregated_stats(
             ).label("available_slots"),
         )
         .outerjoin(cnt_sub, col(DutySlot.id) == cnt_sub.c.duty_slot_id)
-        .where(col(DutySlot.event_id).in_(event_ids))
+        .where(col(DutySlot.task_id).in_(task_ids))
     )
 
     if date_from is not None:
@@ -201,10 +199,10 @@ async def _get_aggregated_stats(
     if date_to is not None:
         query = query.where(col(DutySlot.date) <= date_to)
 
-    query = query.group_by(col(DutySlot.event_id))
+    query = query.group_by(col(DutySlot.task_id))
     result = await session.execute(query)
     return {
-        row.event_id: (row.total_slots, int(row.available_slots or 0))
+        row.task_id: (row.total_slots, int(row.available_slots or 0))
         for row in result.all()
     }
 
@@ -216,37 +214,37 @@ async def _get_aggregated_stats(
 
 async def _build_list_feed(
     session: AsyncSession,
-    events: list[Event],
-    event_ids: list[uuid.UUID],
+    tasks: list[Task],
+    task_ids: list[uuid.UUID],
     user_id: uuid.UUID,
     focus_mode: FeedFocusMode,
     days: int,
-) -> list[FeedEventItem]:
+) -> list[FeedTaskItem]:
     today = dt.date.today()
 
     if focus_mode == "first_available":
-        slots_by_event, window_starts = await _query_slots_first_available(
-            session, event_ids, user_id, today, days
+        slots_by_task, window_starts = await _query_slots_first_available(
+            session, task_ids, user_id, today, days
         )
     else:
-        # today-centered: shared window for all events
+        # today-centered: shared window for all tasks
         date_from = today
         date_to = today + dt.timedelta(days=days - 1)
         pairs = await _query_slots_with_bookings(
-            session, event_ids, user_id, date_from, date_to
+            session, task_ids, user_id, date_from, date_to
         )
-        slots_by_event: dict[uuid.UUID, list[FeedSlotEntry]] = defaultdict(list)
+        slots_by_task: dict[uuid.UUID, list[FeedSlotEntry]] = defaultdict(list)
         for eid, entry in pairs:
-            slots_by_event[eid].append(entry)
-        window_starts = dict.fromkeys(event_ids, today)
+            slots_by_task[eid].append(entry)
+        window_starts = dict.fromkeys(task_ids, today)
 
-    items: list[FeedEventItem] = []
-    for ev in events:
-        ev_read = EventRead.model_validate(ev)
+    items: list[FeedTaskItem] = []
+    for ev in tasks:
+        ev_read = TaskRead.model_validate(ev)
         items.append(
-            FeedEventItem(
+            FeedTaskItem(
                 **ev_read.model_dump(),
-                slots=slots_by_event.get(ev.id, []),
+                slots=slots_by_task.get(ev.id, []),
                 slot_window_start=window_starts.get(ev.id),
             )
         )
@@ -255,19 +253,19 @@ async def _build_list_feed(
 
 async def _build_aggregated_feed(
     session: AsyncSession,
-    events: list[Event],
-    event_ids: list[uuid.UUID],
+    tasks: list[Task],
+    task_ids: list[uuid.UUID],
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
-) -> list[FeedEventItem]:
-    stats = await _get_aggregated_stats(session, event_ids, date_from, date_to)
+) -> list[FeedTaskItem]:
+    stats = await _get_aggregated_stats(session, task_ids, date_from, date_to)
 
-    items: list[FeedEventItem] = []
-    for ev in events:
-        ev_read = EventRead.model_validate(ev)
+    items: list[FeedTaskItem] = []
+    for ev in tasks:
+        ev_read = TaskRead.model_validate(ev)
         total, available = stats.get(ev.id, (0, 0))
         items.append(
-            FeedEventItem(
+            FeedTaskItem(
                 **ev_read.model_dump(),
                 total_slots=total,
                 available_slots=available,
@@ -281,8 +279,8 @@ async def _build_aggregated_feed(
 # ---------------------------------------------------------------------------
 
 
-@router.get("/feed", response_model=EventFeedResponse)
-async def event_feed(
+@router.get("/feed", response_model=TaskFeedResponse)
+async def task_feed(
     session: DBDep,
     current_user: CurrentUser,
     view: FeedView = Query(default="list"),
@@ -294,13 +292,13 @@ async def event_feed(
     date_to: dt.date | None = None,
     my_bookings: bool = Query(default=False),
     days: int = Query(default=5, ge=1, le=31),
-) -> EventFeedResponse:
-    """Unified feed endpoint — returns events with view-specific embedded data."""
+) -> TaskFeedResponse:
+    """Unified feed endpoint — returns tasks with view-specific embedded data."""
     effective_status: str | None = None
     also_include_group_ids: list[uuid.UUID] | None = None
 
     if current_user.is_manager:
-        pass  # global admin/event_manager — see everything
+        pass  # global admin/task_manager — see everything
     else:
         result = await session.execute(
             select(col(EventGroupManager.event_group_id)).where(
@@ -319,10 +317,10 @@ async def event_feed(
     ev_date_from = date_from if date_from else today
     ev_date_to = date_to if view == "calendar" else None
     # Only enforce future-slot filter when no explicit date_from is provided
-    # (i.e. user hasn't picked a custom date range to look at past events)
+    # (i.e. user hasn't picked a custom date range to look at past tasks)
     future_slots_cutoff = now if (not date_from and view != "calendar") else None
 
-    events = await crud_event.get_multi_filtered(
+    tasks = await crud_task.get_multi_filtered(
         session,
         skip=skip,
         limit=limit,
@@ -334,7 +332,7 @@ async def event_feed(
         has_future_slots=future_slots_cutoff,
         also_include_group_ids=also_include_group_ids,
     )
-    total = await crud_event.get_count_filtered(
+    total = await crud_task.get_count_filtered(
         session,
         search=search,
         status=effective_status,
@@ -345,35 +343,35 @@ async def event_feed(
         also_include_group_ids=also_include_group_ids,
     )
 
-    if not events:
-        return EventFeedResponse(items=[], total=total, skip=skip, limit=limit)
+    if not tasks:
+        return TaskFeedResponse(items=[], total=total, skip=skip, limit=limit)
 
-    event_ids = [e.id for e in events]
+    task_ids = [e.id for e in tasks]
 
     if view == "list":
         items = await _build_list_feed(
-            session, events, event_ids, current_user.id, focus_mode, days
+            session, tasks, task_ids, current_user.id, focus_mode, days
         )
     else:
         # cards and calendar both get aggregated stats
         items = await _build_aggregated_feed(
-            session, events, event_ids, date_from, date_to
+            session, tasks, task_ids, date_from, date_to
         )
 
-    return EventFeedResponse(items=items, total=total, skip=skip, limit=limit)
+    return TaskFeedResponse(items=items, total=total, skip=skip, limit=limit)
 
 
 @router.get("/active-dates", response_model=list[dt.date])
-async def event_active_dates(
+async def task_active_dates(
     session: DBDep,
     current_user: CurrentUser,
     date_from: dt.date = Query(...),
     date_to: dt.date = Query(...),
 ) -> list[dt.date]:
-    """Return distinct slot dates within a range where published events have slots."""
+    """Return distinct slot dates within a range where published tasks have slots."""
     query = (
         select(func.distinct(col(DutySlot.date)))
-        .join(Event, col(DutySlot.event_id) == col(Event.id))
+        .join(Task, col(DutySlot.task_id) == col(Task.id))
         .where(
             col(DutySlot.date) >= date_from,
             col(DutySlot.date) <= date_to,
@@ -382,7 +380,7 @@ async def event_active_dates(
     )
 
     if current_user.is_manager:
-        pass  # global admin/event_manager — no status filter
+        pass  # global admin/task_manager — no status filter
     else:
         result = await session.execute(
             select(col(EventGroupManager.event_group_id)).where(
@@ -390,10 +388,10 @@ async def event_active_dates(
             )
         )
         managed_ids: list[uuid.UUID] = list(result.scalars().all())
-        status_filter = col(Event.status) == "published"
+        status_filter = col(Task.status) == "published"
         if managed_ids:
             status_filter = or_(
-                status_filter, col(Event.event_group_id).in_(managed_ids)
+                status_filter, col(Task.event_group_id).in_(managed_ids)
             )
         query = query.where(status_filter)
 
@@ -401,28 +399,28 @@ async def event_active_dates(
     return [row[0] for row in result.all()]
 
 
-@router.get("/{event_id}/slot-window", response_model=SlotWindowResponse)
+@router.get("/{task_id}/slot-window", response_model=SlotWindowResponse)
 async def get_slot_window(
-    event_id: str,
+    task_id: str,
     session: DBDep,
     current_user: CurrentUser,
     start_date: dt.date = Query(...),
     days: int = Query(default=5, ge=1, le=31),
 ) -> SlotWindowResponse:
-    """Get slots for a single event within a date window (for next/prev navigation)."""
-    db_event = await crud_event.get(session, event_id, raise_404_error=True)
-    if not current_user.is_manager and db_event.status != "published":
-        if not db_event.event_group_id or not await crud_egm.is_manager(
-            session, user_id=current_user.id, event_group_id=db_event.event_group_id
+    """Get slots for a single task within a date window (for next/prev navigation)."""
+    db_task = await crud_task.get(session, task_id, raise_404_error=True)
+    if not current_user.is_manager and db_task.status != "published":
+        if not db_task.event_group_id or not await crud_egm.is_manager(
+            session, user_id=current_user.id, event_group_id=db_task.event_group_id
         ):
             raise_problem(
-                403, code="event.not_published", detail="Event is not published"
+                403, code="task.not_published", detail="Task is not published"
             )
 
     end_date = start_date + dt.timedelta(days=days - 1)
     pairs = await _query_slots_with_bookings(
         session,
-        event_ids=[db_event.id],
+        task_ids=[db_task.id],
         user_id=current_user.id,
         date_from=start_date,
         date_to=end_date,

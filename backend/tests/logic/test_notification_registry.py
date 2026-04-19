@@ -90,6 +90,6 @@ class TestRegistry:
         categories = {t.category for t in ALL_NOTIFICATION_TYPES}
         assert "booking" in categories
         assert "slot" in categories
-        assert "event" in categories
+        assert "task" in categories
         assert "admin" in categories
         assert "user" in categories

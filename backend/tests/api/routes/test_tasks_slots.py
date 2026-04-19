@@ -1,23 +1,23 @@
-"""Route tests for Event Slots (generation/regeneration) endpoints."""
+"""Route tests for Task Slots (generation/regeneration) endpoints."""
 
 import pytest
 from httpx import AsyncClient
 
-from app.models.event import Event
+from app.models.task import Task
 
 
 @pytest.mark.asyncio
-class TestEventSlotsRoutes:
-    """Test suite for event slot generation routes (admin only)."""
+class TestTaskSlotsRoutes:
+    """Test suite for task slot generation routes (admin only)."""
 
-    async def test_create_event_with_slots(
+    async def test_create_task_with_slots(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test creating an event with auto-generated slots."""
+        """Test creating an task with auto-generated slots."""
         r = await async_client.post(
-            "/api/v1/events/with-slots",
+            "/api/v1/tasks/with-slots",
             json={
-                "name": "Generated Event",
+                "name": "Generated Task",
                 "description": "Auto-generated slots",
                 "start_date": "2026-07-01",
                 "end_date": "2026-07-03",
@@ -33,17 +33,17 @@ class TestEventSlotsRoutes:
 
         assert r.status_code == 201
         data = r.json()
-        assert data["event"]["name"] == "Generated Event"
+        assert data["task"]["name"] == "Generated Task"
         assert data["duty_slots_created"] >= 1
 
-    async def test_create_event_with_slots_and_group(
+    async def test_create_task_with_slots_and_group(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test creating an event with a new event group."""
+        """Test creating an task with a new task group."""
         r = await async_client.post(
-            "/api/v1/events/with-slots",
+            "/api/v1/tasks/with-slots",
             json={
-                "name": "Grouped Event",
+                "name": "Grouped Task",
                 "start_date": "2026-08-01",
                 "end_date": "2026-08-02",
                 "new_event_group": {
@@ -67,11 +67,11 @@ class TestEventSlotsRoutes:
         assert data["event_group"]["name"] == "New Group"
 
     async def test_regenerate_slots_dry_run(
-        self, async_client: AsyncClient, as_admin: None, test_event: Event
+        self, async_client: AsyncClient, as_admin: None, test_task: Task
     ):
         """Test regenerating slots in dry run mode."""
         r = await async_client.post(
-            f"/api/v1/events/{test_event.id}/regenerate-slots",
+            f"/api/v1/tasks/{test_task.id}/regenerate-slots",
             params={"dry_run": True},
             json={
                 "schedule": {
@@ -92,11 +92,11 @@ class TestEventSlotsRoutes:
         assert "affected_bookings" in data
 
     async def test_regenerate_slots(
-        self, async_client: AsyncClient, as_admin: None, test_event: Event
+        self, async_client: AsyncClient, as_admin: None, test_task: Task
     ):
         """Test actually regenerating slots."""
         r = await async_client.post(
-            f"/api/v1/events/{test_event.id}/regenerate-slots",
+            f"/api/v1/tasks/{test_task.id}/regenerate-slots",
             json={
                 "schedule": {
                     "default_start_time": "09:00:00",
@@ -110,14 +110,14 @@ class TestEventSlotsRoutes:
 
         assert r.status_code == 200
         data = r.json()
-        assert data["event"]["id"] == str(test_event.id)
+        assert data["task"]["id"] == str(test_task.id)
 
-    async def test_add_slots_to_event(
-        self, async_client: AsyncClient, as_admin: None, test_event: Event
+    async def test_add_slots_to_task(
+        self, async_client: AsyncClient, as_admin: None, test_task: Task
     ):
-        """Test adding a new batch of slots to an existing event."""
+        """Test adding a new batch of slots to an existing task."""
         r = await async_client.post(
-            f"/api/v1/events/{test_event.id}/add-slots",
+            f"/api/v1/tasks/{test_task.id}/add-slots",
             json={
                 "start_date": "2026-06-15",
                 "end_date": "2026-06-17",
@@ -135,9 +135,9 @@ class TestEventSlotsRoutes:
         data = r.json()
         assert data["slots_added"] >= 1
 
-    async def test_list_batches(self, async_client: AsyncClient, test_event: Event):
-        """Test listing slot batches for an event."""
-        r = await async_client.get(f"/api/v1/events/{test_event.id}/batches")
+    async def test_list_batches(self, async_client: AsyncClient, test_task: Task):
+        """Test listing slot batches for an task."""
+        r = await async_client.get(f"/api/v1/tasks/{test_task.id}/batches")
 
         assert r.status_code == 200
         assert isinstance(r.json(), list)

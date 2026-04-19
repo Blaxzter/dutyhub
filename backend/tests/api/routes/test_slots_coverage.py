@@ -1,4 +1,4 @@
-"""Coverage gap tests for events/slots.py (add-slots validation, regenerate with batch, matching)."""
+"""Coverage gap tests for tasks/slots.py (add-slots validation, regenerate with batch, matching)."""
 
 from datetime import date, time
 
@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
 from app.models.event_group import EventGroup
 from app.models.slot_batch import SlotBatch
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -24,7 +24,7 @@ class TestAddSlotsCoverage:
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test that add-slots validates dates against event group range."""
+        """Test that add-slots validates dates against task group range."""
         group = EventGroup(
             name="Constrained Group",
             start_date=date(2026, 7, 1),
@@ -35,20 +35,20 @@ class TestAddSlotsCoverage:
         await db_session.flush()
         await db_session.refresh(group)
 
-        event = Event(
-            name="Grouped Event",
+        task = Task(
+            name="Grouped Task",
             start_date=date(2026, 7, 1),
             end_date=date(2026, 7, 5),
             event_group_id=group.id,
             status="draft",
         )
-        db_session.add(event)
+        db_session.add(task)
         await db_session.flush()
-        await db_session.refresh(event)
+        await db_session.refresh(task)
 
         # Try to add slots outside the group's date range
         r = await async_client.post(
-            f"/api/v1/events/{event.id}/add-slots",
+            f"/api/v1/tasks/{task.id}/add-slots",
             json={
                 "start_date": "2026-07-20",
                 "end_date": "2026-07-25",
@@ -68,11 +68,11 @@ class TestAddSlotsCoverage:
         self,
         async_client: AsyncClient,
         as_admin: None,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test adding slots with location and category."""
         r = await async_client.post(
-            f"/api/v1/events/{test_event.id}/add-slots",
+            f"/api/v1/tasks/{test_task.id}/add-slots",
             json={
                 "start_date": "2026-05-24",
                 "end_date": "2026-05-24",
@@ -92,17 +92,17 @@ class TestAddSlotsCoverage:
         data = r.json()
         assert data["slots_added"] >= 1
 
-    async def test_add_slots_to_nonexistent_event(
+    async def test_add_slots_to_nonexistent_task(
         self,
         async_client: AsyncClient,
         as_admin: None,
     ):
-        """Test adding slots to a nonexistent event returns 404."""
+        """Test adding slots to a nonexistent task returns 404."""
         import uuid
 
         fake_id = uuid.uuid4()
         r = await async_client.post(
-            f"/api/v1/events/{fake_id}/add-slots",
+            f"/api/v1/tasks/{fake_id}/add-slots",
             json={
                 "start_date": "2026-07-01",
                 "end_date": "2026-07-02",
@@ -130,19 +130,19 @@ class TestRegenerateSlotsCoverage:
         test_user: User,
     ):
         """Test that regeneration preserves bookings on matching slots."""
-        event = Event(
-            name="Regen Match Event",
+        task = Task(
+            name="Regen Match Task",
             start_date=date(2026, 9, 1),
             end_date=date(2026, 9, 2),
             status="draft",
         )
-        db_session.add(event)
+        db_session.add(task)
         await db_session.flush()
-        await db_session.refresh(event)
+        await db_session.refresh(task)
 
         # Create a slot that will match the regenerated config
         slot = DutySlot(
-            event_id=event.id,
+            task_id=task.id,
             title="Existing Slot",
             date=date(2026, 9, 1),
             start_time=time(9, 0),
@@ -163,7 +163,7 @@ class TestRegenerateSlotsCoverage:
 
         # Regenerate with same time window — slot should match
         r = await async_client.post(
-            f"/api/v1/events/{event.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-slots",
             json={
                 "schedule": {
                     "default_start_time": "09:00:00",
@@ -187,19 +187,19 @@ class TestRegenerateSlotsCoverage:
         db_session: AsyncSession,
     ):
         """Test dry run doesn't persist changes."""
-        event = Event(
-            name="Dry Run Event",
+        task = Task(
+            name="Dry Run Task",
             start_date=date(2026, 9, 5),
             end_date=date(2026, 9, 6),
             status="draft",
         )
-        db_session.add(event)
+        db_session.add(task)
         await db_session.flush()
-        await db_session.refresh(event)
+        await db_session.refresh(task)
 
         # Create existing slot
         slot = DutySlot(
-            event_id=event.id,
+            task_id=task.id,
             title="Dry Run Slot",
             date=date(2026, 9, 5),
             start_time=time(8, 0),
@@ -210,7 +210,7 @@ class TestRegenerateSlotsCoverage:
 
         # Dry-run with different time (should show slot as removed)
         r = await async_client.post(
-            f"/api/v1/events/{event.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-slots",
             params={"dry_run": True},
             json={
                 "schedule": {
@@ -236,19 +236,19 @@ class TestRegenerateSlotsCoverage:
         test_user: User,
     ):
         """Test regeneration reports affected bookings for deleted slots."""
-        event = Event(
-            name="Affected Bookings Event",
+        task = Task(
+            name="Affected Bookings Task",
             start_date=date(2026, 9, 10),
             end_date=date(2026, 9, 11),
             status="draft",
         )
-        db_session.add(event)
+        db_session.add(task)
         await db_session.flush()
-        await db_session.refresh(event)
+        await db_session.refresh(task)
 
         # Create slot with booking
         slot = DutySlot(
-            event_id=event.id,
+            task_id=task.id,
             title="Old Slot",
             date=date(2026, 9, 10),
             start_time=time(8, 0),
@@ -267,7 +267,7 @@ class TestRegenerateSlotsCoverage:
 
         # Regenerate with completely different times — old slot won't match
         r = await async_client.post(
-            f"/api/v1/events/{event.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-slots",
             params={"dry_run": True},
             json={
                 "schedule": {
@@ -292,18 +292,18 @@ class TestRegenerateSlotsCoverage:
         db_session: AsyncSession,
     ):
         """Test regenerating slots scoped to a specific batch."""
-        event = Event(
-            name="Batch Regen Event",
+        task = Task(
+            name="Batch Regen Task",
             start_date=date(2026, 10, 1),
             end_date=date(2026, 10, 5),
             status="draft",
         )
-        db_session.add(event)
+        db_session.add(task)
         await db_session.flush()
-        await db_session.refresh(event)
+        await db_session.refresh(task)
 
         batch = SlotBatch(
-            event_id=event.id,
+            task_id=task.id,
             label="Morning Batch",
             start_date=date(2026, 10, 1),
             end_date=date(2026, 10, 2),
@@ -320,7 +320,7 @@ class TestRegenerateSlotsCoverage:
 
         # Create a slot linked to the batch
         slot = DutySlot(
-            event_id=event.id,
+            task_id=task.id,
             title="Batch Slot",
             date=date(2026, 10, 1),
             start_time=time(8, 0),
@@ -332,7 +332,7 @@ class TestRegenerateSlotsCoverage:
 
         # Regenerate scoped to this batch
         r = await async_client.post(
-            f"/api/v1/events/{event.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-slots",
             params={"batch_id": str(batch.id)},
             json={
                 "schedule": {
@@ -349,21 +349,21 @@ class TestRegenerateSlotsCoverage:
         data = r.json()
         assert data["slots_kept"] >= 1
 
-    async def test_regenerate_with_wrong_batch_event(
+    async def test_regenerate_with_wrong_batch_task(
         self,
         async_client: AsyncClient,
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test regenerating with a batch that doesn't belong to the event."""
-        event1 = Event(
-            name="Event One",
+        """Test regenerating with a batch that doesn't belong to the task."""
+        event1 = Task(
+            name="Task One",
             start_date=date(2026, 11, 1),
             end_date=date(2026, 11, 5),
             status="draft",
         )
-        event2 = Event(
-            name="Event Two",
+        event2 = Task(
+            name="Task Two",
             start_date=date(2026, 11, 10),
             end_date=date(2026, 11, 15),
             status="draft",
@@ -374,8 +374,8 @@ class TestRegenerateSlotsCoverage:
         await db_session.refresh(event2)
 
         batch = SlotBatch(
-            event_id=event2.id,
-            label="Wrong Event Batch",
+            task_id=event2.id,
+            label="Wrong Task Batch",
             start_date=date(2026, 11, 10),
             end_date=date(2026, 11, 11),
         )
@@ -384,7 +384,7 @@ class TestRegenerateSlotsCoverage:
         await db_session.refresh(batch)
 
         r = await async_client.post(
-            f"/api/v1/events/{event1.id}/regenerate-slots",
+            f"/api/v1/tasks/{event1.id}/regenerate-slots",
             params={"batch_id": str(batch.id)},
             json={
                 "schedule": {
@@ -399,26 +399,26 @@ class TestRegenerateSlotsCoverage:
 
         assert r.status_code == 400
 
-    async def test_regenerate_updates_event_fields(
+    async def test_regenerate_updates_task_fields(
         self,
         async_client: AsyncClient,
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test that regeneration updates event name and description."""
-        event = Event(
+        """Test that regeneration updates task name and description."""
+        task = Task(
             name="Original Name",
             description="Original desc",
             start_date=date(2026, 12, 1),
             end_date=date(2026, 12, 3),
             status="draft",
         )
-        db_session.add(event)
+        db_session.add(task)
         await db_session.flush()
-        await db_session.refresh(event)
+        await db_session.refresh(task)
 
         r = await async_client.post(
-            f"/api/v1/events/{event.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-slots",
             json={
                 "name": "Updated Name",
                 "description": "Updated desc",
@@ -434,19 +434,19 @@ class TestRegenerateSlotsCoverage:
 
         assert r.status_code == 200
         data = r.json()
-        assert data["event"]["name"] == "Updated Name"
-        assert data["event"]["description"] == "Updated desc"
+        assert data["task"]["name"] == "Updated Name"
+        assert data["task"]["description"] == "Updated desc"
 
-    async def test_create_event_with_slots_nonexistent_event(
+    async def test_create_task_with_slots_nonexistent_task(
         self,
         async_client: AsyncClient,
         as_admin: None,
     ):
-        """Test creating event with slots returns 201."""
+        """Test creating task with slots returns 201."""
         r = await async_client.post(
-            "/api/v1/events/with-slots",
+            "/api/v1/tasks/with-slots",
             json={
-                "name": "Full Coverage Event",
+                "name": "Full Coverage Task",
                 "description": "Testing all paths",
                 "start_date": "2027-01-10",
                 "end_date": "2027-01-12",
@@ -465,6 +465,6 @@ class TestRegenerateSlotsCoverage:
 
         assert r.status_code == 201
         data = r.json()
-        assert data["event"]["location"] == "Main Hall"
-        assert data["event"]["category"] == "Catering"
+        assert data["task"]["location"] == "Main Hall"
+        assert data["task"]["category"] == "Catering"
         assert data["duty_slots_created"] >= 1

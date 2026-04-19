@@ -13,7 +13,7 @@ from app.core.security import hash_password
 from app.crud.site_settings import site_settings as crud_site_settings
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -333,11 +333,11 @@ class TestExportWithData:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test export includes user's bookings."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Export Test Slot",
             date=date(2026, 6, 1),
             start_time=time(8, 0),

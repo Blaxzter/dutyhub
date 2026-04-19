@@ -303,7 +303,7 @@ async def export_user_data(
             "cancelled_slot_date": str(b.cancelled_slot_date)
             if b.cancelled_slot_date
             else None,
-            "cancelled_event_name": b.cancelled_event_name,
+            "cancelled_task_name": b.cancelled_task_name,
             "created_at": b.created_at.isoformat(),
         }
         for b in bookings_result.scalars().all()

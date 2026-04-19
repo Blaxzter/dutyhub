@@ -4,13 +4,13 @@ import uuid
 from datetime import date, datetime, time, timedelta
 
 from app.schemas.duty_slot import DutySlotCreate
-from app.schemas.event import ExcludedSlot, ScheduleOverride
+from app.schemas.task import ExcludedSlot, ScheduleOverride
 
 
 def generate_duty_slots(
     *,
-    event_id: uuid.UUID,
-    event_name: str,
+    task_id: uuid.UUID,
+    task_name: str,
     start_date: date,
     end_date: date,
     default_start_time: time,
@@ -51,8 +51,8 @@ def generate_duty_slots(
 
         slots.extend(
             _generate_slots_for_day(
-                event_id=event_id,
-                event_name=event_name,
+                task_id=task_id,
+                task_name=task_name,
                 slot_date=current_date,
                 day_start=day_start,
                 day_end=day_end,
@@ -76,8 +76,8 @@ def generate_duty_slots(
 
 def _generate_slots_for_day(
     *,
-    event_id: uuid.UUID,
-    event_name: str,
+    task_id: uuid.UUID,
+    task_name: str,
     slot_date: date,
     day_start: time,
     day_end: time,
@@ -101,11 +101,11 @@ def _generate_slots_for_day(
         slot_start_time = current.time()
         slot_end_time = slot_end.time()
 
-        title = f"{event_name} {slot_start_time.strftime('%H:%M')}-{slot_end_time.strftime('%H:%M')}"
+        title = f"{task_name} {slot_start_time.strftime('%H:%M')}-{slot_end_time.strftime('%H:%M')}"
 
         slots.append(
             DutySlotCreate(
-                event_id=event_id,
+                task_id=task_id,
                 title=title,
                 date=slot_date,
                 start_time=slot_start_time,
@@ -123,10 +123,10 @@ def _generate_slots_for_day(
             # Create a shorter final slot for the remaining time
             slot_start_time = current.time()
             slot_end_time = end_dt.time()
-            title = f"{event_name} {slot_start_time.strftime('%H:%M')}-{slot_end_time.strftime('%H:%M')}"
+            title = f"{task_name} {slot_start_time.strftime('%H:%M')}-{slot_end_time.strftime('%H:%M')}"
             slots.append(
                 DutySlotCreate(
-                    event_id=event_id,
+                    task_id=task_id,
                     title=title,
                     date=slot_date,
                     start_time=slot_start_time,
@@ -141,7 +141,7 @@ def _generate_slots_for_day(
             last = slots[-1]
             last.end_time = end_dt.time()
             if last.start_time and last.end_time:
-                last.title = f"{event_name} {last.start_time.strftime('%H:%M')}-{last.end_time.strftime('%H:%M')}"
+                last.title = f"{task_name} {last.start_time.strftime('%H:%M')}-{last.end_time.strftime('%H:%M')}"
         # remainder_mode == "drop": do nothing (default)
 
     return slots

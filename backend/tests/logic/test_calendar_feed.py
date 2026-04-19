@@ -13,12 +13,12 @@ def _make_booking(
     title: str = "Test Slot",
     location: str = "Room A",
     category: str = "General",
-    event_name: str = "Test Event",
+    task_name: str = "Test Task",
     notes: str | None = None,
     status: str = "confirmed",
 ) -> SimpleNamespace:
     """Create a mock booking object with a duty_slot."""
-    event = SimpleNamespace(name=event_name)
+    task = SimpleNamespace(name=task_name)
     slot = SimpleNamespace(
         date=slot_date,
         start_time=start_time,
@@ -26,7 +26,7 @@ def _make_booking(
         title=title,
         location=location,
         category=category,
-        event=event,
+        task=task,
     )
     return SimpleNamespace(
         id="booking-001",
@@ -57,7 +57,7 @@ class TestBuildCalendar:
 
         text = ical_bytes.decode("utf-8")
         assert "VEVENT" in text
-        assert "Test Event: Test Slot" in text
+        assert "Test Task: Test Slot" in text
         assert "CONFIRMED" in text
 
     def test_skips_cancelled_bookings(self):
@@ -82,14 +82,14 @@ class TestBuildCalendar:
         text = ical_bytes.decode("utf-8")
         assert "VEVENT" not in text
 
-    def test_all_day_event(self):
-        """Test that slots without times become all-day events."""
+    def test_all_day_task(self):
+        """Test that slots without times become all-day tasks."""
         bookings = [_make_booking(start_time=None, end_time=None)]
         ical_bytes = build_calendar(bookings)  # type: ignore[reportArgumentType]
 
         text = ical_bytes.decode("utf-8")
         assert "VEVENT" in text
-        # All-day events use DATE value type, not DATETIME
+        # All-day tasks use DATE value type, not DATETIME
         assert "20260601" in text
 
     def test_slot_without_end_time(self):
@@ -101,7 +101,7 @@ class TestBuildCalendar:
         assert "VEVENT" in text
 
     def test_location_included(self):
-        """Test that location is included in the event."""
+        """Test that location is included in the task."""
         bookings = [_make_booking(location="Room B")]
         ical_bytes = build_calendar(bookings)  # type: ignore[reportArgumentType]
 
@@ -133,7 +133,7 @@ class TestBuildCalendar:
         assert "Bring your laptop" in text
 
     def test_multiple_bookings(self):
-        """Test multiple bookings produce multiple events."""
+        """Test multiple bookings produce multiple tasks."""
         bookings = [
             _make_booking(title="Morning Shift"),
             _make_booking(title="Afternoon Shift", start_time=dt.time(14, 0)),

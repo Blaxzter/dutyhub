@@ -8,7 +8,7 @@ from sqlmodel import Field, Relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.models.event import Event
+    from app.models.task import Task
     from app.models.user_availability import UserAvailability
 
 
@@ -34,7 +34,7 @@ class EventGroup(Base, table=True):
         ),
     )
 
-    events: list["Event"] = Relationship(back_populates="event_group")
+    tasks: list["Task"] = Relationship(back_populates="event_group")
     availabilities: list["UserAvailability"] = Relationship(
         back_populates="event_group",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},

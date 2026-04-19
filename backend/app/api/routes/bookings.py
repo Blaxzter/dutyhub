@@ -39,7 +39,7 @@ async def list_my_bookings(
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
 ) -> MyBookingsListResponse:
-    """List the current user's bookings with joined slot + event data."""
+    """List the current user's bookings with joined slot + task data."""
     items = await crud_booking.get_multi_by_user(
         session,
         user_id=current_user.id,
@@ -63,9 +63,7 @@ async def list_my_bookings(
         bws = BookingReadWithSlot.model_validate(b)
         if b.duty_slot is not None:
             slot_summary = DutySlotSummary.model_validate(b.duty_slot)
-            slot_summary.event_name = (
-                b.duty_slot.event.name if b.duty_slot.event else None
-            )
+            slot_summary.task_name = b.duty_slot.task.name if b.duty_slot.task else None
             bws.duty_slot = slot_summary
         enriched.append(bws)
 
@@ -153,11 +151,11 @@ async def create_booking(
         )
         result = await crud_booking.create(session, obj_in=full_booking)  # type: ignore[arg-type]
 
-    # Load event name for richer notification
-    from app.crud.event import event as crud_event
+    # Load task name for richer notification
+    from app.crud.task import task as crud_task
 
-    event = await crud_event.get(session, str(slot.event_id))
-    event_name = event.name if event else None
+    task = await crud_task.get(session, str(slot.task_id))
+    task_name = task.name if task else None
 
     # Dispatch notifications
     background_tasks.add_task(
@@ -169,17 +167,17 @@ async def create_booking(
         slot_start_time=slot.start_time,
         slot_end_time=slot.end_time,
         slot_location=slot.location,
-        event_name=event_name,
+        task_name=task_name,
         slot_id=slot.id,
-        event_id=slot.event_id,
-        event_group_id=event.event_group_id if event else None,
+        task_id=slot.task_id,
+        event_group_id=task.event_group_id if task else None,
     )
     if existing_user_ids:
         background_tasks.add_task(
             dispatch_booking_cobooked,
             slot_id=slot.id,
             slot_title=slot.title,
-            event_id=slot.event_id,
+            task_id=slot.task_id,
             new_user_name=current_user.name,
             existing_user_ids=existing_user_ids,
         )
@@ -263,7 +261,7 @@ async def cancel_booking(
                 user_id=db_booking.user_id,
                 slot_title=slot.title,
                 slot_id=slot.id,
-                event_id=slot.event_id,
+                task_id=slot.task_id,
             )
 
     return result

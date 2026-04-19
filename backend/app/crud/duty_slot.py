@@ -18,15 +18,15 @@ class CRUDDutySlot(CRUDBase[DutySlot, DutySlotCreate, DutySlotUpdate]):
         *,
         skip: int = 0,
         limit: int = 100,
-        event_id: str | None = None,
+        task_id: str | None = None,
         category: str | None = None,
         search: str | None = None,
         sort_by: DutySlotSortField = "date",
         sort_dir: Literal["asc", "desc"] = "asc",
     ) -> list[DutySlot]:
         query = select(DutySlot)
-        if event_id:
-            query = query.where(col(DutySlot.event_id) == event_id)
+        if task_id:
+            query = query.where(col(DutySlot.task_id) == task_id)
         if category:
             query = query.where(col(DutySlot.category) == category)
         if search:
@@ -46,13 +46,13 @@ class CRUDDutySlot(CRUDBase[DutySlot, DutySlotCreate, DutySlotUpdate]):
         self,
         db: AsyncSession,
         *,
-        event_id: str | None = None,
+        task_id: str | None = None,
         category: str | None = None,
         search: str | None = None,
     ) -> int:
         query = select(func.count()).select_from(DutySlot)
-        if event_id:
-            query = query.where(col(DutySlot.event_id) == event_id)
+        if task_id:
+            query = query.where(col(DutySlot.task_id) == task_id)
         if category:
             query = query.where(col(DutySlot.category) == category)
         if search:

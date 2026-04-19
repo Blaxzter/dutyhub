@@ -103,7 +103,7 @@ class TestEventGroupCoverage:
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test deleting an event group."""
+        """Test deleting an task group."""
         group = EventGroup(
             name="Delete Me Group",
             start_date=date(2027, 1, 1),
@@ -120,7 +120,7 @@ class TestEventGroupCoverage:
 
 @pytest.mark.asyncio
 class TestEventGroupAvailability:
-    """Coverage tests for event group availability endpoints."""
+    """Coverage tests for task group availability endpoints."""
 
     async def test_list_group_availabilities(
         self,

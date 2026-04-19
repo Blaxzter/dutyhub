@@ -71,13 +71,13 @@ async def _process_reminder(reminder: BookingReminder) -> None:
                 await db.commit()
                 return
 
-            # Load event name
-            from app.models.event import Event
+            # Load task name
+            from app.models.task import Task
 
-            event_query = select(Event).where(col(Event.id) == slot.event_id)
-            event_result = await db.execute(event_query)
-            event = event_result.scalar_one_or_none()
-            event_group_id = event.event_group_id if event else None
+            task_query = select(Task).where(col(Task.id) == slot.task_id)
+            task_result = await db.execute(task_query)
+            task = task_result.scalar_one_or_none()
+            event_group_id = task.event_group_id if task else None
 
             svc = NotificationService(db)
 
@@ -85,8 +85,8 @@ async def _process_reminder(reminder: BookingReminder) -> None:
             scope_chain: list[tuple[str, object]] = []
             if slot.id:
                 scope_chain.append(("duty_slot", slot.id))
-            if slot.event_id:
-                scope_chain.append(("event", slot.event_id))
+            if slot.task_id:
+                scope_chain.append(("task", slot.task_id))
             if event_group_id:
                 scope_chain.append(("event_group", event_group_id))
 
@@ -111,7 +111,7 @@ async def _process_reminder(reminder: BookingReminder) -> None:
                 data={
                     "booking_id": str(reminder.booking_id),
                     "slot_id": str(slot.id),
-                    "event_id": str(slot.event_id),
+                    "task_id": str(slot.task_id),
                 },
                 scope_chain=scope_chain,  # type: ignore[arg-type]
                 force_channels=reminder.channels,

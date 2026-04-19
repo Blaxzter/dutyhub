@@ -37,7 +37,7 @@ class BookingRead(BookingBase):
     cancelled_slot_date: dt.date | None = None
     cancelled_slot_start_time: dt.time | None = None
     cancelled_slot_end_time: dt.time | None = None
-    cancelled_event_name: str | None = None
+    cancelled_task_name: str | None = None
 
 
 class DutySlotSummary(BaseModel):
@@ -45,18 +45,18 @@ class DutySlotSummary(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
-    event_id: uuid.UUID
+    task_id: uuid.UUID
     title: str
     date: dt.date
     start_time: dt.time | None = None
     end_time: dt.time | None = None
     location: str | None = None
     category: str | None = None
-    event_name: str | None = None
+    task_name: str | None = None
 
 
 class BookingReadWithSlot(BookingRead):
-    """BookingRead enriched with nested slot + event name (for /me endpoint)."""
+    """BookingRead enriched with nested slot + task name (for /me endpoint)."""
 
     duty_slot: DutySlotSummary | None = None
 
@@ -82,8 +82,8 @@ class SlotBookingEntry(BaseModel):
     created_at: dt.datetime
 
 
-class EventBookingEntry(BaseModel):
-    """A confirmed booking with slot_id, for the bulk event bookings endpoint."""
+class TaskBookingEntry(BaseModel):
+    """A confirmed booking with slot_id, for the bulk task bookings endpoint."""
 
     id: uuid.UUID
     duty_slot_id: uuid.UUID

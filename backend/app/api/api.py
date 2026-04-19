@@ -8,11 +8,11 @@ from app.api.routes import (
     demo_data,
     duty_slots,
     event_groups,
-    events,
     health,
     notifications,
     reporting,
     site_settings,
+    tasks,
     users,
 )
 from app.core.config import settings
@@ -22,7 +22,7 @@ api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(users.router)
 api_router.include_router(site_settings.router)
-api_router.include_router(events.router)
+api_router.include_router(tasks.router)
 api_router.include_router(duty_slots.router)
 api_router.include_router(bookings.router)
 api_router.include_router(booking_reminders.router)

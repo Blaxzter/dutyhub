@@ -89,7 +89,7 @@ async def check_upcoming_slots() -> int:
                 ),
                 data={
                     "slot_id": str(slot.id),
-                    "event_id": str(slot.event_id),
+                    "task_id": str(slot.task_id),
                     "open_spots": open_spots,
                     "confirmed": confirmed,
                     "max_bookings": slot.max_bookings,

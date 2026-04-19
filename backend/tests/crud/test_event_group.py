@@ -22,7 +22,7 @@ class TestCRUDEventGroup:
     """Test suite for EventGroup CRUD operations."""
 
     async def test_create_event_group(self, db_session: AsyncSession, test_user: User):
-        """Test creating a new event group."""
+        """Test creating a new task group."""
         group_in = EventGroupCreate(
             name="Summer Camp 2026",
             start_date=datetime.date(2026, 7, 1),
@@ -40,7 +40,7 @@ class TestCRUDEventGroup:
     async def test_get_event_group(
         self, db_session: AsyncSession, test_event_group: EventGroup
     ):
-        """Test getting an event group by ID."""
+        """Test getting an task group by ID."""
         group = await crud_event_group.get(db_session, test_event_group.id)
 
         assert group is not None
@@ -48,7 +48,7 @@ class TestCRUDEventGroup:
         assert group.id == test_event_group.id
 
     async def test_get_nonexistent_event_group(self, db_session: AsyncSession):
-        """Test getting a non-existent event group returns None."""
+        """Test getting a non-existent task group returns None."""
         import uuid
 
         group = await crud_event_group.get(db_session, uuid.uuid4())
@@ -57,7 +57,7 @@ class TestCRUDEventGroup:
     async def test_update_event_group(
         self, db_session: AsyncSession, test_event_group: EventGroup
     ):
-        """Test updating an event group."""
+        """Test updating an task group."""
         update = EventGroupUpdate(name="Updated Group Name")
         updated = await crud_event_group.update(
             db_session, db_obj=test_event_group, obj_in=update
@@ -72,7 +72,7 @@ class TestCRUDEventGroup:
         test_event_group: EventGroup,
         test_draft_event_group: EventGroup,
     ):
-        """Test filtering event groups by status."""
+        """Test filtering task groups by status."""
         published = await crud_event_group.get_multi_filtered(
             db_session, status="published"
         )
@@ -86,7 +86,7 @@ class TestCRUDEventGroup:
     async def test_get_multi_filtered_by_search(
         self, db_session: AsyncSession, test_event_group: EventGroup
     ):
-        """Test searching event groups by name."""
+        """Test searching task groups by name."""
         results = await crud_event_group.get_multi_filtered(
             db_session, search="Kirchentags"
         )
@@ -95,7 +95,7 @@ class TestCRUDEventGroup:
     async def test_get_count_filtered(
         self, db_session: AsyncSession, test_event_group: EventGroup
     ):
-        """Test counting event groups with a filter."""
+        """Test counting task groups with a filter."""
         count = await crud_event_group.get_count_filtered(
             db_session, status="published"
         )
@@ -104,7 +104,7 @@ class TestCRUDEventGroup:
     async def test_get_count_filtered_search(
         self, db_session: AsyncSession, test_event_group: EventGroup
     ):
-        """Test counting event groups by search term."""
+        """Test counting task groups by search term."""
         count = await crud_event_group.get_count_filtered(
             db_session, search="Kirchentags"
         )

@@ -10,7 +10,7 @@ class SidebarEventGroup(BaseModel):
     status: str = "published"
 
 
-class SidebarEvent(BaseModel):
+class SidebarTask(BaseModel):
     id: uuid.UUID
     name: str
     status: str = "published"
@@ -22,7 +22,7 @@ class SidebarEvent(BaseModel):
 class SidebarBooking(BaseModel):
     id: uuid.UUID
     slot_id: uuid.UUID
-    event_id: uuid.UUID
+    task_id: uuid.UUID
     slot_title: str
     slot_date: dt.date
     slot_start_time: dt.time | None = None
@@ -30,5 +30,5 @@ class SidebarBooking(BaseModel):
 
 class SidebarResponse(BaseModel):
     event_groups: list[SidebarEventGroup]
-    events: list[SidebarEvent]
+    tasks: list[SidebarTask]
     bookings: list[SidebarBooking]

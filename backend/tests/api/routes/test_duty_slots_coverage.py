@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -72,12 +72,12 @@ class TestDutySlotCoverage:
         async_client: AsyncClient,
         as_admin: None,
         db_session: AsyncSession,
-        test_event: Event,
+        test_task: Task,
         test_user: User,
     ):
         """Test deleting a slot with confirmed bookings cancels them."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Delete Me With Booking",
             date=date(2026, 9, 15),
             start_time=time(8, 0),
@@ -106,11 +106,11 @@ class TestDutySlotCoverage:
         async_client: AsyncClient,
         as_admin: None,
         db_session: AsyncSession,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test deleting a slot with a cancellation reason."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Delete Reason Slot",
             date=date(2026, 9, 16),
             start_time=time(10, 0),
@@ -122,19 +122,19 @@ class TestDutySlotCoverage:
 
         r = await async_client.delete(
             f"/api/v1/duty-slots/{slot.id}",
-            params={"cancellation_reason": "Event rescheduled"},
+            params={"cancellation_reason": "Task rescheduled"},
         )
         assert r.status_code == 204
 
-    async def test_list_slots_for_draft_event_forbidden(
+    async def test_list_slots_for_draft_task_forbidden(
         self,
         async_client: AsyncClient,
-        test_draft_event: Event,
+        test_draft_task: Task,
     ):
-        """Test that non-admin users cannot list slots for draft events."""
+        """Test that non-admin users cannot list slots for draft tasks."""
         r = await async_client.get(
             "/api/v1/duty-slots/",
-            params={"event_id": str(test_draft_event.id)},
+            params={"task_id": str(test_draft_task.id)},
         )
         assert r.status_code == 403
 
@@ -155,11 +155,11 @@ class TestDutySlotCoverage:
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test that is_booked_by_me is False when user has no booking."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Not Booked Slot",
             date=date(2026, 9, 20),
             start_time=time(8, 0),
@@ -179,12 +179,12 @@ class TestDutySlotCoverage:
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
-        test_event: Event,
+        test_task: Task,
         test_user: User,
     ):
         """Test listing slot bookings returns user info."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Bookings List Slot",
             date=date(2026, 9, 21),
             start_time=time(8, 0),

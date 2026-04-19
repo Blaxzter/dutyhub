@@ -16,8 +16,8 @@ class TestDashboardRoutes:
 
         assert r.status_code == 200
         data = r.json()
-        assert "events" in data
-        assert "event_count" in data
+        assert "tasks" in data
+        assert "task_count" in data
         assert "event_groups" in data
         assert "bookings" in data
         assert "booking_count" in data
@@ -40,7 +40,7 @@ class TestDashboardRoutes:
         assert r.status_code == 200
         data = r.json()
         assert "event_groups" in data
-        assert "events" in data
+        assert "tasks" in data
         assert "bookings" in data
 
     async def test_dashboard_feed_admin_sees_pending_users(

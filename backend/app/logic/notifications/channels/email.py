@@ -164,8 +164,8 @@ def _build_html(
     # Build action link if we have relevant data
     action_link = ""
     if data:
-        if "event_id" in data:
-            action_link = f"{frontend_url}/app/events/{data['event_id']}"
+        if "task_id" in data:
+            action_link = f"{frontend_url}/app/tasks/{data['task_id']}"
         elif "event_group_id" in data:
             action_link = f"{frontend_url}/app/event-groups/{data['event_group_id']}"
 

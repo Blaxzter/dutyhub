@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
-ScopeType = Literal["global", "event_group", "event", "duty_slot"]
+ScopeType = Literal["global", "event_group", "task", "duty_slot"]
 
 # Values in notification data are always stringified UUIDs, ints, or None.
 NotificationData = dict[str, str | int | None]

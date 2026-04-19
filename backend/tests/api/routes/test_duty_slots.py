@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 
 
 @pytest.mark.asyncio
@@ -26,18 +26,18 @@ class TestDutySlotRoutes:
         assert data["total"] >= 1
         assert any(item["id"] == str(test_duty_slot.id) for item in data["items"])
 
-    async def test_list_duty_slots_filter_by_event(
-        self, async_client: AsyncClient, test_duty_slot: DutySlot, test_event: Event
+    async def test_list_duty_slots_filter_by_task(
+        self, async_client: AsyncClient, test_duty_slot: DutySlot, test_task: Task
     ):
-        """Test filtering duty slots by event_id."""
+        """Test filtering duty slots by task_id."""
         r = await async_client.get(
-            "/api/v1/duty-slots/", params={"event_id": str(test_event.id)}
+            "/api/v1/duty-slots/", params={"task_id": str(test_task.id)}
         )
 
         assert r.status_code == 200
         data = r.json()
         assert data["total"] >= 1
-        assert all(item["event_id"] == str(test_event.id) for item in data["items"])
+        assert all(item["task_id"] == str(test_task.id) for item in data["items"])
 
     async def test_list_duty_slots_search(
         self, async_client: AsyncClient, test_duty_slot: DutySlot
@@ -72,13 +72,13 @@ class TestDutySlotRoutes:
         self,
         async_client: AsyncClient,
         as_admin: None,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test creating a duty slot (admin only)."""
         r = await async_client.post(
             "/api/v1/duty-slots/",
             json={
-                "event_id": str(test_event.id),
+                "task_id": str(test_task.id),
                 "title": "New Shift",
                 "date": "2026-06-15",
                 "start_time": "09:00:00",
@@ -111,11 +111,11 @@ class TestDutySlotRoutes:
         async_client: AsyncClient,
         as_admin: None,
         db_session: AsyncSession,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test deleting a duty slot (admin only)."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="To Delete",
             date=date(2026, 9, 1),
             start_time=time(10, 0),
@@ -138,20 +138,20 @@ class TestDutySlotRoutes:
 
 
 @pytest.mark.asyncio
-class TestDutySlotsEventManagerRole:
-    """Test event_manager role access on /duty-slots/ routes."""
+class TestDutySlotsTaskManagerRole:
+    """Test task_manager role access on /duty-slots/ routes."""
 
-    async def test_create_duty_slot_as_event_manager(
+    async def test_create_duty_slot_as_task_manager(
         self,
         async_client: AsyncClient,
-        as_event_manager: None,
-        test_event: Event,
+        as_task_manager: None,
+        test_task: Task,
     ):
-        """Test that an event_manager can create duty slots."""
+        """Test that an task_manager can create duty slots."""
         r = await async_client.post(
             "/api/v1/duty-slots/",
             json={
-                "event_id": str(test_event.id),
+                "task_id": str(test_task.id),
                 "title": "Manager Slot",
                 "date": "2026-07-01",
                 "start_time": "09:00:00",
@@ -165,13 +165,13 @@ class TestDutySlotsEventManagerRole:
     async def test_create_duty_slot_as_normal_user_raises_403(
         self,
         async_client: AsyncClient,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test that a plain user cannot create duty slots."""
         r = await async_client.post(
             "/api/v1/duty-slots/",
             json={
-                "event_id": str(test_event.id),
+                "task_id": str(test_task.id),
                 "title": "Unauthorized Slot",
                 "date": "2026-07-01",
                 "start_time": "09:00:00",
@@ -181,13 +181,13 @@ class TestDutySlotsEventManagerRole:
 
         assert r.status_code == 403
 
-    async def test_update_duty_slot_as_event_manager(
+    async def test_update_duty_slot_as_task_manager(
         self,
         async_client: AsyncClient,
-        as_event_manager: None,
+        as_task_manager: None,
         test_duty_slot: DutySlot,
     ):
-        """Test that an event_manager can update duty slots."""
+        """Test that an task_manager can update duty slots."""
         r = await async_client.patch(
             f"/api/v1/duty-slots/{test_duty_slot.id}",
             json={"title": "Updated by Manager"},
@@ -209,16 +209,16 @@ class TestDutySlotsEventManagerRole:
 
         assert r.status_code == 403
 
-    async def test_delete_duty_slot_as_event_manager(
+    async def test_delete_duty_slot_as_task_manager(
         self,
         async_client: AsyncClient,
-        as_event_manager: None,
+        as_task_manager: None,
         db_session: AsyncSession,
-        test_event: Event,
+        test_task: Task,
     ):
-        """Test that an event_manager can delete duty slots."""
+        """Test that an task_manager can delete duty slots."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Manager Delete Me",
             date=date(2026, 9, 1),
             start_time=time(10, 0),
@@ -235,11 +235,11 @@ class TestDutySlotsEventManagerRole:
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test that a plain user cannot delete duty slots."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Should Not Delete",
             date=date(2026, 9, 1),
             start_time=time(10, 0),

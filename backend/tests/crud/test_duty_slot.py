@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.duty_slot import duty_slot as crud_duty_slot
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 from app.schemas.duty_slot import DutySlotCreate, DutySlotUpdate
 
 
@@ -15,10 +15,10 @@ from app.schemas.duty_slot import DutySlotCreate, DutySlotUpdate
 class TestCRUDDutySlot:
     """Test suite for DutySlot CRUD operations."""
 
-    async def test_create_duty_slot(self, db_session: AsyncSession, test_event: Event):
+    async def test_create_duty_slot(self, db_session: AsyncSession, test_task: Task):
         """Test creating a new duty slot."""
         slot_in = DutySlotCreate(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Morning Shift",
             date=date(2026, 6, 1),
             start_time=time(8, 0),
@@ -53,16 +53,16 @@ class TestCRUDDutySlot:
 
         assert updated.title == "Updated Shift"
 
-    async def test_get_multi_filtered_by_event(
-        self, db_session: AsyncSession, test_duty_slot: DutySlot, test_event: Event
+    async def test_get_multi_filtered_by_task(
+        self, db_session: AsyncSession, test_duty_slot: DutySlot, test_task: Task
     ):
-        """Test filtering duty slots by event."""
+        """Test filtering duty slots by task."""
         slots = await crud_duty_slot.get_multi_filtered(
-            db_session, event_id=str(test_event.id)
+            db_session, task_id=str(test_task.id)
         )
 
         assert len(slots) >= 1
-        assert all(s.event_id == test_event.id for s in slots)
+        assert all(s.task_id == test_task.id for s in slots)
 
     async def test_get_multi_filtered_by_search(
         self, db_session: AsyncSession, test_duty_slot: DutySlot
@@ -84,11 +84,11 @@ class TestCRUDDutySlot:
         assert len(slots) == 0
 
     async def test_get_count_filtered(
-        self, db_session: AsyncSession, test_duty_slot: DutySlot, test_event: Event
+        self, db_session: AsyncSession, test_duty_slot: DutySlot, test_task: Task
     ):
         """Test counting filtered duty slots."""
         count = await crud_duty_slot.get_count_filtered(
-            db_session, event_id=str(test_event.id)
+            db_session, task_id=str(test_task.id)
         )
 
         assert count >= 1
@@ -102,13 +102,13 @@ class TestCRUDDutySlot:
         assert count == 0
 
     async def test_get_multi_filtered_sort_desc(
-        self, db_session: AsyncSession, test_event: Event
+        self, db_session: AsyncSession, test_task: Task
     ):
         """Test sorting duty slots in descending order."""
         # Create two slots with different dates
         for i, d in enumerate([date(2026, 7, 1), date(2026, 7, 10)]):
             slot_in = DutySlotCreate(
-                event_id=test_event.id,
+                task_id=test_task.id,
                 title=f"Slot {i}",
                 date=d,
                 start_time=time(9, 0),
@@ -118,7 +118,7 @@ class TestCRUDDutySlot:
 
         slots = await crud_duty_slot.get_multi_filtered(
             db_session,
-            event_id=str(test_event.id),
+            task_id=str(test_task.id),
             sort_by="date",
             sort_dir="desc",
         )
@@ -127,10 +127,10 @@ class TestCRUDDutySlot:
         dates = [s.date for s in slots]
         assert dates == sorted(dates, reverse=True)
 
-    async def test_remove_duty_slot(self, db_session: AsyncSession, test_event: Event):
+    async def test_remove_duty_slot(self, db_session: AsyncSession, test_task: Task):
         """Test removing a duty slot."""
         slot_in = DutySlotCreate(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="To Delete",
             date=date(2026, 8, 1),
             start_time=time(10, 0),

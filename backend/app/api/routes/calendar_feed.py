@@ -26,7 +26,7 @@ async def get_calendar_feed(token: str, session: DBDep) -> Response:
     if feed_token is None:
         raise_problem(404, code="calendar_feed.not_found", detail="Not found")
 
-    # Fetch all confirmed bookings with slot + event data
+    # Fetch all confirmed bookings with slot + task data
     bookings = await crud_booking.get_multi_by_user(
         session,
         user_id=feed_token.user_id,

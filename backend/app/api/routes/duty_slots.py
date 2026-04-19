@@ -7,8 +7,8 @@ from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.duty_slot import duty_slot as crud_duty_slot
-from app.crud.event import event as crud_event
 from app.crud.event_group_manager import event_group_manager as crud_egm
+from app.crud.task import task as crud_task
 from app.logic.permissions import require_event_group_access
 from app.models.duty_slot import DutySlot
 from app.schemas.booking import SlotBookingEntry
@@ -45,34 +45,34 @@ async def _enrich_slot(
 async def list_duty_slots(
     session: DBDep,
     current_user: CurrentUser,
-    event_id: str | None = None,
+    task_id: str | None = None,
     category: str | None = None,
     search: str | None = None,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=200),
 ) -> DutySlotListResponse:
-    if event_id:
-        db_event = await crud_event.get(session, event_id, raise_404_error=True)
-        if not current_user.is_manager and db_event.status != "published":
-            # Allow scoped group managers to see slots for their unpublished events
-            if not db_event.event_group_id or not await crud_egm.is_manager(
-                session, user_id=current_user.id, event_group_id=db_event.event_group_id
+    if task_id:
+        db_task = await crud_task.get(session, task_id, raise_404_error=True)
+        if not current_user.is_manager and db_task.status != "published":
+            # Allow scoped group managers to see slots for their unpublished tasks
+            if not db_task.event_group_id or not await crud_egm.is_manager(
+                session, user_id=current_user.id, event_group_id=db_task.event_group_id
             ):
                 raise_problem(
-                    403, code="event.not_published", detail="Event is not published"
+                    403, code="task.not_published", detail="Task is not published"
                 )
 
     items = await crud_duty_slot.get_multi_filtered(
         session,
         skip=skip,
         limit=limit,
-        event_id=event_id,
+        task_id=task_id,
         category=category,
         search=search,
     )
     enriched = [await _enrich_slot(session, s, user_id=current_user.id) for s in items]
     total = await crud_duty_slot.get_count_filtered(
-        session, event_id=event_id, category=category, search=search
+        session, task_id=task_id, category=category, search=search
     )
     return DutySlotListResponse(items=enriched, total=total, skip=skip, limit=limit)
 
@@ -96,10 +96,8 @@ async def create_duty_slot(
     session: DBDep,
     current_user: CurrentUser,
 ) -> DutySlotRead:
-    db_event = await crud_event.get(
-        session, str(slot_in.event_id), raise_404_error=True
-    )
-    await require_event_group_access(current_user, session, db_event.event_group_id)
+    db_task = await crud_task.get(session, str(slot_in.task_id), raise_404_error=True)
+    await require_event_group_access(current_user, session, db_task.event_group_id)
     slot = await crud_duty_slot.create(session, obj_in=slot_in)
     return await _enrich_slot(session, slot)
 
@@ -113,10 +111,8 @@ async def update_duty_slot(
     background_tasks: BackgroundTasks,
 ) -> DutySlotRead:
     db_slot = await crud_duty_slot.get(session, slot_id, raise_404_error=True)
-    db_event = await crud_event.get(
-        session, str(db_slot.event_id), raise_404_error=True
-    )
-    await require_event_group_access(current_user, session, db_event.event_group_id)
+    db_task = await crud_task.get(session, str(db_slot.task_id), raise_404_error=True)
+    await require_event_group_access(current_user, session, db_task.event_group_id)
     old_start = db_slot.start_time
     old_end = db_slot.end_time
     old_date = db_slot.date
@@ -140,7 +136,7 @@ async def update_duty_slot(
                 dispatch_slot_time_changed,
                 slot_id=updated.id,
                 slot_title=updated.title,
-                event_id=updated.event_id,
+                task_id=updated.task_id,
                 booked_user_ids=booked_user_ids,
             )
 
@@ -156,15 +152,15 @@ async def delete_duty_slot(
 ) -> None:
     slot = await crud_duty_slot.get(session, slot_id, raise_404_error=True)
 
-    # Get event name for snapshot
-    db_event = await crud_event.get(session, str(slot.event_id), raise_404_error=True)
-    await require_event_group_access(current_user, session, db_event.event_group_id)
+    # Get task name for snapshot
+    db_task = await crud_task.get(session, str(slot.task_id), raise_404_error=True)
+    await require_event_group_access(current_user, session, db_task.event_group_id)
 
     # Cancel confirmed bookings with snapshot before deleting the slot
     await crud_booking.cancel_bookings_for_slots(
         session,
         slot_ids=[slot.id],
-        event_name=db_event.name,
+        task_name=db_task.name,
         cancellation_reason=cancellation_reason,
     )
 

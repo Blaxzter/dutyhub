@@ -8,7 +8,7 @@ from sqlmodel import Field, Relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.models.event import Event
+    from app.models.task import Task
 
 if __name__ != "__main__":
     from app.models.duty_slot import DutySlot  # noqa: F401
@@ -17,10 +17,10 @@ if __name__ != "__main__":
 class SlotBatch(Base, table=True):
     __tablename__ = "slot_batches"  # type: ignore[assignment]
 
-    event_id: uuid.UUID = Field(
+    task_id: uuid.UUID = Field(
         sa_column=sa.Column(
             sa.Uuid,
-            sa.ForeignKey("events.id", ondelete="CASCADE"),
+            sa.ForeignKey("tasks.id", ondelete="CASCADE"),
             nullable=False,
             index=True,
         )
@@ -61,7 +61,7 @@ class SlotBatch(Base, table=True):
         default=None, sa_column=sa.Column(sa.JSON, nullable=True)
     )
 
-    event: "Event" = Relationship(back_populates="slot_batches")
+    task: "Task" = Relationship(back_populates="slot_batches")
     duty_slots: list["DutySlot"] = Relationship(
         back_populates="batch",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},

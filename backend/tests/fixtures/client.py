@@ -32,7 +32,7 @@ async def app(
     ] = override_current_user
 
     # CurrentSuperuser and CurrentManager raise 403 by default — use as_admin or
-    # as_event_manager fixtures to grant access in tests that require those roles.
+    # as_task_manager fixtures to grant access in tests that require those roles.
     async def override_deny():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -88,12 +88,12 @@ async def as_admin(app: FastAPI, test_admin_user: User) -> AsyncGenerator[None, 
 
 
 @pytest_asyncio.fixture
-async def as_event_manager(
-    app: FastAPI, test_event_manager_user: User
+async def as_task_manager(
+    app: FastAPI, test_task_manager_user: User
 ) -> AsyncGenerator[None, None]:
-    """Temporarily override CurrentUser, CurrentManager, CurrentGlobalManager to return an event_manager user.
+    """Temporarily override CurrentUser, CurrentManager, CurrentGlobalManager to return an task_manager user.
 
-    CurrentSuperuser is overridden to raise 403 because event_managers are not admins.
+    CurrentSuperuser is overridden to raise 403 because task_managers are not admins.
     """
     user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
     manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
@@ -105,7 +105,7 @@ async def as_event_manager(
     }
 
     async def override():
-        return test_event_manager_user
+        return test_task_manager_user
 
     async def override_superuser():
         raise HTTPException(

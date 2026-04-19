@@ -57,7 +57,7 @@ class Booking(Base, table=True):
     cancelled_slot_end_time: dt.time | None = Field(
         default=None, sa_column=sa.Column(sa.Time, nullable=True)
     )
-    cancelled_event_name: str | None = Field(
+    cancelled_task_name: str | None = Field(
         default=None, sa_column=sa.Column(sa.String, nullable=True)
     )
 

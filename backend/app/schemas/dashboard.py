@@ -4,8 +4,8 @@ import uuid
 from pydantic import BaseModel, ConfigDict
 
 
-class DashboardEvent(BaseModel):
-    """Slim event for the dashboard calendar."""
+class DashboardTask(BaseModel):
+    """Slim task for the dashboard calendar."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -19,7 +19,7 @@ class DashboardEvent(BaseModel):
 
 
 class DashboardEventGroup(BaseModel):
-    """Slim event group for the dashboard calendar."""
+    """Slim task group for the dashboard calendar."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -43,8 +43,8 @@ class DashboardBookingItem(BaseModel):
 
 
 class DashboardFeedResponse(BaseModel):
-    events: list[DashboardEvent]
-    event_count: int
+    tasks: list[DashboardTask]
+    task_count: int
     event_groups: list[DashboardEventGroup]
     bookings: list[DashboardBookingItem]
     booking_count: int

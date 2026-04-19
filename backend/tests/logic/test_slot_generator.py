@@ -6,20 +6,20 @@ from datetime import date, time
 import pytest
 
 from app.logic.slot_generator import generate_duty_slots
-from app.schemas.event import ExcludedSlot, ScheduleOverride
+from app.schemas.task import ExcludedSlot, ScheduleOverride
 
 
 class TestSlotGenerator:
     """Tests for generate_duty_slots."""
 
-    def _event_id(self) -> uuid.UUID:
+    def _task_id(self) -> uuid.UUID:
         return uuid.uuid4()
 
     def test_single_day_30min_slots(self):
         """10:00-12:00 with 30min slots = 4 slots."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Bierstand",
+            task_id=self._task_id(),
+            task_name="Bierstand",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(10, 0),
@@ -42,8 +42,8 @@ class TestSlotGenerator:
     def test_multi_day(self):
         """3 days, 2 hours each, 60min slots = 6 slots."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Test",
+            task_id=self._task_id(),
+            task_name="Test",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 3),
             default_start_time=time(8, 0),
@@ -58,8 +58,8 @@ class TestSlotGenerator:
     def test_partial_slot_not_created(self):
         """10:00-11:15 with 30min slots = 2 full slots (not 3 partial)."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Test",
+            task_id=self._task_id(),
+            task_name="Test",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(10, 0),
@@ -81,8 +81,8 @@ class TestSlotGenerator:
         ]
 
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Test",
+            task_id=self._task_id(),
+            task_name="Test",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 2),
             default_start_time=time(10, 0),
@@ -101,7 +101,7 @@ class TestSlotGenerator:
     def test_zero_duration_raises(self):
         """slot_duration_minutes < 1 should be rejected by schema validation."""
         with pytest.raises(ValueError, match="at least 1"):
-            from app.schemas.event import SlotGenerationConfig
+            from app.schemas.task import SlotGenerationConfig
 
             SlotGenerationConfig(
                 default_start_time=time(10, 0),
@@ -113,8 +113,8 @@ class TestSlotGenerator:
     def test_default_max_bookings(self):
         """Default people_per_slot is 1."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Test",
+            task_id=self._task_id(),
+            task_name="Test",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(10, 0),
@@ -127,8 +127,8 @@ class TestSlotGenerator:
     def test_15min_slots(self):
         """15-minute slots over 1 hour = 4 slots."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Test",
+            task_id=self._task_id(),
+            task_name="Test",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(9, 0),
@@ -141,8 +141,8 @@ class TestSlotGenerator:
     def test_remainder_mode_short_adds_shorter_final_slot(self):
         """10:00-11:15 with 30min slots + 'short' = 2 full + 1 shorter slot."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Bierstand",
+            task_id=self._task_id(),
+            task_name="Bierstand",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(10, 0),
@@ -161,8 +161,8 @@ class TestSlotGenerator:
     def test_remainder_mode_extend_lengthens_last_slot(self):
         """10:00-11:15 with 30min slots + 'extend' = 2 slots; last runs 10:30-11:15."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Bierstand",
+            task_id=self._task_id(),
+            task_name="Bierstand",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(10, 0),
@@ -179,8 +179,8 @@ class TestSlotGenerator:
     def test_remainder_mode_extend_noop_when_no_prior_slot(self):
         """Window shorter than duration + 'extend' produces no slots."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Test",
+            task_id=self._task_id(),
+            task_name="Test",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(10, 0),
@@ -194,8 +194,8 @@ class TestSlotGenerator:
     def test_remainder_mode_drop_default_matches_legacy_behavior(self):
         """'drop' is the default; remainder is discarded."""
         slots = generate_duty_slots(
-            event_id=self._event_id(),
-            event_name="Test",
+            task_id=self._task_id(),
+            task_name="Test",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(10, 0),
@@ -209,10 +209,10 @@ class TestSlotGenerator:
 
     def test_excluded_slots_are_filtered(self):
         """Slots matching (date, start, end) in excluded_slots are removed."""
-        event_id = self._event_id()
+        task_id = self._task_id()
         slots = generate_duty_slots(
-            event_id=event_id,
-            event_name="Test",
+            task_id=task_id,
+            task_name="Test",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 1),
             default_start_time=time(10, 0),

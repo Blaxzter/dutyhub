@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class DutySlotBase(BaseModel):
-    event_id: uuid.UUID
+    task_id: uuid.UUID
     title: str
     description: str | None = None
     date: dt.date

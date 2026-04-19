@@ -11,7 +11,6 @@ from .booking import Booking
 from .booking_reminder import BookingReminder
 from .calendar_feed import CalendarFeedToken
 from .duty_slot import DutySlot
-from .event import Event
 from .event_group import EventGroup
 from .event_group_manager import EventGroupManager
 from .notification import (
@@ -23,6 +22,7 @@ from .notification import (
 )
 from .site_settings import SiteSettings
 from .slot_batch import SlotBatch
+from .task import Task
 from .user import User
 from .user_availability import UserAvailability, UserAvailabilityDate
 
@@ -33,7 +33,7 @@ __all__ = [
     "BookingReminder",
     "CalendarFeedToken",
     "DutySlot",
-    "Event",
+    "Task",
     "EventGroup",
     "EventGroupManager",
     "Notification",

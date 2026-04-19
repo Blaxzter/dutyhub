@@ -17,10 +17,10 @@ from app.crud.user import user as crud_user
 from app.crud.user_availability import user_availability as crud_availability
 from app.logic.permissions import require_event_group_access
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
 from app.models.event_group import EventGroup
 from app.models.event_group_manager import EventGroupManager
 from app.models.slot_batch import SlotBatch
+from app.models.task import Task
 from app.models.user import User as UserModel
 from app.models.user_availability import UserAvailabilityDate
 from app.schemas.event_group import (
@@ -51,7 +51,7 @@ async def list_event_groups(
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
 ) -> EventGroupListResponse:
-    """List published event groups (all users) or all groups (admin/manager).
+    """List published task groups (all users) or all groups (admin/manager).
 
     Scoped group managers see published groups plus their managed groups
     regardless of status.
@@ -60,7 +60,7 @@ async def list_event_groups(
     also_include_ids: list[uuid.UUID] | None = None
 
     if current_user.is_manager:
-        # Global admin/event_manager — see everything
+        # Global admin/task_manager — see everything
         pass
     else:
         # Check if user is a scoped group manager
@@ -118,7 +118,7 @@ async def get_event_group(
             raise_problem(
                 403,
                 code="event_group.not_published",
-                detail="Event group is not published",
+                detail="Task group is not published",
             )
     return db_group
 
@@ -144,7 +144,7 @@ async def update_event_group(
     db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
     await require_event_group_access(current_user, session, db_group.id)
 
-    # Validate date range against existing events
+    # Validate date range against existing tasks
     new_start = group_in.start_date or db_group.start_date
     new_end = group_in.end_date or db_group.end_date
     if new_end < new_start:
@@ -156,29 +156,29 @@ async def update_event_group(
     if group_in.start_date is not None or group_in.end_date is not None:
         result = await session.execute(
             sa_select(
-                sa_func.min(col(Event.start_date)),
-                sa_func.max(col(Event.end_date)),
-            ).where(col(Event.event_group_id) == group_id)
+                sa_func.min(col(Task.start_date)),
+                sa_func.max(col(Task.end_date)),
+            ).where(col(Task.event_group_id) == group_id)
         )
         row = result.one()
-        earliest_event, latest_event = row[0], row[1]
-        if earliest_event is not None and new_start > earliest_event:
+        earliest_task, latest_task = row[0], row[1]
+        if earliest_task is not None and new_start > earliest_task:
             raise_problem(
                 422,
                 code="event_group.date_range_conflict",
-                detail=f"Cannot set start date after {earliest_event.isoformat()} — an event starts on that date",
+                detail=f"Cannot set start date after {earliest_task.isoformat()} — an task starts on that date",
             )
-        if latest_event is not None and new_end < latest_event:
+        if latest_task is not None and new_end < latest_task:
             raise_problem(
                 422,
                 code="event_group.date_range_conflict",
-                detail=f"Cannot set end date before {latest_event.isoformat()} — an event ends on that date",
+                detail=f"Cannot set end date before {latest_task.isoformat()} — an task ends on that date",
             )
 
     old_status = db_group.status
     updated = await crud_event_group.update(session, db_obj=db_group, obj_in=group_in)
 
-    # Notify when event group is published
+    # Notify when task group is published
     if old_status != "published" and updated.status == "published":
         from app.logic.notifications.triggers import dispatch_event_group_published
 
@@ -191,19 +191,19 @@ async def update_event_group(
     return updated
 
 
-@router.get("/{group_id}/event-date-bounds")
-async def get_event_date_bounds(
+@router.get("/{group_id}/task-date-bounds")
+async def get_task_date_bounds(
     group_id: uuid.UUID,
     session: DBDep,
     _current_user: CurrentUser,
 ) -> dict[str, dt.date | None]:
-    """Return the earliest event start and latest event end within this group."""
+    """Return the earliest task start and latest task end within this group."""
     await crud_event_group.get(session, group_id, raise_404_error=True)
     result = await session.execute(
         sa_select(
-            sa_func.min(col(Event.start_date)),
-            sa_func.max(col(Event.end_date)),
-        ).where(col(Event.event_group_id) == group_id)
+            sa_func.min(col(Task.start_date)),
+            sa_func.max(col(Task.end_date)),
+        ).where(col(Task.event_group_id) == group_id)
     )
     row = result.one()
     return {"earliest_start": row[0], "latest_end": row[1]}
@@ -220,7 +220,7 @@ async def shift_event_group_dates(
     session: DBDep,
     current_user: CurrentUser,
 ) -> EventGroup:
-    """Shift the entire event group and all its events/slots/availabilities by a date offset.
+    """Shift the entire task group and all its tasks/slots/availabilities by a date offset.
 
     The offset is calculated from the difference between the current group
     start_date and the provided new_start_date.
@@ -232,32 +232,32 @@ async def shift_event_group_dates(
     if delta.days == 0:
         return db_group
 
-    # 1. Shift the event group itself
+    # 1. Shift the task group itself
     db_group.start_date = db_group.start_date + delta
     db_group.end_date = db_group.end_date + delta
     session.add(db_group)
 
-    # Get event IDs in this group
-    event_ids_result = await session.execute(
-        sa_select(col(Event.id)).where(col(Event.event_group_id) == group_id)
+    # Get task IDs in this group
+    task_ids_result = await session.execute(
+        sa_select(col(Task.id)).where(col(Task.event_group_id) == group_id)
     )
-    event_ids = list(event_ids_result.scalars().all())
+    task_ids = list(task_ids_result.scalars().all())
 
-    if event_ids:
-        # 2. Shift events
+    if task_ids:
+        # 2. Shift tasks
         await session.execute(
-            sa_update(Event)
-            .where(col(Event.event_group_id) == group_id)
+            sa_update(Task)
+            .where(col(Task.event_group_id) == group_id)
             .values(
-                start_date=Event.start_date + delta,
-                end_date=Event.end_date + delta,
+                start_date=Task.start_date + delta,
+                end_date=Task.end_date + delta,
             )
         )
 
         # 3. Shift slot_batches
         await session.execute(
             sa_update(SlotBatch)
-            .where(col(SlotBatch.event_id).in_(event_ids))
+            .where(col(SlotBatch.task_id).in_(task_ids))
             .values(
                 start_date=SlotBatch.start_date + delta,
                 end_date=SlotBatch.end_date + delta,
@@ -267,25 +267,25 @@ async def shift_event_group_dates(
         # 4. Shift duty_slots
         await session.execute(
             sa_update(DutySlot)
-            .where(col(DutySlot.event_id).in_(event_ids))
+            .where(col(DutySlot.task_id).in_(task_ids))
             .values(date=DutySlot.date + delta)
         )
 
-        # 5. Shift schedule_overrides in events and slot_batches (JSON with date keys)
+        # 5. Shift schedule_overrides in tasks and slot_batches (JSON with date keys)
         if delta.days != 0:
-            events_with_overrides = (
+            tasks_with_overrides = (
                 (
                     await session.execute(
-                        sa_select(Event).where(
-                            col(Event.id).in_(event_ids),
-                            col(Event.schedule_overrides).isnot(None),
+                        sa_select(Task).where(
+                            col(Task.id).in_(task_ids),
+                            col(Task.schedule_overrides).isnot(None),
                         )
                     )
                 )
                 .scalars()
                 .all()
             )
-            for ev in events_with_overrides:
+            for ev in tasks_with_overrides:
                 ev.schedule_overrides = _shift_overrides(ev.schedule_overrides, delta)
                 session.add(ev)
 
@@ -293,7 +293,7 @@ async def shift_event_group_dates(
                 (
                     await session.execute(
                         sa_select(SlotBatch).where(
-                            col(SlotBatch.event_id).in_(event_ids),
+                            col(SlotBatch.task_id).in_(task_ids),
                             col(SlotBatch.schedule_overrides).isnot(None),
                         )
                     )
@@ -371,7 +371,7 @@ async def list_group_availabilities(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=200, ge=1, le=500),
 ) -> list[UserAvailabilityWithUser]:
-    """List all user availabilities for this event group (managers only)."""
+    """List all user availabilities for this task group (managers only)."""
     await crud_event_group.get(session, group_id, raise_404_error=True)
     await require_event_group_access(current_user, session, group_id)
     availabilities = await crud_availability.get_multi_by_group(
@@ -477,7 +477,7 @@ async def list_group_managers(
     session: DBDep,
     current_user: CurrentUser,
 ) -> list[UserRead]:
-    """List all assigned managers for this event group."""
+    """List all assigned managers for this task group."""
     await crud_event_group.get(session, group_id, raise_404_error=True)
     await require_event_group_access(current_user, session, group_id)
     assignments = await crud_egm.get_by_group(session, event_group_id=group_id)
@@ -497,7 +497,7 @@ async def assign_group_manager(
     session: DBDep,
     _current_user: CurrentSuperuser,
 ) -> UserRead:
-    """Admin-only: assign a user as manager of this event group."""
+    """Admin-only: assign a user as manager of this task group."""
     await crud_event_group.get(session, group_id, raise_404_error=True)
     user = await crud_user.get(session, id=user_id, raise_404_error=True)
     await crud_egm.assign(session, user_id=user_id, event_group_id=group_id)
@@ -511,7 +511,7 @@ async def remove_group_manager(
     session: DBDep,
     _current_user: CurrentSuperuser,
 ) -> None:
-    """Admin-only: remove a user as manager of this event group."""
+    """Admin-only: remove a user as manager of this task group."""
     await crud_event_group.get(session, group_id, raise_404_error=True)
     removed = await crud_egm.remove(session, user_id=user_id, event_group_id=group_id)
     if not removed:

@@ -79,7 +79,7 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
                 )
         if with_slot:
             query = query.options(
-                selectinload(Booking.duty_slot).selectinload(DutySlot.event)  # type: ignore[arg-type]
+                selectinload(Booking.duty_slot).selectinload(DutySlot.task)  # type: ignore[arg-type]
             )
         query = query.order_by(col(Booking.created_at).desc()).offset(skip).limit(limit)
         result = await db.execute(query)
@@ -138,17 +138,17 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         result = await db.execute(query)
         return list(result.scalars().all())
 
-    async def get_confirmed_by_event(
+    async def get_confirmed_by_task(
         self,
         db: AsyncSession,
         *,
-        event_id: uuid.UUID,
+        task_id: uuid.UUID,
     ) -> list[Booking]:
-        """Get all confirmed bookings for every slot belonging to an event, with user data."""
+        """Get all confirmed bookings for every slot belonging to an task, with user data."""
         query = (
             select(Booking)
             .join(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
-            .where(col(DutySlot.event_id) == event_id)
+            .where(col(DutySlot.task_id) == task_id)
             .where(col(Booking.status) == "confirmed")
             .options(selectinload(Booking.user))  # type: ignore[arg-type]
         )
@@ -160,7 +160,7 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         db: AsyncSession,
         *,
         slot_ids: list[uuid.UUID],
-        event_name: str | None = None,
+        task_name: str | None = None,
         cancellation_reason: str | None = None,
     ) -> int:
         """Cancel all confirmed bookings for the given slot IDs.
@@ -194,7 +194,7 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
             b.cancelled_slot_date = slot.date
             b.cancelled_slot_start_time = slot.start_time
             b.cancelled_slot_end_time = slot.end_time
-            b.cancelled_event_name = event_name
+            b.cancelled_task_name = task_name
             db.add(b)
 
         if bookings:

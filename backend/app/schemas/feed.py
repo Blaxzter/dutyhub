@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from app.schemas.event import EventRead
+from app.schemas.task import TaskRead
 
 FeedView = Literal["list", "cards", "calendar"]
 FeedFocusMode = Literal["today", "first_available"]
@@ -22,8 +22,8 @@ class FeedSlotEntry(BaseModel):
     is_booked_by_me: bool = False
 
 
-class FeedEventItem(EventRead):
-    """Event with view-dependent embedded data."""
+class FeedTaskItem(TaskRead):
+    """Task with view-dependent embedded data."""
 
     # List view: embedded slots for the visible 5-day window
     slots: list[FeedSlotEntry] | None = None
@@ -34,8 +34,8 @@ class FeedEventItem(EventRead):
     available_slots: int | None = None
 
 
-class EventFeedResponse(BaseModel):
-    items: list[FeedEventItem]
+class TaskFeedResponse(BaseModel):
+    items: list[FeedTaskItem]
     total: int
     skip: int
     limit: int

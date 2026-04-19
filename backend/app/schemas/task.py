@@ -6,15 +6,15 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from app.schemas.event_group import EventGroupCreate, EventGroupRead
 
-EventStatus = Literal["draft", "published", "archived"]
+TaskStatus = Literal["draft", "published", "archived"]
 
 
-class EventBase(BaseModel):
+class TaskBase(BaseModel):
     name: str
     description: str | None = None
     start_date: dt.date
     end_date: dt.date
-    status: EventStatus = "draft"
+    status: TaskStatus = "draft"
     created_by_id: uuid.UUID | None = None
     event_group_id: uuid.UUID | None = None
     location: str | None = None
@@ -30,22 +30,22 @@ class EventBase(BaseModel):
         return v
 
 
-class EventCreate(EventBase):
+class TaskCreate(TaskBase):
     pass
 
 
-class EventUpdate(BaseModel):
+class TaskUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     start_date: dt.date | None = None
     end_date: dt.date | None = None
-    status: EventStatus | None = None
+    status: TaskStatus | None = None
     event_group_id: uuid.UUID | None = None
     location: str | None = None
     category: str | None = None
 
 
-class EventRead(EventBase):
+class TaskRead(TaskBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     created_at: dt.datetime
@@ -57,8 +57,8 @@ class EventRead(EventBase):
     schedule_overrides: list[dict[str, Any]] | None = None
 
 
-class EventListResponse(BaseModel):
-    items: list[EventRead]
+class TaskListResponse(BaseModel):
+    items: list[TaskRead]
     total: int
     skip: int
     limit: int
@@ -122,12 +122,12 @@ class SlotGenerationConfig(BaseModel):
         return self
 
 
-class EventCreateWithSlots(BaseModel):
+class TaskCreateWithSlots(BaseModel):
     name: str
     description: str | None = None
     start_date: dt.date
     end_date: dt.date
-    status: EventStatus = "draft"
+    status: TaskStatus = "draft"
     location: str | None = None
     category: str | None = None
     event_group_id: uuid.UUID | None = None
@@ -144,15 +144,15 @@ class EventCreateWithSlots(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_event_group(self) -> "EventCreateWithSlots":
+    def validate_event_group(self) -> "TaskCreateWithSlots":
         if self.event_group_id and self.new_event_group:
             msg = "Cannot specify both event_group_id and new_event_group"
             raise ValueError(msg)
         return self
 
 
-class EventCreateWithSlotsResponse(BaseModel):
-    event: EventRead
+class TaskCreateWithSlotsResponse(BaseModel):
+    task: TaskRead
     duty_slots_created: int
     event_group: EventGroupRead | None = None
 
@@ -160,7 +160,7 @@ class EventCreateWithSlotsResponse(BaseModel):
 # --- Slot regeneration schemas ---
 
 
-class EventUpdateWithSlots(BaseModel):
+class TaskUpdateWithSlots(BaseModel):
     name: str | None = None
     description: str | None = None
     start_date: dt.date | None = None
@@ -170,7 +170,7 @@ class EventUpdateWithSlots(BaseModel):
     schedule: SlotGenerationConfig
 
 
-class AddSlotsToEvent(BaseModel):
+class AddSlotsToTask(BaseModel):
     start_date: dt.date
     end_date: dt.date
     location: str | None = None
@@ -188,7 +188,7 @@ class AddSlotsToEvent(BaseModel):
 
 
 class AddSlotsResponse(BaseModel):
-    event: EventRead
+    task: TaskRead
     slots_added: int
 
 
@@ -202,7 +202,7 @@ class AffectedBookingInfo(BaseModel):
 
 
 class SlotRegenerationResult(BaseModel):
-    event: EventRead
+    task: TaskRead
     slots_added: int
     slots_removed: int
     slots_kept: int

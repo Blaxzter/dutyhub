@@ -39,13 +39,13 @@ async def test_admin_user(db_session: AsyncSession) -> User:
 
 
 @pytest_asyncio.fixture
-async def test_event_manager_user(db_session: AsyncSession) -> User:
-    """Create a test user with the event_manager role."""
+async def test_task_manager_user(db_session: AsyncSession) -> User:
+    """Create a test user with the task_manager role."""
     user = User(
         auth0_sub="auth0|manager123",
         email="manager@example.com",
         name="Manager User",
-        roles=["event_manager"],
+        roles=["task_manager"],
         is_active=True,
     )
     db_session.add(user)

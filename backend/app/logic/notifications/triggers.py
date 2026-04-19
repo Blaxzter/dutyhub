@@ -24,23 +24,23 @@ async def dispatch_booking_confirmed(
     slot_start_time: dt.time | None = None,
     slot_end_time: dt.time | None = None,
     slot_location: str | None = None,
-    event_name: str | None = None,
+    task_name: str | None = None,
     slot_id: uuid.UUID,
-    event_id: uuid.UUID,
+    task_id: uuid.UUID,
     event_group_id: uuid.UUID | None = None,
 ) -> None:
     """Notify user that their booking was confirmed."""
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            scope_chain = _build_scope_chain(slot_id, event_id, event_group_id)
+            scope_chain = _build_scope_chain(slot_id, task_id, event_group_id)
 
             def _factory(lang: str) -> tuple[str, str]:
                 return get_message(
                     "booking.confirmed",
                     lang,
                     slot_title=slot_title,
-                    event_name=event_name or "",
+                    task_name=task_name or "",
                     date=slot_date.strftime("%d.%m.%Y") if slot_date else "",
                     start_time=slot_start_time.strftime("%H:%M")
                     if slot_start_time
@@ -56,7 +56,7 @@ async def dispatch_booking_confirmed(
                 data={
                     "booking_id": str(booking_id),
                     "slot_id": str(slot_id),
-                    "event_id": str(event_id),
+                    "task_id": str(task_id),
                 },
                 scope_chain=scope_chain,
             )
@@ -69,7 +69,7 @@ async def dispatch_booking_cobooked(
     *,
     slot_id: uuid.UUID,
     slot_title: str,
-    event_id: uuid.UUID,
+    task_id: uuid.UUID,
     event_group_id: uuid.UUID | None = None,
     new_user_name: str | None,
     existing_user_ids: list[uuid.UUID],
@@ -80,7 +80,7 @@ async def dispatch_booking_cobooked(
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            scope_chain = _build_scope_chain(slot_id, event_id, event_group_id)
+            scope_chain = _build_scope_chain(slot_id, task_id, event_group_id)
             name = new_user_name or "Someone"
             await svc.notify(
                 recipient_ids=existing_user_ids,
@@ -90,7 +90,7 @@ async def dispatch_booking_cobooked(
                 ),
                 data={
                     "slot_id": str(slot_id),
-                    "event_id": str(event_id),
+                    "task_id": str(task_id),
                 },
                 scope_chain=scope_chain,
             )
@@ -105,14 +105,14 @@ async def dispatch_booking_cancelled_by_user(
     user_id: uuid.UUID,
     slot_title: str,
     slot_id: uuid.UUID,
-    event_id: uuid.UUID,
+    task_id: uuid.UUID,
     event_group_id: uuid.UUID | None = None,
 ) -> None:
     """Notify user that their booking cancellation was processed."""
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            scope_chain = _build_scope_chain(slot_id, event_id, event_group_id)
+            scope_chain = _build_scope_chain(slot_id, task_id, event_group_id)
             await svc.notify(
                 recipient_ids=[user_id],
                 type_code="booking.cancelled_by_user",
@@ -122,7 +122,7 @@ async def dispatch_booking_cancelled_by_user(
                 data={
                     "booking_id": str(booking_id),
                     "slot_id": str(slot_id),
-                    "event_id": str(event_id),
+                    "task_id": str(task_id),
                 },
                 scope_chain=scope_chain,
             )
@@ -135,8 +135,8 @@ async def dispatch_booking_cancelled_by_admin(
     *,
     user_ids: list[uuid.UUID],
     slot_title: str,
-    event_name: str | None = None,
-    event_id: uuid.UUID | None = None,
+    task_name: str | None = None,
+    task_id: uuid.UUID | None = None,
     event_group_id: uuid.UUID | None = None,
     reason: str | None = None,
 ) -> None:
@@ -149,16 +149,16 @@ async def dispatch_booking_cancelled_by_admin(
 
             def _factory(lang: str) -> tuple[str, str]:
                 if lang == "de":
-                    event_label = f' für das Event „{event_name}"' if event_name else ""
+                    task_label = f' für das Task „{task_name}"' if task_name else ""
                     detail = f" (Grund: {reason})" if reason else ""
                 else:
-                    event_label = f' for event "{event_name}"' if event_name else ""
+                    task_label = f' for task "{task_name}"' if task_name else ""
                     detail = f" (Reason: {reason})" if reason else ""
                 return get_message(
                     "booking.cancelled_by_admin",
                     lang,
                     slot_title=slot_title,
-                    event_label=event_label,
+                    task_label=task_label,
                     detail=detail,
                 )
 
@@ -167,7 +167,7 @@ async def dispatch_booking_cancelled_by_admin(
                 type_code="booking.cancelled_by_admin",
                 message_factory=_factory,
                 data={
-                    "event_id": str(event_id) if event_id else None,
+                    "task_id": str(task_id) if task_id else None,
                     "event_group_id": str(event_group_id) if event_group_id else None,
                 },
             )
@@ -180,7 +180,7 @@ async def dispatch_slot_time_changed(
     *,
     slot_id: uuid.UUID,
     slot_title: str,
-    event_id: uuid.UUID,
+    task_id: uuid.UUID,
     event_group_id: uuid.UUID | None = None,
     booked_user_ids: list[uuid.UUID],
 ) -> None:
@@ -190,7 +190,7 @@ async def dispatch_slot_time_changed(
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            scope_chain = _build_scope_chain(slot_id, event_id, event_group_id)
+            scope_chain = _build_scope_chain(slot_id, task_id, event_group_id)
             await svc.notify(
                 recipient_ids=booked_user_ids,
                 type_code="slot.time_changed",
@@ -199,7 +199,7 @@ async def dispatch_slot_time_changed(
                 ),
                 data={
                     "slot_id": str(slot_id),
-                    "event_id": str(event_id),
+                    "task_id": str(task_id),
                 },
                 scope_chain=scope_chain,
             )
@@ -208,13 +208,13 @@ async def dispatch_slot_time_changed(
         logger.exception("Failed to dispatch slot.time_changed notification")
 
 
-async def dispatch_event_published(
+async def dispatch_task_published(
     *,
-    event_id: uuid.UUID,
-    event_name: str,
+    task_id: uuid.UUID,
+    task_name: str,
     event_group_id: uuid.UUID | None = None,
 ) -> None:
-    """Notify all active users that an event was published."""
+    """Notify all active users that an task was published."""
     try:
         from sqlalchemy import select
         from sqlmodel import col
@@ -230,21 +230,21 @@ async def dispatch_event_published(
 
             if user_ids:
                 svc = NotificationService(db)
-                scope_chain: list[tuple[str, uuid.UUID]] = [("event", event_id)]
+                scope_chain: list[tuple[str, uuid.UUID]] = [("task", task_id)]
                 if event_group_id:
                     scope_chain.append(("event_group", event_group_id))
                 await svc.notify(
                     recipient_ids=user_ids,
-                    type_code="event.published",
+                    type_code="task.published",
                     message_factory=lambda lang: get_message(
-                        "event.published", lang, event_name=event_name
+                        "task.published", lang, task_name=task_name
                     ),
-                    data={"event_id": str(event_id)},
+                    data={"task_id": str(task_id)},
                     scope_chain=scope_chain,
                 )
                 await db.commit()
     except Exception:
-        logger.exception("Failed to dispatch event.published notification")
+        logger.exception("Failed to dispatch task.published notification")
 
 
 async def dispatch_event_group_published(
@@ -252,7 +252,7 @@ async def dispatch_event_group_published(
     event_group_id: uuid.UUID,
     event_group_name: str,
 ) -> None:
-    """Notify all active users that an event group was published."""
+    """Notify all active users that an task group was published."""
     try:
         from sqlalchemy import select
         from sqlmodel import col
@@ -354,15 +354,15 @@ async def dispatch_user_rejected(
 
 def _build_scope_chain(
     slot_id: uuid.UUID | None = None,
-    event_id: uuid.UUID | None = None,
+    task_id: uuid.UUID | None = None,
     event_group_id: uuid.UUID | None = None,
 ) -> list[tuple[str, uuid.UUID]]:
     """Build a scope chain from most specific to least specific."""
     chain: list[tuple[str, uuid.UUID]] = []
     if slot_id:
         chain.append(("duty_slot", slot_id))
-    if event_id:
-        chain.append(("event", event_id))
+    if task_id:
+        chain.append(("task", task_id))
     if event_group_id:
         chain.append(("event_group", event_group_id))
     return chain

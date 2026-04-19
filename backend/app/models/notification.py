@@ -31,7 +31,7 @@ class NotificationType(Base, table=True):
     )
     category: str = Field(
         sa_column=sa.Column(sa.String, nullable=False),
-        description="Category: booking, slot, event, admin, user, etc.",
+        description="Category: booking, slot, task, admin, user, etc.",
     )
     is_admin_only: bool = Field(
         default=False,
@@ -91,7 +91,7 @@ class NotificationSubscription(Base, table=True):
     scope_type: str = Field(
         default="global",
         sa_column=sa.Column(sa.String, nullable=False, server_default="global"),
-        description="Scope level: global, event_group, event, duty_slot",
+        description="Scope level: global, event_group, task, duty_slot",
     )
     scope_id: uuid.UUID | None = Field(
         default=None,
@@ -139,7 +139,7 @@ class Notification(Base, table=True):
     data: dict[str, str | int | None] | None = Field(
         default=None,
         sa_column=sa.Column(JSONB, nullable=True),
-        description="Arbitrary context data (slot_id, event_id, etc.)",
+        description="Arbitrary context data (slot_id, task_id, etc.)",
     )
 
     is_read: bool = Field(default=False)

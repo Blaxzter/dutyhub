@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -80,11 +80,11 @@ class TestBookingsRoutes:
         assert r.json()["notes"] == "Updated notes"
 
     async def test_slot_capacity_enforced(
-        self, async_client: AsyncClient, db_session: AsyncSession, test_event: Event
+        self, async_client: AsyncClient, db_session: AsyncSession, test_task: Task
     ):
         """Test that bookings are rejected when a slot is full."""
         slot = DutySlot(
-            event_id=test_event.id,
+            task_id=test_task.id,
             title="Limited Slot",
             date=date(2026, 5, 24),
             start_time=time(14, 0),
