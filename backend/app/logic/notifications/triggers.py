@@ -27,13 +27,13 @@ async def dispatch_booking_confirmed(
     task_name: str | None = None,
     slot_id: uuid.UUID,
     task_id: uuid.UUID,
-    event_group_id: uuid.UUID | None = None,
+    event_id: uuid.UUID | None = None,
 ) -> None:
     """Notify user that their booking was confirmed."""
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            scope_chain = _build_scope_chain(slot_id, task_id, event_group_id)
+            scope_chain = _build_scope_chain(slot_id, task_id, event_id)
 
             def _factory(lang: str) -> tuple[str, str]:
                 return get_message(
@@ -70,7 +70,7 @@ async def dispatch_booking_cobooked(
     slot_id: uuid.UUID,
     slot_title: str,
     task_id: uuid.UUID,
-    event_group_id: uuid.UUID | None = None,
+    event_id: uuid.UUID | None = None,
     new_user_name: str | None,
     existing_user_ids: list[uuid.UUID],
 ) -> None:
@@ -80,7 +80,7 @@ async def dispatch_booking_cobooked(
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            scope_chain = _build_scope_chain(slot_id, task_id, event_group_id)
+            scope_chain = _build_scope_chain(slot_id, task_id, event_id)
             name = new_user_name or "Someone"
             await svc.notify(
                 recipient_ids=existing_user_ids,
@@ -106,13 +106,13 @@ async def dispatch_booking_cancelled_by_user(
     slot_title: str,
     slot_id: uuid.UUID,
     task_id: uuid.UUID,
-    event_group_id: uuid.UUID | None = None,
+    event_id: uuid.UUID | None = None,
 ) -> None:
     """Notify user that their booking cancellation was processed."""
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            scope_chain = _build_scope_chain(slot_id, task_id, event_group_id)
+            scope_chain = _build_scope_chain(slot_id, task_id, event_id)
             await svc.notify(
                 recipient_ids=[user_id],
                 type_code="booking.cancelled_by_user",
@@ -137,7 +137,7 @@ async def dispatch_booking_cancelled_by_admin(
     slot_title: str,
     task_name: str | None = None,
     task_id: uuid.UUID | None = None,
-    event_group_id: uuid.UUID | None = None,
+    event_id: uuid.UUID | None = None,
     reason: str | None = None,
 ) -> None:
     """Notify users that their bookings were cancelled by admin action."""
@@ -168,7 +168,7 @@ async def dispatch_booking_cancelled_by_admin(
                 message_factory=_factory,
                 data={
                     "task_id": str(task_id) if task_id else None,
-                    "event_group_id": str(event_group_id) if event_group_id else None,
+                    "event_id": str(event_id) if event_id else None,
                 },
             )
             await db.commit()
@@ -181,7 +181,7 @@ async def dispatch_slot_time_changed(
     slot_id: uuid.UUID,
     slot_title: str,
     task_id: uuid.UUID,
-    event_group_id: uuid.UUID | None = None,
+    event_id: uuid.UUID | None = None,
     booked_user_ids: list[uuid.UUID],
 ) -> None:
     """Notify bookers that a slot's time was changed."""
@@ -190,7 +190,7 @@ async def dispatch_slot_time_changed(
     try:
         async with async_session() as db:
             svc = NotificationService(db)
-            scope_chain = _build_scope_chain(slot_id, task_id, event_group_id)
+            scope_chain = _build_scope_chain(slot_id, task_id, event_id)
             await svc.notify(
                 recipient_ids=booked_user_ids,
                 type_code="slot.time_changed",
@@ -212,7 +212,7 @@ async def dispatch_task_published(
     *,
     task_id: uuid.UUID,
     task_name: str,
-    event_group_id: uuid.UUID | None = None,
+    event_id: uuid.UUID | None = None,
 ) -> None:
     """Notify all active users that an task was published."""
     try:
@@ -231,8 +231,8 @@ async def dispatch_task_published(
             if user_ids:
                 svc = NotificationService(db)
                 scope_chain: list[tuple[str, uuid.UUID]] = [("task", task_id)]
-                if event_group_id:
-                    scope_chain.append(("event_group", event_group_id))
+                if event_id:
+                    scope_chain.append(("event", event_id))
                 await svc.notify(
                     recipient_ids=user_ids,
                     type_code="task.published",
@@ -247,10 +247,10 @@ async def dispatch_task_published(
         logger.exception("Failed to dispatch task.published notification")
 
 
-async def dispatch_event_group_published(
+async def dispatch_event_published(
     *,
-    event_group_id: uuid.UUID,
-    event_group_name: str,
+    event_id: uuid.UUID,
+    event_name: str,
 ) -> None:
     """Notify all active users that an task group was published."""
     try:
@@ -270,18 +270,18 @@ async def dispatch_event_group_published(
                 svc = NotificationService(db)
                 await svc.notify(
                     recipient_ids=user_ids,
-                    type_code="event_group.published",
+                    type_code="event.published",
                     message_factory=lambda lang: get_message(
-                        "event_group.published",
+                        "event.published",
                         lang,
-                        event_group_name=event_group_name,
+                        event_name=event_name,
                     ),
-                    data={"event_group_id": str(event_group_id)},
-                    scope_chain=[("event_group", event_group_id)],
+                    data={"event_id": str(event_id)},
+                    scope_chain=[("event", event_id)],
                 )
                 await db.commit()
     except Exception:
-        logger.exception("Failed to dispatch event_group.published notification")
+        logger.exception("Failed to dispatch event.published notification")
 
 
 async def dispatch_user_registered(
@@ -355,7 +355,7 @@ async def dispatch_user_rejected(
 def _build_scope_chain(
     slot_id: uuid.UUID | None = None,
     task_id: uuid.UUID | None = None,
-    event_group_id: uuid.UUID | None = None,
+    event_id: uuid.UUID | None = None,
 ) -> list[tuple[str, uuid.UUID]]:
     """Build a scope chain from most specific to least specific."""
     chain: list[tuple[str, uuid.UUID]] = []
@@ -363,6 +363,6 @@ def _build_scope_chain(
         chain.append(("duty_slot", slot_id))
     if task_id:
         chain.append(("task", task_id))
-    if event_group_id:
-        chain.append(("event_group", event_group_id))
+    if event_id:
+        chain.append(("event", event_id))
     return chain

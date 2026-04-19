@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from app.models.user_availability import UserAvailability
 
 
-class EventGroup(Base, table=True):
-    __tablename__ = "event_groups"  # type: ignore[assignment]
+class Event(Base, table=True):
+    __tablename__ = "events"  # type: ignore[assignment]
 
     name: str = Field(sa_column=sa.Column(sa.String, nullable=False, index=True))
     description: str | None = Field(
@@ -34,8 +34,8 @@ class EventGroup(Base, table=True):
         ),
     )
 
-    tasks: list["Task"] = Relationship(back_populates="event_group")
+    tasks: list["Task"] = Relationship(back_populates="event")
     availabilities: list["UserAvailability"] = Relationship(
-        back_populates="event_group",
+        back_populates="event",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )

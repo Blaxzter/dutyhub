@@ -6,7 +6,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
-from app.models.event_group import EventGroup
+from app.models.event import Event
 from app.models.user import User
 
 
@@ -176,7 +176,7 @@ class TestReportingTaskManagerRole:
         app: FastAPI,
         db_session: AsyncSession,
         test_task_manager_user: User,
-        test_event_group: EventGroup,
+        test_event: Event,
     ):
         """Test that task_manager overview stats only count tasks they manage."""
         from datetime import date
@@ -192,7 +192,7 @@ class TestReportingTaskManagerRole:
             end_date=date(2026, 7, 1),
             status="published",
             created_by_id=test_task_manager_user.id,
-            event_group_id=test_event_group.id,
+            event_id=test_event.id,
         )
         db_session.add(task)
         await db_session.flush()

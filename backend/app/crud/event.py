@@ -8,13 +8,13 @@ from sqlalchemy.sql import Select
 from sqlmodel import col
 
 from app.crud.base import CRUDBase
-from app.models.event_group import EventGroup
-from app.schemas.event_group import EventGroupCreate, EventGroupUpdate
+from app.models.event import Event
+from app.schemas.event import EventCreate, EventUpdate
 
-EventGroupSortField = Literal["name", "start_date", "end_date", "status", "created_at"]
+EventSortField = Literal["name", "start_date", "end_date", "status", "created_at"]
 
 
-class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
+class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
     def _apply_common_filters(
         self,
         query: Select[Any],
@@ -27,20 +27,18 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
     ) -> Select[Any]:
         if search:
             query = query.where(
-                col(EventGroup.name).ilike(f"%{search}%")
-                | col(EventGroup.description).ilike(f"%{search}%")
+                col(Event.name).ilike(f"%{search}%")
+                | col(Event.description).ilike(f"%{search}%")
             )
         if status:
-            status_filter = col(EventGroup.status) == status
+            status_filter = col(Event.status) == status
             if also_include_ids:
-                status_filter = or_(
-                    status_filter, col(EventGroup.id).in_(also_include_ids)
-                )
+                status_filter = or_(status_filter, col(Event.id).in_(also_include_ids))
             query = query.where(status_filter)
         if date_from:
-            query = query.where(col(EventGroup.end_date) >= date_from)
+            query = query.where(col(Event.end_date) >= date_from)
         if date_to:
-            query = query.where(col(EventGroup.start_date) <= date_to)
+            query = query.where(col(Event.start_date) <= date_to)
         return query
 
     async def get_multi_filtered(
@@ -53,11 +51,11 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
         status: str | None = None,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
-        sort_by: EventGroupSortField = "start_date",
+        sort_by: EventSortField = "start_date",
         sort_dir: Literal["asc", "desc"] = "asc",
         also_include_ids: list[uuid.UUID] | None = None,
-    ) -> list[EventGroup]:
-        query = select(EventGroup)
+    ) -> list[Event]:
+        query = select(Event)
         query = self._apply_common_filters(
             query,
             search=search,
@@ -66,7 +64,7 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
             date_to=date_to,
             also_include_ids=also_include_ids,
         )
-        order_col = getattr(EventGroup, sort_by)
+        order_col = getattr(Event, sort_by)
         query = query.order_by(
             col(order_col).asc() if sort_dir == "asc" else col(order_col).desc()
         )
@@ -84,7 +82,7 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
         date_to: dt.date | None = None,
         also_include_ids: list[uuid.UUID] | None = None,
     ) -> int:
-        query = select(func.count()).select_from(EventGroup)
+        query = select(func.count()).select_from(Event)
         query = self._apply_common_filters(
             query,
             search=search,
@@ -97,4 +95,4 @@ class CRUDEventGroup(CRUDBase[EventGroup, EventGroupCreate, EventGroupUpdate]):
         return result.scalar_one()
 
 
-event_group = CRUDEventGroup(EventGroup)
+event = CRUDEvent(Event)

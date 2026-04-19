@@ -7,11 +7,11 @@ from sqlmodel import col
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
-from app.crud.event_group_manager import event_group_manager as crud_egm
+from app.crud.event_manager import event_manager as crud_egm
 from app.crud.task import task as crud_task
-from app.logic.permissions import require_event_group_access
+from app.logic.permissions import require_event_access
 from app.models.duty_slot import DutySlot
-from app.models.event_group_manager import EventGroupManager
+from app.models.event_manager import EventManager
 from app.models.task import Task
 from app.schemas.booking import TaskBookingEntry
 from app.schemas.task import (
@@ -34,7 +34,7 @@ async def list_tasks(
     search: str | None = None,
     status: TaskStatus | None = None,
     my_bookings: bool = Query(default=False),
-    event_group_id: uuid.UUID | None = Query(default=None),
+    event_id: uuid.UUID | None = Query(default=None),
 ) -> TaskListResponse:
     """List published tasks (all users) or all tasks (admin/manager).
 
@@ -49,8 +49,8 @@ async def list_tasks(
     else:
         # Check for scoped group manager
         result = await session.execute(
-            select(col(EventGroupManager.event_group_id)).where(
-                col(EventGroupManager.user_id) == current_user.id
+            select(col(EventManager.event_id)).where(
+                col(EventManager.user_id) == current_user.id
             )
         )
         managed_ids: list[uuid.UUID] = list(result.scalars().all())
@@ -70,7 +70,7 @@ async def list_tasks(
         status=effective_status,
         booked_by_user_id=booked_by_user_id,
         also_include_group_ids=also_include_group_ids,
-        event_group_id=event_group_id,
+        event_id=event_id,
     )
     total = await crud_task.get_count_filtered(
         session,
@@ -78,7 +78,7 @@ async def list_tasks(
         status=effective_status,
         booked_by_user_id=booked_by_user_id,
         also_include_group_ids=also_include_group_ids,
-        event_group_id=event_group_id,
+        event_id=event_id,
     )
     return TaskListResponse(
         items=[TaskRead.model_validate(i) for i in items],
@@ -97,8 +97,8 @@ async def get_task(
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
     if not current_user.is_manager and db_task.status != "published":
         # Allow scoped group managers to see their unpublished tasks
-        if not db_task.event_group_id or not await crud_egm.is_manager(
-            session, user_id=current_user.id, event_group_id=db_task.event_group_id
+        if not db_task.event_id or not await crud_egm.is_manager(
+            session, user_id=current_user.id, event_id=db_task.event_id
         ):
             raise_problem(
                 403, code="task.not_published", detail="Task is not published"
@@ -112,7 +112,7 @@ async def create_task(
     session: DBDep,
     current_user: CurrentUser,
 ) -> Task:
-    await require_event_group_access(current_user, session, task_in.event_group_id)
+    await require_event_access(current_user, session, task_in.event_id)
     task_in.created_by_id = current_user.id
     return await crud_task.create(session, obj_in=task_in)
 
@@ -126,7 +126,7 @@ async def update_task(
     background_tasks: BackgroundTasks,
 ) -> Task:
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, db_task.event_group_id)
+    await require_event_access(current_user, session, db_task.event_id)
     old_status = db_task.status
     updated = await crud_task.update(session, db_obj=db_task, obj_in=task_in)
 
@@ -138,7 +138,7 @@ async def update_task(
             dispatch_task_published,
             task_id=updated.id,
             task_name=updated.name,
-            event_group_id=updated.event_group_id,
+            event_id=updated.event_id,
         )
 
     return updated
@@ -176,7 +176,7 @@ async def delete_task(
     cancellation_reason: str | None = Query(default=None),
 ) -> None:
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, db_task.event_group_id)
+    await require_event_access(current_user, session, db_task.event_id)
 
     # Collect all slot IDs for this task
     stmt = select(col(DutySlot.id)).where(col(DutySlot.task_id) == db_task.id)

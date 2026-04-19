@@ -8,15 +8,15 @@ from sqlmodel import col
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.duty_slot import duty_slot as crud_duty_slot
-from app.crud.event_group import event_group as crud_event_group
+from app.crud.event import event as crud_event
 from app.crud.slot_batch import slot_batch as crud_slot_batch
 from app.crud.task import task as crud_task
-from app.logic.permissions import require_event_group_access
+from app.logic.permissions import require_event_access
 from app.logic.slot_generator import generate_duty_slots
 from app.models.duty_slot import DutySlot
 from app.models.slot_batch import SlotBatch
 from app.schemas.duty_slot import DutySlotCreate
-from app.schemas.event_group import EventGroupRead
+from app.schemas.event import EventRead
 from app.schemas.slot_batch import SlotBatchCreate
 from app.schemas.task import (
     AddSlotsResponse,
@@ -41,18 +41,16 @@ async def create_task_with_slots(
 ) -> TaskCreateWithSlotsResponse:
     """Create an task with auto-generated duty slots in a single transaction."""
     # Check access for the target task group (if any)
-    await require_event_group_access(current_user, session, payload.event_group_id)
+    await require_event_access(current_user, session, payload.event_id)
     # 1. Optionally create a new task group
-    event_group_read: EventGroupRead | None = None
-    event_group_id = payload.event_group_id
+    event_read: EventRead | None = None
+    event_id = payload.event_id
 
-    if payload.new_event_group:
-        payload.new_event_group.created_by_id = current_user.id
-        db_group = await crud_event_group.create(
-            session, obj_in=payload.new_event_group
-        )
-        event_group_id = db_group.id
-        event_group_read = EventGroupRead.model_validate(db_group)
+    if payload.new_event:
+        payload.new_event.created_by_id = current_user.id
+        db_group = await crud_event.create(session, obj_in=payload.new_event)
+        event_id = db_group.id
+        event_read = EventRead.model_validate(db_group)
 
     # 2. Create the task with generation config stored
     task_in = TaskCreate(
@@ -63,7 +61,7 @@ async def create_task_with_slots(
         status=payload.status,
         location=payload.location,
         category=payload.category,
-        event_group_id=event_group_id,
+        event_id=event_id,
         created_by_id=current_user.id,
     )
     db_task = await crud_task.create(session, obj_in=task_in)
@@ -125,7 +123,7 @@ async def create_task_with_slots(
     return TaskCreateWithSlotsResponse(
         task=TaskRead.model_validate(db_task),
         duty_slots_created=len(slot_creates),
-        event_group=event_group_read,
+        event=event_read,
     )
 
 
@@ -138,20 +136,18 @@ async def add_slots_to_task(
 ) -> AddSlotsResponse:
     """Add a new batch of duty slots to an existing task without touching existing slots."""
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, db_task.event_group_id)
+    await require_event_access(current_user, session, db_task.event_id)
 
     # Validate dates against task group constraints
-    if db_task.event_group_id:
-        db_group = await crud_event_group.get(
-            session, db_task.event_group_id, raise_404_error=True
-        )
+    if db_task.event_id:
+        db_group = await crud_event.get(session, db_task.event_id, raise_404_error=True)
         if (
             payload.start_date < db_group.start_date
             or payload.end_date > db_group.end_date
         ):
             raise_problem(
                 400,
-                code="dates_outside_event_group",
+                code="dates_outside_event",
                 detail=(
                     f"Slot dates must fall within the task group date range "
                     f"({db_group.start_date} to {db_group.end_date})"
@@ -225,7 +221,7 @@ async def regenerate_task_slots(
     Slots are matched by (date, start_time, end_time) — matched slots keep their bookings.
     """
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, db_task.event_group_id)
+    await require_event_access(current_user, session, db_task.event_id)
 
     # If batch_id provided, load the batch for defaults
     db_batch: SlotBatch | None = None

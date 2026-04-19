@@ -4,7 +4,7 @@ import uuid
 from pydantic import BaseModel
 
 
-class SidebarEventGroup(BaseModel):
+class SidebarEvent(BaseModel):
     id: uuid.UUID
     name: str
     status: str = "published"
@@ -29,6 +29,6 @@ class SidebarBooking(BaseModel):
 
 
 class SidebarResponse(BaseModel):
-    event_groups: list[SidebarEventGroup]
+    events: list[SidebarEvent]
     tasks: list[SidebarTask]
     bookings: list[SidebarBooking]

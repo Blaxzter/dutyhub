@@ -4,7 +4,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
-from app.schemas.event_group import EventGroupCreate, EventGroupRead
+from app.schemas.event import EventCreate, EventRead
 
 TaskStatus = Literal["draft", "published", "archived"]
 
@@ -16,7 +16,7 @@ class TaskBase(BaseModel):
     end_date: dt.date
     status: TaskStatus = "draft"
     created_by_id: uuid.UUID | None = None
-    event_group_id: uuid.UUID | None = None
+    event_id: uuid.UUID | None = None
     location: str | None = None
     category: str | None = None
 
@@ -40,7 +40,7 @@ class TaskUpdate(BaseModel):
     start_date: dt.date | None = None
     end_date: dt.date | None = None
     status: TaskStatus | None = None
-    event_group_id: uuid.UUID | None = None
+    event_id: uuid.UUID | None = None
     location: str | None = None
     category: str | None = None
 
@@ -130,8 +130,8 @@ class TaskCreateWithSlots(BaseModel):
     status: TaskStatus = "draft"
     location: str | None = None
     category: str | None = None
-    event_group_id: uuid.UUID | None = None
-    new_event_group: EventGroupCreate | None = None
+    event_id: uuid.UUID | None = None
+    new_event: EventCreate | None = None
     schedule: SlotGenerationConfig
 
     @field_validator("end_date")
@@ -144,9 +144,9 @@ class TaskCreateWithSlots(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_event_group(self) -> "TaskCreateWithSlots":
-        if self.event_group_id and self.new_event_group:
-            msg = "Cannot specify both event_group_id and new_event_group"
+    def validate_event(self) -> "TaskCreateWithSlots":
+        if self.event_id and self.new_event:
+            msg = "Cannot specify both event_id and new_event"
             raise ValueError(msg)
         return self
 
@@ -154,7 +154,7 @@ class TaskCreateWithSlots(BaseModel):
 class TaskCreateWithSlotsResponse(BaseModel):
     task: TaskRead
     duty_slots_created: int
-    event_group: EventGroupRead | None = None
+    event: EventRead | None = None
 
 
 # --- Slot regeneration schemas ---

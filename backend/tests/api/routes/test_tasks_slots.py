@@ -46,7 +46,7 @@ class TestTaskSlotsRoutes:
                 "name": "Grouped Task",
                 "start_date": "2026-08-01",
                 "end_date": "2026-08-02",
-                "new_event_group": {
+                "new_event": {
                     "name": "New Group",
                     "start_date": "2026-08-01",
                     "end_date": "2026-08-31",
@@ -63,8 +63,8 @@ class TestTaskSlotsRoutes:
 
         assert r.status_code == 201
         data = r.json()
-        assert data["event_group"] is not None
-        assert data["event_group"]["name"] == "New Group"
+        assert data["event"] is not None
+        assert data["event"]["name"] == "New Group"
 
     async def test_regenerate_slots_dry_run(
         self, async_client: AsyncClient, as_admin: None, test_task: Task

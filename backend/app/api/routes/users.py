@@ -20,7 +20,7 @@ from app.crud.site_settings import site_settings as crud_site_settings
 from app.crud.user import user as crud_user
 from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
 from app.models.booking import Booking
-from app.models.event_group_manager import EventGroupManager
+from app.models.event_manager import EventManager
 from app.models.notification import NotificationSubscription
 from app.models.user import User
 from app.models.user_availability import UserAvailability, UserAvailabilityDate
@@ -40,15 +40,13 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 async def _build_user_profile(user: User, session: Any) -> UserProfile:
-    """Build a UserProfile including scoped managed_event_group_ids."""
+    """Build a UserProfile including scoped managed_event_ids."""
     result = await session.execute(
-        select(col(EventGroupManager.event_group_id)).where(
-            col(EventGroupManager.user_id) == user.id
-        )
+        select(col(EventManager.event_id)).where(col(EventManager.user_id) == user.id)
     )
     managed_ids = list(result.scalars().all())
     profile = UserProfile.model_validate(user)
-    profile.managed_event_group_ids = managed_ids
+    profile.managed_event_ids = managed_ids
     return profile
 
 

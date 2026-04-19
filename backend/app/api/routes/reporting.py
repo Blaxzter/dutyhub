@@ -14,7 +14,7 @@ from sqlmodel import col
 from app.api.deps import CurrentManager, DBDep
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event_group_manager import EventGroupManager
+from app.models.event_manager import EventManager
 from app.models.task import Task
 from app.models.user import User
 from app.schemas.reporting import (
@@ -178,15 +178,13 @@ async def _get_managed_task_ids(
 
     # Task groups where this user is an assigned manager
     group_result = await session.execute(
-        select(col(EventGroupManager.event_group_id)).where(
-            col(EventGroupManager.user_id) == user.id
-        )
+        select(col(EventManager.event_id)).where(col(EventManager.user_id) == user.id)
     )
     managed_group_ids = list(group_result.scalars().all())
 
     if managed_group_ids:
         group_tasks_result = await session.execute(
-            select(col(Task.id)).where(col(Task.event_group_id).in_(managed_group_ids))
+            select(col(Task.id)).where(col(Task.event_id).in_(managed_group_ids))
         )
         group_task_ids: list[uuid.UUID] = list(group_tasks_result.scalars().all())
     else:

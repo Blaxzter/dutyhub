@@ -7,7 +7,7 @@ from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.slot_batch import slot_batch as crud_slot_batch
 from app.crud.task import task as crud_task
-from app.logic.permissions import require_event_group_access
+from app.logic.permissions import require_event_access
 from app.models.duty_slot import DutySlot
 from app.schemas.slot_batch import SlotBatchRead
 
@@ -43,7 +43,7 @@ async def delete_batch(
 
     # Get task name for snapshot
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, db_task.event_group_id)
+    await require_event_access(current_user, session, db_task.event_id)
 
     # Collect slot IDs in this batch
     stmt = select(col(DutySlot.id)).where(col(DutySlot.batch_id) == db_batch.id)

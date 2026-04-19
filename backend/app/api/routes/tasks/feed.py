@@ -11,11 +11,11 @@ from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
-from app.crud.event_group_manager import event_group_manager as crud_egm
+from app.crud.event_manager import event_manager as crud_egm
 from app.crud.task import task as crud_task
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event_group_manager import EventGroupManager
+from app.models.event_manager import EventManager
 from app.models.task import Task
 from app.schemas.feed import (
     FeedFocusMode,
@@ -301,8 +301,8 @@ async def task_feed(
         pass  # global admin/task_manager — see everything
     else:
         result = await session.execute(
-            select(col(EventGroupManager.event_group_id)).where(
-                col(EventGroupManager.user_id) == current_user.id
+            select(col(EventManager.event_id)).where(
+                col(EventManager.user_id) == current_user.id
             )
         )
         managed_ids: list[uuid.UUID] = list(result.scalars().all())
@@ -383,16 +383,14 @@ async def task_active_dates(
         pass  # global admin/task_manager — no status filter
     else:
         result = await session.execute(
-            select(col(EventGroupManager.event_group_id)).where(
-                col(EventGroupManager.user_id) == current_user.id
+            select(col(EventManager.event_id)).where(
+                col(EventManager.user_id) == current_user.id
             )
         )
         managed_ids: list[uuid.UUID] = list(result.scalars().all())
         status_filter = col(Task.status) == "published"
         if managed_ids:
-            status_filter = or_(
-                status_filter, col(Task.event_group_id).in_(managed_ids)
-            )
+            status_filter = or_(status_filter, col(Task.event_id).in_(managed_ids))
         query = query.where(status_filter)
 
     result = await session.execute(query)
@@ -410,8 +408,8 @@ async def get_slot_window(
     """Get slots for a single task within a date window (for next/prev navigation)."""
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
     if not current_user.is_manager and db_task.status != "published":
-        if not db_task.event_group_id or not await crud_egm.is_manager(
-            session, user_id=current_user.id, event_group_id=db_task.event_group_id
+        if not db_task.event_id or not await crud_egm.is_manager(
+            session, user_id=current_user.id, event_id=db_task.event_id
         ):
             raise_problem(
                 403, code="task.not_published", detail="Task is not published"

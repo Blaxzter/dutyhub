@@ -4,15 +4,15 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
-EventGroupStatus = Literal["draft", "published", "archived"]
+EventStatus = Literal["draft", "published", "archived"]
 
 
-class EventGroupBase(BaseModel):
+class EventBase(BaseModel):
     name: str
     description: str | None = None
     start_date: dt.date
     end_date: dt.date
-    status: EventGroupStatus = "draft"
+    status: EventStatus = "draft"
 
     @field_validator("end_date")
     @classmethod
@@ -24,19 +24,19 @@ class EventGroupBase(BaseModel):
         return v
 
 
-class EventGroupCreate(EventGroupBase):
+class EventCreate(EventBase):
     created_by_id: uuid.UUID | None = None
 
 
-class EventGroupUpdate(BaseModel):
+class EventUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     start_date: dt.date | None = None
     end_date: dt.date | None = None
-    status: EventGroupStatus | None = None
+    status: EventStatus | None = None
 
 
-class EventGroupRead(EventGroupBase):
+class EventRead(EventBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     created_by_id: uuid.UUID | None = None
@@ -44,8 +44,8 @@ class EventGroupRead(EventGroupBase):
     updated_at: dt.datetime
 
 
-class EventGroupListResponse(BaseModel):
-    items: list[EventGroupRead]
+class EventListResponse(BaseModel):
+    items: list[EventRead]
     total: int
     skip: int
     limit: int

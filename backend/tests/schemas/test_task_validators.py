@@ -119,16 +119,16 @@ class TestTaskCreateWithSlots:
                 schedule=_schedule(),
             )
 
-    def test_rejects_both_event_group_refs(self):
-        from app.schemas.event_group import EventGroupCreate
+    def test_rejects_both_event_refs(self):
+        from app.schemas.event import EventCreate
 
-        with pytest.raises(ValidationError, match="event_group_id and new_event_group"):
+        with pytest.raises(ValidationError, match="event_id and new_event"):
             TaskCreateWithSlots(
                 name="x",
                 start_date=dt.date(2026, 1, 1),
                 end_date=dt.date(2026, 1, 2),
-                event_group_id=uuid.uuid4(),
-                new_event_group=EventGroupCreate(
+                event_id=uuid.uuid4(),
+                new_event=EventCreate(
                     name="g",
                     start_date=dt.date(2026, 1, 1),
                     end_date=dt.date(2026, 1, 2),

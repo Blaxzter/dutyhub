@@ -18,7 +18,7 @@ class DashboardTask(BaseModel):
     end_date: dt.date
 
 
-class DashboardEventGroup(BaseModel):
+class DashboardEvent(BaseModel):
     """Slim task group for the dashboard calendar."""
 
     model_config = ConfigDict(from_attributes=True)
@@ -45,7 +45,7 @@ class DashboardBookingItem(BaseModel):
 class DashboardFeedResponse(BaseModel):
     tasks: list[DashboardTask]
     task_count: int
-    event_groups: list[DashboardEventGroup]
+    events: list[DashboardEvent]
     bookings: list[DashboardBookingItem]
     booking_count: int
     pending_user_count: int | None = None

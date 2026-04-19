@@ -11,8 +11,8 @@ from .booking import Booking
 from .booking_reminder import BookingReminder
 from .calendar_feed import CalendarFeedToken
 from .duty_slot import DutySlot
-from .event_group import EventGroup
-from .event_group_manager import EventGroupManager
+from .event import Event
+from .event_manager import EventManager
 from .notification import (
     Notification,
     NotificationSubscription,
@@ -34,8 +34,8 @@ __all__ = [
     "CalendarFeedToken",
     "DutySlot",
     "Task",
-    "EventGroup",
-    "EventGroupManager",
+    "Event",
+    "EventManager",
     "Notification",
     "NotificationSubscription",
     "NotificationType",

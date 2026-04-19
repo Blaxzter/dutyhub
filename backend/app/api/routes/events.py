@@ -11,24 +11,24 @@ from sqlmodel import col
 
 from app.api.deps import CurrentGlobalManager, CurrentSuperuser, CurrentUser, DBDep
 from app.core.errors import raise_problem
-from app.crud.event_group import event_group as crud_event_group
-from app.crud.event_group_manager import event_group_manager as crud_egm
+from app.crud.event import event as crud_event
+from app.crud.event_manager import event_manager as crud_egm
 from app.crud.user import user as crud_user
 from app.crud.user_availability import user_availability as crud_availability
-from app.logic.permissions import require_event_group_access
+from app.logic.permissions import require_event_access
 from app.models.duty_slot import DutySlot
-from app.models.event_group import EventGroup
-from app.models.event_group_manager import EventGroupManager
+from app.models.event import Event
+from app.models.event_manager import EventManager
 from app.models.slot_batch import SlotBatch
 from app.models.task import Task
 from app.models.user import User as UserModel
 from app.models.user_availability import UserAvailabilityDate
-from app.schemas.event_group import (
-    EventGroupCreate,
-    EventGroupListResponse,
-    EventGroupRead,
-    EventGroupStatus,
-    EventGroupUpdate,
+from app.schemas.event import (
+    EventCreate,
+    EventListResponse,
+    EventRead,
+    EventStatus,
+    EventUpdate,
 )
 from app.schemas.user import UserRead
 from app.schemas.user_availability import (
@@ -37,20 +37,20 @@ from app.schemas.user_availability import (
     UserAvailabilityWithUser,
 )
 
-router = APIRouter(prefix="/event-groups", tags=["event-groups"])
+router = APIRouter(prefix="/events", tags=["events"])
 
 
-@router.get("/", response_model=EventGroupListResponse)
-async def list_event_groups(
+@router.get("/", response_model=EventListResponse)
+async def list_events(
     session: DBDep,
     current_user: CurrentUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=200),
     search: str | None = None,
-    status: EventGroupStatus | None = None,
+    status: EventStatus | None = None,
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
-) -> EventGroupListResponse:
+) -> EventListResponse:
     """List published task groups (all users) or all groups (admin/manager).
 
     Scoped group managers see published groups plus their managed groups
@@ -65,8 +65,8 @@ async def list_event_groups(
     else:
         # Check if user is a scoped group manager
         result = await session.execute(
-            sa_select(col(EventGroupManager.event_group_id)).where(
-                col(EventGroupManager.user_id) == current_user.id
+            sa_select(col(EventManager.event_id)).where(
+                col(EventManager.user_id) == current_user.id
             )
         )
         managed_ids = list(result.scalars().all())
@@ -84,65 +84,65 @@ async def list_event_groups(
         "also_include_ids": also_include_ids,
     }
 
-    items = await crud_event_group.get_multi_filtered(
+    items = await crud_event.get_multi_filtered(
         session,
         skip=skip,
         limit=limit,
         **filter_kwargs,
     )
-    total = await crud_event_group.get_count_filtered(
+    total = await crud_event.get_count_filtered(
         session,
         **filter_kwargs,
     )
-    return EventGroupListResponse(
-        items=[EventGroupRead.model_validate(i) for i in items],
+    return EventListResponse(
+        items=[EventRead.model_validate(i) for i in items],
         total=total,
         skip=skip,
         limit=limit,
     )
 
 
-@router.get("/{group_id}", response_model=EventGroupRead)
-async def get_event_group(
+@router.get("/{group_id}", response_model=EventRead)
+async def get_event(
     group_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
-) -> EventGroup:
-    db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
+) -> Event:
+    db_group = await crud_event.get(session, group_id, raise_404_error=True)
     if not current_user.is_manager and db_group.status != "published":
         # Allow scoped group managers to see their own unpublished groups
         is_scoped = await crud_egm.is_manager(
-            session, user_id=current_user.id, event_group_id=group_id
+            session, user_id=current_user.id, event_id=group_id
         )
         if not is_scoped:
             raise_problem(
                 403,
-                code="event_group.not_published",
+                code="event.not_published",
                 detail="Task group is not published",
             )
     return db_group
 
 
-@router.post("/", response_model=EventGroupRead, status_code=201)
-async def create_event_group(
-    group_in: EventGroupCreate,
+@router.post("/", response_model=EventRead, status_code=201)
+async def create_event(
+    group_in: EventCreate,
     session: DBDep,
     current_user: CurrentGlobalManager,
-) -> EventGroup:
+) -> Event:
     group_in.created_by_id = current_user.id
-    return await crud_event_group.create(session, obj_in=group_in)
+    return await crud_event.create(session, obj_in=group_in)
 
 
-@router.patch("/{group_id}", response_model=EventGroupRead)
-async def update_event_group(
+@router.patch("/{group_id}", response_model=EventRead)
+async def update_event(
     group_id: uuid.UUID,
-    group_in: EventGroupUpdate,
+    group_in: EventUpdate,
     session: DBDep,
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
-) -> EventGroup:
-    db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, db_group.id)
+) -> Event:
+    db_group = await crud_event.get(session, group_id, raise_404_error=True)
+    await require_event_access(current_user, session, db_group.id)
 
     # Validate date range against existing tasks
     new_start = group_in.start_date or db_group.start_date
@@ -150,7 +150,7 @@ async def update_event_group(
     if new_end < new_start:
         raise_problem(
             422,
-            code="event_group.invalid_dates",
+            code="event.invalid_dates",
             detail="End date must be on or after start date",
         )
     if group_in.start_date is not None or group_in.end_date is not None:
@@ -158,34 +158,34 @@ async def update_event_group(
             sa_select(
                 sa_func.min(col(Task.start_date)),
                 sa_func.max(col(Task.end_date)),
-            ).where(col(Task.event_group_id) == group_id)
+            ).where(col(Task.event_id) == group_id)
         )
         row = result.one()
         earliest_task, latest_task = row[0], row[1]
         if earliest_task is not None and new_start > earliest_task:
             raise_problem(
                 422,
-                code="event_group.date_range_conflict",
+                code="event.date_range_conflict",
                 detail=f"Cannot set start date after {earliest_task.isoformat()} — an task starts on that date",
             )
         if latest_task is not None and new_end < latest_task:
             raise_problem(
                 422,
-                code="event_group.date_range_conflict",
+                code="event.date_range_conflict",
                 detail=f"Cannot set end date before {latest_task.isoformat()} — an task ends on that date",
             )
 
     old_status = db_group.status
-    updated = await crud_event_group.update(session, db_obj=db_group, obj_in=group_in)
+    updated = await crud_event.update(session, db_obj=db_group, obj_in=group_in)
 
     # Notify when task group is published
     if old_status != "published" and updated.status == "published":
-        from app.logic.notifications.triggers import dispatch_event_group_published
+        from app.logic.notifications.triggers import dispatch_event_published
 
         background_tasks.add_task(
-            dispatch_event_group_published,
-            event_group_id=updated.id,
-            event_group_name=updated.name,
+            dispatch_event_published,
+            event_id=updated.id,
+            event_name=updated.name,
         )
 
     return updated
@@ -198,12 +198,12 @@ async def get_task_date_bounds(
     _current_user: CurrentUser,
 ) -> dict[str, dt.date | None]:
     """Return the earliest task start and latest task end within this group."""
-    await crud_event_group.get(session, group_id, raise_404_error=True)
+    await crud_event.get(session, group_id, raise_404_error=True)
     result = await session.execute(
         sa_select(
             sa_func.min(col(Task.start_date)),
             sa_func.max(col(Task.end_date)),
-        ).where(col(Task.event_group_id) == group_id)
+        ).where(col(Task.event_id) == group_id)
     )
     row = result.one()
     return {"earliest_start": row[0], "latest_end": row[1]}
@@ -213,20 +213,20 @@ class ShiftDatesRequest(BaseModel):
     new_start_date: dt.date
 
 
-@router.post("/{group_id}/shift-dates", response_model=EventGroupRead)
-async def shift_event_group_dates(
+@router.post("/{group_id}/shift-dates", response_model=EventRead)
+async def shift_event_dates(
     group_id: uuid.UUID,
     body: ShiftDatesRequest,
     session: DBDep,
     current_user: CurrentUser,
-) -> EventGroup:
+) -> Event:
     """Shift the entire task group and all its tasks/slots/availabilities by a date offset.
 
     The offset is calculated from the difference between the current group
     start_date and the provided new_start_date.
     """
-    db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, db_group.id)
+    db_group = await crud_event.get(session, group_id, raise_404_error=True)
+    await require_event_access(current_user, session, db_group.id)
 
     delta = body.new_start_date - db_group.start_date
     if delta.days == 0:
@@ -239,7 +239,7 @@ async def shift_event_group_dates(
 
     # Get task IDs in this group
     task_ids_result = await session.execute(
-        sa_select(col(Task.id)).where(col(Task.event_group_id) == group_id)
+        sa_select(col(Task.id)).where(col(Task.event_id) == group_id)
     )
     task_ids = list(task_ids_result.scalars().all())
 
@@ -247,7 +247,7 @@ async def shift_event_group_dates(
         # 2. Shift tasks
         await session.execute(
             sa_update(Task)
-            .where(col(Task.event_group_id) == group_id)
+            .where(col(Task.event_id) == group_id)
             .values(
                 start_date=Task.start_date + delta,
                 end_date=Task.end_date + delta,
@@ -312,7 +312,7 @@ async def shift_event_group_dates(
 
     avail_ids_result = await session.execute(
         sa_select(col(UserAvailability.id)).where(
-            col(UserAvailability.event_group_id) == group_id
+            col(UserAvailability.event_id) == group_id
         )
     )
     avail_ids = list(avail_ids_result.scalars().all())
@@ -349,13 +349,13 @@ def _shift_overrides(
 
 
 @router.delete("/{group_id}", status_code=204)
-async def delete_event_group(
+async def delete_event(
     group_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
 ) -> None:
-    db_group = await crud_event_group.get(session, group_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, db_group.id)
+    db_group = await crud_event.get(session, group_id, raise_404_error=True)
+    await require_event_access(current_user, session, db_group.id)
     await session.delete(db_group)
     await session.commit()
 
@@ -372,10 +372,10 @@ async def list_group_availabilities(
     limit: int = Query(default=200, ge=1, le=500),
 ) -> list[UserAvailabilityWithUser]:
     """List all user availabilities for this task group (managers only)."""
-    await crud_event_group.get(session, group_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, group_id)
+    await crud_event.get(session, group_id, raise_404_error=True)
+    await require_event_access(current_user, session, group_id)
     availabilities = await crud_availability.get_multi_by_group(
-        session, event_group_id=group_id, skip=skip, limit=limit
+        session, event_id=group_id, skip=skip, limit=limit
     )
 
     user_ids = [a.user_id for a in availabilities]
@@ -409,7 +409,7 @@ async def get_my_availability(
     avail = await crud_availability.get_by_user_and_group(
         session,
         user_id=current_user.id,
-        event_group_id=group_id,
+        event_id=group_id,
     )
     if not avail:
         raise_problem(
@@ -431,11 +431,11 @@ async def set_my_availability(
     session: DBDep,
     current_user: CurrentUser,
 ) -> UserAvailabilityRead:
-    await crud_event_group.get(session, group_id, raise_404_error=True)
+    await crud_event.get(session, group_id, raise_404_error=True)
     await crud_availability.upsert_for_user(
         session,
         user_id=current_user.id,
-        event_group_id=group_id,
+        event_id=group_id,
         obj_in=avail_in,
     )
     await session.flush()
@@ -443,7 +443,7 @@ async def set_my_availability(
     avail = await crud_availability.get_by_user_and_group(
         session,
         user_id=current_user.id,
-        event_group_id=group_id,
+        event_id=group_id,
     )
     return UserAvailabilityRead.model_validate(avail)
 
@@ -457,7 +457,7 @@ async def delete_my_availability(
     deleted = await crud_availability.delete_for_user(
         session,
         user_id=current_user.id,
-        event_group_id=group_id,
+        event_id=group_id,
     )
     if not deleted:
         raise_problem(
@@ -478,9 +478,9 @@ async def list_group_managers(
     current_user: CurrentUser,
 ) -> list[UserRead]:
     """List all assigned managers for this task group."""
-    await crud_event_group.get(session, group_id, raise_404_error=True)
-    await require_event_group_access(current_user, session, group_id)
-    assignments = await crud_egm.get_by_group(session, event_group_id=group_id)
+    await crud_event.get(session, group_id, raise_404_error=True)
+    await require_event_access(current_user, session, group_id)
+    assignments = await crud_egm.get_by_group(session, event_id=group_id)
     user_ids = [a.user_id for a in assignments]
     if not user_ids:
         return []
@@ -498,9 +498,9 @@ async def assign_group_manager(
     _current_user: CurrentSuperuser,
 ) -> UserRead:
     """Admin-only: assign a user as manager of this task group."""
-    await crud_event_group.get(session, group_id, raise_404_error=True)
+    await crud_event.get(session, group_id, raise_404_error=True)
     user = await crud_user.get(session, id=user_id, raise_404_error=True)
-    await crud_egm.assign(session, user_id=user_id, event_group_id=group_id)
+    await crud_egm.assign(session, user_id=user_id, event_id=group_id)
     return UserRead.model_validate(user)
 
 
@@ -512,8 +512,8 @@ async def remove_group_manager(
     _current_user: CurrentSuperuser,
 ) -> None:
     """Admin-only: remove a user as manager of this task group."""
-    await crud_event_group.get(session, group_id, raise_404_error=True)
-    removed = await crud_egm.remove(session, user_id=user_id, event_group_id=group_id)
+    await crud_event.get(session, group_id, raise_404_error=True)
+    removed = await crud_egm.remove(session, user_id=user_id, event_id=group_id)
     if not removed:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

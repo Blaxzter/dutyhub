@@ -29,10 +29,10 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         date_to: dt.date | None = None,
         has_future_slots: dt.date | dt.datetime | None = None,
         also_include_group_ids: list[uuid.UUID] | None = None,
-        event_group_id: uuid.UUID | None = None,
+        event_id: uuid.UUID | None = None,
     ) -> Select[Any]:
-        if event_group_id is not None:
-            query = query.where(col(Task.event_group_id) == event_group_id)
+        if event_id is not None:
+            query = query.where(col(Task.event_id) == event_id)
         if search:
             query = query.where(
                 col(Task.name).ilike(f"%{search}%")
@@ -43,7 +43,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             if also_include_group_ids:
                 status_filter = or_(
                     status_filter,
-                    col(Task.event_group_id).in_(also_include_group_ids),
+                    col(Task.event_id).in_(also_include_group_ids),
                 )
             query = query.where(status_filter)
         if created_by_id:
@@ -128,7 +128,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         sort_by: TaskSortField = "start_date",
         sort_dir: Literal["asc", "desc"] = "asc",
         also_include_group_ids: list[uuid.UUID] | None = None,
-        event_group_id: uuid.UUID | None = None,
+        event_id: uuid.UUID | None = None,
     ) -> list[Task]:
         query = select(Task)
         query = self._apply_common_filters(
@@ -141,7 +141,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             date_to=date_to,
             has_future_slots=has_future_slots,
             also_include_group_ids=also_include_group_ids,
-            event_group_id=event_group_id,
+            event_id=event_id,
         )
         order_col = getattr(Task, sort_by)
         query = query.order_by(
@@ -163,7 +163,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         date_to: dt.date | None = None,
         has_future_slots: dt.date | None = None,
         also_include_group_ids: list[uuid.UUID] | None = None,
-        event_group_id: uuid.UUID | None = None,
+        event_id: uuid.UUID | None = None,
     ) -> int:
         query = select(func.count()).select_from(Task)
         query = self._apply_common_filters(
@@ -176,7 +176,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             date_to=date_to,
             has_future_slots=has_future_slots,
             also_include_group_ids=also_include_group_ids,
-            event_group_id=event_group_id,
+            event_id=event_id,
         )
         result = await db.execute(query)
         return result.scalar_one()

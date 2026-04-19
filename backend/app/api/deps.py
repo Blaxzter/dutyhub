@@ -10,7 +10,7 @@ from sqlmodel import col
 from app.core.config import settings
 from app.core.db import async_session
 from app.crud.user import user as crud_user
-from app.models.event_group_manager import EventGroupManager
+from app.models.event_manager import EventManager
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -174,8 +174,8 @@ def current_user(
     async def _is_any_group_manager(session: AsyncSession, user: User) -> bool:
         """Check if user manages at least one task group."""
         result = await session.execute(
-            select(col(EventGroupManager.id))
-            .where(col(EventGroupManager.user_id) == user.id)
+            select(col(EventManager.id))
+            .where(col(EventManager.user_id) == user.id)
             .limit(1)
         )
         return result.scalar_one_or_none() is not None

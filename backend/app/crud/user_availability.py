@@ -23,13 +23,13 @@ class CRUDUserAvailability(
         db: AsyncSession,
         *,
         user_id: uuid.UUID,
-        event_group_id: uuid.UUID,
+        event_id: uuid.UUID,
     ) -> UserAvailability | None:
         query = (
             select(UserAvailability)
             .where(
                 col(UserAvailability.user_id) == user_id,
-                col(UserAvailability.event_group_id) == event_group_id,
+                col(UserAvailability.event_id) == event_id,
             )
             .options(selectinload(UserAvailability.available_dates))  # type: ignore[arg-type]
         )
@@ -40,13 +40,13 @@ class CRUDUserAvailability(
         self,
         db: AsyncSession,
         *,
-        event_group_id: uuid.UUID,
+        event_id: uuid.UUID,
         skip: int = 0,
         limit: int = 200,
     ) -> list[UserAvailability]:
         query = (
             select(UserAvailability)
-            .where(col(UserAvailability.event_group_id) == event_group_id)
+            .where(col(UserAvailability.event_id) == event_id)
             .options(selectinload(UserAvailability.available_dates))  # type: ignore[arg-type]
             .offset(skip)
             .limit(limit)
@@ -73,11 +73,11 @@ class CRUDUserAvailability(
         db: AsyncSession,
         *,
         user_id: uuid.UUID,
-        event_group_id: uuid.UUID,
+        event_id: uuid.UUID,
         obj_in: UserAvailabilityCreate,
     ) -> UserAvailability:
         existing = await self.get_by_user_and_group(
-            db, user_id=user_id, event_group_id=event_group_id
+            db, user_id=user_id, event_id=event_id
         )
         if existing:
             # Update fields
@@ -96,7 +96,7 @@ class CRUDUserAvailability(
         else:
             avail = UserAvailability(
                 user_id=user_id,
-                event_group_id=event_group_id,
+                event_id=event_id,
                 availability_type=obj_in.availability_type,
                 notes=obj_in.notes,
                 default_start_time=obj_in.default_start_time,
@@ -110,7 +110,7 @@ class CRUDUserAvailability(
             await db.flush()
             # Load with dates
             result = await self.get_by_user_and_group(
-                db, user_id=user_id, event_group_id=event_group_id
+                db, user_id=user_id, event_id=event_id
             )
             return result  # type: ignore[return-value]
 
@@ -119,10 +119,10 @@ class CRUDUserAvailability(
         db: AsyncSession,
         *,
         user_id: uuid.UUID,
-        event_group_id: uuid.UUID,
+        event_id: uuid.UUID,
     ) -> bool:
         existing = await self.get_by_user_and_group(
-            db, user_id=user_id, event_group_id=event_group_id
+            db, user_id=user_id, event_id=event_id
         )
         if not existing:
             return False

@@ -11,7 +11,7 @@ if __name__ != "__main__":
     from app.models.duty_slot import DutySlot  # noqa: F401
 
 if __name__ != "__main__":
-    from app.models.event_group import EventGroup  # noqa: F401
+    from app.models.event import Event  # noqa: F401
 
 if __name__ != "__main__":
     from app.models.slot_batch import SlotBatch  # noqa: F401
@@ -38,11 +38,11 @@ class Task(Base, table=True):
             index=True,
         ),
     )
-    event_group_id: uuid.UUID | None = Field(
+    event_id: uuid.UUID | None = Field(
         default=None,
         sa_column=sa.Column(
             sa.Uuid,
-            sa.ForeignKey("event_groups.id", ondelete="SET NULL"),
+            sa.ForeignKey("events.id", ondelete="SET NULL"),
             nullable=True,
             index=True,
         ),
@@ -79,4 +79,4 @@ class Task(Base, table=True):
         back_populates="task",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    event_group: "EventGroup" = Relationship(back_populates="tasks")
+    event: "Event" = Relationship(back_populates="tasks")

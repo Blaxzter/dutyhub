@@ -15,7 +15,7 @@ from sqlmodel import col
 from app.api.deps import CurrentSuperuser, DBDep
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event_group import EventGroup
+from app.models.event import Event
 from app.models.task import Task
 from app.models.user import User
 from app.schemas.demo_data import (
@@ -134,18 +134,18 @@ async def create_demo_data(
     """Create demo task groups, tasks, users, and duty slots."""
     rng = random.Random()  # noqa: S311
     today = dt.date.today()
-    created_groups: list[EventGroup] = []
+    created_groups: list[Event] = []
     created_tasks: list[Task] = []
     created_users: list[User] = []
     created_slots: list[DutySlot] = []
     total_bookings = 0
 
     # --- Task groups ---
-    for i in range(params.num_event_groups):
+    for i in range(params.num_events):
         name = DEMO_GROUP_NAMES[i % len(DEMO_GROUP_NAMES)]
         group_start = today + dt.timedelta(days=rng.randint(0, 2))
         group_end = group_start + dt.timedelta(days=rng.randint(5, 9))
-        group = EventGroup(
+        group = Event(
             name=f"{DEMO_PREFIX} {name}",
             description=f"Auto-generated demo task group #{i + 1}",
             start_date=group_start,
@@ -180,7 +180,7 @@ async def create_demo_data(
             end_date=task_end,
             status="published" if params.publish_tasks else "draft",
             created_by_id=_current_user.id,
-            event_group_id=group.id if group else None,
+            event_id=group.id if group else None,
             location=rng.choice(DEMO_LOCATIONS),
             category="demo",
         )
@@ -270,7 +270,7 @@ async def create_demo_data(
                 total_bookings += 1
 
     return DemoDataCreatedResponse(
-        event_groups_created=len(created_groups),
+        events_created=len(created_groups),
         tasks_created=len(created_tasks),
         users_created=len(created_users),
         duty_slots_created=len(created_slots),
@@ -333,11 +333,7 @@ async def delete_demo_data(
 
     # Delete demo task groups
     demo_groups = (
-        (
-            await db.execute(
-                select(EventGroup).where(col(EventGroup.name).startswith(DEMO_PREFIX))
-            )
-        )
+        (await db.execute(select(Event).where(col(Event.name).startswith(DEMO_PREFIX))))
         .scalars()
         .all()
     )
@@ -357,7 +353,7 @@ async def delete_demo_data(
 
     return DemoDataDeletedResponse(
         tasks_deleted=len(demo_tasks),
-        event_groups_deleted=groups_deleted,
+        events_deleted=groups_deleted,
         users_deleted=users_deleted,
         duty_slots_deleted=len(demo_slots),
         bookings_deleted=bookings_deleted,

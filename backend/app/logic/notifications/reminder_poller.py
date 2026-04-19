@@ -77,7 +77,7 @@ async def _process_reminder(reminder: BookingReminder) -> None:
             task_query = select(Task).where(col(Task.id) == slot.task_id)
             task_result = await db.execute(task_query)
             task = task_result.scalar_one_or_none()
-            event_group_id = task.event_group_id if task else None
+            event_id = task.event_id if task else None
 
             svc = NotificationService(db)
 
@@ -87,8 +87,8 @@ async def _process_reminder(reminder: BookingReminder) -> None:
                 scope_chain.append(("duty_slot", slot.id))
             if slot.task_id:
                 scope_chain.append(("task", slot.task_id))
-            if event_group_id:
-                scope_chain.append(("event_group", event_group_id))
+            if event_id:
+                scope_chain.append(("event", event_id))
 
             def _factory(lang: str) -> tuple[str, str]:
                 return get_message(

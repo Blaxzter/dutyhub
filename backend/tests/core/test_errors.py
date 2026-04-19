@@ -48,7 +48,7 @@ def _body(response: JSONResponse) -> dict[str, Any]:
 
 class TestSlugifyResource:
     def test_slugifies_mixed_case(self):
-        assert _slugify_resource("Event Group") == "event_group"
+        assert _slugify_resource("Event Manager") == "event_manager"
 
     def test_strips_punctuation(self):
         assert _slugify_resource("User--Profile!!") == "user_profile"
@@ -60,8 +60,8 @@ class TestSlugifyResource:
 class TestInferProblemType:
     def test_404_with_resource_detail(self):
         assert (
-            _infer_problem_type(404, "Event group not found")
-            == f"{URN_PREFIX}event_group.not_found"
+            _infer_problem_type(404, "Event manager not found")
+            == f"{URN_PREFIX}event_manager.not_found"
         )
 
     def test_404_without_detail(self):

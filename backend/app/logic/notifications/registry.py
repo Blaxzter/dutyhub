@@ -114,11 +114,11 @@ TASK_PUBLISHED = NotificationTypeDef(
 
 # ── Task group notifications ─────────────────────────────────────
 
-EVENT_GROUP_PUBLISHED = NotificationTypeDef(
-    code="event_group.published",
+EVENT_PUBLISHED = NotificationTypeDef(
+    code="event.published",
     name="Task Group Published",
     description="Notification when a new task group is published",
-    category="event_group",
+    category="event",
     default_channels=["email"],
 )
 
@@ -170,7 +170,7 @@ ALL_NOTIFICATION_TYPES: list[NotificationTypeDef] = [
     SLOT_STARTING_SOON_UNFILLED,
     SLOT_TIME_CHANGED,
     TASK_PUBLISHED,
-    EVENT_GROUP_PUBLISHED,
+    EVENT_PUBLISHED,
     AVAILABILITY_REMINDER,
     USER_REGISTERED,
     USER_APPROVED,

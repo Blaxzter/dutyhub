@@ -170,7 +170,7 @@ async def create_booking(
         task_name=task_name,
         slot_id=slot.id,
         task_id=slot.task_id,
-        event_group_id=task.event_group_id if task else None,
+        event_id=task.event_id if task else None,
     )
     if existing_user_ids:
         background_tasks.add_task(

@@ -48,7 +48,7 @@ class UserProfile(BaseModel):
     rejection_reason: str | None = Field(
         default=None, description="Reason for account rejection"
     )
-    managed_event_group_ids: list[uuid.UUID] = Field(
+    managed_event_ids: list[uuid.UUID] = Field(
         default_factory=list,
-        description="IDs of task groups this user manages (via event_group_managers)",
+        description="IDs of task groups this user manages (via event_managers)",
     )

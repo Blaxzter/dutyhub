@@ -9,7 +9,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.duty_slot import DutySlot
-from app.models.event_group import EventGroup
+from app.models.event import Event
 from app.models.slot_batch import SlotBatch
 from app.models.task import Task
 from app.models.user import User
@@ -19,7 +19,7 @@ from app.models.user_availability import UserAvailability, UserAvailabilityDate
 
 
 class FullHierarchy(TypedDict):
-    group: EventGroup
+    group: Event
     task: Task
     batch: SlotBatch
     slot: DutySlot
@@ -33,9 +33,9 @@ class FullHierarchy(TypedDict):
 @pytest.fixture
 async def group_with_tasks(
     db_session: AsyncSession,
-    test_event_group: EventGroup,
+    test_event: Event,
     test_user: User,
-) -> tuple[EventGroup, list[Task]]:
+) -> tuple[Event, list[Task]]:
     """Create a published task group with two tasks inside it."""
     task_a = Task(
         name="Task A",
@@ -43,7 +43,7 @@ async def group_with_tasks(
         end_date=datetime.date(2026, 6, 11),
         status="published",
         created_by_id=test_user.id,
-        event_group_id=test_event_group.id,
+        event_id=test_event.id,
     )
     task_b = Task(
         name="Task B",
@@ -51,19 +51,19 @@ async def group_with_tasks(
         end_date=datetime.date(2026, 6, 14),
         status="published",
         created_by_id=test_user.id,
-        event_group_id=test_event_group.id,
+        event_id=test_event.id,
     )
     db_session.add_all([task_a, task_b])
     await db_session.flush()
     await db_session.refresh(task_a)
     await db_session.refresh(task_b)
-    return test_event_group, [task_a, task_b]
+    return test_event, [task_a, task_b]
 
 
 @pytest.fixture
 async def group_with_full_hierarchy(
     db_session: AsyncSession,
-    test_event_group: EventGroup,
+    test_event: Event,
     test_user: User,
 ) -> FullHierarchy:
     """Create a group with task → slot_batch → duty_slot + availability dates."""
@@ -73,7 +73,7 @@ async def group_with_full_hierarchy(
         end_date=datetime.date(2026, 6, 12),
         status="published",
         created_by_id=test_user.id,
-        event_group_id=test_event_group.id,
+        event_id=test_event.id,
         schedule_overrides=[{"date": "2026-06-11", "skip": True}],
     )
     db_session.add(task)
@@ -104,7 +104,7 @@ async def group_with_full_hierarchy(
 
     avail = UserAvailability(
         user_id=test_user.id,
-        event_group_id=test_event_group.id,
+        event_id=test_event.id,
         availability_type="specific_dates",
     )
     db_session.add(avail)
@@ -120,7 +120,7 @@ async def group_with_full_hierarchy(
     await db_session.refresh(avail_date)
 
     return FullHierarchy(
-        group=test_event_group,
+        group=test_event,
         task=task,
         batch=batch,
         slot=slot,
@@ -129,20 +129,20 @@ async def group_with_full_hierarchy(
     )
 
 
-# ── GET /event-groups/{id}/task-date-bounds ─────────────────────────────
+# ── GET /events/{id}/task-date-bounds ─────────────────────────────
 
 
 @pytest.mark.asyncio
 class TestTaskDateBounds:
-    """Test suite for GET /event-groups/{id}/task-date-bounds."""
+    """Test suite for GET /events/{id}/task-date-bounds."""
 
     async def test_returns_bounds_with_tasks(
         self,
         async_client: AsyncClient,
-        group_with_tasks: tuple[EventGroup, list[Task]],
+        group_with_tasks: tuple[Event, list[Task]],
     ):
         group, _tasks = group_with_tasks
-        r = await async_client.get(f"/api/v1/event-groups/{group.id}/task-date-bounds")
+        r = await async_client.get(f"/api/v1/events/{group.id}/task-date-bounds")
         assert r.status_code == 200
         data = r.json()
         assert data["earliest_start"] == "2026-06-10"
@@ -151,27 +151,23 @@ class TestTaskDateBounds:
     async def test_returns_nulls_when_no_tasks(
         self,
         async_client: AsyncClient,
-        test_event_group: EventGroup,
+        test_event: Event,
     ):
-        r = await async_client.get(
-            f"/api/v1/event-groups/{test_event_group.id}/task-date-bounds"
-        )
+        r = await async_client.get(f"/api/v1/events/{test_event.id}/task-date-bounds")
         assert r.status_code == 200
         data = r.json()
         assert data["earliest_start"] is None
         assert data["latest_end"] is None
 
     async def test_404_for_nonexistent_group(self, async_client: AsyncClient):
-        r = await async_client.get(
-            f"/api/v1/event-groups/{uuid.uuid4()}/task-date-bounds"
-        )
+        r = await async_client.get(f"/api/v1/events/{uuid.uuid4()}/task-date-bounds")
         assert r.status_code == 404
 
     async def test_single_task_same_start_and_end(
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
-        test_event_group: EventGroup,
+        test_event: Event,
         test_user: User,
     ):
         """When there's only one task, earliest_start == latest_end boundaries."""
@@ -181,35 +177,33 @@ class TestTaskDateBounds:
             end_date=datetime.date(2026, 6, 12),
             status="draft",
             created_by_id=test_user.id,
-            event_group_id=test_event_group.id,
+            event_id=test_event.id,
         )
         db_session.add(task)
         await db_session.flush()
 
-        r = await async_client.get(
-            f"/api/v1/event-groups/{test_event_group.id}/task-date-bounds"
-        )
+        r = await async_client.get(f"/api/v1/events/{test_event.id}/task-date-bounds")
         assert r.status_code == 200
         data = r.json()
         assert data["earliest_start"] == "2026-06-12"
         assert data["latest_end"] == "2026-06-12"
 
 
-# ── PATCH /event-groups/{id} — Date validation ──────────────────────────
+# ── PATCH /events/{id} — Date validation ──────────────────────────
 
 
 @pytest.mark.asyncio
-class TestUpdateEventGroupDateValidation:
+class TestUpdateEventDateValidation:
     """Test enhanced date validation when updating task groups."""
 
     async def test_rejects_end_before_start(
         self,
         async_client: AsyncClient,
-        test_event_group: EventGroup,
+        test_event: Event,
         as_admin: None,
     ):
         r = await async_client.patch(
-            f"/api/v1/event-groups/{test_event_group.id}",
+            f"/api/v1/events/{test_event.id}",
             json={
                 "start_date": "2026-06-14",
                 "end_date": "2026-06-10",
@@ -220,13 +214,13 @@ class TestUpdateEventGroupDateValidation:
     async def test_rejects_start_after_earliest_task(
         self,
         async_client: AsyncClient,
-        group_with_tasks: tuple[EventGroup, list[Task]],
+        group_with_tasks: tuple[Event, list[Task]],
         as_admin: None,
     ):
         """Cannot set start_date after the earliest task start_date."""
         group, _ = group_with_tasks
         r = await async_client.patch(
-            f"/api/v1/event-groups/{group.id}",
+            f"/api/v1/events/{group.id}",
             json={"start_date": "2026-06-12"},  # Task A starts on 2026-06-10
         )
         assert r.status_code == 422
@@ -234,13 +228,13 @@ class TestUpdateEventGroupDateValidation:
     async def test_rejects_end_before_latest_task(
         self,
         async_client: AsyncClient,
-        group_with_tasks: tuple[EventGroup, list[Task]],
+        group_with_tasks: tuple[Event, list[Task]],
         as_admin: None,
     ):
         """Cannot set end_date before the latest task end_date."""
         group, _ = group_with_tasks
         r = await async_client.patch(
-            f"/api/v1/event-groups/{group.id}",
+            f"/api/v1/events/{group.id}",
             json={"end_date": "2026-06-12"},  # Task B ends on 2026-06-14
         )
         assert r.status_code == 422
@@ -248,13 +242,13 @@ class TestUpdateEventGroupDateValidation:
     async def test_allows_valid_date_range_with_tasks(
         self,
         async_client: AsyncClient,
-        group_with_tasks: tuple[EventGroup, list[Task]],
+        group_with_tasks: tuple[Event, list[Task]],
         as_admin: None,
     ):
         """Can set dates that encompass all tasks."""
         group, _ = group_with_tasks
         r = await async_client.patch(
-            f"/api/v1/event-groups/{group.id}",
+            f"/api/v1/events/{group.id}",
             json={
                 "start_date": "2026-06-09",
                 "end_date": "2026-06-15",
@@ -268,12 +262,12 @@ class TestUpdateEventGroupDateValidation:
     async def test_allows_date_update_without_tasks(
         self,
         async_client: AsyncClient,
-        test_event_group: EventGroup,
+        test_event: Event,
         as_admin: None,
     ):
         """Can freely update dates when there are no tasks."""
         r = await async_client.patch(
-            f"/api/v1/event-groups/{test_event_group.id}",
+            f"/api/v1/events/{test_event.id}",
             json={
                 "start_date": "2026-07-01",
                 "end_date": "2026-07-05",
@@ -285,36 +279,36 @@ class TestUpdateEventGroupDateValidation:
     async def test_allows_name_update_without_date_validation(
         self,
         async_client: AsyncClient,
-        group_with_tasks: tuple[EventGroup, list[Task]],
+        group_with_tasks: tuple[Event, list[Task]],
         as_admin: None,
     ):
         """Updating only the name does not trigger date validation."""
         group, _ = group_with_tasks
         r = await async_client.patch(
-            f"/api/v1/event-groups/{group.id}",
+            f"/api/v1/events/{group.id}",
             json={"name": "Renamed with tasks"},
         )
         assert r.status_code == 200
         assert r.json()["name"] == "Renamed with tasks"
 
 
-# ── POST /event-groups/{id}/shift-dates ──────────────────────────────────
+# ── POST /events/{id}/shift-dates ──────────────────────────────────
 
 
 @pytest.mark.asyncio
-class TestShiftEventGroupDates:
-    """Test suite for POST /event-groups/{id}/shift-dates."""
+class TestShiftEventDates:
+    """Test suite for POST /events/{id}/shift-dates."""
 
     async def test_no_op_when_same_start_date(
         self,
         async_client: AsyncClient,
-        group_with_tasks: tuple[EventGroup, list[Task]],
+        group_with_tasks: tuple[Event, list[Task]],
         as_admin: None,
     ):
         """Shifting to the same start date returns the group unchanged."""
         group, _ = group_with_tasks
         r = await async_client.post(
-            f"/api/v1/event-groups/{group.id}/shift-dates",
+            f"/api/v1/events/{group.id}/shift-dates",
             json={"new_start_date": str(group.start_date)},
         )
         assert r.status_code == 200
@@ -335,7 +329,7 @@ class TestShiftEventGroupDates:
         new_start = original_start + delta
 
         r = await async_client.post(
-            f"/api/v1/event-groups/{group.id}/shift-dates",
+            f"/api/v1/events/{group.id}/shift-dates",
             json={"new_start_date": new_start.isoformat()},
         )
         assert r.status_code == 200
@@ -358,7 +352,7 @@ class TestShiftEventGroupDates:
         new_start = group.start_date + delta
 
         await async_client.post(
-            f"/api/v1/event-groups/{group.id}/shift-dates",
+            f"/api/v1/events/{group.id}/shift-dates",
             json={"new_start_date": new_start.isoformat()},
         )
 
@@ -381,7 +375,7 @@ class TestShiftEventGroupDates:
         new_start = group.start_date + delta
 
         await async_client.post(
-            f"/api/v1/event-groups/{group.id}/shift-dates",
+            f"/api/v1/events/{group.id}/shift-dates",
             json={"new_start_date": new_start.isoformat()},
         )
 
@@ -404,7 +398,7 @@ class TestShiftEventGroupDates:
         new_start = group.start_date + delta
 
         await async_client.post(
-            f"/api/v1/event-groups/{group.id}/shift-dates",
+            f"/api/v1/events/{group.id}/shift-dates",
             json={"new_start_date": new_start.isoformat()},
         )
 
@@ -426,7 +420,7 @@ class TestShiftEventGroupDates:
         new_start = group.start_date + delta
 
         await async_client.post(
-            f"/api/v1/event-groups/{group.id}/shift-dates",
+            f"/api/v1/events/{group.id}/shift-dates",
             json={"new_start_date": new_start.isoformat()},
         )
 
@@ -456,7 +450,7 @@ class TestShiftEventGroupDates:
         new_start = group.start_date + delta
 
         await async_client.post(
-            f"/api/v1/event-groups/{group.id}/shift-dates",
+            f"/api/v1/events/{group.id}/shift-dates",
             json={"new_start_date": new_start.isoformat()},
         )
 
@@ -477,7 +471,7 @@ class TestShiftEventGroupDates:
         new_start = group.start_date + delta
 
         r = await async_client.post(
-            f"/api/v1/event-groups/{group.id}/shift-dates",
+            f"/api/v1/events/{group.id}/shift-dates",
             json={"new_start_date": new_start.isoformat()},
         )
         assert r.status_code == 200
@@ -489,11 +483,11 @@ class TestShiftEventGroupDates:
     async def test_shift_requires_access(
         self,
         async_client: AsyncClient,
-        test_event_group: EventGroup,
+        test_event: Event,
     ):
         """Normal user without manager access gets 403."""
         r = await async_client.post(
-            f"/api/v1/event-groups/{test_event_group.id}/shift-dates",
+            f"/api/v1/events/{test_event.id}/shift-dates",
             json={"new_start_date": "2026-07-01"},
         )
         assert r.status_code == 403
@@ -504,7 +498,7 @@ class TestShiftEventGroupDates:
         as_admin: None,
     ):
         r = await async_client.post(
-            f"/api/v1/event-groups/{uuid.uuid4()}/shift-dates",
+            f"/api/v1/events/{uuid.uuid4()}/shift-dates",
             json={"new_start_date": "2026-07-01"},
         )
         assert r.status_code == 404
@@ -512,15 +506,15 @@ class TestShiftEventGroupDates:
     async def test_shift_with_no_tasks(
         self,
         async_client: AsyncClient,
-        test_event_group: EventGroup,
+        test_event: Event,
         as_admin: None,
     ):
         """Shifting a group with no tasks still shifts the group dates."""
-        original_start = test_event_group.start_date
+        original_start = test_event.start_date
         new_start = original_start + datetime.timedelta(days=14)
 
         r = await async_client.post(
-            f"/api/v1/event-groups/{test_event_group.id}/shift-dates",
+            f"/api/v1/events/{test_event.id}/shift-dates",
             json={"new_start_date": new_start.isoformat()},
         )
         assert r.status_code == 200

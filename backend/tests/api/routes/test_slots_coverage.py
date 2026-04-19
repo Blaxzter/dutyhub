@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
 from app.models.duty_slot import DutySlot
-from app.models.event_group import EventGroup
+from app.models.event import Event
 from app.models.slot_batch import SlotBatch
 from app.models.task import Task
 from app.models.user import User
@@ -18,14 +18,14 @@ from app.models.user import User
 class TestAddSlotsCoverage:
     """Coverage tests for add-slots endpoint."""
 
-    async def test_add_slots_with_event_group_validation(
+    async def test_add_slots_with_event_validation(
         self,
         async_client: AsyncClient,
         as_admin: None,
         db_session: AsyncSession,
     ):
         """Test that add-slots validates dates against task group range."""
-        group = EventGroup(
+        group = Event(
             name="Constrained Group",
             start_date=date(2026, 7, 1),
             end_date=date(2026, 7, 15),
@@ -39,7 +39,7 @@ class TestAddSlotsCoverage:
             name="Grouped Task",
             start_date=date(2026, 7, 1),
             end_date=date(2026, 7, 5),
-            event_group_id=group.id,
+            event_id=group.id,
             status="draft",
         )
         db_session.add(task)

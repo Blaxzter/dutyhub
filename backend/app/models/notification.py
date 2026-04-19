@@ -91,7 +91,7 @@ class NotificationSubscription(Base, table=True):
     scope_type: str = Field(
         default="global",
         sa_column=sa.Column(sa.String, nullable=False, server_default="global"),
-        description="Scope level: global, event_group, task, duty_slot",
+        description="Scope level: global, event, task, duty_slot",
     )
     scope_id: uuid.UUID | None = Field(
         default=None,

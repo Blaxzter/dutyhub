@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.event_group import EventGroup
+from app.models.event import Event
 from app.models.task import Task
 from app.models.user import User
 
@@ -136,7 +136,7 @@ class TestTasksRoutes:
         assert data["task"]["slot_duration_minutes"] == 60
         assert data["task"]["people_per_slot"] == 3
         assert data["duty_slots_created"] == 4  # 2 days * 2 slots/day
-        assert data["event_group"] is None
+        assert data["event"] is None
 
     async def test_create_task_with_slots_and_new_group(
         self, async_client: AsyncClient, as_admin: None
@@ -148,7 +148,7 @@ class TestTasksRoutes:
                 "name": "Weinstand",
                 "start_date": "2026-06-01",
                 "end_date": "2026-06-01",
-                "new_event_group": {
+                "new_event": {
                     "name": "Sommerfest 2026",
                     "start_date": "2026-06-01",
                     "end_date": "2026-06-03",
@@ -165,9 +165,9 @@ class TestTasksRoutes:
         assert r.status_code == 201
         data = r.json()
         assert data["task"]["name"] == "Weinstand"
-        assert data["event_group"] is not None
-        assert data["event_group"]["name"] == "Sommerfest 2026"
-        assert data["task"]["event_group_id"] == data["event_group"]["id"]
+        assert data["event"] is not None
+        assert data["event"]["name"] == "Sommerfest 2026"
+        assert data["task"]["event_id"] == data["event"]["id"]
         assert data["duty_slots_created"] == 4  # 2 hours / 30 min
 
     async def test_create_task_with_slots_and_overrides(
@@ -295,14 +295,14 @@ class TestTasksTaskManagerRole:
         app: FastAPI,
         db_session: AsyncSession,
         test_task_manager_user: User,
-        test_event_group: EventGroup,
+        test_event: Event,
     ):
         """Test that a scoped group manager can edit tasks in their assigned group."""
         from datetime import date
         from typing import Any, get_args
 
         from app.api import deps as deps_module
-        from app.crud.event_group_manager import event_group_manager as crud_egm
+        from app.crud.event_manager import event_manager as crud_egm
         from app.models.task import Task as TaskModel
 
         # Assign test_task_manager_user as scoped manager (no global role)
@@ -312,7 +312,7 @@ class TestTasksTaskManagerRole:
         await crud_egm.assign(
             db_session,
             user_id=test_task_manager_user.id,
-            event_group_id=test_event_group.id,
+            event_id=test_event.id,
         )
 
         # Create an task in that group
@@ -322,7 +322,7 @@ class TestTasksTaskManagerRole:
             end_date=date(2026, 7, 1),
             status="published",
             created_by_id=test_task_manager_user.id,
-            event_group_id=test_event_group.id,
+            event_id=test_event.id,
         )
         db_session.add(task)
         await db_session.flush()
@@ -354,25 +354,25 @@ class TestTasksTaskManagerRole:
         app: FastAPI,
         db_session: AsyncSession,
         test_task_manager_user: User,
-        test_event_group: EventGroup,
-        test_draft_event_group: EventGroup,
+        test_event: Event,
+        test_draft_event: Event,
     ):
         """Test that a scoped group manager cannot edit tasks in another group."""
         from datetime import date
         from typing import Any, get_args
 
         from app.api import deps as deps_module
-        from app.crud.event_group_manager import event_group_manager as crud_egm
+        from app.crud.event_manager import event_manager as crud_egm
         from app.models.task import Task as TaskModel
 
-        # Assign user as scoped manager for test_event_group only (no global role)
+        # Assign user as scoped manager for test_event only (no global role)
         test_task_manager_user.roles = []
         db_session.add(test_task_manager_user)
         await db_session.flush()
         await crud_egm.assign(
             db_session,
             user_id=test_task_manager_user.id,
-            event_group_id=test_event_group.id,
+            event_id=test_event.id,
         )
 
         # Create task in the OTHER group
@@ -382,7 +382,7 @@ class TestTasksTaskManagerRole:
             end_date=date(2026, 7, 1),
             status="published",
             created_by_id=test_task_manager_user.id,
-            event_group_id=test_draft_event_group.id,
+            event_id=test_draft_event.id,
         )
         db_session.add(task)
         await db_session.flush()
