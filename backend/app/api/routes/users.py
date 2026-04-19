@@ -297,9 +297,9 @@ async def export_user_data(
             "status": b.status,
             "notes": b.notes,
             "cancellation_reason": b.cancellation_reason,
-            "cancelled_slot_title": b.cancelled_slot_title,
-            "cancelled_slot_date": str(b.cancelled_slot_date)
-            if b.cancelled_slot_date
+            "cancelled_shift_title": b.cancelled_shift_title,
+            "cancelled_shift_date": str(b.cancelled_shift_date)
+            if b.cancelled_shift_date
             else None,
             "cancelled_task_name": b.cancelled_task_name,
             "created_at": b.created_at.isoformat(),

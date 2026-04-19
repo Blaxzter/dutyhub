@@ -14,9 +14,9 @@ class SidebarTask(BaseModel):
     id: uuid.UUID
     name: str
     status: str = "published"
-    open_slots: int
-    next_slot_date: dt.date | None = None
-    next_slot_start_time: dt.time | None = None
+    open_shifts: int
+    next_shift_date: dt.date | None = None
+    next_shift_start_time: dt.time | None = None
 
 
 class SidebarBooking(BaseModel):

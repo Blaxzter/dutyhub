@@ -40,9 +40,9 @@ class TestReportingRoutes:
         assert "cancelled_bookings" in overview
         assert "cancellation_rate" in overview
         assert "total_tasks" in overview
-        assert "total_slots" in overview
-        assert "total_slot_capacity" in overview
-        assert "filled_slots" in overview
+        assert "total_shifts" in overview
+        assert "total_shift_capacity" in overview
+        assert "filled_shifts" in overview
         assert "fill_rate" in overview
         assert "active_volunteers" in overview
         assert "total_volunteers" in overview

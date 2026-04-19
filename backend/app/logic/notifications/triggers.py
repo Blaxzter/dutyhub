@@ -74,7 +74,7 @@ async def dispatch_booking_cobooked(
     new_user_name: str | None,
     existing_user_ids: list[uuid.UUID],
 ) -> None:
-    """Notify existing bookers that someone else also booked their slot."""
+    """Notify existing bookers that someone else also booked their shift."""
     if not existing_user_ids:
         return
     try:
@@ -84,9 +84,9 @@ async def dispatch_booking_cobooked(
             name = new_user_name or "Someone"
             await svc.notify(
                 recipient_ids=existing_user_ids,
-                type_code="booking.slot_cobooked",
+                type_code="booking.shift_cobooked",
                 message_factory=lambda lang, _name=name: get_message(
-                    "booking.slot_cobooked", lang, name=_name, slot_title=slot_title
+                    "booking.shift_cobooked", lang, name=_name, slot_title=slot_title
                 ),
                 data={
                     "slot_id": str(slot_id),
@@ -176,7 +176,7 @@ async def dispatch_booking_cancelled_by_admin(
         logger.exception("Failed to dispatch booking.cancelled_by_admin notification")
 
 
-async def dispatch_slot_time_changed(
+async def dispatch_shift_time_changed(
     *,
     slot_id: uuid.UUID,
     slot_title: str,
@@ -184,7 +184,7 @@ async def dispatch_slot_time_changed(
     event_id: uuid.UUID | None = None,
     booked_user_ids: list[uuid.UUID],
 ) -> None:
-    """Notify bookers that a slot's time was changed."""
+    """Notify bookers that a shift's time was changed."""
     if not booked_user_ids:
         return
     try:
@@ -193,9 +193,9 @@ async def dispatch_slot_time_changed(
             scope_chain = _build_scope_chain(slot_id, task_id, event_id)
             await svc.notify(
                 recipient_ids=booked_user_ids,
-                type_code="slot.time_changed",
+                type_code="shift.time_changed",
                 message_factory=lambda lang: get_message(
-                    "slot.time_changed", lang, slot_title=slot_title
+                    "shift.time_changed", lang, slot_title=slot_title
                 ),
                 data={
                     "slot_id": str(slot_id),
@@ -205,7 +205,7 @@ async def dispatch_slot_time_changed(
             )
             await db.commit()
     except Exception:
-        logger.exception("Failed to dispatch slot.time_changed notification")
+        logger.exception("Failed to dispatch shift.time_changed notification")
 
 
 async def dispatch_task_published(
@@ -360,7 +360,7 @@ def _build_scope_chain(
     """Build a scope chain from most specific to least specific."""
     chain: list[tuple[str, uuid.UUID]] = []
     if slot_id:
-        chain.append(("duty_slot", slot_id))
+        chain.append(("shift", slot_id))
     if task_id:
         chain.append(("task", task_id))
     if event_id:

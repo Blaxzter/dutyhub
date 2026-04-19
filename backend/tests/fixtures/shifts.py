@@ -1,18 +1,18 @@
-"""DutySlot fixtures for testing."""
+"""Shift fixtures for testing."""
 
 from datetime import date, time
 
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 from app.models.task import Task
 
 
 @pytest_asyncio.fixture
-async def test_duty_slot(db_session: AsyncSession, test_task: Task) -> DutySlot:
-    """Create a test duty slot."""
-    slot = DutySlot(
+async def test_shift(db_session: AsyncSession, test_task: Task) -> Shift:
+    """Create a test duty shift."""
+    shift = Shift(
         task_id=test_task.id,
         title="Einlasskontrolle",
         description="Einlass am Haupteingang",
@@ -23,7 +23,7 @@ async def test_duty_slot(db_session: AsyncSession, test_task: Task) -> DutySlot:
         category="Sicherheit",
         max_bookings=2,
     )
-    db_session.add(slot)
+    db_session.add(shift)
     await db_session.flush()
-    await db_session.refresh(slot)
-    return slot
+    await db_session.refresh(shift)
+    return shift

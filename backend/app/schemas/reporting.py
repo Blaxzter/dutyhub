@@ -10,9 +10,9 @@ class ReportingOverviewStats(BaseModel):
     cancelled_bookings: int
     cancellation_rate: float
     total_tasks: int
-    total_slots: int
-    total_slot_capacity: int
-    filled_slots: int
+    total_shifts: int
+    total_shift_capacity: int
+    filled_shifts: int
     fill_rate: float
     active_volunteers: int
     total_volunteers: int

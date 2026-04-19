@@ -8,16 +8,16 @@ BookingStatus = Literal["confirmed", "cancelled"]
 
 
 class BookingBase(BaseModel):
-    duty_slot_id: uuid.UUID | None = None
+    shift_id: uuid.UUID | None = None
     user_id: uuid.UUID
     status: BookingStatus = "confirmed"
     notes: str | None = None
 
 
 class BookingCreate(BaseModel):
-    """User only provides the slot and optional notes. user_id is set server-side."""
+    """User only provides the shift and optional notes. user_id is set server-side."""
 
-    duty_slot_id: uuid.UUID
+    shift_id: uuid.UUID
     notes: str | None = None
 
 
@@ -33,15 +33,15 @@ class BookingRead(BookingBase):
     created_at: dt.datetime
     updated_at: dt.datetime
     cancellation_reason: str | None = None
-    cancelled_slot_title: str | None = None
-    cancelled_slot_date: dt.date | None = None
-    cancelled_slot_start_time: dt.time | None = None
-    cancelled_slot_end_time: dt.time | None = None
+    cancelled_shift_title: str | None = None
+    cancelled_shift_date: dt.date | None = None
+    cancelled_shift_start_time: dt.time | None = None
+    cancelled_shift_end_time: dt.time | None = None
     cancelled_task_name: str | None = None
 
 
-class DutySlotSummary(BaseModel):
-    """Lightweight slot info nested inside a booking response."""
+class ShiftSummary(BaseModel):
+    """Lightweight shift info nested inside a booking response."""
 
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -55,21 +55,21 @@ class DutySlotSummary(BaseModel):
     task_name: str | None = None
 
 
-class BookingReadWithSlot(BookingRead):
-    """BookingRead enriched with nested slot + task name (for /me endpoint)."""
+class BookingReadWithShift(BookingRead):
+    """BookingRead enriched with nested shift + task name (for /me endpoint)."""
 
-    duty_slot: DutySlotSummary | None = None
+    shift: ShiftSummary | None = None
 
 
 class MyBookingsListResponse(BaseModel):
-    items: list[BookingReadWithSlot]
+    items: list[BookingReadWithShift]
     total: int
     skip: int
     limit: int
 
 
-class SlotBookingEntry(BaseModel):
-    """A confirmed booking for a slot, with basic user info."""
+class ShiftBookingEntry(BaseModel):
+    """A confirmed booking for a shift, with basic user info."""
 
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -86,6 +86,6 @@ class TaskBookingEntry(BaseModel):
     """A confirmed booking with slot_id, for the bulk task bookings endpoint."""
 
     id: uuid.UUID
-    duty_slot_id: uuid.UUID
+    shift_id: uuid.UUID
     user_name: str | None = None
     user_phone_number: str | None = None

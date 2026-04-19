@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
 
@@ -16,26 +16,24 @@ from app.models.user import User
 class TestBookingsRoutes:
     """Test suite for /bookings/ routes."""
 
-    async def test_create_booking(
-        self, async_client: AsyncClient, test_duty_slot: DutySlot
-    ):
+    async def test_create_booking(self, async_client: AsyncClient, test_shift: Shift):
         """Test creating a new booking."""
         r = await async_client.post(
             "/api/v1/bookings/",
-            json={"duty_slot_id": str(test_duty_slot.id)},
+            json={"shift_id": str(test_shift.id)},
         )
 
         assert r.status_code == 201
         assert r.json()["status"] == "confirmed"
-        assert r.json()["duty_slot_id"] == str(test_duty_slot.id)
+        assert r.json()["shift_id"] == str(test_shift.id)
 
     async def test_double_booking_prevented(
-        self, async_client: AsyncClient, test_booking: Booking, test_duty_slot: DutySlot
+        self, async_client: AsyncClient, test_booking: Booking, test_shift: Shift
     ):
-        """Test that a user cannot double-book the same slot."""
+        """Test that a user cannot double-book the same shift."""
         r = await async_client.post(
             "/api/v1/bookings/",
-            json={"duty_slot_id": str(test_duty_slot.id)},
+            json={"shift_id": str(test_shift.id)},
         )
 
         assert r.status_code == 409
@@ -79,21 +77,21 @@ class TestBookingsRoutes:
         assert r.status_code == 200
         assert r.json()["notes"] == "Updated notes"
 
-    async def test_slot_capacity_enforced(
+    async def test_shift_capacity_enforced(
         self, async_client: AsyncClient, db_session: AsyncSession, test_task: Task
     ):
-        """Test that bookings are rejected when a slot is full."""
-        slot = DutySlot(
+        """Test that bookings are rejected when a shift is full."""
+        shift = Shift(
             task_id=test_task.id,
-            title="Limited Slot",
+            title="Limited Shift",
             date=date(2026, 5, 24),
             start_time=time(14, 0),
             end_time=time(18, 0),
             max_bookings=1,
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
-        await db_session.refresh(slot)
+        await db_session.refresh(shift)
 
         other_user = User(
             auth0_sub="auth0|other_user_cap_test",
@@ -105,7 +103,7 @@ class TestBookingsRoutes:
         await db_session.flush()
 
         existing = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=other_user.id,
             status="confirmed",
         )
@@ -114,7 +112,7 @@ class TestBookingsRoutes:
 
         r = await async_client.post(
             "/api/v1/bookings/",
-            json={"duty_slot_id": str(slot.id)},
+            json={"shift_id": str(shift.id)},
         )
 
         assert r.status_code == 409

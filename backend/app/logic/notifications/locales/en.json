@@ -3,9 +3,9 @@
     "title": "✅ Booking Confirmed",
     "body": "Your booking has been confirmed!\n\n📌 {slot_title}\n📅 {date} ⏰ {start_time}–{end_time}\n🏠 {location}\n🎫 {task_name}"
   },
-  "booking.slot_cobooked": {
+  "booking.shift_cobooked": {
     "title": "New Co-booking",
-    "body": "{name} also booked the slot \"{slot_title}\"."
+    "body": "{name} also booked the shift \"{slot_title}\"."
   },
   "booking.cancelled_by_user": {
     "title": "Booking Cancelled",
@@ -19,9 +19,9 @@
     "title": "Booking Cancelled by Admin",
     "body": "Your booking for \"{slot_title}\"{task_label} was cancelled by an administrator.{detail}"
   },
-  "slot.time_changed": {
-    "title": "Slot Time Changed",
-    "body": "The time for slot \"{slot_title}\" has been updated. Please check the new schedule."
+  "shift.time_changed": {
+    "title": "Shift Time Changed",
+    "body": "The time for shift \"{slot_title}\" has been updated. Please check the new schedule."
   },
   "task.published": {
     "title": "New Task Published",

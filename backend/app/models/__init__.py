@@ -10,7 +10,6 @@ from .base import Base  # Import the Base model for common fields and functional
 from .booking import Booking
 from .booking_reminder import BookingReminder
 from .calendar_feed import CalendarFeedToken
-from .duty_slot import DutySlot
 from .event import Event
 from .event_manager import EventManager
 from .notification import (
@@ -20,8 +19,9 @@ from .notification import (
     PushSubscription,
     TelegramBinding,
 )
+from .shift import Shift
+from .shift_batch import ShiftBatch
 from .site_settings import SiteSettings
-from .slot_batch import SlotBatch
 from .task import Task
 from .user import User
 from .user_availability import UserAvailability, UserAvailabilityDate
@@ -32,7 +32,7 @@ __all__ = [
     "Booking",
     "BookingReminder",
     "CalendarFeedToken",
-    "DutySlot",
+    "Shift",
     "Task",
     "Event",
     "EventManager",
@@ -41,7 +41,7 @@ __all__ = [
     "NotificationType",
     "PushSubscription",
     "SiteSettings",
-    "SlotBatch",
+    "ShiftBatch",
     "TelegramBinding",
     "User",
     "UserAvailability",

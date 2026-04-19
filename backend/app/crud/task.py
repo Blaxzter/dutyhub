@@ -9,7 +9,7 @@ from sqlmodel import col
 
 from app.crud.base import CRUDBase
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 from app.models.task import Task
 from app.schemas.task import TaskCreate, TaskUpdate
 
@@ -27,7 +27,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         booked_by_user_id: str | None = None,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
-        has_future_slots: dt.date | dt.datetime | None = None,
+        has_future_shifts: dt.date | dt.datetime | None = None,
         also_include_group_ids: list[uuid.UUID] | None = None,
         event_id: uuid.UUID | None = None,
     ) -> Select[Any]:
@@ -51,8 +51,8 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         if booked_by_user_id:
             query = query.where(
                 col(Task.id).in_(
-                    select(col(DutySlot.task_id))
-                    .join(Booking, col(Booking.duty_slot_id) == col(DutySlot.id))
+                    select(col(Shift.task_id))
+                    .join(Booking, col(Booking.shift_id) == col(Shift.id))
                     .where(
                         col(Booking.user_id) == booked_by_user_id,
                         col(Booking.status) == "confirmed",
@@ -63,50 +63,50 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             query = query.where(col(Task.end_date) >= date_from)
         if date_to:
             query = query.where(col(Task.start_date) <= date_to)
-        if has_future_slots:
-            # Only include tasks that have at least one bookable slot in the future
+        if has_future_shifts:
+            # Only include tasks that have at least one bookable shift in the future
             booking_count_sq = (
                 select(func.count())
                 .select_from(Booking)
                 .where(
-                    col(Booking.duty_slot_id) == col(DutySlot.id),
+                    col(Booking.shift_id) == col(Shift.id),
                     col(Booking.status) == "confirmed",
                 )
-                .correlate(DutySlot)
+                .correlate(Shift)
                 .scalar_subquery()
             )
             today = (
-                has_future_slots.date()
-                if isinstance(has_future_slots, dt.datetime)
-                else has_future_slots
+                has_future_shifts.date()
+                if isinstance(has_future_shifts, dt.datetime)
+                else has_future_shifts
             )
             now_time = (
-                has_future_slots.time()
-                if isinstance(has_future_slots, dt.datetime)
+                has_future_shifts.time()
+                if isinstance(has_future_shifts, dt.datetime)
                 else None
             )
 
-            # Slot is in the future if:
+            # Shift is in the future if:
             #   date > today, OR
             #   date == today AND (start_time is NULL OR start_time >= now)
-            future_condition = col(DutySlot.date) > today
+            future_condition = col(Shift.date) > today
             if now_time is not None:
                 future_condition = or_(
-                    col(DutySlot.date) > today,
+                    col(Shift.date) > today,
                     and_(
-                        col(DutySlot.date) == today,
+                        col(Shift.date) == today,
                         or_(
-                            col(DutySlot.start_time).is_(None),
-                            col(DutySlot.start_time) >= now_time,
+                            col(Shift.start_time).is_(None),
+                            col(Shift.start_time) >= now_time,
                         ),
                     ),
                 )
 
             query = query.where(
                 col(Task.id).in_(
-                    select(col(DutySlot.task_id)).where(
+                    select(col(Shift.task_id)).where(
                         future_condition,
-                        col(DutySlot.max_bookings) > booking_count_sq,
+                        col(Shift.max_bookings) > booking_count_sq,
                     )
                 )
             )
@@ -124,7 +124,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         booked_by_user_id: str | None = None,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
-        has_future_slots: dt.date | None = None,
+        has_future_shifts: dt.date | None = None,
         sort_by: TaskSortField = "start_date",
         sort_dir: Literal["asc", "desc"] = "asc",
         also_include_group_ids: list[uuid.UUID] | None = None,
@@ -139,7 +139,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             booked_by_user_id=booked_by_user_id,
             date_from=date_from,
             date_to=date_to,
-            has_future_slots=has_future_slots,
+            has_future_shifts=has_future_shifts,
             also_include_group_ids=also_include_group_ids,
             event_id=event_id,
         )
@@ -161,7 +161,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         booked_by_user_id: str | None = None,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
-        has_future_slots: dt.date | None = None,
+        has_future_shifts: dt.date | None = None,
         also_include_group_ids: list[uuid.UUID] | None = None,
         event_id: uuid.UUID | None = None,
     ) -> int:
@@ -174,7 +174,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             booked_by_user_id=booked_by_user_id,
             date_from=date_from,
             date_to=date_to,
-            has_future_slots=has_future_slots,
+            has_future_shifts=has_future_shifts,
             also_include_group_ids=also_include_group_ids,
             event_id=event_id,
         )

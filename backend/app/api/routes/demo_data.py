@@ -14,8 +14,8 @@ from sqlmodel import col
 
 from app.api.deps import CurrentSuperuser, DBDep
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
 from app.models.event import Event
+from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
 from app.schemas.demo_data import (
@@ -131,13 +131,13 @@ async def create_demo_data(
     db: DBDep,
     _current_user: CurrentSuperuser,
 ) -> DemoDataCreatedResponse:
-    """Create demo task groups, tasks, users, and duty slots."""
+    """Create demo task groups, tasks, users, and duty shifts."""
     rng = random.Random()  # noqa: S311
     today = dt.date.today()
     created_groups: list[Event] = []
     created_tasks: list[Task] = []
     created_users: list[User] = []
-    created_slots: list[DutySlot] = []
+    created_shifts: list[Shift] = []
     total_bookings = 0
 
     # --- Task groups ---
@@ -191,25 +191,25 @@ async def create_demo_data(
     if created_tasks:
         await db.flush()
 
-    # --- Duty slots for each task (randomised count per day) ---
+    # --- Duty shifts for each task (randomised count per day) ---
     for task in created_tasks:
         # Iterate each day of the task
         num_days = (task.end_date - task.start_date).days + 1
         for d in range(num_days):
             slot_date = task.start_date + dt.timedelta(days=d)
-            # Random number of slots around the target, ±50 %
-            lo = max(1, params.num_slots_per_task // 2)
-            hi = max(lo + 1, int(params.num_slots_per_task * 1.5))
-            day_slots = rng.randint(lo, hi)
+            # Random number of shifts around the target, ±50 %
+            lo = max(1, params.num_shifts_per_task // 2)
+            hi = max(lo + 1, int(params.num_shifts_per_task * 1.5))
+            day_shifts = rng.randint(lo, hi)
             start_hour = rng.randint(7, 10)
-            for s in range(day_slots):
+            for s in range(day_shifts):
                 hour = (start_hour + s) % 23
                 slot_start = dt.time(hour=hour)
                 slot_end = dt.time(hour=(hour + 1) % 23)
-                slot = DutySlot(
+                shift = Shift(
                     task_id=task.id,
-                    title=f"{DEMO_PREFIX} Slot {s + 1}",
-                    description=f"Demo slot {s + 1} for {task.name}",
+                    title=f"{DEMO_PREFIX} Shift {s + 1}",
+                    description=f"Demo shift {s + 1} for {task.name}",
                     date=slot_date,
                     start_time=slot_start,
                     end_time=slot_end,
@@ -217,8 +217,8 @@ async def create_demo_data(
                     category="demo",
                     max_bookings=rng.choice([1, 2, 2, 3]),
                 )
-                db.add(slot)
-                created_slots.append(slot)
+                db.add(shift)
+                created_shifts.append(shift)
 
     # --- Demo users (use example.com — RFC 2606 reserved, always valid) ---
     for i in range(params.num_users):
@@ -236,33 +236,35 @@ async def create_demo_data(
         db.add(user)
         created_users.append(user)
 
-    # Flush to get user + slot IDs for bookings
-    if created_users or created_slots:
+    # Flush to get user + shift IDs for bookings
+    if created_users or created_shifts:
         await db.flush()
 
-    # --- Bookings: each demo user books a random subset of slots ---
-    if created_users and created_slots:
-        # Track confirmed bookings per slot to respect max_bookings
-        slot_booking_counts: dict[uuid.UUID, int] = {s.id: 0 for s in created_slots}
+    # --- Bookings: each demo user books a random subset of shifts ---
+    if created_users and created_shifts:
+        # Track confirmed bookings per shift to respect max_bookings
+        slot_booking_counts: dict[uuid.UUID, int] = {s.id: 0 for s in created_shifts}
         booked_pairs: set[tuple[uuid.UUID, uuid.UUID]] = set()
 
         for user in created_users:
-            # Each user books 20-60 % of available slots
+            # Each user books 20-60 % of available shifts
             num_to_book = rng.randint(
-                max(1, len(created_slots) // 5),
-                max(1, len(created_slots) * 3 // 5),
+                max(1, len(created_shifts) // 5),
+                max(1, len(created_shifts) * 3 // 5),
             )
-            candidates = rng.sample(created_slots, min(num_to_book, len(created_slots)))
-            for slot in candidates:
-                pair = (slot.id, user.id)
+            candidates = rng.sample(
+                created_shifts, min(num_to_book, len(created_shifts))
+            )
+            for shift in candidates:
+                pair = (shift.id, user.id)
                 if pair in booked_pairs:
                     continue
-                if slot_booking_counts[slot.id] >= slot.max_bookings:
+                if slot_booking_counts[shift.id] >= shift.max_bookings:
                     continue
                 booked_pairs.add(pair)
-                slot_booking_counts[slot.id] += 1
+                slot_booking_counts[shift.id] += 1
                 booking = Booking(
-                    duty_slot_id=slot.id,
+                    shift_id=shift.id,
                     user_id=user.id,
                     status="confirmed",
                 )
@@ -273,7 +275,7 @@ async def create_demo_data(
         events_created=len(created_groups),
         tasks_created=len(created_tasks),
         users_created=len(created_users),
-        duty_slots_created=len(created_slots),
+        shifts_created=len(created_shifts),
         bookings_created=total_bookings,
     )
 
@@ -295,25 +297,25 @@ async def delete_demo_data(
         .all()
     )
 
-    # Find demo slots
-    demo_slots = (
+    # Find demo shifts
+    demo_shifts = (
         (
             await db.execute(
-                select(DutySlot).where(col(DutySlot.title).startswith(DEMO_PREFIX))
+                select(Shift).where(col(Shift.title).startswith(DEMO_PREFIX))
             )
         )
         .scalars()
         .all()
     )
-    demo_slot_ids = [s.id for s in demo_slots]
+    demo_shift_ids = [s.id for s in demo_shifts]
 
-    # Delete bookings on demo slots
+    # Delete bookings on demo shifts
     bookings_deleted = 0
-    if demo_slot_ids:
+    if demo_shift_ids:
         bookings = (
             (
                 await db.execute(
-                    select(Booking).where(col(Booking.duty_slot_id).in_(demo_slot_ids))
+                    select(Booking).where(col(Booking.shift_id).in_(demo_shift_ids))
                 )
             )
             .scalars()
@@ -323,8 +325,8 @@ async def delete_demo_data(
         for b in bookings:
             await db.delete(b)
 
-    # Delete demo slots
-    for s in demo_slots:
+    # Delete demo shifts
+    for s in demo_shifts:
         await db.delete(s)
 
     # Delete demo tasks
@@ -355,6 +357,6 @@ async def delete_demo_data(
         tasks_deleted=len(demo_tasks),
         events_deleted=groups_deleted,
         users_deleted=users_deleted,
-        duty_slots_deleted=len(demo_slots),
+        shifts_deleted=len(demo_shifts),
         bookings_deleted=bookings_deleted,
     )

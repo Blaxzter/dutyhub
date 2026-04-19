@@ -4,7 +4,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 from app.models.task import Task
 
 
@@ -13,7 +13,7 @@ class TestTaskFeedRoutes:
     """Test suite for /tasks/feed routes."""
 
     async def test_task_feed_list_view(
-        self, async_client: AsyncClient, test_task: Task, test_duty_slot: DutySlot
+        self, async_client: AsyncClient, test_task: Task, test_shift: Shift
     ):
         """Test the task feed in list view mode."""
         r = await async_client.get("/api/v1/tasks/feed", params={"view": "list"})
@@ -95,7 +95,7 @@ class TestTaskFeedRoutes:
         assert r.json()["items"] == []
 
     async def test_task_feed_focus_mode_first_available(
-        self, async_client: AsyncClient, test_task: Task, test_duty_slot: DutySlot
+        self, async_client: AsyncClient, test_task: Task, test_shift: Shift
     ):
         """Test the task feed with first_available focus mode."""
         r = await async_client.get(
@@ -106,7 +106,7 @@ class TestTaskFeedRoutes:
         assert r.status_code == 200
 
     async def test_task_active_dates(
-        self, async_client: AsyncClient, test_task: Task, test_duty_slot: DutySlot
+        self, async_client: AsyncClient, test_task: Task, test_shift: Shift
     ):
         """Test the active dates endpoint."""
         r = await async_client.get(
@@ -117,17 +117,17 @@ class TestTaskFeedRoutes:
         assert r.status_code == 200
         assert isinstance(r.json(), list)
 
-    async def test_task_slot_window(
-        self, async_client: AsyncClient, test_task: Task, test_duty_slot: DutySlot
+    async def test_task_shift_window(
+        self, async_client: AsyncClient, test_task: Task, test_shift: Shift
     ):
-        """Test the slot window endpoint for a specific task."""
+        """Test the shift window endpoint for a specific task."""
         r = await async_client.get(
-            f"/api/v1/tasks/{test_task.id}/slot-window",
+            f"/api/v1/tasks/{test_task.id}/shift-window",
             params={"start_date": "2026-05-01", "days": 7},
         )
 
         assert r.status_code == 200
         data = r.json()
-        assert "slots" in data
+        assert "shifts" in data
         assert "start_date" in data
         assert "days" in data

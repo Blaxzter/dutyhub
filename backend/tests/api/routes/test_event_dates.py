@@ -8,9 +8,9 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.duty_slot import DutySlot
 from app.models.event import Event
-from app.models.slot_batch import SlotBatch
+from app.models.shift import Shift
+from app.models.shift_batch import ShiftBatch
 from app.models.task import Task
 from app.models.user import User
 from app.models.user_availability import UserAvailability, UserAvailabilityDate
@@ -21,8 +21,8 @@ from app.models.user_availability import UserAvailability, UserAvailabilityDate
 class FullHierarchy(TypedDict):
     group: Event
     task: Task
-    batch: SlotBatch
-    slot: DutySlot
+    batch: ShiftBatch
+    shift: Shift
     availability: UserAvailability
     avail_date: UserAvailabilityDate
 
@@ -66,7 +66,7 @@ async def group_with_full_hierarchy(
     test_event: Event,
     test_user: User,
 ) -> FullHierarchy:
-    """Create a group with task → slot_batch → duty_slot + availability dates."""
+    """Create a group with task → shift_batch → shift + availability dates."""
     task = Task(
         name="Shift Test Task",
         start_date=datetime.date(2026, 6, 10),
@@ -80,7 +80,7 @@ async def group_with_full_hierarchy(
     await db_session.flush()
     await db_session.refresh(task)
 
-    batch = SlotBatch(
+    batch = ShiftBatch(
         task_id=task.id,
         start_date=datetime.date(2026, 6, 10),
         end_date=datetime.date(2026, 6, 12),
@@ -90,7 +90,7 @@ async def group_with_full_hierarchy(
     await db_session.flush()
     await db_session.refresh(batch)
 
-    slot = DutySlot(
+    shift = Shift(
         task_id=task.id,
         batch_id=batch.id,
         title="Morning Shift",
@@ -98,9 +98,9 @@ async def group_with_full_hierarchy(
         start_time=datetime.time(8, 0),
         end_time=datetime.time(12, 0),
     )
-    db_session.add(slot)
+    db_session.add(shift)
     await db_session.flush()
-    await db_session.refresh(slot)
+    await db_session.refresh(shift)
 
     avail = UserAvailability(
         user_id=test_user.id,
@@ -123,7 +123,7 @@ async def group_with_full_hierarchy(
         group=test_event,
         task=task,
         batch=batch,
-        slot=slot,
+        shift=shift,
         availability=avail,
         avail_date=avail_date,
     )
@@ -360,14 +360,14 @@ class TestShiftEventDates:
         assert task.start_date == original_task_start + delta
         assert task.end_date == datetime.date(2026, 6, 12) + delta
 
-    async def test_shifts_slot_batches(
+    async def test_shifts_shift_batches(
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
         group_with_full_hierarchy: FullHierarchy,
         as_admin: None,
     ):
-        """Slot batches get their dates shifted."""
+        """Shift batches get their dates shifted."""
         group = group_with_full_hierarchy["group"]
         batch = group_with_full_hierarchy["batch"]
         original_batch_start = batch.start_date
@@ -383,17 +383,17 @@ class TestShiftEventDates:
         assert batch.start_date == original_batch_start + delta
         assert batch.end_date == datetime.date(2026, 6, 12) + delta
 
-    async def test_shifts_duty_slots(
+    async def test_shifts_shifts(
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
         group_with_full_hierarchy: FullHierarchy,
         as_admin: None,
     ):
-        """Duty slots get their dates shifted."""
+        """Duty shifts get their dates shifted."""
         group = group_with_full_hierarchy["group"]
-        slot = group_with_full_hierarchy["slot"]
-        original_slot_date = slot.date
+        shift = group_with_full_hierarchy["shift"]
+        original_shift_date = shift.date
         delta = datetime.timedelta(days=10)
         new_start = group.start_date + delta
 
@@ -402,8 +402,8 @@ class TestShiftEventDates:
             json={"new_start_date": new_start.isoformat()},
         )
 
-        await db_session.refresh(slot)
-        assert slot.date == original_slot_date + delta
+        await db_session.refresh(shift)
+        assert shift.date == original_shift_date + delta
 
     async def test_shifts_schedule_overrides(
         self,

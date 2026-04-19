@@ -7,39 +7,41 @@ from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
-from app.crud.duty_slot import duty_slot as crud_duty_slot
 from app.crud.event import event as crud_event
-from app.crud.slot_batch import slot_batch as crud_slot_batch
+from app.crud.shift import shift as crud_shift
+from app.crud.shift_batch import shift_batch as crud_shift_batch
 from app.crud.task import task as crud_task
 from app.logic.permissions import require_event_access
-from app.logic.slot_generator import generate_duty_slots
-from app.models.duty_slot import DutySlot
-from app.models.slot_batch import SlotBatch
-from app.schemas.duty_slot import DutySlotCreate
+from app.logic.shift_generator import generate_shifts
+from app.models.shift import Shift
+from app.models.shift_batch import ShiftBatch
 from app.schemas.event import EventRead
-from app.schemas.slot_batch import SlotBatchCreate
+from app.schemas.shift import ShiftCreate
+from app.schemas.shift_batch import ShiftBatchCreate
 from app.schemas.task import (
-    AddSlotsResponse,
-    AddSlotsToTask,
+    AddShiftsResponse,
+    AddShiftsToTask,
     AffectedBookingInfo,
-    SlotRegenerationResult,
+    ShiftRegenerationResult,
     TaskCreate,
-    TaskCreateWithSlots,
-    TaskCreateWithSlotsResponse,
+    TaskCreateWithShifts,
+    TaskCreateWithShiftsResponse,
     TaskRead,
-    TaskUpdateWithSlots,
+    TaskUpdateWithShifts,
 )
 
 router = APIRouter()
 
 
-@router.post("/with-slots", response_model=TaskCreateWithSlotsResponse, status_code=201)
-async def create_task_with_slots(
-    payload: TaskCreateWithSlots,
+@router.post(
+    "/with-shifts", response_model=TaskCreateWithShiftsResponse, status_code=201
+)
+async def create_task_with_shifts(
+    payload: TaskCreateWithShifts,
     session: DBDep,
     current_user: CurrentUser,
-) -> TaskCreateWithSlotsResponse:
-    """Create an task with auto-generated duty slots in a single transaction."""
+) -> TaskCreateWithShiftsResponse:
+    """Create an task with auto-generated duty shifts in a single transaction."""
     # Check access for the target task group (if any)
     await require_event_access(current_user, session, payload.event_id)
     # 1. Optionally create a new task group
@@ -67,18 +69,18 @@ async def create_task_with_slots(
     db_task = await crud_task.create(session, obj_in=task_in)
 
     # Store generation config on the task (kept for backwards compat)
-    db_task.slot_duration_minutes = payload.schedule.slot_duration_minutes
+    db_task.shift_duration_minutes = payload.schedule.shift_duration_minutes
     db_task.default_start_time = payload.schedule.default_start_time
     db_task.default_end_time = payload.schedule.default_end_time
-    db_task.people_per_slot = payload.schedule.people_per_slot
+    db_task.people_per_shift = payload.schedule.people_per_shift
     db_task.schedule_overrides = [
         o.model_dump(mode="json") for o in payload.schedule.overrides
     ]
     session.add(db_task)
     await session.flush()
 
-    # 3. Create a SlotBatch to store the generation config
-    batch_in = SlotBatchCreate(
+    # 3. Create a ShiftBatch to store the generation config
+    batch_in = ShiftBatchCreate(
         task_id=db_task.id,
         label=payload.name,
         start_date=payload.start_date,
@@ -87,54 +89,54 @@ async def create_task_with_slots(
         category=payload.category,
         default_start_time=payload.schedule.default_start_time,
         default_end_time=payload.schedule.default_end_time,
-        slot_duration_minutes=payload.schedule.slot_duration_minutes,
-        people_per_slot=payload.schedule.people_per_slot,
+        shift_duration_minutes=payload.schedule.shift_duration_minutes,
+        people_per_shift=payload.schedule.people_per_shift,
         remainder_mode=payload.schedule.remainder_mode,
         schedule_overrides=[
             o.model_dump(mode="json") for o in payload.schedule.overrides
         ],
     )
-    db_batch = await crud_slot_batch.create(session, obj_in=batch_in)
+    db_batch = await crud_shift_batch.create(session, obj_in=batch_in)
 
-    # 4. Generate and bulk-insert duty slots linked to the batch
-    slot_creates = generate_duty_slots(
+    # 4. Generate and bulk-insert duty shifts linked to the batch
+    slot_creates = generate_shifts(
         task_id=db_task.id,
         task_name=payload.name,
         start_date=payload.start_date,
         end_date=payload.end_date,
         default_start_time=payload.schedule.default_start_time,
         default_end_time=payload.schedule.default_end_time,
-        slot_duration_minutes=payload.schedule.slot_duration_minutes,
-        people_per_slot=payload.schedule.people_per_slot,
+        shift_duration_minutes=payload.schedule.shift_duration_minutes,
+        people_per_shift=payload.schedule.people_per_shift,
         remainder_mode=payload.schedule.remainder_mode,
         location=payload.location,
         category=payload.category,
         overrides=payload.schedule.overrides,
-        excluded_slots=payload.schedule.excluded_slots,
+        excluded_shifts=payload.schedule.excluded_shifts,
     )
 
     for slot_in in slot_creates:
         slot_in.batch_id = db_batch.id
-        await crud_duty_slot.create(session, obj_in=slot_in)
+        await crud_shift.create(session, obj_in=slot_in)
 
     await session.flush()
     await session.refresh(db_task)
 
-    return TaskCreateWithSlotsResponse(
+    return TaskCreateWithShiftsResponse(
         task=TaskRead.model_validate(db_task),
-        duty_slots_created=len(slot_creates),
+        shifts_created=len(slot_creates),
         event=event_read,
     )
 
 
-@router.post("/{task_id}/add-slots", response_model=AddSlotsResponse, status_code=201)
-async def add_slots_to_task(
+@router.post("/{task_id}/add-shifts", response_model=AddShiftsResponse, status_code=201)
+async def add_shifts_to_task(
     task_id: str,
-    payload: AddSlotsToTask,
+    payload: AddShiftsToTask,
     session: DBDep,
     current_user: CurrentUser,
-) -> AddSlotsResponse:
-    """Add a new batch of duty slots to an existing task without touching existing slots."""
+) -> AddShiftsResponse:
+    """Add a new batch of duty shifts to an existing task without touching existing shifts."""
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
     await require_event_access(current_user, session, db_task.event_id)
 
@@ -149,13 +151,13 @@ async def add_slots_to_task(
                 400,
                 code="dates_outside_event",
                 detail=(
-                    f"Slot dates must fall within the task group date range "
+                    f"Shift dates must fall within the task group date range "
                     f"({db_group.start_date} to {db_group.end_date})"
                 ),
             )
 
-    # Create a SlotBatch record
-    batch_in = SlotBatchCreate(
+    # Create a ShiftBatch record
+    batch_in = ShiftBatchCreate(
         task_id=db_task.id,
         label=payload.location or payload.category or db_task.name,
         start_date=payload.start_date,
@@ -164,69 +166,69 @@ async def add_slots_to_task(
         category=payload.category,
         default_start_time=payload.schedule.default_start_time,
         default_end_time=payload.schedule.default_end_time,
-        slot_duration_minutes=payload.schedule.slot_duration_minutes,
-        people_per_slot=payload.schedule.people_per_slot,
+        shift_duration_minutes=payload.schedule.shift_duration_minutes,
+        people_per_shift=payload.schedule.people_per_shift,
         remainder_mode=payload.schedule.remainder_mode,
         schedule_overrides=[
             o.model_dump(mode="json") for o in payload.schedule.overrides
         ],
     )
-    db_batch = await crud_slot_batch.create(session, obj_in=batch_in)
+    db_batch = await crud_shift_batch.create(session, obj_in=batch_in)
 
-    slot_creates = generate_duty_slots(
+    slot_creates = generate_shifts(
         task_id=db_task.id,
         task_name=db_task.name,
         start_date=payload.start_date,
         end_date=payload.end_date,
         default_start_time=payload.schedule.default_start_time,
         default_end_time=payload.schedule.default_end_time,
-        slot_duration_minutes=payload.schedule.slot_duration_minutes,
-        people_per_slot=payload.schedule.people_per_slot,
+        shift_duration_minutes=payload.schedule.shift_duration_minutes,
+        people_per_shift=payload.schedule.people_per_shift,
         remainder_mode=payload.schedule.remainder_mode,
         location=payload.location,
         category=payload.category,
         overrides=payload.schedule.overrides,
-        excluded_slots=payload.schedule.excluded_slots,
+        excluded_shifts=payload.schedule.excluded_shifts,
     )
 
     for slot_in in slot_creates:
         slot_in.batch_id = db_batch.id
-        await crud_duty_slot.create(session, obj_in=slot_in)
+        await crud_shift.create(session, obj_in=slot_in)
 
     await session.flush()
     await session.refresh(db_task)
 
-    return AddSlotsResponse(
+    return AddShiftsResponse(
         task=TaskRead.model_validate(db_task),
-        slots_added=len(slot_creates),
+        shifts_added=len(slot_creates),
     )
 
 
 @router.post(
-    "/{task_id}/regenerate-slots",
-    response_model=SlotRegenerationResult,
+    "/{task_id}/regenerate-shifts",
+    response_model=ShiftRegenerationResult,
 )
-async def regenerate_task_slots(
+async def regenerate_task_shifts(
     task_id: str,
-    payload: TaskUpdateWithSlots,
+    payload: TaskUpdateWithShifts,
     session: DBDep,
     current_user: CurrentUser,
     dry_run: bool = Query(default=False),
     batch_id: str | None = Query(default=None),
-) -> SlotRegenerationResult:
-    """Regenerate duty slots for an task, preserving bookings where slots match.
+) -> ShiftRegenerationResult:
+    """Regenerate duty shifts for an task, preserving bookings where shifts match.
 
     When dry_run=True, returns a preview without making changes.
-    When batch_id is provided, only regenerates slots belonging to that batch.
-    Slots are matched by (date, start_time, end_time) — matched slots keep their bookings.
+    When batch_id is provided, only regenerates shifts belonging to that batch.
+    Shifts are matched by (date, start_time, end_time) — matched shifts keep their bookings.
     """
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
     await require_event_access(current_user, session, db_task.event_id)
 
     # If batch_id provided, load the batch for defaults
-    db_batch: SlotBatch | None = None
+    db_batch: ShiftBatch | None = None
     if batch_id:
-        db_batch = await crud_slot_batch.get(session, batch_id, raise_404_error=True)
+        db_batch = await crud_shift_batch.get(session, batch_id, raise_404_error=True)
         if str(db_batch.task_id) != str(db_task.id):
             raise_problem(
                 400,
@@ -255,72 +257,72 @@ async def regenerate_task_slots(
             payload.category if payload.category is not None else db_task.category
         )
 
-    # 1. Generate new slot definitions
-    new_slot_defs = generate_duty_slots(
+    # 1. Generate new shift definitions
+    new_shift_defs = generate_shifts(
         task_id=db_task.id,
         task_name=effective_name,
         start_date=effective_start_date,
         end_date=effective_end_date,
         default_start_time=payload.schedule.default_start_time,
         default_end_time=payload.schedule.default_end_time,
-        slot_duration_minutes=payload.schedule.slot_duration_minutes,
-        people_per_slot=payload.schedule.people_per_slot,
+        shift_duration_minutes=payload.schedule.shift_duration_minutes,
+        people_per_shift=payload.schedule.people_per_shift,
         remainder_mode=payload.schedule.remainder_mode,
         location=effective_location,
         category=effective_category,
         overrides=payload.schedule.overrides,
-        excluded_slots=payload.schedule.excluded_slots,
+        excluded_shifts=payload.schedule.excluded_shifts,
     )
 
-    # 2. Load existing slots with their bookings (scoped to batch if provided)
+    # 2. Load existing shifts with their bookings (scoped to batch if provided)
     stmt = (
-        select(DutySlot)
-        .where(col(DutySlot.task_id) == db_task.id)
-        .options(selectinload(DutySlot.bookings))  # type: ignore[arg-type]
+        select(Shift)
+        .where(col(Shift.task_id) == db_task.id)
+        .options(selectinload(Shift.bookings))  # type: ignore[arg-type]
     )
     if batch_id:
-        stmt = stmt.where(col(DutySlot.batch_id) == batch_id)
+        stmt = stmt.where(col(Shift.batch_id) == batch_id)
     result = await session.execute(stmt)
-    existing_slots = list(result.scalars().all())
+    existing_shifts = list(result.scalars().all())
 
-    # 3. Build lookup of existing slots by (date, start_time, end_time)
-    existing_lookup: dict[tuple[Any, ...], DutySlot] = {}
-    for slot in existing_slots:
-        key = (slot.date, slot.start_time, slot.end_time)
-        existing_lookup[key] = slot
+    # 3. Build lookup of existing shifts by (date, start_time, end_time)
+    existing_lookup: dict[tuple[Any, ...], Shift] = {}
+    for shift in existing_shifts:
+        key = (shift.date, shift.start_time, shift.end_time)
+        existing_lookup[key] = shift
 
-    # 4. Match new slots to existing
+    # 4. Match new shifts to existing
     matched_keys: set[tuple[Any, ...]] = set()
-    slots_to_create: list[DutySlotCreate] = []
-    for new_slot in new_slot_defs:
-        key = (new_slot.date, new_slot.start_time, new_slot.end_time)
+    shifts_to_create: list[ShiftCreate] = []
+    for new_shift in new_shift_defs:
+        key = (new_shift.date, new_shift.start_time, new_shift.end_time)
         if key in existing_lookup:
             matched_keys.add(key)
-            # Update title and max_bookings on matched slots
+            # Update title and max_bookings on matched shifts
             existing = existing_lookup[key]
-            existing.title = new_slot.title
-            existing.max_bookings = new_slot.max_bookings
-            existing.location = new_slot.location
-            existing.category = new_slot.category
+            existing.title = new_shift.title
+            existing.max_bookings = new_shift.max_bookings
+            existing.location = new_shift.location
+            existing.category = new_shift.category
         else:
-            slots_to_create.append(new_slot)
+            shifts_to_create.append(new_shift)
 
-    # 5. Find unmatched existing slots (to be deleted) and their confirmed bookings
+    # 5. Find unmatched existing shifts (to be deleted) and their confirmed bookings
     affected_bookings: list[AffectedBookingInfo] = []
-    slots_to_delete: list[DutySlot] = []
-    for key, slot in existing_lookup.items():
+    shifts_to_delete: list[Shift] = []
+    for key, shift in existing_lookup.items():
         if key not in matched_keys:
-            slots_to_delete.append(slot)
-            for booking in slot.bookings:
+            shifts_to_delete.append(shift)
+            for booking in shift.bookings:
                 if booking.status == "confirmed":
                     affected_bookings.append(
                         AffectedBookingInfo(
                             booking_id=booking.id,
                             user_id=booking.user_id,
-                            slot_title=slot.title,
-                            slot_date=slot.date,
-                            slot_start_time=slot.start_time,
-                            slot_end_time=slot.end_time,
+                            slot_title=shift.title,
+                            slot_date=shift.date,
+                            slot_start_time=shift.start_time,
+                            slot_end_time=shift.end_time,
                         )
                     )
 
@@ -341,10 +343,10 @@ async def regenerate_task_slots(
                 db_task.category = payload.category
 
             # Store generation config on task
-            db_task.slot_duration_minutes = payload.schedule.slot_duration_minutes
+            db_task.shift_duration_minutes = payload.schedule.shift_duration_minutes
             db_task.default_start_time = payload.schedule.default_start_time
             db_task.default_end_time = payload.schedule.default_end_time
-            db_task.people_per_slot = payload.schedule.people_per_slot
+            db_task.people_per_shift = payload.schedule.people_per_shift
             db_task.schedule_overrides = [
                 o.model_dump(mode="json") for o in payload.schedule.overrides
             ]
@@ -358,31 +360,31 @@ async def regenerate_task_slots(
             db_batch.category = effective_category
             db_batch.default_start_time = payload.schedule.default_start_time
             db_batch.default_end_time = payload.schedule.default_end_time
-            db_batch.slot_duration_minutes = payload.schedule.slot_duration_minutes
-            db_batch.people_per_slot = payload.schedule.people_per_slot
+            db_batch.shift_duration_minutes = payload.schedule.shift_duration_minutes
+            db_batch.people_per_shift = payload.schedule.people_per_shift
             db_batch.remainder_mode = payload.schedule.remainder_mode
             db_batch.schedule_overrides = [
                 o.model_dump(mode="json") for o in payload.schedule.overrides
             ]
             session.add(db_batch)
 
-        # 6c. Delete unmatched slots (cascade deletes bookings)
-        for slot in slots_to_delete:
-            await session.delete(slot)
+        # 6c. Delete unmatched shifts (cascade deletes bookings)
+        for shift in shifts_to_delete:
+            await session.delete(shift)
 
-        # 6d. Create new slots (linked to batch if scoped)
-        for slot_in in slots_to_create:
+        # 6d. Create new shifts (linked to batch if scoped)
+        for slot_in in shifts_to_create:
             if batch_id and db_batch:
                 slot_in.batch_id = db_batch.id
-            await crud_duty_slot.create(session, obj_in=slot_in)
+            await crud_shift.create(session, obj_in=slot_in)
 
         await session.flush()
         await session.refresh(db_task)
 
-    return SlotRegenerationResult(
+    return ShiftRegenerationResult(
         task=TaskRead.model_validate(db_task),
-        slots_added=len(slots_to_create),
-        slots_removed=len(slots_to_delete),
-        slots_kept=len(matched_keys),
+        shifts_added=len(shifts_to_create),
+        shifts_removed=len(shifts_to_delete),
+        shifts_kept=len(matched_keys),
         affected_bookings=affected_bookings,
     )

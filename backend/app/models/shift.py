@@ -8,16 +8,16 @@ from sqlmodel import Field, Relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.models.slot_batch import SlotBatch
+    from app.models.shift_batch import ShiftBatch
     from app.models.task import Task
 
 if __name__ != "__main__":
     from app.models.booking import Booking  # noqa: F401
 
 
-class DutySlot(Base, table=True):
-    __tablename__ = "duty_slots"  # type: ignore[assignment]
-    __table_args__ = (sa.Index("ix_duty_slots_task_id_date", "task_id", "date"),)
+class Shift(Base, table=True):
+    __tablename__ = "shifts"  # type: ignore[assignment]
+    __table_args__ = (sa.Index("ix_shifts_task_id_date", "task_id", "date"),)
 
     task_id: uuid.UUID = Field(
         sa_column=sa.Column(
@@ -31,7 +31,7 @@ class DutySlot(Base, table=True):
         default=None,
         sa_column=sa.Column(
             sa.Uuid,
-            sa.ForeignKey("slot_batches.id", ondelete="CASCADE"),
+            sa.ForeignKey("shift_batches.id", ondelete="CASCADE"),
             nullable=True,
             index=True,
         ),
@@ -57,10 +57,10 @@ class DutySlot(Base, table=True):
         default=1, sa_column=sa.Column(sa.Integer, nullable=False)
     )
 
-    task: "Task" = Relationship(back_populates="duty_slots")
-    batch: Optional["SlotBatch"] = Relationship(back_populates="duty_slots")
+    task: "Task" = Relationship(back_populates="shifts")
+    batch: Optional["ShiftBatch"] = Relationship(back_populates="shifts")
     bookings: list["Booking"] = Relationship(
-        back_populates="duty_slot",
+        back_populates="shift",
         sa_relationship_kwargs={
             "cascade": "save-update, merge",
             "passive_deletes": True,

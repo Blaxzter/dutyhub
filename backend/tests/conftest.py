@@ -21,13 +21,13 @@ from tests.fixtures.auth import (
 from tests.fixtures.bookings import test_booking
 from tests.fixtures.client import app, as_admin, as_task_manager, async_client
 from tests.fixtures.database import db_session, test_db_setup, test_engine
-from tests.fixtures.duty_slots import test_duty_slot
 from tests.fixtures.events import (
     test_draft_event,
     test_event,
     test_user_availability,
     test_user_availability_with_dates,
 )
+from tests.fixtures.shifts import test_shift
 from tests.fixtures.tasks import test_draft_task, test_task
 from tests.fixtures.users import (
     test_admin_user,

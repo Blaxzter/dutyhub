@@ -15,8 +15,8 @@ def build_calendar(
 ) -> bytes:
     """Convert confirmed bookings into an iCalendar byte string.
 
-    Each booking with a linked duty_slot becomes a VEVENT.
-    Slots without times become all-day events.
+    Each booking with a linked shift becomes a VEVENT.
+    Shifts without times become all-day events.
     """
     cal = Calendar()
     cal.add("prodid", "-//WirkSam//Duty Bookings//EN")
@@ -28,42 +28,42 @@ def build_calendar(
         if booking.status != "confirmed":
             continue
 
-        slot = booking.duty_slot
-        if slot is None:
+        shift = booking.shift
+        if shift is None:
             continue
 
         event = Event()
         event.add("uid", f"booking-{booking.id}@wirksam")
 
-        # Build summary: "Task Name: Slot Title" or just "Slot Title"
-        task_name = getattr(slot, "task", None) and slot.task.name
-        summary = f"{task_name}: {slot.title}" if task_name else slot.title
+        # Build summary: "Task Name: Shift Title" or just "Shift Title"
+        task_name = getattr(shift, "task", None) and shift.task.name
+        summary = f"{task_name}: {shift.title}" if task_name else shift.title
         event.add("summary", summary)
 
         # Date/time handling
-        if slot.start_time is not None:
-            dtstart = dt.datetime.combine(slot.date, slot.start_time)
+        if shift.start_time is not None:
+            dtstart = dt.datetime.combine(shift.date, shift.start_time)
             event.add("dtstart", dtstart)
-            if slot.end_time is not None:
-                dtend = dt.datetime.combine(slot.date, slot.end_time)
+            if shift.end_time is not None:
+                dtend = dt.datetime.combine(shift.date, shift.end_time)
                 event.add("dtend", dtend)
             else:
                 # Default 1-hour duration when only start time is set
                 event.add("dtend", dtstart + dt.timedelta(hours=1))
         else:
             # All-day event (DATE value type)
-            event.add("dtstart", slot.date)
-            event.add("dtend", slot.date + dt.timedelta(days=1))
+            event.add("dtstart", shift.date)
+            event.add("dtend", shift.date + dt.timedelta(days=1))
 
-        if slot.location:
-            event.add("location", slot.location)
+        if shift.location:
+            event.add("location", shift.location)
 
         # Description
         desc_parts: list[str] = []
         if task_name:
             desc_parts.append(task_name)
-        if slot.category:
-            desc_parts.append(slot.category)
+        if shift.category:
+            desc_parts.append(shift.category)
         if booking.notes:
             desc_parts.append(booking.notes)
         desc_parts.append("Booked via WirkSam")

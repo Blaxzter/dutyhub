@@ -107,12 +107,12 @@ class TestTasksRoutes:
 
         assert r.status_code == 404
 
-    async def test_create_task_with_slots(
+    async def test_create_task_with_shifts(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test creating an task with auto-generated duty slots."""
+        """Test creating an task with auto-generated duty shifts."""
         r = await async_client.post(
-            "/api/v1/tasks/with-slots",
+            "/api/v1/tasks/with-shifts",
             json={
                 "name": "Bierstand",
                 "description": "Beer stand duty",
@@ -123,8 +123,8 @@ class TestTasksRoutes:
                 "schedule": {
                     "default_start_time": "10:00:00",
                     "default_end_time": "12:00:00",
-                    "slot_duration_minutes": 60,
-                    "people_per_slot": 3,
+                    "shift_duration_minutes": 60,
+                    "people_per_shift": 3,
                 },
             },
         )
@@ -133,17 +133,17 @@ class TestTasksRoutes:
         data = r.json()
         assert data["task"]["name"] == "Bierstand"
         assert data["task"]["location"] == "Halle A"
-        assert data["task"]["slot_duration_minutes"] == 60
-        assert data["task"]["people_per_slot"] == 3
-        assert data["duty_slots_created"] == 4  # 2 days * 2 slots/day
+        assert data["task"]["shift_duration_minutes"] == 60
+        assert data["task"]["people_per_shift"] == 3
+        assert data["shifts_created"] == 4  # 2 days * 2 shifts/day
         assert data["event"] is None
 
-    async def test_create_task_with_slots_and_new_group(
+    async def test_create_task_with_shifts_and_new_group(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test creating an task with slots and a new task group."""
+        """Test creating an task with shifts and a new task group."""
         r = await async_client.post(
-            "/api/v1/tasks/with-slots",
+            "/api/v1/tasks/with-shifts",
             json={
                 "name": "Weinstand",
                 "start_date": "2026-06-01",
@@ -156,8 +156,8 @@ class TestTasksRoutes:
                 "schedule": {
                     "default_start_time": "18:00:00",
                     "default_end_time": "20:00:00",
-                    "slot_duration_minutes": 30,
-                    "people_per_slot": 2,
+                    "shift_duration_minutes": 30,
+                    "people_per_shift": 2,
                 },
             },
         )
@@ -168,14 +168,14 @@ class TestTasksRoutes:
         assert data["event"] is not None
         assert data["event"]["name"] == "Sommerfest 2026"
         assert data["task"]["event_id"] == data["event"]["id"]
-        assert data["duty_slots_created"] == 4  # 2 hours / 30 min
+        assert data["shifts_created"] == 4  # 2 hours / 30 min
 
-    async def test_create_task_with_slots_and_overrides(
+    async def test_create_task_with_shifts_and_overrides(
         self, async_client: AsyncClient, as_admin: None
     ):
         """Test per-date schedule overrides."""
         r = await async_client.post(
-            "/api/v1/tasks/with-slots",
+            "/api/v1/tasks/with-shifts",
             json={
                 "name": "Kasse",
                 "start_date": "2026-06-01",
@@ -183,8 +183,8 @@ class TestTasksRoutes:
                 "schedule": {
                     "default_start_time": "10:00:00",
                     "default_end_time": "12:00:00",
-                    "slot_duration_minutes": 60,
-                    "people_per_slot": 1,
+                    "shift_duration_minutes": 60,
+                    "people_per_shift": 1,
                     "overrides": [
                         {
                             "date": "2026-06-02",
@@ -198,8 +198,8 @@ class TestTasksRoutes:
 
         assert r.status_code == 201
         data = r.json()
-        # Day 1: 10-12 = 2 slots, Day 2: 14-18 = 4 slots
-        assert data["duty_slots_created"] == 6
+        # Day 1: 10-12 = 2 shifts, Day 2: 14-18 = 4 shifts
+        assert data["shifts_created"] == 6
 
 
 @pytest.mark.asyncio

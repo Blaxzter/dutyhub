@@ -8,13 +8,13 @@ from sqlmodel import Field, Relationship
 from app.models.base import Base
 
 if __name__ != "__main__":
-    from app.models.duty_slot import DutySlot  # noqa: F401
+    from app.models.shift import Shift  # noqa: F401
 
 if __name__ != "__main__":
     from app.models.event import Event  # noqa: F401
 
 if __name__ != "__main__":
-    from app.models.slot_batch import SlotBatch  # noqa: F401
+    from app.models.shift_batch import ShiftBatch  # noqa: F401
 
 
 class Task(Base, table=True):
@@ -55,7 +55,7 @@ class Task(Base, table=True):
     category: str | None = Field(
         default=None, sa_column=sa.Column(sa.String, nullable=True)
     )
-    slot_duration_minutes: int | None = Field(
+    shift_duration_minutes: int | None = Field(
         default=None, sa_column=sa.Column(sa.Integer, nullable=True)
     )
     default_start_time: time | None = Field(
@@ -64,18 +64,18 @@ class Task(Base, table=True):
     default_end_time: time | None = Field(
         default=None, sa_column=sa.Column(sa.Time, nullable=True)
     )
-    people_per_slot: int | None = Field(
+    people_per_shift: int | None = Field(
         default=None, sa_column=sa.Column(sa.Integer, nullable=True)
     )
     schedule_overrides: list[dict[str, Any]] | None = Field(
         default=None, sa_column=sa.Column(sa.JSON, nullable=True)
     )
 
-    duty_slots: list["DutySlot"] = Relationship(
+    shifts: list["Shift"] = Relationship(
         back_populates="task",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
-    slot_batches: list["SlotBatch"] = Relationship(
+    shift_batches: list["ShiftBatch"] = Relationship(
         back_populates="task",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )

@@ -1,4 +1,4 @@
-"""Coverage gap tests for tasks/slots.py (add-slots validation, regenerate with batch, matching)."""
+"""Coverage gap tests for tasks/shifts.py (add-shifts validation, regenerate with batch, matching)."""
 
 from datetime import date, time
 
@@ -7,24 +7,24 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
 from app.models.event import Event
-from app.models.slot_batch import SlotBatch
+from app.models.shift import Shift
+from app.models.shift_batch import ShiftBatch
 from app.models.task import Task
 from app.models.user import User
 
 
 @pytest.mark.asyncio
-class TestAddSlotsCoverage:
-    """Coverage tests for add-slots endpoint."""
+class TestAddShiftsCoverage:
+    """Coverage tests for add-shifts endpoint."""
 
-    async def test_add_slots_with_event_validation(
+    async def test_add_shifts_with_event_validation(
         self,
         async_client: AsyncClient,
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test that add-slots validates dates against task group range."""
+        """Test that add-shifts validates dates against task group range."""
         group = Event(
             name="Constrained Group",
             start_date=date(2026, 7, 1),
@@ -46,17 +46,17 @@ class TestAddSlotsCoverage:
         await db_session.flush()
         await db_session.refresh(task)
 
-        # Try to add slots outside the group's date range
+        # Try to add shifts outside the group's date range
         r = await async_client.post(
-            f"/api/v1/tasks/{task.id}/add-slots",
+            f"/api/v1/tasks/{task.id}/add-shifts",
             json={
                 "start_date": "2026-07-20",
                 "end_date": "2026-07-25",
                 "schedule": {
                     "default_start_time": "09:00:00",
                     "default_end_time": "17:00:00",
-                    "slot_duration_minutes": 240,
-                    "people_per_slot": 1,
+                    "shift_duration_minutes": 240,
+                    "people_per_shift": 1,
                     "overrides": [],
                 },
             },
@@ -64,15 +64,15 @@ class TestAddSlotsCoverage:
 
         assert r.status_code == 400
 
-    async def test_add_slots_with_location_and_category(
+    async def test_add_shifts_with_location_and_category(
         self,
         async_client: AsyncClient,
         as_admin: None,
         test_task: Task,
     ):
-        """Test adding slots with location and category."""
+        """Test adding shifts with location and category."""
         r = await async_client.post(
-            f"/api/v1/tasks/{test_task.id}/add-slots",
+            f"/api/v1/tasks/{test_task.id}/add-shifts",
             json={
                 "start_date": "2026-05-24",
                 "end_date": "2026-05-24",
@@ -81,8 +81,8 @@ class TestAddSlotsCoverage:
                 "schedule": {
                     "default_start_time": "08:00:00",
                     "default_end_time": "12:00:00",
-                    "slot_duration_minutes": 120,
-                    "people_per_slot": 2,
+                    "shift_duration_minutes": 120,
+                    "people_per_shift": 2,
                     "overrides": [],
                 },
             },
@@ -90,27 +90,27 @@ class TestAddSlotsCoverage:
 
         assert r.status_code == 201
         data = r.json()
-        assert data["slots_added"] >= 1
+        assert data["shifts_added"] >= 1
 
-    async def test_add_slots_to_nonexistent_task(
+    async def test_add_shifts_to_nonexistent_task(
         self,
         async_client: AsyncClient,
         as_admin: None,
     ):
-        """Test adding slots to a nonexistent task returns 404."""
+        """Test adding shifts to a nonexistent task returns 404."""
         import uuid
 
         fake_id = uuid.uuid4()
         r = await async_client.post(
-            f"/api/v1/tasks/{fake_id}/add-slots",
+            f"/api/v1/tasks/{fake_id}/add-shifts",
             json={
                 "start_date": "2026-07-01",
                 "end_date": "2026-07-02",
                 "schedule": {
                     "default_start_time": "09:00:00",
                     "default_end_time": "17:00:00",
-                    "slot_duration_minutes": 240,
-                    "people_per_slot": 1,
+                    "shift_duration_minutes": 240,
+                    "people_per_shift": 1,
                     "overrides": [],
                 },
             },
@@ -119,17 +119,17 @@ class TestAddSlotsCoverage:
 
 
 @pytest.mark.asyncio
-class TestRegenerateSlotsCoverage:
-    """Coverage tests for regenerate-slots endpoint."""
+class TestRegenerateShiftsCoverage:
+    """Coverage tests for regenerate-shifts endpoint."""
 
-    async def test_regenerate_with_matching_slots_preserved(
+    async def test_regenerate_with_matching_shifts_preserved(
         self,
         async_client: AsyncClient,
         as_admin: None,
         db_session: AsyncSession,
         test_user: User,
     ):
-        """Test that regeneration preserves bookings on matching slots."""
+        """Test that regeneration preserves bookings on matching shifts."""
         task = Task(
             name="Regen Match Task",
             start_date=date(2026, 9, 1),
@@ -140,36 +140,36 @@ class TestRegenerateSlotsCoverage:
         await db_session.flush()
         await db_session.refresh(task)
 
-        # Create a slot that will match the regenerated config
-        slot = DutySlot(
+        # Create a shift that will match the regenerated config
+        shift = Shift(
             task_id=task.id,
-            title="Existing Slot",
+            title="Existing Shift",
             date=date(2026, 9, 1),
             start_time=time(9, 0),
             end_time=time(13, 0),
             max_bookings=2,
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
-        await db_session.refresh(slot)
+        await db_session.refresh(shift)
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_user.id,
             status="confirmed",
         )
         db_session.add(booking)
         await db_session.flush()
 
-        # Regenerate with same time window — slot should match
+        # Regenerate with same time window — shift should match
         r = await async_client.post(
-            f"/api/v1/tasks/{task.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-shifts",
             json={
                 "schedule": {
                     "default_start_time": "09:00:00",
                     "default_end_time": "13:00:00",
-                    "slot_duration_minutes": 240,
-                    "people_per_slot": 3,
+                    "shift_duration_minutes": 240,
+                    "people_per_shift": 3,
                     "overrides": [],
                 },
             },
@@ -177,7 +177,7 @@ class TestRegenerateSlotsCoverage:
 
         assert r.status_code == 200
         data = r.json()
-        assert data["slots_kept"] >= 1
+        assert data["shifts_kept"] >= 1
         assert data["affected_bookings"] == []
 
     async def test_regenerate_dry_run_no_changes(
@@ -197,27 +197,27 @@ class TestRegenerateSlotsCoverage:
         await db_session.flush()
         await db_session.refresh(task)
 
-        # Create existing slot
-        slot = DutySlot(
+        # Create existing shift
+        shift = Shift(
             task_id=task.id,
-            title="Dry Run Slot",
+            title="Dry Run Shift",
             date=date(2026, 9, 5),
             start_time=time(8, 0),
             end_time=time(12, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
-        # Dry-run with different time (should show slot as removed)
+        # Dry-run with different time (should show shift as removed)
         r = await async_client.post(
-            f"/api/v1/tasks/{task.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-shifts",
             params={"dry_run": True},
             json={
                 "schedule": {
                     "default_start_time": "10:00:00",
                     "default_end_time": "14:00:00",
-                    "slot_duration_minutes": 240,
-                    "people_per_slot": 1,
+                    "shift_duration_minutes": 240,
+                    "people_per_shift": 1,
                     "overrides": [],
                 },
             },
@@ -225,8 +225,8 @@ class TestRegenerateSlotsCoverage:
 
         assert r.status_code == 200
         data = r.json()
-        assert data["slots_removed"] >= 1
-        assert data["slots_added"] >= 1
+        assert data["shifts_removed"] >= 1
+        assert data["shifts_added"] >= 1
 
     async def test_regenerate_with_affected_bookings(
         self,
@@ -235,7 +235,7 @@ class TestRegenerateSlotsCoverage:
         db_session: AsyncSession,
         test_user: User,
     ):
-        """Test regeneration reports affected bookings for deleted slots."""
+        """Test regeneration reports affected bookings for deleted shifts."""
         task = Task(
             name="Affected Bookings Task",
             start_date=date(2026, 9, 10),
@@ -246,35 +246,35 @@ class TestRegenerateSlotsCoverage:
         await db_session.flush()
         await db_session.refresh(task)
 
-        # Create slot with booking
-        slot = DutySlot(
+        # Create shift with booking
+        shift = Shift(
             task_id=task.id,
-            title="Old Slot",
+            title="Old Shift",
             date=date(2026, 9, 10),
             start_time=time(8, 0),
             end_time=time(12, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_user.id,
             status="confirmed",
         )
         db_session.add(booking)
         await db_session.flush()
 
-        # Regenerate with completely different times — old slot won't match
+        # Regenerate with completely different times — old shift won't match
         r = await async_client.post(
-            f"/api/v1/tasks/{task.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-shifts",
             params={"dry_run": True},
             json={
                 "schedule": {
                     "default_start_time": "14:00:00",
                     "default_end_time": "18:00:00",
-                    "slot_duration_minutes": 240,
-                    "people_per_slot": 1,
+                    "shift_duration_minutes": 240,
+                    "people_per_shift": 1,
                     "overrides": [],
                 },
             },
@@ -283,7 +283,7 @@ class TestRegenerateSlotsCoverage:
         assert r.status_code == 200
         data = r.json()
         assert len(data["affected_bookings"]) >= 1
-        assert data["affected_bookings"][0]["slot_title"] == "Old Slot"
+        assert data["affected_bookings"][0]["slot_title"] == "Old Shift"
 
     async def test_regenerate_with_batch_id(
         self,
@@ -291,7 +291,7 @@ class TestRegenerateSlotsCoverage:
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test regenerating slots scoped to a specific batch."""
+        """Test regenerating shifts scoped to a specific batch."""
         task = Task(
             name="Batch Regen Task",
             start_date=date(2026, 10, 1),
@@ -302,15 +302,15 @@ class TestRegenerateSlotsCoverage:
         await db_session.flush()
         await db_session.refresh(task)
 
-        batch = SlotBatch(
+        batch = ShiftBatch(
             task_id=task.id,
             label="Morning Batch",
             start_date=date(2026, 10, 1),
             end_date=date(2026, 10, 2),
             default_start_time=time(8, 0),
             default_end_time=time(12, 0),
-            slot_duration_minutes=240,
-            people_per_slot=2,
+            shift_duration_minutes=240,
+            people_per_shift=2,
             location="Hall A",
             category="Security",
         )
@@ -318,28 +318,28 @@ class TestRegenerateSlotsCoverage:
         await db_session.flush()
         await db_session.refresh(batch)
 
-        # Create a slot linked to the batch
-        slot = DutySlot(
+        # Create a shift linked to the batch
+        shift = Shift(
             task_id=task.id,
-            title="Batch Slot",
+            title="Batch Shift",
             date=date(2026, 10, 1),
             start_time=time(8, 0),
             end_time=time(12, 0),
             batch_id=batch.id,
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         # Regenerate scoped to this batch
         r = await async_client.post(
-            f"/api/v1/tasks/{task.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-shifts",
             params={"batch_id": str(batch.id)},
             json={
                 "schedule": {
                     "default_start_time": "08:00:00",
                     "default_end_time": "12:00:00",
-                    "slot_duration_minutes": 240,
-                    "people_per_slot": 3,
+                    "shift_duration_minutes": 240,
+                    "people_per_shift": 3,
                     "overrides": [],
                 },
             },
@@ -347,7 +347,7 @@ class TestRegenerateSlotsCoverage:
 
         assert r.status_code == 200
         data = r.json()
-        assert data["slots_kept"] >= 1
+        assert data["shifts_kept"] >= 1
 
     async def test_regenerate_with_wrong_batch_task(
         self,
@@ -373,7 +373,7 @@ class TestRegenerateSlotsCoverage:
         await db_session.refresh(event1)
         await db_session.refresh(event2)
 
-        batch = SlotBatch(
+        batch = ShiftBatch(
             task_id=event2.id,
             label="Wrong Task Batch",
             start_date=date(2026, 11, 10),
@@ -384,14 +384,14 @@ class TestRegenerateSlotsCoverage:
         await db_session.refresh(batch)
 
         r = await async_client.post(
-            f"/api/v1/tasks/{event1.id}/regenerate-slots",
+            f"/api/v1/tasks/{event1.id}/regenerate-shifts",
             params={"batch_id": str(batch.id)},
             json={
                 "schedule": {
                     "default_start_time": "09:00:00",
                     "default_end_time": "17:00:00",
-                    "slot_duration_minutes": 240,
-                    "people_per_slot": 1,
+                    "shift_duration_minutes": 240,
+                    "people_per_shift": 1,
                     "overrides": [],
                 },
             },
@@ -418,15 +418,15 @@ class TestRegenerateSlotsCoverage:
         await db_session.refresh(task)
 
         r = await async_client.post(
-            f"/api/v1/tasks/{task.id}/regenerate-slots",
+            f"/api/v1/tasks/{task.id}/regenerate-shifts",
             json={
                 "name": "Updated Name",
                 "description": "Updated desc",
                 "schedule": {
                     "default_start_time": "09:00:00",
                     "default_end_time": "17:00:00",
-                    "slot_duration_minutes": 480,
-                    "people_per_slot": 1,
+                    "shift_duration_minutes": 480,
+                    "people_per_shift": 1,
                     "overrides": [],
                 },
             },
@@ -437,14 +437,14 @@ class TestRegenerateSlotsCoverage:
         assert data["task"]["name"] == "Updated Name"
         assert data["task"]["description"] == "Updated desc"
 
-    async def test_create_task_with_slots_nonexistent_task(
+    async def test_create_task_with_shifts_nonexistent_task(
         self,
         async_client: AsyncClient,
         as_admin: None,
     ):
-        """Test creating task with slots returns 201."""
+        """Test creating task with shifts returns 201."""
         r = await async_client.post(
-            "/api/v1/tasks/with-slots",
+            "/api/v1/tasks/with-shifts",
             json={
                 "name": "Full Coverage Task",
                 "description": "Testing all paths",
@@ -455,8 +455,8 @@ class TestRegenerateSlotsCoverage:
                 "schedule": {
                     "default_start_time": "06:00:00",
                     "default_end_time": "22:00:00",
-                    "slot_duration_minutes": 240,
-                    "people_per_slot": 4,
+                    "shift_duration_minutes": 240,
+                    "people_per_shift": 4,
                     "remainder_mode": "extend",
                     "overrides": [],
                 },
@@ -467,4 +467,4 @@ class TestRegenerateSlotsCoverage:
         data = r.json()
         assert data["task"]["location"] == "Main Hall"
         assert data["task"]["category"] == "Catering"
-        assert data["duty_slots_created"] >= 1
+        assert data["shifts_created"] >= 1

@@ -10,21 +10,21 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.task import (
-    AddSlotsToTask,
-    ExcludedSlot,
+    AddShiftsToTask,
+    ExcludedShift,
     ScheduleOverride,
-    SlotGenerationConfig,
+    ShiftGenerationConfig,
     TaskBase,
-    TaskCreateWithSlots,
+    TaskCreateWithShifts,
 )
 
 
-def _schedule(**overrides: Any) -> SlotGenerationConfig:
-    return SlotGenerationConfig(
+def _schedule(**overrides: Any) -> ShiftGenerationConfig:
+    return ShiftGenerationConfig(
         default_start_time=overrides.pop("default_start_time", dt.time(9, 0)),
         default_end_time=overrides.pop("default_end_time", dt.time(17, 0)),
-        slot_duration_minutes=overrides.pop("slot_duration_minutes", 60),
-        people_per_slot=overrides.pop("people_per_slot", 1),
+        shift_duration_minutes=overrides.pop("shift_duration_minutes", 60),
+        people_per_shift=overrides.pop("people_per_shift", 1),
         **overrides,
     )
 
@@ -72,26 +72,26 @@ class TestScheduleOverride:
             )
 
 
-class TestExcludedSlot:
+class TestExcludedShift:
     def test_valid(self):
-        ExcludedSlot(
+        ExcludedShift(
             date=dt.date(2026, 1, 1),
             start_time=dt.time(9, 0),
             end_time=dt.time(10, 0),
         )
 
 
-class TestSlotGenerationConfig:
+class TestShiftGenerationConfig:
     def test_valid(self):
         _schedule()
 
     def test_duration_must_be_positive(self):
-        with pytest.raises(ValidationError, match="slot_duration_minutes"):
-            _schedule(slot_duration_minutes=0)
+        with pytest.raises(ValidationError, match="shift_duration_minutes"):
+            _schedule(shift_duration_minutes=0)
 
     def test_people_must_be_positive(self):
-        with pytest.raises(ValidationError, match="people_per_slot"):
-            _schedule(people_per_slot=0)
+        with pytest.raises(ValidationError, match="people_per_shift"):
+            _schedule(people_per_shift=0)
 
     def test_end_time_must_be_after_start_time(self):
         with pytest.raises(ValidationError, match="default_end_time"):
@@ -101,9 +101,9 @@ class TestSlotGenerationConfig:
             )
 
 
-class TestTaskCreateWithSlots:
+class TestTaskCreateWithShifts:
     def test_valid(self):
-        TaskCreateWithSlots(
+        TaskCreateWithShifts(
             name="x",
             start_date=dt.date(2026, 1, 1),
             end_date=dt.date(2026, 1, 2),
@@ -112,7 +112,7 @@ class TestTaskCreateWithSlots:
 
     def test_rejects_end_before_start(self):
         with pytest.raises(ValidationError, match="end_date"):
-            TaskCreateWithSlots(
+            TaskCreateWithShifts(
                 name="x",
                 start_date=dt.date(2026, 1, 2),
                 end_date=dt.date(2026, 1, 1),
@@ -123,7 +123,7 @@ class TestTaskCreateWithSlots:
         from app.schemas.event import EventCreate
 
         with pytest.raises(ValidationError, match="event_id and new_event"):
-            TaskCreateWithSlots(
+            TaskCreateWithShifts(
                 name="x",
                 start_date=dt.date(2026, 1, 1),
                 end_date=dt.date(2026, 1, 2),
@@ -137,9 +137,9 @@ class TestTaskCreateWithSlots:
             )
 
 
-class TestAddSlotsToTask:
+class TestAddShiftsToTask:
     def test_valid(self):
-        AddSlotsToTask(
+        AddShiftsToTask(
             start_date=dt.date(2026, 1, 1),
             end_date=dt.date(2026, 1, 2),
             schedule=_schedule(),
@@ -147,7 +147,7 @@ class TestAddSlotsToTask:
 
     def test_rejects_end_before_start(self):
         with pytest.raises(ValidationError, match="end_date"):
-            AddSlotsToTask(
+            AddShiftsToTask(
                 start_date=dt.date(2026, 1, 2),
                 end_date=dt.date(2026, 1, 1),
                 schedule=_schedule(),

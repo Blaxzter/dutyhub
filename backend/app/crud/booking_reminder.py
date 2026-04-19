@@ -24,7 +24,7 @@ class CRUDBookingReminder(
         *,
         booking_id: uuid.UUID,
         user_id: uuid.UUID,
-        duty_slot_id: uuid.UUID,
+        shift_id: uuid.UUID,
         offset_minutes: int,
         slot_start: dt.datetime,
         channels: Sequence[AllowedChannel] | None = None,
@@ -43,7 +43,7 @@ class CRUDBookingReminder(
         reminder = BookingReminder(
             booking_id=booking_id,
             user_id=user_id,
-            duty_slot_id=duty_slot_id,
+            shift_id=shift_id,
             remind_at=remind_at,
             offset_minutes=offset_minutes,
             status=status,
@@ -60,7 +60,7 @@ class CRUDBookingReminder(
         *,
         booking_id: uuid.UUID,
         user_id: uuid.UUID,
-        duty_slot_id: uuid.UUID,
+        shift_id: uuid.UUID,
         slot_start: dt.datetime,
         defaults: Sequence[ReminderOffsetEntry],
     ) -> list[BookingReminder]:
@@ -73,7 +73,7 @@ class CRUDBookingReminder(
                 db,
                 booking_id=booking_id,
                 user_id=user_id,
-                duty_slot_id=duty_slot_id,
+                shift_id=shift_id,
                 offset_minutes=offset,
                 slot_start=slot_start,
                 channels=channels,
@@ -154,7 +154,7 @@ class CRUDBookingReminder(
         self,
         db: AsyncSession,
     ) -> int:
-        """Mark pending reminders for past slots as expired."""
+        """Mark pending reminders for past shifts as expired."""
         now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
         # A reminder is stale if remind_at is more than 1 hour in the past
         # and still pending (missed by the poller somehow)

@@ -30,7 +30,7 @@ class DashboardEvent(BaseModel):
 
 
 class DashboardBookingItem(BaseModel):
-    """Booking with inline slot info for calendar display — avoids N+1."""
+    """Booking with inline shift info for calendar display — avoids N+1."""
 
     model_config = ConfigDict(from_attributes=True)
 

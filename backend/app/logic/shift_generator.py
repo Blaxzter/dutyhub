@@ -1,13 +1,13 @@
-"""Generate duty slots from a schedule configuration."""
+"""Generate duty shifts from a schedule configuration."""
 
 import uuid
 from datetime import date, datetime, time, timedelta
 
-from app.schemas.duty_slot import DutySlotCreate
-from app.schemas.task import ExcludedSlot, ScheduleOverride
+from app.schemas.shift import ShiftCreate
+from app.schemas.task import ExcludedShift, ScheduleOverride
 
 
-def generate_duty_slots(
+def generate_shifts(
     *,
     task_id: uuid.UUID,
     task_name: str,
@@ -15,18 +15,18 @@ def generate_duty_slots(
     end_date: date,
     default_start_time: time,
     default_end_time: time,
-    slot_duration_minutes: int,
-    people_per_slot: int = 1,
+    shift_duration_minutes: int,
+    people_per_shift: int = 1,
     remainder_mode: str = "drop",
     location: str | None = None,
     category: str | None = None,
     overrides: list[ScheduleOverride] | None = None,
-    excluded_slots: list[ExcludedSlot] | None = None,
-) -> list[DutySlotCreate]:
-    """Generate a list of DutySlotCreate objects for each time slot.
+    excluded_shifts: list[ExcludedShift] | None = None,
+) -> list[ShiftCreate]:
+    """Generate a list of ShiftCreate objects for each time shift.
 
     Iterates each date in [start_date, end_date], splits each day's time range
-    into slots of slot_duration_minutes, and returns the full list.
+    into shifts of shift_duration_minutes, and returns the full list.
     Per-date overrides can specify different start/end times for specific dates.
     """
     override_map: dict[date, ScheduleOverride] = {}
@@ -36,28 +36,28 @@ def generate_duty_slots(
 
     # Build exclusion set for fast lookup
     exclusion_set: set[tuple[date, time, time]] = set()
-    if excluded_slots:
-        for ex in excluded_slots:
+    if excluded_shifts:
+        for ex in excluded_shifts:
             exclusion_set.add((ex.date, ex.start_time, ex.end_time))
 
-    slots: list[DutySlotCreate] = []
+    shifts: list[ShiftCreate] = []
     current_date = start_date
-    duration = timedelta(minutes=slot_duration_minutes)
+    duration = timedelta(minutes=shift_duration_minutes)
 
     while current_date <= end_date:
         override = override_map.get(current_date)
         day_start = override.start_time if override else default_start_time
         day_end = override.end_time if override else default_end_time
 
-        slots.extend(
-            _generate_slots_for_day(
+        shifts.extend(
+            _generate_shifts_for_day(
                 task_id=task_id,
                 task_name=task_name,
                 slot_date=current_date,
                 day_start=day_start,
                 day_end=day_end,
                 duration=duration,
-                people_per_slot=people_per_slot,
+                people_per_shift=people_per_shift,
                 remainder_mode=remainder_mode,
                 location=location,
                 category=category,
@@ -65,16 +65,16 @@ def generate_duty_slots(
         )
         current_date += timedelta(days=1)
 
-    # Filter out excluded slots
+    # Filter out excluded shifts
     if exclusion_set:
-        slots = [
-            s for s in slots if (s.date, s.start_time, s.end_time) not in exclusion_set
+        shifts = [
+            s for s in shifts if (s.date, s.start_time, s.end_time) not in exclusion_set
         ]
 
-    return slots
+    return shifts
 
 
-def _generate_slots_for_day(
+def _generate_shifts_for_day(
     *,
     task_id: uuid.UUID,
     task_name: str,
@@ -82,18 +82,18 @@ def _generate_slots_for_day(
     day_start: time,
     day_end: time,
     duration: timedelta,
-    people_per_slot: int,
+    people_per_shift: int,
     remainder_mode: str = "drop",
     location: str | None,
     category: str | None,
-) -> list[DutySlotCreate]:
-    """Generate slots for a single day."""
+) -> list[ShiftCreate]:
+    """Generate shifts for a single day."""
     # Use a reference date to do time arithmetic
     ref = date(2000, 1, 1)
     start_dt = _combine(ref, day_start)
     end_dt = _combine(ref, day_end)
 
-    slots: list[DutySlotCreate] = []
+    shifts: list[ShiftCreate] = []
     current = start_dt
 
     while current + duration <= end_dt:
@@ -103,8 +103,8 @@ def _generate_slots_for_day(
 
         title = f"{task_name} {slot_start_time.strftime('%H:%M')}-{slot_end_time.strftime('%H:%M')}"
 
-        slots.append(
-            DutySlotCreate(
+        shifts.append(
+            ShiftCreate(
                 task_id=task_id,
                 title=title,
                 date=slot_date,
@@ -112,20 +112,20 @@ def _generate_slots_for_day(
                 end_time=slot_end_time,
                 location=location,
                 category=category,
-                max_bookings=people_per_slot,
+                max_bookings=people_per_shift,
             )
         )
         current = slot_end
 
-    # Handle remaining time that doesn't fill a full slot
+    # Handle remaining time that doesn't fill a full shift
     if current < end_dt:
         if remainder_mode == "short":
-            # Create a shorter final slot for the remaining time
+            # Create a shorter final shift for the remaining time
             slot_start_time = current.time()
             slot_end_time = end_dt.time()
             title = f"{task_name} {slot_start_time.strftime('%H:%M')}-{slot_end_time.strftime('%H:%M')}"
-            slots.append(
-                DutySlotCreate(
+            shifts.append(
+                ShiftCreate(
                     task_id=task_id,
                     title=title,
                     date=slot_date,
@@ -133,18 +133,18 @@ def _generate_slots_for_day(
                     end_time=slot_end_time,
                     location=location,
                     category=category,
-                    max_bookings=people_per_slot,
+                    max_bookings=people_per_shift,
                 )
             )
-        elif remainder_mode == "extend" and slots:
-            # Extend the last slot to cover the remaining time
-            last = slots[-1]
+        elif remainder_mode == "extend" and shifts:
+            # Extend the last shift to cover the remaining time
+            last = shifts[-1]
             last.end_time = end_dt.time()
             if last.start_time and last.end_time:
                 last.title = f"{task_name} {last.start_time.strftime('%H:%M')}-{last.end_time.strftime('%H:%M')}"
         # remainder_mode == "drop": do nothing (default)
 
-    return slots
+    return shifts
 
 
 def _combine(d: date, t: time) -> datetime:

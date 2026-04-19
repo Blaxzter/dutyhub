@@ -10,8 +10,8 @@ from app.crud.booking import booking as crud_booking
 from app.crud.event_manager import event_manager as crud_egm
 from app.crud.task import task as crud_task
 from app.logic.permissions import require_event_access
-from app.models.duty_slot import DutySlot
 from app.models.event_manager import EventManager
+from app.models.shift import Shift
 from app.models.task import Task
 from app.schemas.booking import TaskBookingEntry
 from app.schemas.task import (
@@ -150,7 +150,7 @@ async def list_task_bookings(
     session: DBDep,
     _current_user: CurrentUser,
 ) -> list[TaskBookingEntry]:
-    """List all confirmed bookings for every slot in an task, with user info."""
+    """List all confirmed bookings for every shift in an task, with user info."""
     import uuid as _uuid
 
     await crud_task.get(session, task_id, raise_404_error=True)
@@ -160,7 +160,7 @@ async def list_task_bookings(
     return [
         TaskBookingEntry(
             id=b.id,
-            duty_slot_id=b.duty_slot_id,  # type: ignore[arg-type]
+            shift_id=b.shift_id,  # type: ignore[arg-type]
             user_name=b.user.name if b.user else None,
             user_phone_number=b.user.phone_number if b.user else None,
         )
@@ -178,13 +178,13 @@ async def delete_task(
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
     await require_event_access(current_user, session, db_task.event_id)
 
-    # Collect all slot IDs for this task
-    stmt = select(col(DutySlot.id)).where(col(DutySlot.task_id) == db_task.id)
+    # Collect all shift IDs for this task
+    stmt = select(col(Shift.id)).where(col(Shift.task_id) == db_task.id)
     result = await session.execute(stmt)
     slot_ids = list(result.scalars().all())
 
     # Cancel confirmed bookings with snapshot before deleting
-    await crud_booking.cancel_bookings_for_slots(
+    await crud_booking.cancel_bookings_for_shifts(
         session,
         slot_ids=slot_ids,
         task_name=db_task.name,

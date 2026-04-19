@@ -61,15 +61,15 @@ BOOKING_CANCELLED_BY_USER = NotificationTypeDef(
 BOOKING_CANCELLED_BY_ADMIN = NotificationTypeDef(
     code="booking.cancelled_by_admin",
     name="Booking Cancelled by Admin",
-    description="Notification when an admin cancels your booking (slot deleted or regenerated)",
+    description="Notification when an admin cancels your booking (shift deleted or regenerated)",
     category="booking",
     default_channels=["email", "push"],
 )
 
-BOOKING_SLOT_COBOOKED = NotificationTypeDef(
-    code="booking.slot_cobooked",
-    name="Slot Co-booked",
-    description="Notification when someone else also books a slot you are on",
+BOOKING_SHIFT_COBOOKED = NotificationTypeDef(
+    code="booking.shift_cobooked",
+    name="Shift Co-booked",
+    description="Notification when someone else also books a shift you are on",
     category="booking",
     default_channels=["push"],
 )
@@ -77,28 +77,28 @@ BOOKING_SLOT_COBOOKED = NotificationTypeDef(
 BOOKING_REMINDER = NotificationTypeDef(
     code="booking.reminder",
     name="Booking Reminder",
-    description="Reminder before a booked slot starts",
+    description="Reminder before a booked shift starts",
     category="booking",
     default_channels=["push"],
     is_user_configurable=False,
 )
 
-# ── Slot notifications ────────────────────────────────────────────
+# ── Shift notifications ────────────────────────────────────────────
 
-SLOT_STARTING_SOON_UNFILLED = NotificationTypeDef(
-    code="slot.starting_soon_unfilled",
-    name="Slot Starting Soon (Unfilled)",
-    description="Alert when a slot starts in 30 minutes but still has open spots",
-    category="slot",
+SHIFT_STARTING_SOON_UNFILLED = NotificationTypeDef(
+    code="shift.starting_soon_unfilled",
+    name="Shift Starting Soon (Unfilled)",
+    description="Alert when a shift starts in 30 minutes but still has open spots",
+    category="shift",
     is_admin_only=True,
     default_channels=["email", "push"],
 )
 
-SLOT_TIME_CHANGED = NotificationTypeDef(
-    code="slot.time_changed",
-    name="Slot Time Changed",
-    description="Notification when a slot you booked has its time changed",
-    category="slot",
+SHIFT_TIME_CHANGED = NotificationTypeDef(
+    code="shift.time_changed",
+    name="Shift Time Changed",
+    description="Notification when a shift you booked has its time changed",
+    category="shift",
     default_channels=["email", "push"],
 )
 
@@ -165,10 +165,10 @@ ALL_NOTIFICATION_TYPES: list[NotificationTypeDef] = [
     BOOKING_CONFIRMED,
     BOOKING_CANCELLED_BY_USER,
     BOOKING_CANCELLED_BY_ADMIN,
-    BOOKING_SLOT_COBOOKED,
+    BOOKING_SHIFT_COBOOKED,
     BOOKING_REMINDER,
-    SLOT_STARTING_SOON_UNFILLED,
-    SLOT_TIME_CHANGED,
+    SHIFT_STARTING_SOON_UNFILLED,
+    SHIFT_TIME_CHANGED,
     TASK_PUBLISHED,
     EVENT_PUBLISHED,
     AVAILABILITY_REMINDER,

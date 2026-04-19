@@ -1,7 +1,7 @@
 from app.crud.booking import booking
 from app.crud.booking_reminder import booking_reminder
-from app.crud.duty_slot import duty_slot
 from app.crud.event import event
+from app.crud.shift import shift
 from app.crud.site_settings import site_settings
 from app.crud.task import task
 from app.crud.user import user
@@ -10,7 +10,7 @@ from app.crud.user_availability import user_availability
 __all__ = [
     "booking",
     "booking_reminder",
-    "duty_slot",
+    "shift",
     "task",
     "event",
     "site_settings",

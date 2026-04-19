@@ -3,9 +3,9 @@
     "title": "✅ Buchung bestätigt",
     "body": "Ihre Buchung wurde bestätigt!\n\n📌 {slot_title}\n📅 {date} ⏰ {start_time}–{end_time}\n🏠 {location}\n🎫 {task_name}"
   },
-  "booking.slot_cobooked": {
+  "booking.shift_cobooked": {
     "title": "Neue Mitbuchung",
-    "body": "{name} hat ebenfalls den Slot „{slot_title}“ gebucht."
+    "body": "{name} hat ebenfalls den Shift „{slot_title}“ gebucht."
   },
   "booking.cancelled_by_user": {
     "title": "Buchung storniert",
@@ -19,9 +19,9 @@
     "title": "Buchung durch Admin storniert",
     "body": "Ihre Buchung für „{slot_title}“{task_label} wurde von einem Administrator storniert.{detail}"
   },
-  "slot.time_changed": {
-    "title": "Slot-Zeit geändert",
-    "body": "Die Zeit für den Slot „{slot_title}“ wurde aktualisiert. Bitte prüfen Sie den neuen Zeitplan."
+  "shift.time_changed": {
+    "title": "Shift-Zeit geändert",
+    "body": "Die Zeit für den Shift „{slot_title}“ wurde aktualisiert. Bitte prüfen Sie den neuen Zeitplan."
   },
   "task.published": {
     "title": "Neues Task veröffentlicht",

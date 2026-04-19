@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
 
@@ -57,18 +57,18 @@ class TestReminderCoverage:
         test_task: Task,
     ):
         """Test adding a reminder to a cancelled booking fails."""
-        slot = DutySlot(
+        shift = Shift(
             task_id=test_task.id,
-            title="Cancelled Reminder Slot",
+            title="Cancelled Reminder Shift",
             date=date(2026, 8, 1),
             start_time=time(9, 0),
             end_time=time(13, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_user.id,
             status="cancelled",
         )
@@ -113,18 +113,18 @@ class TestReminderCoverage:
         test_task: Task,
     ):
         """Test that a user cannot list reminders for another user's booking."""
-        slot = DutySlot(
+        shift = Shift(
             task_id=test_task.id,
-            title="Other User Reminder Slot",
+            title="Other User Reminder Shift",
             date=date(2026, 8, 2),
             start_time=time(10, 0),
             end_time=time(14, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_admin_user.id,
             status="confirmed",
         )
@@ -143,18 +143,18 @@ class TestReminderCoverage:
         test_task: Task,
     ):
         """Test that a user cannot add a reminder to another user's booking."""
-        slot = DutySlot(
+        shift = Shift(
             task_id=test_task.id,
-            title="Other Add Reminder Slot",
+            title="Other Add Reminder Shift",
             date=date(2026, 8, 3),
             start_time=time(10, 0),
             end_time=time(14, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_admin_user.id,
             status="confirmed",
         )
@@ -178,18 +178,18 @@ class TestReminderCoverage:
         """Test that a user cannot delete another user's reminder."""
         from app.crud.booking_reminder import booking_reminder as crud_reminder
 
-        slot = DutySlot(
+        shift = Shift(
             task_id=test_task.id,
-            title="Other Delete Reminder Slot",
+            title="Other Delete Reminder Shift",
             date=date(2026, 8, 4),
             start_time=time(10, 0),
             end_time=time(14, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_admin_user.id,
             status="confirmed",
         )
@@ -199,13 +199,13 @@ class TestReminderCoverage:
 
         import datetime as dt
 
-        assert slot.start_time is not None
-        slot_start = dt.datetime.combine(slot.date, slot.start_time)
+        assert shift.start_time is not None
+        slot_start = dt.datetime.combine(shift.date, shift.start_time)
         reminder = await crud_reminder.create_reminder(
             db_session,
             booking_id=booking.id,
             user_id=test_admin_user.id,
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             offset_minutes=30,
             slot_start=slot_start,
             channels=["push"],

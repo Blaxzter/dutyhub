@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict
 from app.schemas.task import RemainderMode
 
 
-class SlotBatchBase(BaseModel):
+class ShiftBatchBase(BaseModel):
     task_id: uuid.UUID
     label: str | None = None
     start_date: dt.date
@@ -16,17 +16,17 @@ class SlotBatchBase(BaseModel):
     category: str | None = None
     default_start_time: dt.time | None = None
     default_end_time: dt.time | None = None
-    slot_duration_minutes: int | None = None
-    people_per_slot: int | None = None
+    shift_duration_minutes: int | None = None
+    people_per_shift: int | None = None
     remainder_mode: RemainderMode | None = "drop"
     schedule_overrides: list[dict[str, Any]] | None = None
 
 
-class SlotBatchCreate(SlotBatchBase):
+class ShiftBatchCreate(ShiftBatchBase):
     pass
 
 
-class SlotBatchUpdate(BaseModel):
+class ShiftBatchUpdate(BaseModel):
     label: str | None = None
     start_date: dt.date | None = None
     end_date: dt.date | None = None
@@ -34,13 +34,13 @@ class SlotBatchUpdate(BaseModel):
     category: str | None = None
     default_start_time: dt.time | None = None
     default_end_time: dt.time | None = None
-    slot_duration_minutes: int | None = None
-    people_per_slot: int | None = None
+    shift_duration_minutes: int | None = None
+    people_per_shift: int | None = None
     remainder_mode: RemainderMode | None = None
     schedule_overrides: list[dict[str, Any]] | None = None
 
 
-class SlotBatchRead(SlotBatchBase):
+class ShiftBatchRead(ShiftBatchBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     created_at: dt.datetime

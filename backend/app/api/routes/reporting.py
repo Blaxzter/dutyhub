@@ -13,8 +13,8 @@ from sqlmodel import col
 
 from app.api.deps import CurrentManager, DBDep
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
 from app.models.event_manager import EventManager
+from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
 from app.schemas.reporting import (
@@ -79,22 +79,22 @@ async def reporting_export(
             col(Booking.cancellation_reason),
             col(User.name).label("volunteer_name"),
             col(User.email).label("volunteer_email"),
-            col(DutySlot.title).label("slot_title"),
-            col(DutySlot.date).label("slot_date"),
-            col(DutySlot.start_time).label("slot_start_time"),
-            col(DutySlot.end_time).label("slot_end_time"),
-            col(DutySlot.location).label("slot_location"),
-            col(DutySlot.category).label("slot_category"),
+            col(Shift.title).label("slot_title"),
+            col(Shift.date).label("slot_date"),
+            col(Shift.start_time).label("slot_start_time"),
+            col(Shift.end_time).label("slot_end_time"),
+            col(Shift.location).label("slot_location"),
+            col(Shift.category).label("slot_category"),
             col(Task.name).label("task_name"),
         )
         .join(User, col(Booking.user_id) == col(User.id))
-        .outerjoin(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
-        .outerjoin(Task, col(DutySlot.task_id) == col(Task.id))
+        .outerjoin(Shift, col(Booking.shift_id) == col(Shift.id))
+        .outerjoin(Task, col(Shift.task_id) == col(Task.id))
         .order_by(col(Booking.created_at).desc())
     )
     if task_ids_filter is not None:
         query = query.where(col(Task.id).in_(task_ids_filter))
-    query = _apply_slot_date_filters(query, date_from, date_to)
+    query = _apply_shift_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
     rows = result.all()
@@ -109,8 +109,8 @@ async def reporting_export(
             "Cancellation Reason",
             "Volunteer Name",
             "Volunteer Email",
-            "Slot Title",
-            "Slot Date",
+            "Shift Title",
+            "Shift Date",
             "Start Time",
             "End Time",
             "Location",
@@ -150,12 +150,12 @@ async def reporting_export(
 # ---------------------------------------------------------------------------
 
 
-def _apply_slot_date_filters(query, date_from, date_to):  # noqa: ANN001, ANN202
-    """Apply optional date range filters on DutySlot.date."""
+def _apply_shift_date_filters(query, date_from, date_to):  # noqa: ANN001, ANN202
+    """Apply optional date range filters on Shift.date."""
     if date_from:
-        query = query.where(col(DutySlot.date) >= date_from)
+        query = query.where(col(Shift.date) >= date_from)
     if date_to:
-        query = query.where(col(DutySlot.date) <= date_to)
+        query = query.where(col(Shift.date) <= date_to)
     return query
 
 
@@ -207,11 +207,11 @@ async def _overview_stats(  # noqa: ANN001
             func.count().filter(col(Booking.status) == "cancelled").label("cancelled"),
         )
         .select_from(Booking)
-        .outerjoin(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
+        .outerjoin(Shift, col(Booking.shift_id) == col(Shift.id))
     )
     if task_ids_filter is not None:
-        booking_query = booking_query.where(col(DutySlot.task_id).in_(task_ids_filter))
-    booking_query = _apply_slot_date_filters(booking_query, date_from, date_to)
+        booking_query = booking_query.where(col(Shift.task_id).in_(task_ids_filter))
+    booking_query = _apply_shift_date_filters(booking_query, date_from, date_to)
     result = await session.execute(booking_query)
     row = result.one()
     total_bookings = row.total
@@ -232,44 +232,42 @@ async def _overview_stats(  # noqa: ANN001
     task_result = await session.execute(task_query)
     total_tasks = task_result.scalar_one()
 
-    # Slot stats
+    # Shift stats
     slot_query = select(
-        func.count().label("total_slots"),
-        func.coalesce(func.sum(col(DutySlot.max_bookings)), 0).label("total_capacity"),
-    ).select_from(DutySlot)
+        func.count().label("total_shifts"),
+        func.coalesce(func.sum(col(Shift.max_bookings)), 0).label("total_capacity"),
+    ).select_from(Shift)
     if task_ids_filter is not None:
-        slot_query = slot_query.where(col(DutySlot.task_id).in_(task_ids_filter))
+        slot_query = slot_query.where(col(Shift.task_id).in_(task_ids_filter))
     if date_from:
-        slot_query = slot_query.where(col(DutySlot.date) >= date_from)
+        slot_query = slot_query.where(col(Shift.date) >= date_from)
     if date_to:
-        slot_query = slot_query.where(col(DutySlot.date) <= date_to)
+        slot_query = slot_query.where(col(Shift.date) <= date_to)
     slot_result = await session.execute(slot_query)
     slot_row = slot_result.one()
-    total_slots = slot_row.total_slots
+    total_shifts = slot_row.total_shifts
     total_capacity = slot_row.total_capacity
 
-    # Filled slots (slots with at least one confirmed booking)
+    # Filled shifts (shifts with at least one confirmed booking)
     confirmed_count_sq = (
         select(func.count())
         .select_from(Booking)
         .where(
-            col(Booking.duty_slot_id) == col(DutySlot.id),
+            col(Booking.shift_id) == col(Shift.id),
             col(Booking.status) == "confirmed",
         )
-        .correlate(DutySlot)
+        .correlate(Shift)
         .scalar_subquery()
     )
-    filled_query = (
-        select(func.count()).select_from(DutySlot).where(confirmed_count_sq > 0)
-    )
+    filled_query = select(func.count()).select_from(Shift).where(confirmed_count_sq > 0)
     if task_ids_filter is not None:
-        filled_query = filled_query.where(col(DutySlot.task_id).in_(task_ids_filter))
+        filled_query = filled_query.where(col(Shift.task_id).in_(task_ids_filter))
     if date_from:
-        filled_query = filled_query.where(col(DutySlot.date) >= date_from)
+        filled_query = filled_query.where(col(Shift.date) >= date_from)
     if date_to:
-        filled_query = filled_query.where(col(DutySlot.date) <= date_to)
+        filled_query = filled_query.where(col(Shift.date) <= date_to)
     filled_result = await session.execute(filled_query)
-    filled_slots = filled_result.scalar_one()
+    filled_shifts = filled_result.scalar_one()
 
     # Confirmed bookings as % of total capacity
     fill_rate = confirmed_bookings / total_capacity * 100 if total_capacity > 0 else 0.0
@@ -288,9 +286,9 @@ async def _overview_stats(  # noqa: ANN001
         cancelled_bookings=cancelled_bookings,
         cancellation_rate=round(cancellation_rate, 1),
         total_tasks=total_tasks,
-        total_slots=total_slots,
-        total_slot_capacity=total_capacity,
-        filled_slots=filled_slots,
+        total_shifts=total_shifts,
+        total_shift_capacity=total_capacity,
+        filled_shifts=filled_shifts,
         fill_rate=round(fill_rate, 1),
         active_volunteers=vol_row.active,
         total_volunteers=vol_row.total,
@@ -305,18 +303,18 @@ async def _bookings_trend(  # noqa: ANN001
 ) -> list[BookingsTrendPoint]:
     query = (
         select(
-            col(DutySlot.date).label("date"),
+            col(Shift.date).label("date"),
             func.count().filter(col(Booking.status) == "confirmed").label("confirmed"),
             func.count().filter(col(Booking.status) == "cancelled").label("cancelled"),
         )
         .select_from(Booking)
-        .join(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
-        .group_by(col(DutySlot.date))
-        .order_by(col(DutySlot.date))
+        .join(Shift, col(Booking.shift_id) == col(Shift.id))
+        .group_by(col(Shift.date))
+        .order_by(col(Shift.date))
     )
     if task_ids_filter is not None:
-        query = query.where(col(DutySlot.task_id).in_(task_ids_filter))
-    query = _apply_slot_date_filters(query, date_from, date_to)
+        query = query.where(col(Shift.task_id).in_(task_ids_filter))
+    query = _apply_shift_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
     return [
@@ -340,15 +338,15 @@ async def _top_volunteers(  # noqa: ANN001
         )
         .select_from(Booking)
         .join(User, col(Booking.user_id) == col(User.id))
-        .outerjoin(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
+        .outerjoin(Shift, col(Booking.shift_id) == col(Shift.id))
         .where(col(Booking.status) == "confirmed")
         .group_by(col(User.id), col(User.name), col(User.email))
         .order_by(func.count().desc())
         .limit(10)
     )
     if task_ids_filter is not None:
-        query = query.where(col(DutySlot.task_id).in_(task_ids_filter))
-    query = _apply_slot_date_filters(query, date_from, date_to)
+        query = query.where(col(Shift.task_id).in_(task_ids_filter))
+    query = _apply_shift_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
     return [
@@ -372,31 +370,29 @@ async def _category_breakdown(  # noqa: ANN001
         select(func.count())
         .select_from(Booking)
         .where(
-            col(Booking.duty_slot_id) == col(DutySlot.id),
+            col(Booking.shift_id) == col(Shift.id),
             col(Booking.status) == "confirmed",
         )
-        .correlate(DutySlot)
+        .correlate(Shift)
         .scalar_subquery()
     )
     query = (
         select(
-            col(DutySlot.category),
+            col(Shift.category),
             func.count().label("slot_count"),
-            func.coalesce(func.sum(col(DutySlot.max_bookings)), 0).label(
-                "total_capacity"
-            ),
+            func.coalesce(func.sum(col(Shift.max_bookings)), 0).label("total_capacity"),
             func.coalesce(func.sum(confirmed_count_sq), 0).label("confirmed_bookings"),
         )
-        .select_from(DutySlot)
-        .group_by(col(DutySlot.category))
+        .select_from(Shift)
+        .group_by(col(Shift.category))
         .order_by(func.count().desc())
     )
     if task_ids_filter is not None:
-        query = query.where(col(DutySlot.task_id).in_(task_ids_filter))
+        query = query.where(col(Shift.task_id).in_(task_ids_filter))
     if date_from:
-        query = query.where(col(DutySlot.date) >= date_from)
+        query = query.where(col(Shift.date) >= date_from)
     if date_to:
-        query = query.where(col(DutySlot.date) <= date_to)
+        query = query.where(col(Shift.date) <= date_to)
 
     result = await session.execute(query)
     return [
@@ -422,24 +418,24 @@ async def _bookings_by_hour(  # noqa: ANN001
     date_to: dt.date | None,
     task_ids_filter: list[uuid.UUID] | None = None,
 ) -> list[BookingsByHour]:
-    hour_expr = func.extract("hour", col(DutySlot.start_time))
+    hour_expr = func.extract("hour", col(Shift.start_time))
     query = (
         select(
             hour_expr.label("hour"),
             func.count().label("booking_count"),
         )
         .select_from(Booking)
-        .join(DutySlot, col(Booking.duty_slot_id) == col(DutySlot.id))
+        .join(Shift, col(Booking.shift_id) == col(Shift.id))
         .where(
             col(Booking.status) == "confirmed",
-            col(DutySlot.start_time).is_not(None),
+            col(Shift.start_time).is_not(None),
         )
         .group_by(hour_expr)
         .order_by(hour_expr)
     )
     if task_ids_filter is not None:
-        query = query.where(col(DutySlot.task_id).in_(task_ids_filter))
-    query = _apply_slot_date_filters(query, date_from, date_to)
+        query = query.where(col(Shift.task_id).in_(task_ids_filter))
+    query = _apply_shift_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
     return [
@@ -458,32 +454,30 @@ async def _task_fill_rates(  # noqa: ANN001
         select(func.count())
         .select_from(Booking)
         .where(
-            col(Booking.duty_slot_id) == col(DutySlot.id),
+            col(Booking.shift_id) == col(Shift.id),
             col(Booking.status) == "confirmed",
         )
-        .correlate(DutySlot)
+        .correlate(Shift)
         .scalar_subquery()
     )
     query = (
         select(
             col(Task.id).label("task_id"),
             col(Task.name).label("task_name"),
-            func.coalesce(func.sum(col(DutySlot.max_bookings)), 0).label(
-                "total_capacity"
-            ),
+            func.coalesce(func.sum(col(Shift.max_bookings)), 0).label("total_capacity"),
             func.coalesce(func.sum(confirmed_count_sq), 0).label("confirmed_bookings"),
         )
         .select_from(Task)
-        .join(DutySlot, col(DutySlot.task_id) == col(Task.id))
+        .join(Shift, col(Shift.task_id) == col(Task.id))
         .group_by(col(Task.id), col(Task.name))
         .order_by(col(Task.name))
     )
     if task_ids_filter is not None:
         query = query.where(col(Task.id).in_(task_ids_filter))
     if date_from:
-        query = query.where(col(DutySlot.date) >= date_from)
+        query = query.where(col(Shift.date) >= date_from)
     if date_to:
-        query = query.where(col(DutySlot.date) <= date_to)
+        query = query.where(col(Shift.date) <= date_to)
 
     result = await session.execute(query)
     return [

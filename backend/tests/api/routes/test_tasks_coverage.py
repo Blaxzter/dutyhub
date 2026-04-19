@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
 
@@ -118,19 +118,19 @@ class TestTaskCrudCoverage:
         test_user: User,
     ):
         """Test listing all confirmed bookings for an task."""
-        slot = DutySlot(
+        shift = Shift(
             task_id=test_task.id,
-            title="Bookings List Slot",
+            title="Bookings List Shift",
             date=date(2026, 6, 10),
             start_time=time(9, 0),
             end_time=time(13, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
-        await db_session.refresh(slot)
+        await db_session.refresh(shift)
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_user.id,
             status="confirmed",
         )
@@ -142,7 +142,7 @@ class TestTaskCrudCoverage:
         assert r.status_code == 200
         data = r.json()
         assert len(data) >= 1
-        assert "duty_slot_id" in data[0]
+        assert "shift_id" in data[0]
         assert "user_name" in data[0]
 
     async def test_list_task_bookings_not_found(self, async_client: AsyncClient):
@@ -189,18 +189,18 @@ class TestTaskCrudCoverage:
         await db_session.flush()
         await db_session.refresh(task)
 
-        slot = DutySlot(
+        shift = Shift(
             task_id=task.id,
-            title="Slot To Delete",
+            title="Shift To Delete",
             date=date(2026, 10, 10),
             start_time=time(8, 0),
             end_time=time(12, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_user.id,
             status="confirmed",
         )

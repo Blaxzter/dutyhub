@@ -6,11 +6,11 @@ from app.api.routes import (
     calendar_feed,
     dashboard,
     demo_data,
-    duty_slots,
     events,
     health,
     notifications,
     reporting,
+    shifts,
     site_settings,
     tasks,
     users,
@@ -23,7 +23,7 @@ api_router.include_router(health.router)
 api_router.include_router(users.router)
 api_router.include_router(site_settings.router)
 api_router.include_router(tasks.router)
-api_router.include_router(duty_slots.router)
+api_router.include_router(shifts.router)
 api_router.include_router(bookings.router)
 api_router.include_router(booking_reminders.router)
 api_router.include_router(calendar_feed.router)

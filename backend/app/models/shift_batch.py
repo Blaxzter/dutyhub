@@ -11,11 +11,11 @@ if TYPE_CHECKING:
     from app.models.task import Task
 
 if __name__ != "__main__":
-    from app.models.duty_slot import DutySlot  # noqa: F401
+    from app.models.shift import Shift  # noqa: F401
 
 
-class SlotBatch(Base, table=True):
-    __tablename__ = "slot_batches"  # type: ignore[assignment]
+class ShiftBatch(Base, table=True):
+    __tablename__ = "shift_batches"  # type: ignore[assignment]
 
     task_id: uuid.UUID = Field(
         sa_column=sa.Column(
@@ -33,7 +33,7 @@ class SlotBatch(Base, table=True):
     start_date: date = Field(sa_column=sa.Column(sa.Date, nullable=False))
     end_date: date = Field(sa_column=sa.Column(sa.Date, nullable=False))
 
-    # Batch-level properties applied to all slots
+    # Batch-level properties applied to all shifts
     location: str | None = Field(
         default=None, sa_column=sa.Column(sa.String, nullable=True)
     )
@@ -48,10 +48,10 @@ class SlotBatch(Base, table=True):
     default_end_time: time | None = Field(
         default=None, sa_column=sa.Column(sa.Time, nullable=True)
     )
-    slot_duration_minutes: int | None = Field(
+    shift_duration_minutes: int | None = Field(
         default=None, sa_column=sa.Column(sa.Integer, nullable=True)
     )
-    people_per_slot: int | None = Field(
+    people_per_shift: int | None = Field(
         default=None, sa_column=sa.Column(sa.Integer, nullable=True)
     )
     remainder_mode: str | None = Field(
@@ -61,8 +61,8 @@ class SlotBatch(Base, table=True):
         default=None, sa_column=sa.Column(sa.JSON, nullable=True)
     )
 
-    task: "Task" = Relationship(back_populates="slot_batches")
-    duty_slots: list["DutySlot"] = Relationship(
+    task: "Task" = Relationship(back_populates="shift_batches")
+    shifts: list["Shift"] = Relationship(
         back_populates="batch",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )

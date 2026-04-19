@@ -16,10 +16,10 @@ from app.crud.event_manager import event_manager as crud_egm
 from app.crud.user import user as crud_user
 from app.crud.user_availability import user_availability as crud_availability
 from app.logic.permissions import require_event_access
-from app.models.duty_slot import DutySlot
 from app.models.event import Event
 from app.models.event_manager import EventManager
-from app.models.slot_batch import SlotBatch
+from app.models.shift import Shift
+from app.models.shift_batch import ShiftBatch
 from app.models.task import Task
 from app.models.user import User as UserModel
 from app.models.user_availability import UserAvailabilityDate
@@ -220,7 +220,7 @@ async def shift_event_dates(
     session: DBDep,
     current_user: CurrentUser,
 ) -> Event:
-    """Shift the entire task group and all its tasks/slots/availabilities by a date offset.
+    """Shift the entire task group and all its tasks/shifts/availabilities by a date offset.
 
     The offset is calculated from the difference between the current group
     start_date and the provided new_start_date.
@@ -254,24 +254,24 @@ async def shift_event_dates(
             )
         )
 
-        # 3. Shift slot_batches
+        # 3. Shift shift_batches
         await session.execute(
-            sa_update(SlotBatch)
-            .where(col(SlotBatch.task_id).in_(task_ids))
+            sa_update(ShiftBatch)
+            .where(col(ShiftBatch.task_id).in_(task_ids))
             .values(
-                start_date=SlotBatch.start_date + delta,
-                end_date=SlotBatch.end_date + delta,
+                start_date=ShiftBatch.start_date + delta,
+                end_date=ShiftBatch.end_date + delta,
             )
         )
 
-        # 4. Shift duty_slots
+        # 4. Shift shifts
         await session.execute(
-            sa_update(DutySlot)
-            .where(col(DutySlot.task_id).in_(task_ids))
-            .values(date=DutySlot.date + delta)
+            sa_update(Shift)
+            .where(col(Shift.task_id).in_(task_ids))
+            .values(date=Shift.date + delta)
         )
 
-        # 5. Shift schedule_overrides in tasks and slot_batches (JSON with date keys)
+        # 5. Shift schedule_overrides in tasks and shift_batches (JSON with date keys)
         if delta.days != 0:
             tasks_with_overrides = (
                 (
@@ -292,9 +292,9 @@ async def shift_event_dates(
             batches_with_overrides = (
                 (
                     await session.execute(
-                        sa_select(SlotBatch).where(
-                            col(SlotBatch.task_id).in_(task_ids),
-                            col(SlotBatch.schedule_overrides).isnot(None),
+                        sa_select(ShiftBatch).where(
+                            col(ShiftBatch.task_id).in_(task_ids),
+                            col(ShiftBatch.schedule_overrides).isnot(None),
                         )
                     )
                 )

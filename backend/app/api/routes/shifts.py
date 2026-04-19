@@ -6,34 +6,34 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
-from app.crud.duty_slot import duty_slot as crud_duty_slot
 from app.crud.event_manager import event_manager as crud_egm
+from app.crud.shift import shift as crud_shift
 from app.crud.task import task as crud_task
 from app.logic.permissions import require_event_access
-from app.models.duty_slot import DutySlot
-from app.schemas.booking import SlotBookingEntry
-from app.schemas.duty_slot import (
-    DutySlotCreate,
-    DutySlotListResponse,
-    DutySlotRead,
-    DutySlotUpdate,
+from app.models.shift import Shift
+from app.schemas.booking import ShiftBookingEntry
+from app.schemas.shift import (
+    ShiftCreate,
+    ShiftListResponse,
+    ShiftRead,
+    ShiftUpdate,
 )
 
-router = APIRouter(prefix="/duty-slots", tags=["duty-slots"])
+router = APIRouter(prefix="/shifts", tags=["shifts"])
 
 
-async def _enrich_slot(
+async def _enrich_shift(
     session: AsyncSession,
-    slot: DutySlot,
+    shift: Shift,
     user_id: uuid.UUID | None = None,
-) -> DutySlotRead:
-    """Add current_bookings count and is_booked_by_me to a DutySlotRead."""
-    count = await crud_booking.get_confirmed_count(session, duty_slot_id=slot.id)
-    read = DutySlotRead.model_validate(slot)
+) -> ShiftRead:
+    """Add current_bookings count and is_booked_by_me to a ShiftRead."""
+    count = await crud_booking.get_confirmed_count(session, shift_id=shift.id)
+    read = ShiftRead.model_validate(shift)
     read.current_bookings = count
     if user_id:
-        my_booking = await crud_booking.get_by_slot_and_user(
-            session, duty_slot_id=slot.id, user_id=user_id
+        my_booking = await crud_booking.get_by_shift_and_user(
+            session, shift_id=shift.id, user_id=user_id
         )
         read.is_booked_by_me = (
             my_booking is not None and my_booking.status == "confirmed"
@@ -41,8 +41,8 @@ async def _enrich_slot(
     return read
 
 
-@router.get("/", response_model=DutySlotListResponse)
-async def list_duty_slots(
+@router.get("/", response_model=ShiftListResponse)
+async def list_shifts(
     session: DBDep,
     current_user: CurrentUser,
     task_id: str | None = None,
@@ -50,11 +50,11 @@ async def list_duty_slots(
     search: str | None = None,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=200),
-) -> DutySlotListResponse:
+) -> ShiftListResponse:
     if task_id:
         db_task = await crud_task.get(session, task_id, raise_404_error=True)
         if not current_user.is_manager and db_task.status != "published":
-            # Allow scoped group managers to see slots for their unpublished tasks
+            # Allow scoped group managers to see shifts for their unpublished tasks
             if not db_task.event_id or not await crud_egm.is_manager(
                 session, user_id=current_user.id, event_id=db_task.event_id
             ):
@@ -62,7 +62,7 @@ async def list_duty_slots(
                     403, code="task.not_published", detail="Task is not published"
                 )
 
-    items = await crud_duty_slot.get_multi_filtered(
+    items = await crud_shift.get_multi_filtered(
         session,
         skip=skip,
         limit=limit,
@@ -70,53 +70,53 @@ async def list_duty_slots(
         category=category,
         search=search,
     )
-    enriched = [await _enrich_slot(session, s, user_id=current_user.id) for s in items]
-    total = await crud_duty_slot.get_count_filtered(
+    enriched = [await _enrich_shift(session, s, user_id=current_user.id) for s in items]
+    total = await crud_shift.get_count_filtered(
         session, task_id=task_id, category=category, search=search
     )
-    return DutySlotListResponse(items=enriched, total=total, skip=skip, limit=limit)
+    return ShiftListResponse(items=enriched, total=total, skip=skip, limit=limit)
 
 
-@router.get("/{slot_id}", response_model=DutySlotRead)
-async def get_duty_slot(
+@router.get("/{slot_id}", response_model=ShiftRead)
+async def get_shift(
     slot_id: str | None,
     session: DBDep,
     _current_user: CurrentUser,
-) -> DutySlotRead:
+) -> ShiftRead:
     if slot_id is None:
         raise_problem(400, code="invalid_request", detail="slot_id is required")
 
-    slot = await crud_duty_slot.get(session, slot_id, raise_404_error=True)
-    return await _enrich_slot(session, slot, user_id=_current_user.id)
+    shift = await crud_shift.get(session, slot_id, raise_404_error=True)
+    return await _enrich_shift(session, shift, user_id=_current_user.id)
 
 
-@router.post("/", response_model=DutySlotRead, status_code=201)
-async def create_duty_slot(
-    slot_in: DutySlotCreate,
+@router.post("/", response_model=ShiftRead, status_code=201)
+async def create_shift(
+    slot_in: ShiftCreate,
     session: DBDep,
     current_user: CurrentUser,
-) -> DutySlotRead:
+) -> ShiftRead:
     db_task = await crud_task.get(session, str(slot_in.task_id), raise_404_error=True)
     await require_event_access(current_user, session, db_task.event_id)
-    slot = await crud_duty_slot.create(session, obj_in=slot_in)
-    return await _enrich_slot(session, slot)
+    shift = await crud_shift.create(session, obj_in=slot_in)
+    return await _enrich_shift(session, shift)
 
 
-@router.patch("/{slot_id}", response_model=DutySlotRead)
-async def update_duty_slot(
+@router.patch("/{slot_id}", response_model=ShiftRead)
+async def update_shift(
     slot_id: str,
-    slot_in: DutySlotUpdate,
+    slot_in: ShiftUpdate,
     session: DBDep,
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
-) -> DutySlotRead:
-    db_slot = await crud_duty_slot.get(session, slot_id, raise_404_error=True)
-    db_task = await crud_task.get(session, str(db_slot.task_id), raise_404_error=True)
+) -> ShiftRead:
+    db_shift = await crud_shift.get(session, slot_id, raise_404_error=True)
+    db_task = await crud_task.get(session, str(db_shift.task_id), raise_404_error=True)
     await require_event_access(current_user, session, db_task.event_id)
-    old_start = db_slot.start_time
-    old_end = db_slot.end_time
-    old_date = db_slot.date
-    updated = await crud_duty_slot.update(session, db_obj=db_slot, obj_in=slot_in)
+    old_start = db_shift.start_time
+    old_end = db_shift.end_time
+    old_date = db_shift.date
+    updated = await crud_shift.update(session, db_obj=db_shift, obj_in=slot_in)
 
     # Notify bookers if time changed
     time_changed = (
@@ -125,62 +125,62 @@ async def update_duty_slot(
         or (slot_in.date is not None and slot_in.date != old_date)
     )
     if time_changed:
-        bookings = await crud_booking.get_multi_by_slot(
-            session, duty_slot_id=updated.id, status="confirmed"
+        bookings = await crud_booking.get_multi_by_shift(
+            session, shift_id=updated.id, status="confirmed"
         )
         booked_user_ids = [b.user_id for b in bookings]
         if booked_user_ids:
-            from app.logic.notifications.triggers import dispatch_slot_time_changed
+            from app.logic.notifications.triggers import dispatch_shift_time_changed
 
             background_tasks.add_task(
-                dispatch_slot_time_changed,
+                dispatch_shift_time_changed,
                 slot_id=updated.id,
                 slot_title=updated.title,
                 task_id=updated.task_id,
                 booked_user_ids=booked_user_ids,
             )
 
-    return await _enrich_slot(session, updated)
+    return await _enrich_shift(session, updated)
 
 
 @router.delete("/{slot_id}", status_code=204)
-async def delete_duty_slot(
+async def delete_shift(
     slot_id: str,
     session: DBDep,
     current_user: CurrentUser,
     cancellation_reason: str | None = Query(default=None),
 ) -> None:
-    slot = await crud_duty_slot.get(session, slot_id, raise_404_error=True)
+    shift = await crud_shift.get(session, slot_id, raise_404_error=True)
 
     # Get task name for snapshot
-    db_task = await crud_task.get(session, str(slot.task_id), raise_404_error=True)
+    db_task = await crud_task.get(session, str(shift.task_id), raise_404_error=True)
     await require_event_access(current_user, session, db_task.event_id)
 
-    # Cancel confirmed bookings with snapshot before deleting the slot
-    await crud_booking.cancel_bookings_for_slots(
+    # Cancel confirmed bookings with snapshot before deleting the shift
+    await crud_booking.cancel_bookings_for_shifts(
         session,
-        slot_ids=[slot.id],
+        slot_ids=[shift.id],
         task_name=db_task.name,
         cancellation_reason=cancellation_reason,
     )
 
-    await session.delete(slot)
+    await session.delete(shift)
     await session.commit()
 
 
-@router.get("/{slot_id}/bookings", response_model=list[SlotBookingEntry])
-async def list_slot_bookings(
+@router.get("/{slot_id}/bookings", response_model=list[ShiftBookingEntry])
+async def list_shift_bookings(
     slot_id: str,
     session: DBDep,
     _current_user: CurrentUser,
-) -> list[SlotBookingEntry]:
-    """List confirmed bookings for a slot with basic user info."""
-    await crud_duty_slot.get(session, slot_id, raise_404_error=True)
-    bookings = await crud_booking.get_multi_by_slot(
-        session, duty_slot_id=uuid.UUID(slot_id), status="confirmed", with_user=True
+) -> list[ShiftBookingEntry]:
+    """List confirmed bookings for a shift with basic user info."""
+    await crud_shift.get(session, slot_id, raise_404_error=True)
+    bookings = await crud_booking.get_multi_by_shift(
+        session, shift_id=uuid.UUID(slot_id), status="confirmed", with_user=True
     )
     return [
-        SlotBookingEntry(
+        ShiftBookingEntry(
             id=b.id,
             user_id=b.user_id,
             user_name=b.user.name if b.user else None,

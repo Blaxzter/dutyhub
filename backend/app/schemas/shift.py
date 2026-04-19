@@ -4,7 +4,7 @@ import uuid
 from pydantic import BaseModel, ConfigDict
 
 
-class DutySlotBase(BaseModel):
+class ShiftBase(BaseModel):
     task_id: uuid.UUID
     title: str
     description: str | None = None
@@ -17,11 +17,11 @@ class DutySlotBase(BaseModel):
     batch_id: uuid.UUID | None = None
 
 
-class DutySlotCreate(DutySlotBase):
+class ShiftCreate(ShiftBase):
     pass
 
 
-class DutySlotUpdate(BaseModel):
+class ShiftUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     date: dt.date | None = None
@@ -32,7 +32,7 @@ class DutySlotUpdate(BaseModel):
     max_bookings: int | None = None
 
 
-class DutySlotRead(DutySlotBase):
+class ShiftRead(ShiftBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     created_at: dt.datetime
@@ -41,8 +41,8 @@ class DutySlotRead(DutySlotBase):
     is_booked_by_me: bool = False
 
 
-class DutySlotListResponse(BaseModel):
-    items: list[DutySlotRead]
+class ShiftListResponse(BaseModel):
+    items: list[ShiftRead]
     total: int
     skip: int
     limit: int
