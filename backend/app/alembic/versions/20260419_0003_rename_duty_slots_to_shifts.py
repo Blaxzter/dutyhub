@@ -121,30 +121,70 @@ def upgrade():
         """
     )
 
-    # Data migration: notification type codes + categories + scope_type
+    # Data migration: notification type codes + categories + scope_type (merge-aware).
     op.execute(
         "UPDATE notification_subscriptions SET scope_type = 'shift' WHERE scope_type = 'duty_slot'"
     )
-    op.execute(
-        "UPDATE notification_types SET code = 'shift.starting_soon_unfilled' WHERE code = 'slot.starting_soon_unfilled'"
-    )
-    op.execute(
-        "UPDATE notification_types SET code = 'shift.time_changed' WHERE code = 'slot.time_changed'"
-    )
-    op.execute(
-        "UPDATE notification_types SET code = 'booking.shift_cobooked' WHERE code = 'booking.slot_cobooked'"
-    )
+    # Inline merge-aware rename for each (old_code, new_code) pair.
+    for old_code, new_code, category, name, description in [
+        (
+            "slot.starting_soon_unfilled",
+            "shift.starting_soon_unfilled",
+            "shift",
+            "Shift Starting Soon (Unfilled)",
+            "Alert when a shift starts in 30 minutes but still has open spots",
+        ),
+        (
+            "slot.time_changed",
+            "shift.time_changed",
+            "shift",
+            "Shift Time Changed",
+            "Notification when a shift you booked has its time changed",
+        ),
+        (
+            "booking.slot_cobooked",
+            "booking.shift_cobooked",
+            "booking",
+            "Shift Co-booked",
+            "Notification when someone else also books a shift you are on",
+        ),
+    ]:
+        op.execute(
+            f"""
+            DO $$
+            DECLARE
+                old_id UUID;
+                new_id UUID;
+            BEGIN
+                SELECT id INTO old_id FROM notification_types WHERE code = '{old_code}';
+                SELECT id INTO new_id FROM notification_types WHERE code = '{new_code}';
+
+                IF old_id IS NOT NULL AND new_id IS NOT NULL THEN
+                    UPDATE notification_subscriptions ns
+                    SET notification_type_id = new_id
+                    WHERE ns.notification_type_id = old_id
+                      AND NOT EXISTS (
+                          SELECT 1 FROM notification_subscriptions s2
+                          WHERE s2.user_id = ns.user_id
+                            AND s2.notification_type_id = new_id
+                            AND s2.scope_type = ns.scope_type
+                            AND s2.scope_id IS NOT DISTINCT FROM ns.scope_id
+                      );
+                    DELETE FROM notification_subscriptions WHERE notification_type_id = old_id;
+                    DELETE FROM notification_types WHERE id = old_id;
+                    UPDATE notification_types
+                    SET category = '{category}', name = '{name}', description = '{description}'
+                    WHERE id = new_id;
+                ELSIF old_id IS NOT NULL THEN
+                    UPDATE notification_types
+                    SET code = '{new_code}', category = '{category}', name = '{name}', description = '{description}'
+                    WHERE id = old_id;
+                END IF;
+            END$$;
+            """
+        )
     op.execute(
         "UPDATE notification_types SET category = 'shift' WHERE category = 'slot'"
-    )
-    op.execute(
-        "UPDATE notification_types SET name = 'Shift Starting Soon (Unfilled)' WHERE code = 'shift.starting_soon_unfilled'"
-    )
-    op.execute(
-        "UPDATE notification_types SET name = 'Shift Time Changed' WHERE code = 'shift.time_changed'"
-    )
-    op.execute(
-        "UPDATE notification_types SET name = 'Shift Co-booked' WHERE code = 'booking.shift_cobooked'"
     )
 
 

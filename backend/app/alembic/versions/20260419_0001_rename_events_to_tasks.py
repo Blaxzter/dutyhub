@@ -54,21 +54,57 @@ def upgrade():
     # Rename primary-key constraint on the old events table
     op.execute("ALTER TABLE tasks RENAME CONSTRAINT events_pkey TO tasks_pkey")
 
-    # Data migration: notification subscription scopes + type codes
+    # Data migration: notification subscription scopes + type codes.
+    # The seeder (which runs on app startup) may have already created rows
+    # with the new code ('task.published'). If so, merge: repoint any
+    # subscriptions on the old row to the new row, then delete the old row.
     op.execute(
         "UPDATE notification_subscriptions SET scope_type = 'task' WHERE scope_type = 'event'"
     )
     op.execute(
-        "UPDATE notification_types SET code = 'task.published' WHERE code = 'event.published'"
+        """
+        DO $$
+        DECLARE
+            old_id UUID;
+            new_id UUID;
+        BEGIN
+            SELECT id INTO old_id FROM notification_types WHERE code = 'event.published';
+            SELECT id INTO new_id FROM notification_types WHERE code = 'task.published';
+
+            IF old_id IS NOT NULL AND new_id IS NOT NULL THEN
+                -- Both exist: move non-colliding subscriptions to new, drop colliding ones, delete old row.
+                UPDATE notification_subscriptions ns
+                SET notification_type_id = new_id
+                WHERE ns.notification_type_id = old_id
+                  AND NOT EXISTS (
+                      SELECT 1 FROM notification_subscriptions s2
+                      WHERE s2.user_id = ns.user_id
+                        AND s2.notification_type_id = new_id
+                        AND s2.scope_type = ns.scope_type
+                        AND s2.scope_id IS NOT DISTINCT FROM ns.scope_id
+                  );
+                DELETE FROM notification_subscriptions WHERE notification_type_id = old_id;
+                DELETE FROM notification_types WHERE id = old_id;
+                -- Ensure new row carries correct metadata (seeder may have set non-canonical values).
+                UPDATE notification_types
+                SET category = 'task',
+                    name = 'Task Published',
+                    description = 'Notification when a new task is published'
+                WHERE id = new_id;
+            ELSIF old_id IS NOT NULL THEN
+                -- Only old: rename in place.
+                UPDATE notification_types
+                SET code = 'task.published',
+                    category = 'task',
+                    name = 'Task Published',
+                    description = 'Notification when a new task is published'
+                WHERE id = old_id;
+            END IF;
+        END$$;
+        """
     )
     op.execute(
         "UPDATE notification_types SET category = 'task' WHERE category = 'event'"
-    )
-    op.execute(
-        "UPDATE notification_types SET name = 'Task Published' WHERE code = 'task.published'"
-    )
-    op.execute(
-        "UPDATE notification_types SET description = 'Notification when a new task is published' WHERE code = 'task.published'"
     )
 
 

@@ -73,21 +73,51 @@ def upgrade():
         "ALTER TABLE event_managers RENAME CONSTRAINT uq_event_group_manager TO uq_event_manager"
     )
 
-    # Data migration: scope_type + notification type codes
+    # Data migration: scope_type + notification type codes (merge-aware — see step 1).
     op.execute(
         "UPDATE notification_subscriptions SET scope_type = 'event' WHERE scope_type = 'event_group'"
     )
     op.execute(
-        "UPDATE notification_types SET code = 'event.published' WHERE code = 'event_group.published'"
+        """
+        DO $$
+        DECLARE
+            old_id UUID;
+            new_id UUID;
+        BEGIN
+            SELECT id INTO old_id FROM notification_types WHERE code = 'event_group.published';
+            SELECT id INTO new_id FROM notification_types WHERE code = 'event.published';
+
+            IF old_id IS NOT NULL AND new_id IS NOT NULL THEN
+                UPDATE notification_subscriptions ns
+                SET notification_type_id = new_id
+                WHERE ns.notification_type_id = old_id
+                  AND NOT EXISTS (
+                      SELECT 1 FROM notification_subscriptions s2
+                      WHERE s2.user_id = ns.user_id
+                        AND s2.notification_type_id = new_id
+                        AND s2.scope_type = ns.scope_type
+                        AND s2.scope_id IS NOT DISTINCT FROM ns.scope_id
+                  );
+                DELETE FROM notification_subscriptions WHERE notification_type_id = old_id;
+                DELETE FROM notification_types WHERE id = old_id;
+                UPDATE notification_types
+                SET category = 'event',
+                    name = 'Event Published',
+                    description = 'Notification when a new event is published'
+                WHERE id = new_id;
+            ELSIF old_id IS NOT NULL THEN
+                UPDATE notification_types
+                SET code = 'event.published',
+                    category = 'event',
+                    name = 'Event Published',
+                    description = 'Notification when a new event is published'
+                WHERE id = old_id;
+            END IF;
+        END$$;
+        """
     )
     op.execute(
         "UPDATE notification_types SET category = 'event' WHERE category = 'event_group'"
-    )
-    op.execute(
-        "UPDATE notification_types SET name = 'Event Published' WHERE code = 'event.published'"
-    )
-    op.execute(
-        "UPDATE notification_types SET description = 'Notification when a new event is published' WHERE code = 'event.published'"
     )
 
 
