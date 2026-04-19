@@ -2,23 +2,23 @@
     "demoData": {
         "create": {
             "button": "Demodaten erstellen",
-            "description": "Events, Eventgruppen, Benutzer und Dienstslots mit dem Präfix [DEMO] generieren.",
+            "description": "Tasks, Veranstaltungen, Benutzer und Dienstshifts mit dem Präfix [DEMO] generieren.",
             "title": "Demodaten erstellen"
         },
-        "createSuccess": "{events} Events, {groups} Gruppen, {users} Benutzer, {slots} Slots und {bookings} Buchungen erstellt.",
+        "createSuccess": "{tasks} Tasks, {events} Gruppen, {users} Benutzer, {shifts} Shifts und {bookings} Buchungen erstellt.",
         "delete": {
             "button": "Alle Demodaten löschen",
             "description": "Alle Demodaten aus dem System entfernen.",
-            "info": "Dies löscht alle mit [DEMO] gekennzeichneten Einträge — Events, Eventgruppen, Dienstslots, Buchungen und Demobenutzer.",
+            "info": "Dies löscht alle mit [DEMO] gekennzeichneten Einträge — Tasks, Veranstaltungen, Dienstshifts, Buchungen und Demobenutzer.",
             "title": "Demodaten löschen"
         },
-        "deleteSuccess": "{events} Events, {groups} Gruppen, {users} Benutzer, {slots} Slots und {bookings} Buchungen gelöscht.",
+        "deleteSuccess": "{tasks} Tasks, {events} Gruppen, {users} Benutzer, {shifts} Shifts und {bookings} Buchungen gelöscht.",
         "fields": {
-            "numEventGroups": "Anzahl Eventgruppen",
-            "numEvents": "Anzahl Events",
-            "numSlotsPerEvent": "Slots pro Event",
+            "numEvents": "Anzahl Veranstaltungen",
+            "numShiftsPerTask": "Shifts pro Task",
+            "numTasks": "Anzahl Tasks",
             "numUsers": "Anzahl Demobenutzer",
-            "publishEvents": "Events sofort veröffentlichen"
+            "publishTasks": "Tasks sofort veröffentlichen"
         },
         "subtitle": "Demodaten zu Testzwecken generieren oder entfernen.",
         "title": "Demodaten"
@@ -39,9 +39,9 @@
             "booked": "Gebucht",
             "capacity": "Kapazität",
             "category": "Kategorie",
-            "description": "Slot-Kapazität und Auslastung pro Kategorie.",
+            "description": "Shift-Kapazität und Auslastung pro Kategorie.",
             "fillRate": "Auslastung",
-            "slots": "Slots",
+            "shifts": "Shifts",
             "title": "Nach Kategorie",
             "uncategorized": "Ohne Kategorie"
         },
@@ -49,10 +49,10 @@
         "eventFillRates": {
             "booked": "Gebucht",
             "capacity": "Kapazität",
-            "description": "Wie voll die Slots jedes Events belegt sind.",
-            "event": "Event",
+            "description": "Wie voll die Shifts jedes Tasks belegt sind.",
             "fillRate": "Auslastung",
-            "title": "Auslastung nach Event"
+            "task": "Task",
+            "title": "Auslastung nach Task"
         },
         "export": "CSV exportieren",
         "from": "Von",
@@ -67,12 +67,12 @@
             "cancelledBookings": "Storniert",
             "confirmedBookings": "Bestätigt",
             "fillRate": "Auslastung",
-            "filledSlots": "Belegte Slots",
+            "filledShifts": "Belegte Shifts",
             "title": "Übersicht",
             "totalBookings": "Buchungen gesamt",
             "totalCapacity": "Gesamtkapazität",
-            "totalEvents": "Events",
-            "totalSlots": "Slots",
+            "totalShifts": "Shifts",
+            "totalTasks": "Tasks",
             "totalVolunteers": "Freiwillige gesamt"
         },
         "reset": "Zurücksetzen",
@@ -129,10 +129,10 @@
             "rejected": "Abgelehnt"
         },
         "grantedAdmin": "Adminrolle an {name} vergeben.",
-        "grantedEventManager": "Event-Manager-Rolle an {name} vergeben.",
+        "grantedTaskManager": "Task-Manager-Rolle an {name} vergeben.",
         "inactive": "Inaktiv",
         "makeAdmin": "Admin machen",
-        "makeEventManager": "Event-Manager machen",
+        "makeTaskManager": "Task-Manager machen",
         "pending": "Ausstehend",
         "reject": "Ablehnen",
         "rejectDialogDescription": "Geben Sie optional einen Grund für die Ablehnung der Kontoanfrage von {name} an. Der Benutzer sieht diese Nachricht.",
@@ -141,9 +141,9 @@
         "rejected": "Abgelehnt",
         "rejectedToast": "Konto für {name} abgelehnt.",
         "removeAdmin": "Admin entfernen",
-        "removeEventManager": "Event-Manager entfernen",
+        "removeTaskManager": "Task-Manager entfernen",
         "removedAdmin": "Adminrolle von {name} entfernt.",
-        "removedEventManager": "Event-Manager-Rolle von {name} entfernt.",
+        "removedTaskManager": "Task-Manager-Rolle von {name} entfernt.",
         "searchPlaceholder": "Nach Name oder E-Mail suchen...",
         "sections": {
             "active": "Aktive Mitglieder",

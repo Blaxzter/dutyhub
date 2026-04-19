@@ -3,15 +3,15 @@
 **Status:** Idea collection — not yet prioritized or approved
 **Created:** 2026-03-28
 
-**Goal:** Catalog potential features to extend WirkSam beyond its current core of event management, slot booking, notifications, and availability tracking.
+**Goal:** Catalog potential features to extend WirkSam beyond its current core of task management, shift booking, notifications, and availability tracking.
 
 ---
 
 ## High Impact
 
-### 1. Slot Swap / Trade Requests
+### 1. Shift Swap / Trade Requests
 
-Volunteers often can't make a shift after booking. Let users request a swap with another volunteer or post their slot to a "swap board" for others to claim.
+Volunteers often can't make a shift after booking. Let users request a swap with another volunteer or post their shift to a "swap board" for others to claim.
 
 - New `SwapRequest` model: links original booking, requesting user, optional target user
 - States: `open`, `claimed`, `completed`, `expired`
@@ -19,61 +19,61 @@ Volunteers often can't make a shift after booking. Let users request a swap with
 - Notification integration: notify eligible volunteers when a swap is posted
 - **Why:** Reduces admin burden and no-shows without forcing cancellation
 
-### 2. Recurring Events
+### 2. Recurring Tasks
 
-True recurrence engine (weekly service, monthly meeting) that auto-creates events + slots on a schedule. Currently events are one-off even if grouped.
+True recurrence engine (weekly service, monthly meeting) that auto-creates tasks + shifts on a schedule. Currently tasks are one-off even if grouped.
 
-- Recurrence rule on `Event` or `EventGroup` (e.g. RRULE-style: weekly, biweekly, monthly)
-- Admin sets a template event with slot config; system generates instances
+- Recurrence rule on `Task` or `Event` (e.g. RRULE-style: weekly, biweekly, monthly)
+- Admin sets a template task with shift config; system generates instances
 - Edit options: single instance vs all future instances
 - **Why:** Saves admins significant repetitive work for regular volunteer activities
 
 ### 4. Automatic Booking Cancellation Notifications
 
-Already partially built (see `TODO.md`). When admins regenerate duty slots and cancel affected bookings, users should be notified automatically.
+Already partially built (see `TODO.md`). When admins regenerate shifts and cancel affected bookings, users should be notified automatically.
 
-- Notification infrastructure exists — needs trigger wiring in slot regeneration logic
+- Notification infrastructure exists — needs trigger wiring in shift regeneration logic
 - Use existing notification preferences and channels (email, push, telegram)
-- **Why:** Lowest-effort high-value item; prevents volunteers from showing up to cancelled shifts
+- **Why:** Lowest-effort high-value item; prtasks volunteers from showing up to cancelled shifts
 
 ---
 
 ## Medium Impact
 
-### 5. Waitlist for Full Slots
+### 5. Waitlist for Full Shifts
 
-When a duty slot hits `max_bookings`, let users join a waitlist. Auto-promote when someone cancels.
+When a shift hits `max_bookings`, let users join a waitlist. Auto-promote when someone cancels.
 
-- New `WaitlistEntry` model: `user_id` + `duty_slot_id` + `position` + `created_at`
+- New `WaitlistEntry` model: `user_id` + `shift_id` + `position` + `created_at`
 - Auto-promote first in queue on cancellation, with notification
 - User can leave waitlist at any time
-- **Why:** Captures demand that's currently lost and improves slot fill rates
+- **Why:** Captures demand that's currently lost and improves shift fill rates
 
 ### 7. Bulk Booking for Admins
 
-Let admins assign multiple volunteers to slots at once, or assign one volunteer to multiple slots.
+Let admins assign multiple volunteers to shifts at once, or assign one volunteer to multiple shifts.
 
-- Multi-select UI on slot list and user list
+- Multi-select UI on shift list and user list
 - Batch booking endpoint: `POST /bookings/bulk`
-- Conflict detection (already booked, slot full)
-- **Why:** Large events with 50+ slots are tedious to staff one-by-one
+- Conflict detection (already booked, shift full)
+- **Why:** Large tasks with 50+ shifts are tedious to staff one-by-one
 
 ### 8. Check-in / Attendance Tracking
 
 Mark whether volunteers actually showed up.
 
 - Add `checked_in_at` field to `Booking`
-- Admin toggle in event detail view or dedicated check-in view
+- Admin toggle in task detail view or dedicated check-in view
 - Optional: QR code per booking for self-check-in
 - Feeds into reporting dashboard (#3)
 - **Why:** Provides accountability data and identifies reliability patterns
 
 ### 9. User Groups / Teams
 
-Organize volunteers into teams beyond the existing event groups.
+Organize volunteers into teams beyond the existing events.
 
 - New `Team` model with members (many-to-many with `User`)
-- Admins can assign slots to teams, filter by team
+- Admins can assign shifts to teams, filter by team
 - Team-level notifications
 - **Why:** Enables structured coordination for specialized roles (sound, welcome, kitchen, etc.)
 
@@ -83,19 +83,19 @@ Organize volunteers into teams beyond the existing event groups.
 
 ### 10. Volunteer Skill / Preference Tags
 
-Let users tag themselves with skills and let admins filter when assigning slots by category.
+Let users tag themselves with skills and let admins filter when assigning shifts by category.
 
 - Tag model or JSONB array on `User`
 - Admin can define available tags
-- Filter slots by matching category to user tags
-- Suggestion engine: "these users have relevant skills for this slot"
-- **Why:** Better volunteer-slot matching, especially for specialized duties
+- Filter shifts by matching category to user tags
+- Suggestion engine: "these users have relevant skills for this shift"
+- **Why:** Better volunteer-shift matching, especially for specialized duties
 
-### 11. Comments / Notes on Events
+### 11. Comments / Notes on Tasks
 
-Simple comment thread on events or event groups for coordination.
+Simple comment thread on tasks or events for coordination.
 
-- New `EventComment` model: `user_id` + `event_id` + `body` + `created_at`
+- New `TaskComment` model: `user_id` + `task_id` + `body` + `created_at`
 - Flat list (no threading needed)
 - Notification on new comment (for watchers or all booked users)
 - **Why:** Lightweight coordination without external tools ("bring extra chairs", "parking is limited")
@@ -121,8 +121,8 @@ Improve the mobile experience with progressive web app features.
 
 Beyond the existing iCal feed: broader export and sharing options.
 
-- CSV/PDF export of event schedules and booking lists
-- Shareable public link for event schedules (no login required)
+- CSV/PDF export of task schedules and booking lists
+- Shareable public link for task schedules (no login required)
 - Print improvements beyond current print views
 - **Why:** Useful for coordinators who need to share schedules with non-users
 
@@ -136,7 +136,7 @@ Based on effort-to-value ratio and existing infrastructure:
 | -------- | ------------------------------------- | --------------------------------------- |
 | 1        | #4 Booking cancellation notifications | Already partially built, minimal effort |
 | 2        | #6 Shift reminders                    | Leverages existing notification system  |
-| 3        | #1 Slot swap / trade                  | Solves real volunteer pain point        |
+| 3        | #1 Shift swap / trade                  | Solves real volunteer pain point        |
 | 4        | #5 Waitlist                           | Natural extension of booking system     |
 | 5        | #3 Reporting dashboard                | High admin value, data already exists   |
 

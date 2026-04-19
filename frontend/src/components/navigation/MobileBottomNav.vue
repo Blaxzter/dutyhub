@@ -11,19 +11,19 @@ const { t } = useI18n()
 const route = useRoute()
 const notificationStore = useNotificationStore()
 
-const EVENT_ROUTES = new Set([
-  'events',
-  'event-create',
-  'event-edit',
-  'event-detail',
-  'event-add-slots',
+const TASK_ROUTES = new Set([
+  'tasks',
+  'task-create',
+  'task-edit',
+  'task-detail',
+  'task-add-shifts',
 ])
 const BOOKING_ROUTES = new Set(['my-bookings', 'booking-detail'])
 const INBOX_ROUTES = new Set(['notifications'])
 
-const activeTab = computed<'events' | 'bookings' | 'inbox' | null>(() => {
+const activeTab = computed<'tasks' | 'bookings' | 'inbox' | null>(() => {
   const name = typeof route.name === 'string' ? route.name : ''
-  if (EVENT_ROUTES.has(name)) return 'events'
+  if (TASK_ROUTES.has(name)) return 'tasks'
   if (BOOKING_ROUTES.has(name)) return 'bookings'
   if (INBOX_ROUTES.has(name)) return 'inbox'
   return null
@@ -41,15 +41,15 @@ const notificationDisplayCount = computed(() => {
     class="fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
   >
     <RouterLink
-      :to="{ name: 'events' }"
-      data-testid="mobile-nav-events"
+      :to="{ name: 'tasks' }"
+      data-testid="mobile-nav-tasks"
       class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-xs"
       :class="
-        activeTab === 'events' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+        activeTab === 'tasks' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
       "
     >
       <CalendarDays class="size-5" />
-      <span>{{ t('navigation.mobileBottomNav.events') }}</span>
+      <span>{{ t('navigation.mobileBottomNav.tasks') }}</span>
     </RouterLink>
 
     <RouterLink

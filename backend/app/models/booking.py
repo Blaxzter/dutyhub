@@ -8,22 +8,22 @@ from sqlmodel import Field, Relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.models.duty_slot import DutySlot  # noqa: F401
+    from app.models.shift import Shift  # noqa: F401
     from app.models.user import User  # noqa: F401
 
 
 class Booking(Base, table=True):
     __tablename__ = "bookings"  # type: ignore[assignment]
     __table_args__ = (
-        sa.UniqueConstraint("duty_slot_id", "user_id", name="uq_booking_slot_user"),
-        sa.Index("ix_bookings_duty_slot_id_status", "duty_slot_id", "status"),
+        sa.UniqueConstraint("shift_id", "user_id", name="uq_booking_shift_user"),
+        sa.Index("ix_bookings_shift_id_status", "shift_id", "status"),
     )
 
-    duty_slot_id: uuid.UUID | None = Field(
+    shift_id: uuid.UUID | None = Field(
         default=None,
         sa_column=sa.Column(
             sa.Uuid,
-            sa.ForeignKey("duty_slots.id", ondelete="SET NULL"),
+            sa.ForeignKey("shifts.id", ondelete="SET NULL"),
             nullable=True,
             index=True,
         ),
@@ -44,22 +44,22 @@ class Booking(Base, table=True):
         default=None, sa_column=sa.Column(sa.Text, nullable=True)
     )
 
-    # Snapshot fields — populated when a slot is admin-deleted so users still see context
-    cancelled_slot_title: str | None = Field(
+    # Snapshot fields — populated when a shift is admin-deleted so users still see context
+    cancelled_shift_title: str | None = Field(
         default=None, sa_column=sa.Column(sa.String, nullable=True)
     )
-    cancelled_slot_date: dt.date | None = Field(
+    cancelled_shift_date: dt.date | None = Field(
         default=None, sa_column=sa.Column(sa.Date, nullable=True)
     )
-    cancelled_slot_start_time: dt.time | None = Field(
+    cancelled_shift_start_time: dt.time | None = Field(
         default=None, sa_column=sa.Column(sa.Time, nullable=True)
     )
-    cancelled_slot_end_time: dt.time | None = Field(
+    cancelled_shift_end_time: dt.time | None = Field(
         default=None, sa_column=sa.Column(sa.Time, nullable=True)
     )
-    cancelled_event_name: str | None = Field(
+    cancelled_task_name: str | None = Field(
         default=None, sa_column=sa.Column(sa.String, nullable=True)
     )
 
-    duty_slot: Optional["DutySlot"] = Relationship(back_populates="bookings")
+    shift: Optional["Shift"] = Relationship(back_populates="bookings")
     user: Optional["User"] = Relationship()

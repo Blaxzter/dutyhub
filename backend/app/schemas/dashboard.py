@@ -4,8 +4,8 @@ import uuid
 from pydantic import BaseModel, ConfigDict
 
 
-class DashboardEvent(BaseModel):
-    """Slim event for the dashboard calendar."""
+class DashboardTask(BaseModel):
+    """Slim task for the dashboard calendar."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,8 +18,8 @@ class DashboardEvent(BaseModel):
     end_date: dt.date
 
 
-class DashboardEventGroup(BaseModel):
-    """Slim event group for the dashboard calendar."""
+class DashboardEvent(BaseModel):
+    """Slim event for the dashboard calendar."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -30,7 +30,7 @@ class DashboardEventGroup(BaseModel):
 
 
 class DashboardBookingItem(BaseModel):
-    """Booking with inline slot info for calendar display — avoids N+1."""
+    """Booking with inline shift info for calendar display — avoids N+1."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -43,9 +43,9 @@ class DashboardBookingItem(BaseModel):
 
 
 class DashboardFeedResponse(BaseModel):
+    tasks: list[DashboardTask]
+    task_count: int
     events: list[DashboardEvent]
-    event_count: int
-    event_groups: list[DashboardEventGroup]
     bookings: list[DashboardBookingItem]
     booking_count: int
     pending_user_count: int | None = None

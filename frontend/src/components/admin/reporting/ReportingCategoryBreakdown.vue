@@ -32,7 +32,7 @@ const { t } = useI18n()
         <TableHeader>
           <TableRow>
             <TableHead>{{ t('admin.reporting.categories.category') }}</TableHead>
-            <TableHead class="text-right">{{ t('admin.reporting.categories.slots') }}</TableHead>
+            <TableHead class="text-right">{{ t('admin.reporting.categories.shifts') }}</TableHead>
             <TableHead class="text-right">{{ t('admin.reporting.categories.capacity') }}</TableHead>
             <TableHead class="text-right">{{ t('admin.reporting.categories.booked') }}</TableHead>
             <TableHead class="text-right">{{ t('admin.reporting.categories.fillRate') }}</TableHead>

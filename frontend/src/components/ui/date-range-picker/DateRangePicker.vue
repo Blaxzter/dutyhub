@@ -132,7 +132,7 @@ function isEndpoint(date: DateValue): boolean {
 
 // Display label
 const displayLabel = computed(() => {
-  const fallback = props.defaultLabel ?? t('duties.events.filters.fromToday')
+  const fallback = props.defaultLabel ?? t('duties.tasks.filters.fromToday')
   if (!props.dateFrom) return fallback
   const fromDate = new Date(props.dateFrom + 'T00:00:00')
   const fromStr = fromDate.toLocaleDateString(locale.value, {
@@ -141,7 +141,7 @@ const displayLabel = computed(() => {
     year: 'numeric',
   })
   if (!props.dateTo || props.dateTo === props.dateFrom) {
-    return t('duties.events.filters.fromDate', { date: fromStr })
+    return t('duties.tasks.filters.fromDate', { date: fromStr })
   }
   const toDate = new Date(props.dateTo + 'T00:00:00')
   const toStr = toDate.toLocaleDateString(locale.value, {
@@ -194,10 +194,10 @@ const hasValue = computed(() => props.dateFrom !== null)
           </RangeCalendarPrev>
           <!-- Month + year selectors -->
           <div class="flex items-center gap-1">
-            <div class="**:data-[slot=native-select-icon]:right-1">
+            <div class="**:data-[shift=native-select-icon]:right-1">
               <div class="relative">
                 <div
-                  class="absolute inset-0 flex h-full items-center text-sm pl-2 pointer-events-none"
+                  class="absolute inset-0 flex h-full items-center text-sm pl-2 pointer-tasks-none"
                 >
                   {{ formatter.custom(toDate(date), { month: 'short' }) }}
                 </div>
@@ -289,7 +289,7 @@ const hasValue = computed(() => props.dateFrom !== null)
                     v-if="isMarked(weekDate) && weekDate.month === month.value.month"
                     :class="
                       cn(
-                        'absolute bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full pointer-events-none',
+                        'absolute bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full pointer-tasks-none',
                         isEndpoint(weekDate) ? 'bg-primary-foreground' : 'bg-primary',
                       )
                     "
@@ -304,7 +304,7 @@ const hasValue = computed(() => props.dateFrom !== null)
         <div v-if="hasValue" class="border-t mt-3 pt-3 flex justify-center">
           <Button variant="ghost" size="sm" @click="clearSelection">
             <CalendarX2 class="h-4 w-4" />
-            {{ resetLabel ?? t('duties.events.filters.resetToToday') }}
+            {{ resetLabel ?? t('duties.tasks.filters.resetToToday') }}
           </Button>
         </div>
       </RangeCalendarRoot>

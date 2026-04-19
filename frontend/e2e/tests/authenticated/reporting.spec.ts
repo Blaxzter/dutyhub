@@ -3,11 +3,11 @@
  */
 import { expect, test } from '../../fixtures.js'
 import {
-  type EventWithSlots,
-  bookSlot,
-  createEventWithSlots,
-  deleteEvent,
-  listSlots,
+  type TaskWithShifts,
+  bookShift,
+  createTaskWithShifts,
+  deleteTask,
+  listShifts,
   uniqueName,
 } from '../../helpers/api.js'
 
@@ -24,16 +24,16 @@ test.describe('Reporting – navigation', () => {
 })
 
 test.describe('Reporting – page structure', () => {
-  let created: EventWithSlots
+  let created: TaskWithShifts
 
   test.beforeEach(async ({ adminPage: page }) => {
-    created = await createEventWithSlots(page, { name: uniqueName('Report'), status: 'published' })
-    const slots = await listSlots(page, created.event.id)
-    await bookSlot(page, slots[0].id)
+    created = await createTaskWithShifts(page, { name: uniqueName('Report'), status: 'published' })
+    const shifts = await listShifts(page, created.task.id)
+    await bookShift(page, shifts[0].id)
   })
 
   test.afterEach(async ({ adminPage: page }) => {
-    await deleteEvent(page, created?.event?.id).catch(() => {})
+    await deleteTask(page, created?.task?.id).catch(() => {})
   })
 
   test('shows page heading', async ({ adminPage: page }) => {

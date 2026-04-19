@@ -466,7 +466,7 @@ export const useNotificationStore = defineStore('notification', () => {
         const payload = JSON.parse(e.data) as { unread_count: number }
         unreadCount.value = payload.unread_count
       } catch {
-        console.error('Failed to parse SSE unread_count event')
+        console.error('Failed to parse SSE unread_count task')
       }
     })
 

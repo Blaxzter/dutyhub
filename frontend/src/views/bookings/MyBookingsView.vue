@@ -28,7 +28,7 @@ import Input from '@/components/ui/input/Input.vue'
 import Separator from '@/components/ui/separator/Separator.vue'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
-import type { BookingReadWithSlot, MyBookingsListResponse } from '@/client/types.gen'
+import type { BookingReadWithShift, MyBookingsListResponse } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t, locale } = useI18n()
@@ -37,10 +37,10 @@ const { get, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 const router = useRouter()
 
-const bookings = ref<BookingReadWithSlot[]>([])
+const bookings = ref<BookingReadWithShift[]>([])
 const loading = ref(false)
 
-const openBookingDetail = (booking: BookingReadWithSlot) => {
+const openBookingDetail = (booking: BookingReadWithShift) => {
   router.push({ name: 'booking-detail', params: { bookingId: booking.id } })
 }
 
@@ -65,7 +65,7 @@ async function handleVisibleMonth(range: { from: string; to: string }) {
 }
 
 // --- Grouping state (persisted in localStorage) ---
-type GroupMode = 'none' | 'date' | 'event' | 'location'
+type GroupMode = 'none' | 'date' | 'task' | 'location'
 const STORAGE_KEY = 'wirksam:bookings:groupBy'
 const activeGrouping = ref<GroupMode>((localStorage.getItem(STORAGE_KEY) as GroupMode) || 'none')
 
@@ -77,7 +77,7 @@ const toggleGrouping = (mode: GroupMode) => {
 
 const groupingOptions = computed(() => [
   { mode: 'date' as const, icon: CalendarDays, label: t('duties.bookings.groupBy.date') },
-  { mode: 'event' as const, icon: Layers, label: t('duties.bookings.groupBy.event') },
+  { mode: 'task' as const, icon: Layers, label: t('duties.bookings.groupBy.task') },
   { mode: 'location' as const, icon: MapPin, label: t('duties.bookings.groupBy.location') },
 ])
 
@@ -85,7 +85,7 @@ const groupingOptions = computed(() => [
 interface BookingGroup {
   key: string
   label: string
-  bookings: BookingReadWithSlot[]
+  bookings: BookingReadWithShift[]
 }
 
 const searchQuery = ref('')
@@ -98,12 +98,12 @@ const filteredBookings = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
   if (query) {
     result = result.filter((b) => {
-      const slot = b.duty_slot
-      if (!slot) return false
+      const shift = b.shift
+      if (!shift) return false
       return (
-        slot.title?.toLowerCase().includes(query) ||
-        slot.event_name?.toLowerCase().includes(query) ||
-        slot.location?.toLowerCase().includes(query)
+        shift.title?.toLowerCase().includes(query) ||
+        shift.task_name?.toLowerCase().includes(query) ||
+        shift.location?.toLowerCase().includes(query)
       )
     })
   }
@@ -121,11 +121,11 @@ const sortedBookings = computed(() =>
   }),
 )
 
-const groupKey = (booking: BookingReadWithSlot): string => {
+const groupKey = (booking: BookingReadWithShift): string => {
   switch (activeGrouping.value) {
     case 'date':
       return slotDate(booking) ?? '__none__'
-    case 'event':
+    case 'task':
       return eventName(booking) ?? '__none__'
     case 'location':
       return slotLocation(booking) ?? '__none__'
@@ -140,8 +140,8 @@ const groupLabel = (key: string): string => {
     switch (activeGrouping.value) {
       case 'date':
         return t('duties.bookings.noDate')
-      case 'event':
-        return t('duties.bookings.noEvent')
+      case 'task':
+        return t('duties.bookings.noTask')
       case 'location':
         return t('duties.bookings.noLocation')
       default:
@@ -157,14 +157,14 @@ const groupedBookings = computed<BookingGroup[]>(() => {
     return [{ key: '__all__', label: '', bookings: sortedBookings.value }]
   }
 
-  const groups = new Map<string, BookingReadWithSlot[]>()
+  const events = new Map<string, BookingReadWithShift[]>()
   for (const booking of sortedBookings.value) {
     const k = groupKey(booking)
-    if (!groups.has(k)) groups.set(k, [])
-    groups.get(k)!.push(booking)
+    if (!events.has(k)) events.set(k, [])
+    events.get(k)!.push(booking)
   }
 
-  return Array.from(groups.entries()).map(([key, items]) => ({
+  return Array.from(events.entries()).map(([key, items]) => ({
     key,
     label: groupLabel(key),
     bookings: items,
@@ -224,7 +224,7 @@ const loadBookings = async () => {
 
 watch([dateFrom, dateTo], () => loadBookings())
 
-const handleCancel = async (booking: BookingReadWithSlot) => {
+const handleCancel = async (booking: BookingReadWithShift) => {
   const confirmed = await confirmDestructive(t('duties.bookings.cancelConfirm'))
   if (!confirmed) return
 
@@ -237,7 +237,7 @@ const handleCancel = async (booking: BookingReadWithSlot) => {
   }
 }
 
-const handleDismiss = async (booking: BookingReadWithSlot) => {
+const handleDismiss = async (booking: BookingReadWithShift) => {
   try {
     await del({ url: `/bookings/${booking.id}/dismiss` })
     toast.success(t('duties.bookings.dismissSuccess'))
@@ -249,32 +249,32 @@ const handleDismiss = async (booking: BookingReadWithSlot) => {
 
 // --- Display helpers ---
 
-const slotTitle = (booking: BookingReadWithSlot) => {
-  if (booking.duty_slot) return booking.duty_slot.title
-  if (booking.cancelled_slot_title) return booking.cancelled_slot_title
-  return t('duties.bookings.unknownSlot')
+const slotTitle = (booking: BookingReadWithShift) => {
+  if (booking.shift) return booking.shift.title
+  if (booking.cancelled_shift_title) return booking.cancelled_shift_title
+  return t('duties.bookings.unknownShift')
 }
 
-const slotDate = (booking: BookingReadWithSlot) => {
-  if (booking.duty_slot) return booking.duty_slot.date
-  if (booking.cancelled_slot_date) return booking.cancelled_slot_date
+const slotDate = (booking: BookingReadWithShift) => {
+  if (booking.shift) return booking.shift.date
+  if (booking.cancelled_shift_date) return booking.cancelled_shift_date
   return null
 }
 
-const slotStartTime = (booking: BookingReadWithSlot) => {
-  return booking.duty_slot?.start_time ?? booking.cancelled_slot_start_time ?? null
+const slotStartTime = (booking: BookingReadWithShift) => {
+  return booking.shift?.start_time ?? booking.cancelled_shift_start_time ?? null
 }
 
-const slotEndTime = (booking: BookingReadWithSlot) => {
-  return booking.duty_slot?.end_time ?? booking.cancelled_slot_end_time ?? null
+const slotEndTime = (booking: BookingReadWithShift) => {
+  return booking.shift?.end_time ?? booking.cancelled_shift_end_time ?? null
 }
 
-const slotLocation = (booking: BookingReadWithSlot) => {
-  return booking.duty_slot?.location ?? null
+const slotLocation = (booking: BookingReadWithShift) => {
+  return booking.shift?.location ?? null
 }
 
-const eventName = (booking: BookingReadWithSlot) => {
-  return booking.duty_slot?.event_name ?? booking.cancelled_event_name ?? null
+const eventName = (booking: BookingReadWithShift) => {
+  return booking.shift?.task_name ?? booking.cancelled_task_name ?? null
 }
 
 onMounted(loadBookings)
@@ -297,7 +297,7 @@ onMounted(loadBookings)
             <Tooltip v-for="opt in groupingOptions" :key="opt.mode">
               <TooltipTrigger as-child>
                 <Button
-                  :data-testid="`btn-group-${opt.mode}`"
+                  :data-testid="`btn-event-${opt.mode}`"
                   :variant="activeGrouping === opt.mode ? 'default' : 'ghost'"
                   size="sm"
                   class="rounded-none border-0"
@@ -359,29 +359,29 @@ onMounted(loadBookings)
 
     <!-- Bookings (grouped or flat) -->
     <div v-else class="space-y-8">
-      <section v-for="group in groupedBookings" :key="group.key">
+      <section v-for="event in groupedBookings" :key="event.key">
         <!-- Group header (only when grouping is active) -->
-        <div v-if="group.label" class="flex items-center gap-3 mb-4">
-          <h2 class="text-lg font-semibold truncate min-w-0 max-w-sm" :title="group.label">
-            {{ group.label }}
+        <div v-if="event.label" class="flex items-center gap-3 mb-4">
+          <h2 class="text-lg font-semibold truncate min-w-0 max-w-sm" :title="event.label">
+            {{ event.label }}
           </h2>
           <Separator class="flex-1" />
           <span class="text-sm text-muted-foreground whitespace-nowrap">
-            {{ group.bookings.length }}
+            {{ event.bookings.length }}
           </span>
         </div>
 
         <!-- Bookings grid -->
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card
-            v-for="booking in group.bookings"
+            v-for="booking in event.bookings"
             :key="booking.id"
             :class="[booking.status === 'cancelled' ? 'opacity-75 border-destructive/30' : '']"
           >
             <CardHeader class="pb-3">
               <div class="flex items-start justify-between gap-2 min-w-0">
                 <div class="min-w-0">
-                  <!-- Use event name as title for active bookings; fall back to slot title for cancelled -->
+                  <!-- Use task name as title for active bookings; fall back to shift title for cancelled -->
                   <CardTitle
                     class="text-lg truncate"
                     :title="eventName(booking) ?? slotTitle(booking)"
@@ -439,8 +439,8 @@ onMounted(loadBookings)
                 </div>
               </div>
 
-              <!-- Slot deleted notice -->
-              <div v-else-if="booking.status === 'cancelled' && !booking.duty_slot_id" class="mt-3">
+              <!-- Shift deleted notice -->
+              <div v-else-if="booking.status === 'cancelled' && !booking.shift_id" class="mt-3">
                 <Separator class="mb-3" />
                 <p class="text-xs text-muted-foreground italic">
                   {{ t('duties.bookings.slotDeleted') }}
@@ -452,14 +452,14 @@ onMounted(loadBookings)
 
               <!-- Action buttons -->
               <div class="mt-4 flex items-center gap-2">
-                <!-- Detail button (only for active slots) -->
+                <!-- Detail button (only for active shifts) -->
                 <Button
-                  v-if="booking.duty_slot"
+                  v-if="booking.shift"
                   variant="outline"
                   size="sm"
                   @click="openBookingDetail(booking)"
                 >
-                  {{ t('duties.dutySlots.detail.openDetails') }}
+                  {{ t('duties.shifts.detail.openDetails') }}
                 </Button>
 
                 <div class="flex-1" />

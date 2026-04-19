@@ -82,31 +82,6 @@ const router = createRouter({
           },
         },
         {
-          path: 'event-groups',
-          name: 'event-groups',
-          component: () => import('@/views/event-groups/EventGroupsView.vue'),
-          meta: {
-            breadcrumbs: [{ title: 'Event Groups', titleKey: 'duties.eventGroups.title' }],
-          },
-        },
-        {
-          path: 'event-groups/:groupId/:section?',
-          name: 'event-group-detail',
-          component: () => import('@/views/event-groups/EventGroupDetailView.vue'),
-          meta: {
-            routerViewKey: (route: { params: { groupId?: string } }) =>
-              `event-group-${route.params.groupId}`,
-            breadcrumbs: [
-              {
-                title: 'Event Groups',
-                titleKey: 'duties.eventGroups.title',
-                to: { name: 'event-groups' },
-              },
-              { title: 'Event Group Details', titleKey: 'duties.eventGroups.detail.title' },
-            ],
-          },
-        },
-        {
           path: 'events',
           name: 'events',
           component: () => import('@/views/events/EventsView.vue'),
@@ -115,49 +90,74 @@ const router = createRouter({
           },
         },
         {
-          path: 'events/create',
-          name: 'event-create',
-          component: () => import('@/views/events/EventCreateView.vue'),
-          meta: {
-            requiresRole: ['admin', 'event_manager'],
-            breadcrumbs: [
-              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
-              { title: 'Create Event', titleKey: 'duties.events.createView.title' },
-            ],
-          },
-        },
-        {
-          path: 'events/:eventId/edit',
-          name: 'event-edit',
-          component: () => import('@/views/events/EventEditView.vue'),
-          meta: {
-            requiresRole: ['admin', 'event_manager'],
-            breadcrumbs: [
-              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
-              { title: 'Edit Event', titleKey: 'duties.events.editView.title' },
-            ],
-          },
-        },
-        {
-          path: 'events/:eventId/add-slots',
-          name: 'event-add-slots',
-          component: () => import('@/views/events/EventAddSlotsView.vue'),
-          meta: {
-            requiresRole: ['admin', 'event_manager'],
-            breadcrumbs: [
-              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
-              { title: 'Add Slots', titleKey: 'duties.events.addSlotsView.title' },
-            ],
-          },
-        },
-        {
-          path: 'events/:eventId',
+          path: 'events/:eventId/:section?',
           name: 'event-detail',
           component: () => import('@/views/events/EventDetailView.vue'),
           meta: {
+            routerViewKey: (route: { params: { eventId?: string } }) =>
+              `event-${route.params.eventId}`,
             breadcrumbs: [
-              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
+              {
+                title: 'Events',
+                titleKey: 'duties.events.title',
+                to: { name: 'events' },
+              },
               { title: 'Event Details', titleKey: 'duties.events.detail.title' },
+            ],
+          },
+        },
+        {
+          path: 'tasks',
+          name: 'tasks',
+          component: () => import('@/views/tasks/TasksView.vue'),
+          meta: {
+            breadcrumbs: [{ title: 'Tasks', titleKey: 'duties.tasks.title' }],
+          },
+        },
+        {
+          path: 'tasks/create',
+          name: 'task-create',
+          component: () => import('@/views/tasks/TaskCreateView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
+            breadcrumbs: [
+              { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
+              { title: 'Create Task', titleKey: 'duties.tasks.createView.title' },
+            ],
+          },
+        },
+        {
+          path: 'tasks/:eventId/edit',
+          name: 'task-edit',
+          component: () => import('@/views/tasks/TaskEditView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
+            breadcrumbs: [
+              { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
+              { title: 'Edit Task', titleKey: 'duties.tasks.editView.title' },
+            ],
+          },
+        },
+        {
+          path: 'tasks/:eventId/add-shifts',
+          name: 'task-add-shifts',
+          component: () => import('@/views/tasks/TaskAddShiftsView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
+            breadcrumbs: [
+              { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
+              { title: 'Add Shifts', titleKey: 'duties.tasks.addShiftsView.title' },
+            ],
+          },
+        },
+        {
+          path: 'tasks/:eventId',
+          name: 'task-detail',
+          component: () => import('@/views/tasks/TaskDetailView.vue'),
+          meta: {
+            breadcrumbs: [
+              { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
+              { title: 'Task Details', titleKey: 'duties.tasks.detail.title' },
             ],
           },
         },
@@ -240,7 +240,7 @@ const router = createRouter({
           name: 'reporting',
           component: () => import('@/views/admin/ReportingView.vue'),
           meta: {
-            requiresRole: ['admin', 'event_manager'],
+            requiresRole: ['admin', 'task_manager'],
             breadcrumbs: [
               { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
               { title: 'Reports', titleKey: 'admin.reporting.title' },
@@ -280,14 +280,14 @@ const router = createRouter({
       beforeEnter: authGuard,
       children: [
         {
+          path: 'tasks/:eventId',
+          name: 'print-task',
+          component: () => import('@/views/print/PrintTaskView.vue'),
+        },
+        {
           path: 'events/:eventId',
           name: 'print-event',
           component: () => import('@/views/print/PrintEventView.vue'),
-        },
-        {
-          path: 'event-groups/:groupId',
-          name: 'print-event-group',
-          component: () => import('@/views/print/PrintEventGroupView.vue'),
         },
       ],
     },
@@ -360,10 +360,10 @@ router.beforeEach(async (to) => {
 
   const requiredRoles = normalizeRoles(to.meta.requiresRole)
   const hasRole = requiredRoles.some((role) => authStore.roles.includes(role))
-  // Scoped group managers are allowed on routes that accept event_manager
-  const groupManagerAllowed =
-    !hasRole && requiredRoles.includes('event_manager') && authStore.isGroupManager
-  if (!hasRole && !groupManagerAllowed) {
+  // Scoped event managers are allowed on routes that accept task_manager
+  const eventManagerAllowed =
+    !hasRole && requiredRoles.includes('task_manager') && authStore.isEventManager
+  if (!hasRole && !eventManagerAllowed) {
     return { name: 'home' }
   }
 

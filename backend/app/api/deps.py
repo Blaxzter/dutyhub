@@ -10,7 +10,7 @@ from sqlmodel import col
 from app.core.config import settings
 from app.core.db import async_session
 from app.crud.user import user as crud_user
-from app.models.event_group_manager import EventGroupManager
+from app.models.event_manager import EventManager
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -172,10 +172,10 @@ def current_user(
     any_of_roles_list = _normalize_required_roles(any_of_roles)
 
     async def _is_any_group_manager(session: AsyncSession, user: User) -> bool:
-        """Check if user manages at least one event group."""
+        """Check if user manages at least one event."""
         result = await session.execute(
-            select(col(EventGroupManager.id))
-            .where(col(EventGroupManager.user_id) == user.id)
+            select(col(EventManager.id))
+            .where(col(EventManager.user_id) == user.id)
             .limit(1)
         )
         return result.scalar_one_or_none() is not None
@@ -241,12 +241,12 @@ def current_user(
 CurrentUser = Annotated[User, Depends(current_user())]
 CurrentSuperuser = Annotated[User, Depends(current_user("admin"))]
 CurrentGlobalManager = Annotated[
-    User, Depends(current_user(any_of_roles=["admin", "event_manager"]))
+    User, Depends(current_user(any_of_roles=["admin", "task_manager"]))
 ]
 CurrentManager = Annotated[
     User,
     Depends(
-        current_user(any_of_roles=["admin", "event_manager"], allow_group_managers=True)
+        current_user(any_of_roles=["admin", "task_manager"], allow_group_managers=True)
     ),
 ]
 AnyUser = Annotated[User, Depends(current_user(require_active=False))]

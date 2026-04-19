@@ -57,13 +57,13 @@ async function toggleGlobalChannel(
 
 // Per-type preferences (only show user-configurable types)
 const groupedTypes = computed(() => {
-  const groups: Record<string, NotificationType[]> = {}
+  const events: Record<string, NotificationType[]> = {}
   for (const type of types.value) {
     if (!type.is_user_configurable) continue
-    if (!groups[type.category]) groups[type.category] = []
-    groups[type.category].push(type)
+    if (!events[type.category]) events[type.category] = []
+    events[type.category].push(type)
   }
-  return groups
+  return events
 })
 
 function getPreference(typeId: string) {

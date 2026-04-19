@@ -15,7 +15,7 @@ from app.crud.booking_reminder import booking_reminder as crud_reminder
 from app.logic.notifications.messages import get_message
 from app.logic.notifications.service import NotificationService
 from app.models.booking_reminder import BookingReminder
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 
 logger = get_logger(__name__)
 
@@ -55,53 +55,51 @@ async def _process_reminder(reminder: BookingReminder) -> None:
     """Dispatch a single reminder through the notification service."""
     async with async_session() as db:
         try:
-            # Load the slot for context
+            # Load the shift for context
             from sqlalchemy import select
             from sqlmodel import col
 
-            slot_query = select(DutySlot).where(
-                col(DutySlot.id) == reminder.duty_slot_id
-            )
+            slot_query = select(Shift).where(col(Shift.id) == reminder.shift_id)
             result = await db.execute(slot_query)
-            slot = result.scalar_one_or_none()
+            shift = result.scalar_one_or_none()
 
-            if not slot:
-                # Slot was deleted; mark reminder as expired
+            if not shift:
+                # Shift was deleted; mark reminder as expired
                 await crud_reminder.mark_sent(db, reminder_id=reminder.id)
                 await db.commit()
                 return
 
-            # Load event name
-            from app.models.event import Event
+            # Load task name
+            from app.models.task import Task
 
-            event_query = select(Event).where(col(Event.id) == slot.event_id)
-            event_result = await db.execute(event_query)
-            event = event_result.scalar_one_or_none()
-            event_group_id = event.event_group_id if event else None
+            task_query = select(Task).where(col(Task.id) == shift.task_id)
+            task_result = await db.execute(task_query)
+            task = task_result.scalar_one_or_none()
+            event_id = task.event_id if task else None
 
             svc = NotificationService(db)
 
             # Build scope chain for preference resolution
             scope_chain: list[tuple[str, object]] = []
-            if slot.id:
-                scope_chain.append(("duty_slot", slot.id))
-            if slot.event_id:
-                scope_chain.append(("event", slot.event_id))
-            if event_group_id:
-                scope_chain.append(("event_group", event_group_id))
+            if shift.id:
+                scope_chain.append(("shift", shift.id))
+            if shift.task_id:
+                scope_chain.append(("task", shift.task_id))
+            if event_id:
+                scope_chain.append(("event", event_id))
 
             def _factory(lang: str) -> tuple[str, str]:
                 return get_message(
                     "booking.reminder",
                     lang,
-                    slot_title=slot.title,
+                    slot_title=shift.title,
                     time_until=_format_time_until(reminder.offset_minutes, lang),
-                    date=slot.date.strftime("%d.%m.%Y") if slot.date else "",
-                    start_time=slot.start_time.strftime("%H:%M")
-                    if slot.start_time
+                    date=shift.date.strftime("%d.%m.%Y") if shift.date else "",
+                    start_time=shift.start_time.strftime("%H:%M")
+                    if shift.start_time
                     else "",
-                    end_time=slot.end_time.strftime("%H:%M") if slot.end_time else "",
-                    location=slot.location or "",
+                    end_time=shift.end_time.strftime("%H:%M") if shift.end_time else "",
+                    location=shift.location or "",
                 )
 
             await svc.notify(
@@ -110,8 +108,8 @@ async def _process_reminder(reminder: BookingReminder) -> None:
                 message_factory=_factory,
                 data={
                     "booking_id": str(reminder.booking_id),
-                    "slot_id": str(slot.id),
-                    "event_id": str(slot.event_id),
+                    "slot_id": str(shift.id),
+                    "task_id": str(shift.task_id),
                 },
                 scope_chain=scope_chain,  # type: ignore[arg-type]
                 force_channels=reminder.channels,
@@ -143,7 +141,7 @@ async def _poll_cycle() -> int:
                     id=r.id,
                     booking_id=r.booking_id,
                     user_id=r.user_id,
-                    duty_slot_id=r.duty_slot_id,
+                    shift_id=r.shift_id,
                     remind_at=r.remind_at,
                     offset_minutes=r.offset_minutes,
                     status=r.status,

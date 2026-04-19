@@ -1,5 +1,5 @@
 {
-    "allEvents": "Alle Veranstaltungen drucken",
+    "allTasks": "Alle Veranstaltungen drucken",
     "contactColumn": "Kontakt",
     "nameColumn": "Name",
     "optionsDialog": {
@@ -7,7 +7,7 @@
     },
     "overview": "Übersicht drucken",
     "printButton": "Drucken",
-    "printEvent": "Veranstaltung drucken",
+    "printTask": "Veranstaltung drucken",
     "scanToSignUp": "Scannen, um sich online anzumelden",
     "toolbar": {
         "filterDates": "Tage filtern",

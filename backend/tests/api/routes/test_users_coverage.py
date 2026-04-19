@@ -12,8 +12,8 @@ from app.api import deps as deps_module
 from app.core.security import hash_password
 from app.crud.site_settings import site_settings as crud_site_settings
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.shift import Shift
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -333,21 +333,21 @@ class TestExportWithData:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test export includes user's bookings."""
-        slot = DutySlot(
-            event_id=test_event.id,
-            title="Export Test Slot",
+        shift = Shift(
+            task_id=test_task.id,
+            title="Export Test Shift",
             date=date(2026, 6, 1),
             start_time=time(8, 0),
             end_time=time(12, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_user.id,
             status="confirmed",
             notes="Export test",

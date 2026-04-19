@@ -29,10 +29,10 @@ cd backend && uv run coverage run -m pytest -q && uv run coverage report --show-
 | `test_user`          | `fixtures/users.py`        | Active user, no roles.                                                                  |
 | `test_admin_user`    | `fixtures/users.py`        | Active admin user (`roles=["admin"]`).                                                  |
 | `test_inactive_user` | `fixtures/users.py`        | Inactive user.                                                                          |
-| `test_event`         | `fixtures/events.py`       | Published event with dates in the future.                                               |
-| `test_duty_slot`     | `fixtures/duty_slots.py`   | Duty slot linked to `test_event`.                                                       |
-| `test_booking`       | `fixtures/bookings.py`     | Confirmed booking by `test_user` on `test_duty_slot`.                                   |
-| `test_event_group`   | `fixtures/event_groups.py` | Published event group.                                                                  |
+| `test_task`         | `fixtures/tasks.py`       | Published task with dates in the future.                                               |
+| `test_shift`     | `fixtures/shifts.py`   | Duty shift linked to `test_task`.                                                       |
+| `test_booking`       | `fixtures/bookings.py`     | Confirmed booking by `test_user` on `test_shift`.                                   |
+| `test_event`   | `fixtures/events.py` | Published event.                                                                  |
 
 To add a new fixture, create or edit the relevant file in `tests/fixtures/` and import it in `tests/conftest.py`.
 
@@ -136,7 +136,7 @@ Requires `E2E_AUTH0_USERNAME`, `E2E_AUTH0_PASSWORD` (and `_MEMBER` variants) in 
 | -------------------------------- | --------------------------------------------------------- |
 | `e2e/setup/auth.setup.ts`        | Logs in as admin, saves state to `e2e/.auth/user.json`    |
 | `e2e/setup/auth-member.setup.ts` | Logs in as member, saves state to `e2e/.auth/member.json` |
-| `e2e/helpers/api.ts`             | `api()`, `createEventWithSlots()`, `bookSlot()`, etc.     |
+| `e2e/helpers/api.ts`             | `api()`, `createTaskWithShifts()`, `bookShift()`, etc.     |
 | `e2e/helpers/log-capture.ts`     | Captures backend logs on test failure                     |
 
 ### Test Organization
@@ -157,16 +157,16 @@ All E2E selectors use `data-testid` attributes instead of text or role-based sel
 | Pattern        | Examples                                                               |
 | -------------- | ---------------------------------------------------------------------- |
 | Page heading   | `page-heading` (every view's h1)                                       |
-| Sidebar links  | `sidebar-link-home`, `sidebar-link-events`, `sidebar-link-admin-users` |
-| Action buttons | `btn-create-event`, `btn-cancel-booking`, `btn-back`, `btn-submit`     |
-| Sections       | `section-duty-slots`, `section-reminders`, `section-stats`             |
-| Stat cards     | `stat-card-events`, `stat-active`, `stat-pending`                      |
-| Form inputs    | `input-search`, `input-event-name`, `input-approval-code`              |
+| Sidebar links  | `sidebar-link-home`, `sidebar-link-tasks`, `sidebar-link-admin-users` |
+| Action buttons | `btn-create-task`, `btn-cancel-booking`, `btn-back`, `btn-submit`     |
+| Sections       | `section-shifts`, `section-reminders`, `section-stats`             |
+| Stat cards     | `stat-card-tasks`, `stat-active`, `stat-pending`                      |
+| Form inputs    | `input-search`, `input-task-name`, `input-approval-code`              |
 | Channel cards  | `channel-email`, `channel-push`, `channel-telegram`                    |
 
 **When adding a new view:** Add `data-testid="page-heading"` to the h1 and testids to all interactive elements. Then use `page.getByTestId()` in specs.
 
-**When to use `getByText()` instead:** Only for dynamic data from test fixtures (event names, user names) — never for translated UI labels.
+**When to use `getByText()` instead:** Only for dynamic data from test fixtures (task names, user names) — never for translated UI labels.
 
 ### Writing E2E Tests for a New View
 
@@ -201,21 +201,21 @@ For features requiring test data, use the API helpers in `beforeEach`/`afterEach
 
 ```typescript
 import {
-    createEventWithSlots,
-    deleteEvent,
-    publishEvent,
+    createTaskWithShifts,
+    deleteTask,
+    publishTask,
 } from "../../helpers/api.js";
 
-let created: EventWithSlots;
+let created: TaskWithShifts;
 
 test.beforeEach(async ({ page }) => {
-    await page.goto("/app/events"); // need page context for API helpers
-    created = await createEventWithSlots(page, { name: "Test Event" });
-    await publishEvent(page, created.event.id);
+    await page.goto("/app/tasks"); // need page context for API helpers
+    created = await createTaskWithShifts(page, { name: "Test Task" });
+    await publishTask(page, created.task.id);
 });
 
 test.afterEach(async ({ page }) => {
-    await deleteEvent(page, created.event.id).catch(() => {});
+    await deleteTask(page, created.task.id).catch(() => {});
 });
 ```
 

@@ -90,11 +90,11 @@ class User(Base, table=True):
         return "admin" in self.roles
 
     @property
-    def is_event_manager(self) -> bool:
-        """Check if user has event_manager role."""
-        return "event_manager" in self.roles
+    def is_task_manager(self) -> bool:
+        """Check if user has task_manager role."""
+        return "task_manager" in self.roles
 
     @property
     def is_manager(self) -> bool:
-        """Check if user has admin or event_manager role."""
-        return self.is_admin or self.is_event_manager
+        """Check if user has admin or task_manager role."""
+        return self.is_admin or self.is_task_manager

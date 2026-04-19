@@ -7,110 +7,110 @@ import { expect, test } from '../../fixtures.js'
 import {
   api,
   clearAvailability,
-  createGroup,
-  deleteGroup,
+  createEvent,
+  deleteEvent,
   futureDate,
   uniqueName,
 } from '../../helpers/api.js'
-import type { EventGroupRead } from '../../helpers/api.js'
+import type { EventRead } from '../../helpers/api.js'
 import { pickDate } from '../../helpers/ui.js'
 
 // ── RBAC: member cannot create or delete ─────────────────────────────────────
 
 test.describe('Member – RBAC', () => {
-  let group: EventGroupRead
+  let event: EventRead
 
   test.beforeEach(async ({ adminPage }) => {
-    await adminPage.goto('/app/event-groups')
-    group = await createGroup(adminPage, uniqueName('E2E RBAC Member Test Group'))
+    await adminPage.goto('/app/events')
+    event = await createEvent(adminPage, uniqueName('E2E RBAC Member Test Event'))
   })
 
   test.afterEach(async ({ adminPage }) => {
-    await deleteGroup(adminPage, group.id)
+    await deleteEvent(adminPage, event.id)
   })
 
   test('member does not see Create button', async ({ memberPage: member }) => {
-    await member.goto('/app/event-groups')
-    await expect(member.getByTestId('btn-create-group')).toBeHidden()
+    await member.goto('/app/events')
+    await expect(member.getByTestId('btn-create-event')).toBeHidden()
   })
 
-  test('member does not see Delete button on event group cards', async ({ memberPage: member }) => {
-    await member.goto('/app/event-groups')
-    await expect(member.getByText(group.name).first()).toBeVisible()
-    const card = member.locator('[class*="cursor-pointer"]').filter({ hasText: group.name })
+  test('member does not see Delete button on event cards', async ({ memberPage: member }) => {
+    await member.goto('/app/events')
+    await expect(member.getByText(event.name).first()).toBeVisible()
+    const card = member.locator('[class*="cursor-pointer"]').filter({ hasText: event.name })
     await expect(card.getByRole('button')).toBeHidden()
   })
 
   test('member does not see the member availabilities admin table', async ({
     memberPage: member,
   }) => {
-    await member.goto(`/app/event-groups/${group.id}`)
+    await member.goto(`/app/events/${event.id}`)
     await expect(member.getByTestId('section-admin-availabilities')).toBeHidden()
   })
 })
 
-// ── Member can view published groups but not drafts ───────────────────────────
+// ── Member can view published events but not drafts ───────────────────────────
 
 test.describe('Member – list view', () => {
-  let group: EventGroupRead
+  let event: EventRead
 
   test.beforeEach(async ({ adminPage }) => {
-    await adminPage.goto('/app/event-groups')
-    group = await createGroup(adminPage, uniqueName('E2E Member Visible Group'))
+    await adminPage.goto('/app/events')
+    event = await createEvent(adminPage, uniqueName('E2E Member Visible Event'))
   })
 
   test.afterEach(async ({ adminPage }) => {
-    await deleteGroup(adminPage, group.id)
+    await deleteEvent(adminPage, event.id)
   })
 
-  test('member can see published event groups', async ({ memberPage: member }) => {
-    await member.goto('/app/event-groups')
-    await expect(member.getByText(group.name).first()).toBeVisible()
+  test('member can see published events', async ({ memberPage: member }) => {
+    await member.goto('/app/events')
+    await expect(member.getByText(event.name).first()).toBeVisible()
   })
 
-  test('member cannot see draft event groups', async ({ adminPage, memberPage: member }) => {
-    const draft = await createGroup(adminPage, uniqueName('E2E Hidden Draft Group'), 'draft')
+  test('member cannot see draft events', async ({ adminPage, memberPage: member }) => {
+    const draft = await createEvent(adminPage, uniqueName('E2E Hidden Draft Event'), 'draft')
     try {
-      await member.goto('/app/event-groups')
+      await member.goto('/app/events')
       await expect(member.getByText(draft.name)).toBeHidden()
     } finally {
-      await deleteGroup(adminPage, draft.id)
+      await deleteEvent(adminPage, draft.id)
     }
   })
 
-  test('member can navigate to event group detail page', async ({ memberPage: member }) => {
-    await member.goto('/app/event-groups')
-    await member.getByText(group.name).first().click()
-    await expect(member).toHaveURL(new RegExp(`/app/event-groups/${group.id}`))
-    await expect(member.getByRole('heading', { name: group.name })).toBeVisible()
+  test('member can navigate to event detail page', async ({ memberPage: member }) => {
+    await member.goto('/app/events')
+    await member.getByText(event.name).first().click()
+    await expect(member).toHaveURL(new RegExp(`/app/events/${event.id}`))
+    await expect(member.getByRole('heading', { name: event.name })).toBeVisible()
   })
 })
 
 // ── Member can manage their own availability ──────────────────────────────────
 
 test.describe('Member – availability', () => {
-  let group: EventGroupRead
+  let event: EventRead
 
   test.beforeEach(async ({ adminPage }) => {
-    await adminPage.goto('/app/event-groups')
-    group = await createGroup(adminPage, uniqueName('E2E Member Availability Group'))
+    await adminPage.goto('/app/events')
+    event = await createEvent(adminPage, uniqueName('E2E Member Availability Event'))
   })
 
   test.afterEach(async ({ adminPage }) => {
-    await deleteGroup(adminPage, group.id)
+    await deleteEvent(adminPage, event.id)
   })
 
   test('member sees Register Availability button when none set', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}/availability`)
-    await clearAvailability(member, group.id).catch(() => {})
+    await member.goto(`/app/events/${event.id}/availability`)
+    await clearAvailability(member, event.id).catch(() => {})
     await member.reload()
     const section = member.getByTestId('section-availability')
     await expect(section.getByTestId('btn-availability')).toBeVisible()
   })
 
   test('member can register as fully available', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}/availability`)
-    await clearAvailability(member, group.id).catch(() => {})
+    await member.goto(`/app/events/${event.id}/availability`)
+    await clearAvailability(member, event.id).catch(() => {})
     await member.reload()
     const section = member.getByTestId('section-availability')
     await section.getByTestId('btn-availability').click()
@@ -121,12 +121,12 @@ test.describe('Member – availability', () => {
     await expect(section.getByText(/open to be requested|fully.?available/i)).toBeVisible()
     await expect(section.getByTestId('btn-availability')).toBeVisible()
     await expect(section.getByTestId('btn-remove-availability')).toBeVisible()
-    await clearAvailability(member, group.id).catch(() => {})
+    await clearAvailability(member, event.id).catch(() => {})
   })
 
   test('member can register availability for specific dates', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}/availability`)
-    await clearAvailability(member, group.id).catch(() => {})
+    await member.goto(`/app/events/${event.id}/availability`)
+    await clearAvailability(member, event.id).catch(() => {})
     await member.reload()
     const section = member.getByTestId('section-availability')
     await section.getByTestId('btn-availability').click()
@@ -140,12 +140,12 @@ test.describe('Member – availability', () => {
 
     await expect(member.getByTestId('dialog-availability')).toBeHidden()
     await expect(section.getByText(/specific dates/i)).toBeVisible()
-    await clearAvailability(member, group.id).catch(() => {})
+    await clearAvailability(member, event.id).catch(() => {})
   })
 
   test('member can update their availability', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}/availability`)
-    await api(member, 'POST', `/event-groups/${group.id}/availability`, {
+    await member.goto(`/app/events/${event.id}/availability`)
+    await api(member, 'POST', `/events/${event.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
     })
@@ -157,12 +157,12 @@ test.describe('Member – availability', () => {
 
     await expect(member.getByTestId('dialog-availability')).toBeHidden()
     await expect(section.getByText(/specific dates/i)).toBeVisible()
-    await clearAvailability(member, group.id).catch(() => {})
+    await clearAvailability(member, event.id).catch(() => {})
   })
 
   test('member can remove their availability', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-groups/${group.id}/availability`)
-    await api(member, 'POST', `/event-groups/${group.id}/availability`, {
+    await member.goto(`/app/events/${event.id}/availability`)
+    await api(member, 'POST', `/events/${event.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
     })

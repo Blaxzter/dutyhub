@@ -54,11 +54,11 @@ watch(activeIndex, async () => {
 <template>
   <div class="relative overflow-hidden">
     <div
-      class="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-background to-transparent transition-opacity duration-200"
+      class="pointer-tasks-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-background to-transparent transition-opacity duration-200"
       :class="showFadeLeft ? 'opacity-100' : 'opacity-0'"
     />
     <div
-      class="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-background to-transparent transition-opacity duration-200"
+      class="pointer-tasks-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-background to-transparent transition-opacity duration-200"
       :class="showFadeRight ? 'opacity-100' : 'opacity-0'"
     />
     <div

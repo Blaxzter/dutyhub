@@ -30,16 +30,16 @@ export const useAuthStore = defineStore('auth', () => {
   const profile = ref<UserProfile | null>(null)
   const roles = computed(() => profile.value?.roles ?? [])
   const isAdmin = computed(() => profile.value?.is_admin ?? false)
-  const isEventManager = computed(() => profile.value?.is_event_manager ?? false)
-  const managedEventGroupIds = computed(() => profile.value?.managed_event_group_ids ?? [])
-  const isGroupManager = computed(() => managedEventGroupIds.value.length > 0)
-  const isManager = computed(() => isAdmin.value || isEventManager.value || isGroupManager.value)
+  const isTaskManager = computed(() => profile.value?.is_task_manager ?? false)
+  const managedEventIds = computed(() => profile.value?.managed_event_ids ?? [])
+  const isEventManager = computed(() => managedEventIds.value.length > 0)
+  const isManager = computed(() => isAdmin.value || isTaskManager.value || isEventManager.value)
   const isActive = computed(() => profile.value?.is_active ?? true)
 
-  /** Check if current user can manage an event/group by its event_group_id. */
-  function canManageGroup(eventGroupId: string | null | undefined): boolean {
-    if (isAdmin.value || isEventManager.value) return true
-    return !!eventGroupId && managedEventGroupIds.value.includes(eventGroupId)
+  /** Check if current user can manage a task/event by its event_id. */
+  function canManageEvent(eventId: string | null | undefined): boolean {
+    if (isAdmin.value || isTaskManager.value) return true
+    return !!eventId && managedEventIds.value.includes(eventId)
   }
 
   let profilePromise: Promise<UserProfile | null> | null = null
@@ -183,11 +183,11 @@ export const useAuthStore = defineStore('auth', () => {
     roles,
     isActive,
     isAdmin,
+    isTaskManager,
     isEventManager,
-    isGroupManager,
-    managedEventGroupIds,
+    managedEventIds,
     isManager,
-    canManageGroup,
+    canManageEvent,
     pendingUserCount,
     loading,
     profileLoading,

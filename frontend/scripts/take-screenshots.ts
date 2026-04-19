@@ -57,15 +57,15 @@ const PAGES: Array<{
   fullPage?: boolean
 }> = [
   { name: 'dashboard', path: '/app/home' },
-  { name: 'event-groups', path: '/app/event-groups' },
   { name: 'events', path: '/app/events' },
+  { name: 'tasks', path: '/app/tasks' },
   {
-    name: 'event-detail',
-    path: '/app/events',
+    name: 'task-detail',
+    path: '/app/tasks',
     action: async (page: import('@playwright/test').Page) => {
-      // Click the first event card heading (works regardless of demo data content)
+      // Click the first task card heading (works regardless of demo data content)
       await page.locator('main h3').first().click()
-      await page.waitForURL(/\/app\/events\//)
+      await page.waitForURL(/\/app\/tasks\//)
       await page.waitForTimeout(1000)
     },
   },
@@ -227,11 +227,11 @@ test(`Take How It Works step screenshots [${LANG}]`, async ({ page }) => {
   await page.setViewportSize(VIEWPORT)
   await login(page)
 
-  // Navigate to event creation
-  await page.goto(`${BASE_URL}/app/events/create`)
+  // Navigate to task creation
+  await page.goto(`${BASE_URL}/app/tasks/create`)
   await page.waitForTimeout(3000)
 
-  // --- Step 1: Event Details ---
+  // --- Step 1: Task Details ---
   await page.getByRole('textbox').first().fill('Kirchentag 2026')
   await page.locator('textarea').fill(
     'Annual church congress with multiple duty stations across the venue.',
@@ -241,7 +241,7 @@ test(`Take How It Works step screenshots [${LANG}]`, async ({ page }) => {
 
   // Screenshot the accordion item (header + content) by going up from the region
   const detailsSection = page
-    .getByRole('region', { name: /Event Details|Veranstaltungsdetails/ })
+    .getByRole('region', { name: /Task Details|Veranstaltungsdetails/ })
     .locator('..')
   await detailsSection.screenshot({
     path: `${SCREENSHOT_DIR}/create-step1-details.png`,
@@ -249,11 +249,11 @@ test(`Take How It Works step screenshots [${LANG}]`, async ({ page }) => {
   })
   console.log(`  Saved: ${SCREENSHOT_DIR}/create-step1-details.png`)
 
-  // Click Next to move to Event Group
+  // Click Next to move to Event
   await page.getByRole('button', { name: labels.next }).click()
   await page.waitForTimeout(500)
 
-  // Skip Event Group, click Next to move to Dates
+  // Skip Event, click Next to move to Dates
   await page.getByRole('button', { name: labels.next }).click()
   await page.waitForTimeout(500)
 
@@ -276,7 +276,7 @@ test(`Take How It Works step screenshots [${LANG}]`, async ({ page }) => {
   await page.waitForTimeout(300)
 
   const datesSection = page
-    .getByRole('region', { name: /Event Dates|Veranstaltungstermine/ })
+    .getByRole('region', { name: /Task Dates|Veranstaltungstermine/ })
     .locator('..')
   await datesSection.screenshot({
     path: `${SCREENSHOT_DIR}/create-step2-dates.png`,
@@ -284,7 +284,7 @@ test(`Take How It Works step screenshots [${LANG}]`, async ({ page }) => {
   })
   console.log(`  Saved: ${SCREENSHOT_DIR}/create-step2-dates.png`)
 
-  // Click Next to move to Schedule & Slots
+  // Click Next to move to Schedule & Shifts
   await page.getByRole('button', { name: labels.next }).click()
   await page.waitForTimeout(500)
 
@@ -309,7 +309,7 @@ test(`Take How It Works step screenshots [${LANG}]`, async ({ page }) => {
   await page.waitForTimeout(300)
 
   const scheduleSection = page
-    .getByRole('region', { name: /Schedule & Slots|Zeitplan & Schichten/ })
+    .getByRole('region', { name: /Schedule & Shifts|Zeitplan & Schichten/ })
     .locator('..')
   await scheduleSection.screenshot({
     path: `${SCREENSHOT_DIR}/create-step3-schedule.png`,

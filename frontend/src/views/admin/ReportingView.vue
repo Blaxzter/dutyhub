@@ -20,7 +20,7 @@ import {
 import ReportingBookingsChart from '@/components/admin/reporting/ReportingBookingsChart.vue'
 import ReportingBusiestTimes from '@/components/admin/reporting/ReportingBusiestTimes.vue'
 import ReportingCategoryBreakdown from '@/components/admin/reporting/ReportingCategoryBreakdown.vue'
-import ReportingEventFillRates from '@/components/admin/reporting/ReportingEventFillRates.vue'
+import ReportingTaskFillRates from '@/components/admin/reporting/ReportingTaskFillRates.vue'
 import ReportingOverviewCards from '@/components/admin/reporting/ReportingOverviewCards.vue'
 import ReportingTopVolunteers from '@/components/admin/reporting/ReportingTopVolunteers.vue'
 
@@ -127,7 +127,7 @@ async function exportCsv() {
 async function handleVisibleMonth(range: { from: string; to: string }) {
   try {
     const res = await get<{ data: string[] }>({
-      url: '/events/active-dates',
+      url: '/tasks/active-dates',
       query: { date_from: range.from, date_to: range.to },
     })
     markedDays.value = new Set(res.data)
@@ -234,14 +234,14 @@ onMounted(() => {
           :categories="data.category_breakdown"
         />
 
-        <ReportingEventFillRates
-          v-if="data.event_fill_rates.length > 0"
-          :events="data.event_fill_rates"
+        <ReportingTaskFillRates
+          v-if="data.task_fill_rates.length > 0"
+          :tasks="data.task_fill_rates"
         />
       </div>
 
       <!-- No data state -->
-      <Card v-if="data.overview.total_bookings === 0 && data.overview.total_events === 0">
+      <Card v-if="data.overview.total_bookings === 0 && data.overview.total_tasks === 0">
         <CardContent class="flex items-center justify-center py-12 text-muted-foreground">
           {{ t('admin.reporting.noData') }}
         </CardContent>

@@ -6,14 +6,14 @@
             "filterTooltipNone": "Kalendereinträge filtern",
             "filters": {
                 "bookings": "Meine Buchungen",
-                "events": "Veranstaltungen",
-                "groups": "Veranstaltungsgruppen"
+                "groups": "Veranstaltungsgruppen",
+                "tasks": "Veranstaltungen"
             },
             "hiddenCount": "{count} Kategorie ausgeblendet | {count} Kategorien ausgeblendet",
             "title": "Kalender"
         },
         "quickActions": {
-            "browseEvents": "Veranstaltungen durchsuchen",
+            "browseTasks": "Veranstaltungen durchsuchen",
             "howItWorks": "So funktioniert's",
             "myBookings": "Meine Buchungen",
             "title": "Schnellzugriff"
@@ -23,7 +23,7 @@
                 "description": "Ihre bestätigten Dienstbuchungen",
                 "title": "Meine Buchungen"
             },
-            "events": {
+            "tasks": {
                 "description": "Verfügbare Veranstaltungen",
                 "title": "Veranstaltungen"
             },

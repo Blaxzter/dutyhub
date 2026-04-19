@@ -114,8 +114,8 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
           </SidebarMenuButton>
         </SidebarMenuItem>
 
-        <!-- Collapsible group (has sub-items) — split: left navigates, right toggles -->
-        <Collapsible v-else as-child :default-open="item.isActive" class="group/collapsible">
+        <!-- Collapsible event (has sub-items) — split: left navigates, right toggles -->
+        <Collapsible v-else as-child :default-open="item.isActive" class="event/collapsible">
           <SidebarMenuItem>
             <SidebarSplitButton :is-active="isRouteActive(item.routeName)">
               <template #link>
@@ -132,11 +132,11 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
               <template #action>
                 <CollapsibleTrigger as-child>
                   <button
-                    class="flex shrink-0 items-center justify-center rounded-r-md px-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors group-data-[collapsible=icon]:hidden"
+                    class="flex shrink-0 items-center justify-center rounded-r-md px-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors event-data-[collapsible=icon]:hidden"
                     @click="handleSidebarToggle(item)"
                   >
                     <ChevronRight
-                      class="size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                      class="size-4 transition-transform duration-200 event-data-[state=open]/collapsible:rotate-90"
                     />
                   </button>
                 </CollapsibleTrigger>
