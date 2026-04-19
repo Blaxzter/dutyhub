@@ -6,18 +6,18 @@ import {
   type EventRead,
   type TaskWithShifts,
   createTaskWithShifts,
-  createGroup,
+  createEvent,
   deleteTask,
-  deleteGroup,
+  deleteEvent,
   uniqueName,
 } from '../../helpers/api.js'
 
 let created: TaskWithShifts
-let group: EventRead
+let event: EventRead
 
 test.beforeEach(async ({ adminPage: page }) => {
   await page.goto('/app/tasks')
-  group = await createGroup(page, uniqueName('E2E Print Group'))
+  event = await createEvent(page, uniqueName('E2E Print Event'))
   created = await createTaskWithShifts(page, {
     name: uniqueName('E2E Print Task'),
     status: 'published',
@@ -25,13 +25,13 @@ test.beforeEach(async ({ adminPage: page }) => {
     endTime: '12:00',
     slotDuration: 60,
     peoplePerShift: 2,
-    eventId: group.id,
+    eventId: event.id,
   })
 })
 
 test.afterEach(async ({ adminPage: page }) => {
   await deleteTask(page, created.task.id).catch(() => {})
-  await deleteGroup(page, group.id).catch(() => {})
+  await deleteEvent(page, event.id).catch(() => {})
 })
 
 test.describe('Print Task – smoke', () => {
@@ -57,20 +57,20 @@ test.describe('Print Task – smoke', () => {
   })
 })
 
-test.describe('Print Task Group – smoke', () => {
-  test('print task group page loads', async ({ adminPage: page }) => {
-    await page.goto(`/print/events/${group.id}`)
-    await expect(page).toHaveURL(new RegExp(`/print/events/${group.id}`))
+test.describe('Print Task Event – smoke', () => {
+  test('print event page loads', async ({ adminPage: page }) => {
+    await page.goto(`/print/events/${event.id}`)
+    await expect(page).toHaveURL(new RegExp(`/print/events/${event.id}`))
   })
 
-  test('shows print toolbar for group', async ({ adminPage: page }) => {
-    await page.goto(`/print/events/${group.id}`)
+  test('shows print toolbar for event', async ({ adminPage: page }) => {
+    await page.goto(`/print/events/${event.id}`)
     await expect(page.getByTestId('print-toolbar')).toBeVisible()
   })
 
-  test('shows group name in print content', async ({ adminPage: page }) => {
-    await page.goto(`/print/events/${group.id}`)
-    // Dynamic group name from fixture
-    await expect(page.getByText(group.name)).toBeVisible()
+  test('shows event name in print content', async ({ adminPage: page }) => {
+    await page.goto(`/print/events/${event.id}`)
+    // Dynamic event name from fixture
+    await expect(page.getByText(event.name)).toBeVisible()
   })
 })

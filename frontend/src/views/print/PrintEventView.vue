@@ -29,10 +29,10 @@ const { formatTime, formatDateLabel } = useFormatters()
 const route = useRoute()
 const { get } = useAuthenticatedClient()
 
-const groupId = computed(() => route.params.groupId as string)
+const eventId = computed(() => route.params.eventId as string)
 const mode = computed(() => (route.query.mode as string) ?? 'overview')
 
-const group = ref<EventRead | null>(null)
+const event = ref<EventRead | null>(null)
 const tasks = ref<TaskRead[]>([])
 const rawTaskShifts = ref<Map<string, ShiftRead[]>>(new Map())
 const eventBatches = ref<Map<string, ShiftBatchRead[]>>(new Map())
@@ -70,7 +70,7 @@ const eventShifts = computed(() => {
 })
 
 const groupUrl = computed(() => {
-  return `${window.location.origin}/app/events/${groupId.value}`
+  return `${window.location.origin}/app/events/${eventId.value}`
 })
 
 const eventUrl = (eventId: string) => {
@@ -112,30 +112,30 @@ const getShiftsByBatch = (eventId: string): BatchGroup[] => {
     }
   }
 
-  const groups: BatchGroup[] = []
+  const events: BatchGroup[] = []
   for (const batch of batchList) {
     const batchShifts = batchMap.get(batch.id) ?? []
-    if (batchShifts.length > 0) groups.push({ batch, shifts: batchShifts })
+    if (batchShifts.length > 0) events.push({ batch, shifts: batchShifts })
   }
-  if (unbatched.length > 0) groups.push({ batch: null, shifts: unbatched })
+  if (unbatched.length > 0) events.push({ batch: null, shifts: unbatched })
 
-  return groups
+  return events
 }
 
 const groupByDate = (shifts: ShiftRead[]) => {
-  const groups: Record<string, ShiftRead[]> = {}
+  const events: Record<string, ShiftRead[]> = {}
   for (const shift of shifts) {
-    if (!groups[shift.date]) groups[shift.date] = []
-    groups[shift.date].push(shift)
+    if (!events[shift.date]) events[shift.date] = []
+    events[shift.date].push(shift)
   }
-  for (const dateShifts of Object.values(groups)) {
+  for (const dateShifts of Object.values(events)) {
     dateShifts.sort(
       (a, b) =>
         (a.start_time ?? '').localeCompare(b.start_time ?? '') ||
         (a.end_time ?? '').localeCompare(b.end_time ?? ''),
     )
   }
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  return Object.entries(events).sort(([a], [b]) => a.localeCompare(b))
 }
 
 const batchLabel = (batch: ShiftBatchRead) => {
@@ -228,13 +228,13 @@ const toggleDate = (date: string, checked: boolean | 'indeterminate') => {
 onMounted(async () => {
   try {
     const [groupRes, tasksRes] = await Promise.all([
-      get<{ data: EventRead }>({ url: `/events/${groupId.value}` }),
+      get<{ data: EventRead }>({ url: `/events/${eventId.value}` }),
       get<{ data: TaskListResponse }>({
         url: '/tasks/',
-        query: { limit: 200, event_id: groupId.value },
+        query: { limit: 200, event_id: eventId.value },
       }),
     ])
-    group.value = groupRes.data
+    event.value = groupRes.data
     tasks.value = tasksRes.data.items.sort((a: TaskRead, b: TaskRead) =>
       a.start_date.localeCompare(b.start_date),
     )
@@ -344,18 +344,18 @@ onMounted(async () => {
       {{ t('common.states.loading') }}
     </div>
 
-    <div v-else-if="group" data-testid="print-content">
+    <div v-else-if="event" data-testid="print-content">
       <!-- ======================== OVERVIEW MODE ======================== -->
       <template v-if="mode === 'overview'">
         <div class="flex items-start justify-between gap-4">
           <div class="space-y-2 flex-1">
-            <h1 class="text-3xl font-bold">{{ group.name }}</h1>
-            <p v-if="group.description" class="text-muted-foreground text-lg">
-              {{ group.description }}
+            <h1 class="text-3xl font-bold">{{ event.name }}</h1>
+            <p v-if="event.description" class="text-muted-foreground text-lg">
+              {{ event.description }}
             </p>
             <p class="text-sm text-muted-foreground flex items-center gap-1">
               <CalendarDays class="h-4 w-4" />
-              {{ formatDate(group.start_date) }} – {{ formatDate(group.end_date) }}
+              {{ formatDate(event.start_date) }} – {{ formatDate(event.end_date) }}
             </p>
           </div>
           <div class="shrink-0 text-center space-y-1">
@@ -417,7 +417,7 @@ onMounted(async () => {
               <th class="text-left font-normal p-0 pb-4">
                 <div class="flex items-start justify-between gap-4">
                   <div class="space-y-2 flex-1">
-                    <p class="text-sm text-muted-foreground">{{ group.name }}</p>
+                    <p class="text-sm text-muted-foreground">{{ event.name }}</p>
                     <h1 class="text-3xl font-bold">{{ ev.name }}</h1>
                     <p v-if="ev.description" class="text-muted-foreground text-lg">
                       {{ ev.description }}

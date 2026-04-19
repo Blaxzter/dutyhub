@@ -53,7 +53,7 @@ class TestTasksRoutes:
     async def test_create_task_as_admin(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test that an admin can create an task."""
+        """Test that an admin can create a task."""
         r = await async_client.post(
             "/api/v1/tasks/",
             json={
@@ -70,7 +70,7 @@ class TestTasksRoutes:
     async def test_update_task_as_admin(
         self, async_client: AsyncClient, test_task: Task, as_admin: None
     ):
-        """Test that an admin can update an task."""
+        """Test that an admin can update a task."""
         r = await async_client.patch(
             f"/api/v1/tasks/{test_task.id}",
             json={"name": "Updated Task Name"},
@@ -82,7 +82,7 @@ class TestTasksRoutes:
     async def test_delete_task_as_admin(
         self, async_client: AsyncClient, test_task: Task, as_admin: None
     ):
-        """Test that an admin can delete an task."""
+        """Test that an admin can delete a task."""
         r = await async_client.delete(f"/api/v1/tasks/{test_task.id}")
 
         assert r.status_code == 204
@@ -110,7 +110,7 @@ class TestTasksRoutes:
     async def test_create_task_with_shifts(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test creating an task with auto-generated duty shifts."""
+        """Test creating a task with auto-generated duty shifts."""
         r = await async_client.post(
             "/api/v1/tasks/with-shifts",
             json={
@@ -141,7 +141,7 @@ class TestTasksRoutes:
     async def test_create_task_with_shifts_and_new_group(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test creating an task with shifts and a new task group."""
+        """Test creating a task with shifts and a new event."""
         r = await async_client.post(
             "/api/v1/tasks/with-shifts",
             json={
@@ -211,7 +211,7 @@ class TestTasksTaskManagerRole:
         async_client: AsyncClient,
         as_task_manager: None,
     ):
-        """Test that an task_manager can create an task (no group required)."""
+        """Test that a task_manager can create a task (no group required)."""
         r = await async_client.post(
             "/api/v1/tasks/",
             json={
@@ -246,7 +246,7 @@ class TestTasksTaskManagerRole:
         test_task: Task,
         as_task_manager: None,
     ):
-        """Test that an task_manager can update any task."""
+        """Test that a task_manager can update any task."""
         r = await async_client.patch(
             f"/api/v1/tasks/{test_task.id}",
             json={"name": "Updated by Manager"},
@@ -274,7 +274,7 @@ class TestTasksTaskManagerRole:
         test_task: Task,
         as_task_manager: None,
     ):
-        """Test that an task_manager can delete any task."""
+        """Test that a task_manager can delete any task."""
         r = await async_client.delete(f"/api/v1/tasks/{test_task.id}")
 
         assert r.status_code == 204
@@ -297,7 +297,7 @@ class TestTasksTaskManagerRole:
         test_task_manager_user: User,
         test_event: Event,
     ):
-        """Test that a scoped group manager can edit tasks in their assigned group."""
+        """Test that a scoped event manager can edit tasks in their assigned event."""
         from datetime import date
         from typing import Any, get_args
 
@@ -315,7 +315,7 @@ class TestTasksTaskManagerRole:
             event_id=test_event.id,
         )
 
-        # Create an task in that group
+        # Create a task in that group
         task = TaskModel(
             name="Group Task",
             start_date=date(2026, 7, 1),
@@ -357,7 +357,7 @@ class TestTasksTaskManagerRole:
         test_event: Event,
         test_draft_event: Event,
     ):
-        """Test that a scoped group manager cannot edit tasks in another group."""
+        """Test that a scoped event manager cannot edit tasks in another event."""
         from datetime import date
         from typing import Any, get_args
 

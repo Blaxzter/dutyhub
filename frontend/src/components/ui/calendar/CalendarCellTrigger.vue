@@ -23,7 +23,7 @@ const forwardedProps = useForwardProps(delegatedProps)
 
 <template>
   <CalendarCellTrigger
-    data-shift="calendar-cell-trigger"
+    data-slot="calendar-cell-trigger"
     :class="
       cn(
         buttonVariants({ variant: 'ghost' }),

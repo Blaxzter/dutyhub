@@ -28,7 +28,7 @@
     "body": "A new task \"{task_name}\" has been published. Check it out!"
   },
   "event.published": {
-    "title": "New Task Group Published",
+    "title": "New Event Published",
     "body": "Task group \"{event_name}\" has been published."
   },
   "user.registered": {

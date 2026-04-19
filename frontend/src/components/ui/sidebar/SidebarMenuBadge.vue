@@ -10,7 +10,7 @@ const props = defineProps<{
 
 <template>
   <div
-    data-shift="sidebar-menu-badge"
+    data-slot="sidebar-menu-badge"
     data-sidebar="menu-badge"
     :class="
       cn(
@@ -19,7 +19,7 @@ const props = defineProps<{
         'peer-data-[size=sm]/menu-button:top-1',
         'peer-data-[size=default]/menu-button:top-1.5',
         'peer-data-[size=lg]/menu-button:top-2.5',
-        'group-data-[collapsible=icon]:hidden',
+        'event-data-[collapsible=icon]:hidden',
         props.class,
       )
     "

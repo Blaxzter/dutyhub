@@ -65,19 +65,19 @@ const showTitleColumn = computed(() => showTitle.value)
 const showLocationColumn = computed(() => showLocation.value && hasAnyLocation.value)
 
 const groupByDate = (shifts: ShiftRead[]) => {
-  const groups: Record<string, ShiftRead[]> = {}
+  const events: Record<string, ShiftRead[]> = {}
   for (const shift of shifts) {
-    if (!groups[shift.date]) groups[shift.date] = []
-    groups[shift.date].push(shift)
+    if (!events[shift.date]) events[shift.date] = []
+    events[shift.date].push(shift)
   }
-  for (const dateShifts of Object.values(groups)) {
+  for (const dateShifts of Object.values(events)) {
     dateShifts.sort(
       (a, b) =>
         (a.start_time ?? '').localeCompare(b.start_time ?? '') ||
         (a.end_time ?? '').localeCompare(b.end_time ?? ''),
     )
   }
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  return Object.entries(events).sort(([a], [b]) => a.localeCompare(b))
 }
 
 interface BatchGroup {
@@ -102,14 +102,14 @@ const shiftsByBatch = computed<BatchGroup[]>(() => {
     }
   }
 
-  const groups: BatchGroup[] = []
+  const events: BatchGroup[] = []
   for (const batch of batches.value) {
     const shifts = batchMap.get(batch.id) ?? []
-    if (shifts.length > 0) groups.push({ batch, shifts })
+    if (shifts.length > 0) events.push({ batch, shifts })
   }
-  if (unbatched.length > 0) groups.push({ batch: null, shifts: unbatched })
+  if (unbatched.length > 0) events.push({ batch: null, shifts: unbatched })
 
-  return groups
+  return events
 })
 
 const batchLabel = (batch: ShiftBatchRead) => {
@@ -333,22 +333,22 @@ onMounted(async () => {
               <!-- Duty Shifts -->
               <div v-if="shifts.length > 0" class="space-y-4">
                 <div
-                  v-for="group in shiftsByBatch"
-                  :key="group.batch?.id ?? 'all'"
+                  v-for="event in shiftsByBatch"
+                  :key="event.batch?.id ?? 'all'"
                   class="space-y-3"
                 >
-                  <h3 v-if="group.batch" class="font-semibold text-lg">
-                    {{ batchLabel(group.batch) }}
+                  <h3 v-if="event.batch" class="font-semibold text-lg">
+                    {{ batchLabel(event.batch) }}
                     <span
-                      v-if="group.batch.location"
+                      v-if="event.batch.location"
                       class="text-sm font-normal text-muted-foreground ml-2"
                     >
-                      {{ group.batch.location }}
+                      {{ event.batch.location }}
                     </span>
                   </h3>
 
                   <div
-                    v-for="[date, shifts] in groupByDate(group.shifts)"
+                    v-for="[date, shifts] in groupByDate(event.shifts)"
                     :key="date"
                     class="space-y-1 print-keep-together"
                   >

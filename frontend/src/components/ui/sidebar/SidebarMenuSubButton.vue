@@ -23,7 +23,7 @@ const props = withDefaults(
 
 <template>
   <Primitive
-    data-shift="sidebar-menu-sub-button"
+    data-slot="sidebar-menu-sub-button"
     data-sidebar="menu-sub-button"
     :as="as"
     :as-child="asChild"
@@ -35,7 +35,7 @@ const props = withDefaults(
         'data-[active=true]:bg-black/10 data-[active=true]:dark:bg-white/10 data-[active=true]:text-sidebar-accent-foreground data-[active=true]:font-medium',
         size === 'sm' && 'text-xs',
         size === 'md' && 'text-sm',
-        'group-data-[collapsible=icon]:hidden',
+        'event-data-[collapsible=icon]:hidden',
         props.class,
       )
     "

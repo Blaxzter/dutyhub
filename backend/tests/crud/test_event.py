@@ -22,7 +22,7 @@ class TestCRUDEvent:
     """Test suite for Event CRUD operations."""
 
     async def test_create_event(self, db_session: AsyncSession, test_user: User):
-        """Test creating a new task group."""
+        """Test creating a new event."""
         group_in = EventCreate(
             name="Summer Camp 2026",
             start_date=datetime.date(2026, 7, 1),
@@ -38,7 +38,7 @@ class TestCRUDEvent:
         assert group.id is not None
 
     async def test_get_event(self, db_session: AsyncSession, test_event: Event):
-        """Test getting an task group by ID."""
+        """Test getting an event by ID."""
         group = await crud_event.get(db_session, test_event.id)
 
         assert group is not None
@@ -46,14 +46,14 @@ class TestCRUDEvent:
         assert group.id == test_event.id
 
     async def test_get_nonexistent_event(self, db_session: AsyncSession):
-        """Test getting a non-existent task group returns None."""
+        """Test getting a non-existent event returns None."""
         import uuid
 
         group = await crud_event.get(db_session, uuid.uuid4())
         assert group is None
 
     async def test_update_event(self, db_session: AsyncSession, test_event: Event):
-        """Test updating an task group."""
+        """Test updating an event."""
         update = EventUpdate(name="Updated Group Name")
         updated = await crud_event.update(db_session, db_obj=test_event, obj_in=update)
 
@@ -66,7 +66,7 @@ class TestCRUDEvent:
         test_event: Event,
         test_draft_event: Event,
     ):
-        """Test filtering task groups by status."""
+        """Test filtering events by status."""
         published = await crud_event.get_multi_filtered(db_session, status="published")
         assert any(g.id == test_event.id for g in published)
         assert all(g.status == "published" for g in published)
@@ -78,21 +78,21 @@ class TestCRUDEvent:
     async def test_get_multi_filtered_by_search(
         self, db_session: AsyncSession, test_event: Event
     ):
-        """Test searching task groups by name."""
+        """Test searching events by name."""
         results = await crud_event.get_multi_filtered(db_session, search="Kirchentags")
         assert any(g.id == test_event.id for g in results)
 
     async def test_get_count_filtered(
         self, db_session: AsyncSession, test_event: Event
     ):
-        """Test counting task groups with a filter."""
+        """Test counting events with a filter."""
         count = await crud_event.get_count_filtered(db_session, status="published")
         assert count >= 1
 
     async def test_get_count_filtered_search(
         self, db_session: AsyncSession, test_event: Event
     ):
-        """Test counting task groups by search term."""
+        """Test counting events by search term."""
         count = await crud_event.get_count_filtered(db_session, search="Kirchentags")
         assert count >= 1
 

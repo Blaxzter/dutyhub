@@ -84,7 +84,7 @@
 - [x] Sidebar navigation
 - [x] Direct URL navigation
 - [x] Heading and search input
-- [x] Created group appears with published badge
+- [x] Created event appears with published badge
 - [x] Search filters list
 - [x] Click card navigates to detail
 - [x] Admin: Create button visible
@@ -93,9 +93,9 @@
 - [x] Detail page: name and status badge
 - [x] Detail page: date range
 - [x] Detail page: My Availability section
-- [x] Detail page: Tasks in this Group section
+- [x] Detail page: Tasks in this Event section
 - [x] Detail page: back button
-- [x] Detail page: non-existent group handling
+- [x] Detail page: non-existent event handling
 - [x] Availability: Register button when none set
 - [x] Availability: dialog opens with type options
 - [x] Availability: cancel dialog without saving
@@ -119,7 +119,7 @@
 - [x] Booking shows confirmed status
 - [x] Cancel booking from bookings page
 - [x] Filter switching (all, this month)
-- [x] Grouping buttons visible
+- [x] Eventing buttons visible
 
 ### Settings (`/app/settings`)
 - [x] Page accessible via URL
@@ -163,7 +163,7 @@
 - [x] No Create button on events
 - [x] No Delete button on event cards
 - [x] No member availabilities admin table
-- [x] Can see published groups, cannot see drafts
+- [x] Can see published events, cannot see drafts
 - [x] Can manage own availability
 - [x] No User Management sidebar link
 - [x] No Demo Data sidebar link
@@ -171,8 +171,8 @@
 ### Cross-User Scenarios
 - [x] Admin creates task → member sees in list
 - [x] Member books shift → admin sees updated count
-- [x] Admin publishes group → member sees it
-- [x] Admin draft group → hidden from member
+- [x] Admin publishes event → member sees it
+- [x] Admin draft event → hidden from member
 - [x] Member registers availability → admin sees in table
 - [x] Member removes availability → admin sees empty state
 - [x] Multiple members' availability visible to admin

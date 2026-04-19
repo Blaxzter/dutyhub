@@ -18,8 +18,8 @@ import type { EventRead } from '@/client/types.gen'
 import { formatDate } from '@/lib/format'
 
 const props = defineProps<{
-  group: EventRead
-  groupId: string
+  event: EventRead
+  eventId: string
   canManage?: boolean
 }>()
 
@@ -35,17 +35,17 @@ const router = useRouter()
   <!-- Mobile header (<xl): stacked -->
   <div class="space-y-2 xl:hidden">
     <h1 class="text-2xl sm:text-3xl font-bold leading-tight">
-      {{ props.group.name }}
+      {{ props.event.name }}
     </h1>
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
       <div class="flex items-center gap-1.5">
         <StatusDropdown
-          :status="props.group.status"
+          :status="props.event.status"
           i18n-prefix="duties.events.statuses"
           :editable="props.canManage"
           @change="emit('statusChange', $event)"
         />
-        <Popover v-if="props.group.status === 'draft'">
+        <Popover v-if="props.event.status === 'draft'">
           <PopoverTrigger as-child>
             <button
               type="button"
@@ -62,11 +62,11 @@ const router = useRouter()
       </div>
       <p class="text-sm text-muted-foreground">
         <CalendarDays class="mr-1 inline h-3.5 w-3.5" />
-        {{ formatDate(props.group.start_date) }} – {{ formatDate(props.group.end_date) }}
+        {{ formatDate(props.event.start_date) }} – {{ formatDate(props.event.end_date) }}
       </p>
     </div>
-    <p v-if="props.group.description" class="text-muted-foreground">
-      {{ props.group.description }}
+    <p v-if="props.event.description" class="text-muted-foreground">
+      {{ props.event.description }}
     </p>
   </div>
 
@@ -74,16 +74,16 @@ const router = useRouter()
   <div class="hidden xl:flex flex-wrap items-start justify-between gap-4">
     <div class="space-y-1">
       <div class="flex items-center gap-3">
-        <h1 data-testid="page-heading" class="text-3xl font-bold">{{ props.group.name }}</h1>
+        <h1 data-testid="page-heading" class="text-3xl font-bold">{{ props.event.name }}</h1>
         <div class="flex items-center gap-1.5">
           <StatusDropdown
-            data-testid="group-status"
-            :status="props.group.status"
+            data-testid="event-status"
+            :status="props.event.status"
             i18n-prefix="duties.events.statuses"
             :editable="props.canManage"
             @change="emit('statusChange', $event)"
           />
-          <Popover v-if="props.group.status === 'draft'">
+          <Popover v-if="props.event.status === 'draft'">
             <PopoverTrigger as-child>
               <button
                 type="button"
@@ -99,12 +99,12 @@ const router = useRouter()
           </Popover>
         </div>
       </div>
-      <p v-if="props.group.description" class="text-muted-foreground">
-        {{ props.group.description }}
+      <p v-if="props.event.description" class="text-muted-foreground">
+        {{ props.event.description }}
       </p>
       <p class="text-sm text-muted-foreground">
         <CalendarDays class="mr-1 inline h-3.5 w-3.5" />
-        {{ formatDate(props.group.start_date) }} – {{ formatDate(props.group.end_date) }}
+        {{ formatDate(props.event.start_date) }} – {{ formatDate(props.event.end_date) }}
       </p>
     </div>
     <DropdownMenu>
@@ -120,7 +120,7 @@ const router = useRouter()
           @click="
             router.push({
               name: 'print-event',
-              params: { groupId: props.groupId },
+              params: { eventId: props.eventId },
               query: { mode: 'overview' },
             })
           "
@@ -132,7 +132,7 @@ const router = useRouter()
           @click="
             router.push({
               name: 'print-event',
-              params: { groupId: props.groupId },
+              params: { eventId: props.eventId },
               query: { mode: 'all' },
             })
           "

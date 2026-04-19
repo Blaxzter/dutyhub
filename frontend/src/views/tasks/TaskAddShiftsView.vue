@@ -48,11 +48,11 @@ const submitting = ref(false)
 const task = ref<TaskRead | null>(null)
 const event = ref<EventRead | null>(null)
 
-// --- Task group date constraints ---
-const groupMinDate = computed(() =>
+// --- Task event date constraints ---
+const eventMinDate = computed(() =>
   event.value ? parseDate(event.value.start_date) : undefined,
 )
-const groupMaxDate = computed(() =>
+const eventMaxDate = computed(() =>
   event.value ? parseDate(event.value.end_date) : undefined,
 )
 
@@ -217,7 +217,7 @@ const loadTask = async () => {
       return
     }
 
-    // Fetch task group for date constraints
+    // Fetch task event for date constraints
     if (ev.event_id) {
       try {
         const groupResponse = await get<{ data: EventRead }>({
@@ -379,7 +379,7 @@ onMounted(loadTask)
           <!-- Single date -->
           <div v-if="dateMode === 'single'" class="space-y-2">
             <Label>{{ t('duties.shifts.fields.date') }} *</Label>
-            <DatePicker v-model="singleDate" :min-value="groupMinDate" :max-value="groupMaxDate" />
+            <DatePicker v-model="singleDate" :min-value="eventMinDate" :max-value="eventMaxDate" />
           </div>
 
           <!-- Date range -->
@@ -388,16 +388,16 @@ onMounted(loadTask)
               <Label>{{ t('duties.tasks.fields.startDate') }} *</Label>
               <DatePicker
                 v-model="rangeStartDate"
-                :min-value="groupMinDate"
-                :max-value="rangeEndDate || groupMaxDate"
+                :min-value="eventMinDate"
+                :max-value="rangeEndDate || eventMaxDate"
               />
             </div>
             <div class="space-y-2">
               <Label>{{ t('duties.tasks.fields.endDate') }} *</Label>
               <DatePicker
                 v-model="rangeEndDate"
-                :min-value="rangeStartDate || groupMinDate"
-                :max-value="groupMaxDate"
+                :min-value="rangeStartDate || eventMinDate"
+                :max-value="eventMaxDate"
                 :highlight="rangeStartDate"
               />
             </div>
@@ -410,8 +410,8 @@ onMounted(loadTask)
                 <Label>{{ t('duties.tasks.createView.addDate') }}</Label>
                 <DatePicker
                   v-model="specificDatePicker"
-                  :min-value="groupMinDate"
-                  :max-value="groupMaxDate"
+                  :min-value="eventMinDate"
+                  :max-value="eventMaxDate"
                 />
               </div>
               <Button :disabled="!specificDatePicker" @click="addSpecificDate">

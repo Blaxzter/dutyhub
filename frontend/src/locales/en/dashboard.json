@@ -6,7 +6,7 @@
             "filterTooltipNone": "Filter calendar items",
             "filters": {
                 "bookings": "My Bookings",
-                "groups": "Task Groups",
+                "groups": "Events",
                 "tasks": "Tasks"
             },
             "hiddenCount": "{count} category hidden | {count} categories hidden",

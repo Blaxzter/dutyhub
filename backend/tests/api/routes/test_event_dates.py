@@ -1,4 +1,4 @@
-"""Tests for task group date-bounds, shift-dates, and date validation endpoints."""
+"""Tests for event date-bounds, shift-dates, and date validation endpoints."""
 
 import datetime
 import uuid
@@ -36,7 +36,7 @@ async def group_with_tasks(
     test_event: Event,
     test_user: User,
 ) -> tuple[Event, list[Task]]:
-    """Create a published task group with two tasks inside it."""
+    """Create a published event with two tasks inside it."""
     task_a = Task(
         name="Task A",
         start_date=datetime.date(2026, 6, 10),
@@ -194,7 +194,7 @@ class TestTaskDateBounds:
 
 @pytest.mark.asyncio
 class TestUpdateEventDateValidation:
-    """Test enhanced date validation when updating task groups."""
+    """Test enhanced date validation when updating events."""
 
     async def test_rejects_end_before_start(
         self,

@@ -50,7 +50,7 @@ test.describe('Task Create – form wizard', () => {
       .getByTestId('section-task-details')
       .getByRole('button', { name: /next|weiter/i })
       .click()
-    // Second section should now be visible (Task Group)
+    // Second section should now be visible (Task Event)
     await expect(page.getByTestId('section-event')).toBeVisible()
   })
 })

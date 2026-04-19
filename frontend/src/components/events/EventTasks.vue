@@ -13,7 +13,7 @@ import { statusVariant } from '@/lib/status'
 
 defineProps<{
   tasks: TaskRead[]
-  groupId: string
+  eventId: string
   canManage?: boolean
 }>()
 
@@ -33,7 +33,7 @@ const navigateToTask = (task: TaskRead) => {
         v-if="canManage"
         size="sm"
         class="max-xl:hidden"
-        @click="router.push({ name: 'task-create', query: { groupId } })"
+        @click="router.push({ name: 'task-create', query: { eventId } })"
       >
         <Plus class="mr-1.5 h-4 w-4" />
         {{ t('duties.tasks.create') }}

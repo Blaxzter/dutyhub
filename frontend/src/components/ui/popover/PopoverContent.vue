@@ -28,7 +28,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 <template>
   <PopoverPortal>
     <PopoverContent
-      data-shift="popover-content"
+      data-slot="popover-content"
       v-bind="{ ...$attrs, ...forwarded }"
       :class="
         cn(

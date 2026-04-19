@@ -131,7 +131,7 @@ async def create_demo_data(
     db: DBDep,
     _current_user: CurrentSuperuser,
 ) -> DemoDataCreatedResponse:
-    """Create demo task groups, tasks, users, and duty shifts."""
+    """Create demo events, tasks, users, and duty shifts."""
     rng = random.Random()  # noqa: S311
     today = dt.date.today()
     created_groups: list[Event] = []
@@ -147,7 +147,7 @@ async def create_demo_data(
         group_end = group_start + dt.timedelta(days=rng.randint(5, 9))
         group = Event(
             name=f"{DEMO_PREFIX} {name}",
-            description=f"Auto-generated demo task group #{i + 1}",
+            description=f"Auto-generated demo event #{i + 1}",
             start_date=group_start,
             end_date=group_end,
             status="published" if params.publish_tasks else "draft",
@@ -333,7 +333,7 @@ async def delete_demo_data(
     for e in demo_tasks:
         await db.delete(e)
 
-    # Delete demo task groups
+    # Delete demo events
     demo_groups = (
         (await db.execute(select(Event).where(col(Event.name).startswith(DEMO_PREFIX))))
         .scalars()

@@ -12,7 +12,7 @@ from app.models.user_availability import UserAvailability, UserAvailabilityDate
 
 @pytest_asyncio.fixture
 async def test_event(db_session: AsyncSession, test_user: User) -> Event:
-    """Create a published test task group."""
+    """Create a published test event."""
     group = Event(
         name="Kirchentags Woche 2026",
         description="Überregionale Kirchentags-Aktionswoche",
@@ -29,7 +29,7 @@ async def test_event(db_session: AsyncSession, test_user: User) -> Event:
 
 @pytest_asyncio.fixture
 async def test_draft_event(db_session: AsyncSession, test_user: User) -> Event:
-    """Create a draft test task group."""
+    """Create a draft test event."""
     group = Event(
         name="Adventskonzert 2026",
         description="Draft group",

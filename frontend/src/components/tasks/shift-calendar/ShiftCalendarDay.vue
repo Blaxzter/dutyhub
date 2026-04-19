@@ -13,7 +13,7 @@ defineProps<{
 
 const emit = defineEmits<{
   navigateTask: [task: CalendarTask]
-  navigateGroup: [group: CalendarEvent]
+  navigateGroup: [event: CalendarEvent]
   navigateBooking: [booking: BookingCalendarItem]
 }>()
 
@@ -22,15 +22,15 @@ const { t } = useI18n()
 
 <template>
   <div class="space-y-4">
-    <!-- Active groups for this day -->
-    <div v-if="day.groups.length > 0" class="flex flex-wrap gap-2">
+    <!-- Active events for this day -->
+    <div v-if="day.events.length > 0" class="flex flex-wrap gap-2">
       <button
-        v-for="group in day.groups"
-        :key="'dg-' + group.id"
+        v-for="event in day.events"
+        :key="'dg-' + event.id"
         class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/25 transition-colors"
-        @click="emit('navigateGroup', group)"
+        @click="emit('navigateGroup', event)"
       >
-        {{ group.name }}
+        {{ event.name }}
       </button>
     </div>
 
@@ -88,7 +88,7 @@ const { t } = useI18n()
 
     <!-- Empty state -->
     <div
-      v-if="day.tasks.length === 0 && day.bookings.length === 0 && day.groups.length === 0"
+      v-if="day.tasks.length === 0 && day.bookings.length === 0 && day.events.length === 0"
       class="py-12 text-center text-muted-foreground"
     >
       {{ t('duties.tasks.calendar.noItems') }}

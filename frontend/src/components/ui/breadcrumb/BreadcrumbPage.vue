@@ -10,7 +10,7 @@ const props = defineProps<{
 
 <template>
   <span
-    data-shift="breadcrumb-page"
+    data-slot="breadcrumb-page"
     role="link"
     aria-disabled="true"
     aria-current="page"

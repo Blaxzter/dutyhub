@@ -157,14 +157,14 @@ const groupedBookings = computed<BookingGroup[]>(() => {
     return [{ key: '__all__', label: '', bookings: sortedBookings.value }]
   }
 
-  const groups = new Map<string, BookingReadWithShift[]>()
+  const events = new Map<string, BookingReadWithShift[]>()
   for (const booking of sortedBookings.value) {
     const k = groupKey(booking)
-    if (!groups.has(k)) groups.set(k, [])
-    groups.get(k)!.push(booking)
+    if (!events.has(k)) events.set(k, [])
+    events.get(k)!.push(booking)
   }
 
-  return Array.from(groups.entries()).map(([key, items]) => ({
+  return Array.from(events.entries()).map(([key, items]) => ({
     key,
     label: groupLabel(key),
     bookings: items,
@@ -297,7 +297,7 @@ onMounted(loadBookings)
             <Tooltip v-for="opt in groupingOptions" :key="opt.mode">
               <TooltipTrigger as-child>
                 <Button
-                  :data-testid="`btn-group-${opt.mode}`"
+                  :data-testid="`btn-event-${opt.mode}`"
                   :variant="activeGrouping === opt.mode ? 'default' : 'ghost'"
                   size="sm"
                   class="rounded-none border-0"
@@ -359,22 +359,22 @@ onMounted(loadBookings)
 
     <!-- Bookings (grouped or flat) -->
     <div v-else class="space-y-8">
-      <section v-for="group in groupedBookings" :key="group.key">
+      <section v-for="event in groupedBookings" :key="event.key">
         <!-- Group header (only when grouping is active) -->
-        <div v-if="group.label" class="flex items-center gap-3 mb-4">
-          <h2 class="text-lg font-semibold truncate min-w-0 max-w-sm" :title="group.label">
-            {{ group.label }}
+        <div v-if="event.label" class="flex items-center gap-3 mb-4">
+          <h2 class="text-lg font-semibold truncate min-w-0 max-w-sm" :title="event.label">
+            {{ event.label }}
           </h2>
           <Separator class="flex-1" />
           <span class="text-sm text-muted-foreground whitespace-nowrap">
-            {{ group.bookings.length }}
+            {{ event.bookings.length }}
           </span>
         </div>
 
         <!-- Bookings grid -->
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <Card
-            v-for="booking in group.bookings"
+            v-for="booking in event.bookings"
             :key="booking.id"
             :class="[booking.status === 'cancelled' ? 'opacity-75 border-destructive/30' : '']"
           >

@@ -51,9 +51,9 @@ async def list_events(
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
 ) -> EventListResponse:
-    """List published task groups (all users) or all groups (admin/manager).
+    """List published events (all users) or all groups (admin/manager).
 
-    Scoped group managers see published groups plus their managed groups
+    Scoped event managers see published groups plus their managed groups
     regardless of status.
     """
     effective_status = status
@@ -63,7 +63,7 @@ async def list_events(
         # Global admin/task_manager — see everything
         pass
     else:
-        # Check if user is a scoped group manager
+        # Check if user is a scoped event manager
         result = await session.execute(
             sa_select(col(EventManager.event_id)).where(
                 col(EventManager.user_id) == current_user.id
@@ -110,7 +110,7 @@ async def get_event(
 ) -> Event:
     db_group = await crud_event.get(session, group_id, raise_404_error=True)
     if not current_user.is_manager and db_group.status != "published":
-        # Allow scoped group managers to see their own unpublished groups
+        # Allow scoped event managers to see their own unpublished groups
         is_scoped = await crud_egm.is_manager(
             session, user_id=current_user.id, event_id=group_id
         )
@@ -166,19 +166,19 @@ async def update_event(
             raise_problem(
                 422,
                 code="event.date_range_conflict",
-                detail=f"Cannot set start date after {earliest_task.isoformat()} — an task starts on that date",
+                detail=f"Cannot set start date after {earliest_task.isoformat()} — a task starts on that date",
             )
         if latest_task is not None and new_end < latest_task:
             raise_problem(
                 422,
                 code="event.date_range_conflict",
-                detail=f"Cannot set end date before {latest_task.isoformat()} — an task ends on that date",
+                detail=f"Cannot set end date before {latest_task.isoformat()} — a task ends on that date",
             )
 
     old_status = db_group.status
     updated = await crud_event.update(session, db_obj=db_group, obj_in=group_in)
 
-    # Notify when task group is published
+    # Notify when event is published
     if old_status != "published" and updated.status == "published":
         from app.logic.notifications.triggers import dispatch_event_published
 
@@ -220,7 +220,7 @@ async def shift_event_dates(
     session: DBDep,
     current_user: CurrentUser,
 ) -> Event:
-    """Shift the entire task group and all its tasks/shifts/availabilities by a date offset.
+    """Shift the entire event and all its tasks/shifts/availabilities by a date offset.
 
     The offset is calculated from the difference between the current group
     start_date and the provided new_start_date.
@@ -232,7 +232,7 @@ async def shift_event_dates(
     if delta.days == 0:
         return db_group
 
-    # 1. Shift the task group itself
+    # 1. Shift the event itself
     db_group.start_date = db_group.start_date + delta
     db_group.end_date = db_group.end_date + delta
     session.add(db_group)
@@ -364,14 +364,14 @@ async def delete_event(
 
 
 @router.get("/{group_id}/availabilities", response_model=list[UserAvailabilityWithUser])
-async def list_group_availabilities(
+async def list_event_availabilities(
     group_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=200, ge=1, le=500),
 ) -> list[UserAvailabilityWithUser]:
-    """List all user availabilities for this task group (managers only)."""
+    """List all user availabilities for this event (managers only)."""
     await crud_event.get(session, group_id, raise_404_error=True)
     await require_event_access(current_user, session, group_id)
     availabilities = await crud_availability.get_multi_by_group(
@@ -472,12 +472,12 @@ async def delete_my_availability(
 
 
 @router.get("/{group_id}/managers", response_model=list[UserRead])
-async def list_group_managers(
+async def list_event_managers(
     group_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
 ) -> list[UserRead]:
-    """List all assigned managers for this task group."""
+    """List all assigned managers for this event."""
     await crud_event.get(session, group_id, raise_404_error=True)
     await require_event_access(current_user, session, group_id)
     assignments = await crud_egm.get_by_group(session, event_id=group_id)
@@ -497,7 +497,7 @@ async def assign_group_manager(
     session: DBDep,
     _current_user: CurrentSuperuser,
 ) -> UserRead:
-    """Admin-only: assign a user as manager of this task group."""
+    """Admin-only: assign a user as manager of this event."""
     await crud_event.get(session, group_id, raise_404_error=True)
     user = await crud_user.get(session, id=user_id, raise_404_error=True)
     await crud_egm.assign(session, user_id=user_id, event_id=group_id)
@@ -511,7 +511,7 @@ async def remove_group_manager(
     session: DBDep,
     _current_user: CurrentSuperuser,
 ) -> None:
-    """Admin-only: remove a user as manager of this task group."""
+    """Admin-only: remove a user as manager of this event."""
     await crud_event.get(session, group_id, raise_404_error=True)
     removed = await crud_egm.remove(session, user_id=user_id, event_id=group_id)
     if not removed:

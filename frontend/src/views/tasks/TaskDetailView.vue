@@ -110,7 +110,7 @@ interface BatchGroup {
 
 const shiftsByBatch = computed<BatchGroup[]>(() => {
   if (!hasBatches.value) {
-    // No batches — return all shifts as a single group
+    // No batches — return all shifts as a single event
     return [{ batch: null, shifts: shifts.value }]
   }
 
@@ -126,22 +126,22 @@ const shiftsByBatch = computed<BatchGroup[]>(() => {
     }
   }
 
-  const groups: BatchGroup[] = []
+  const events: BatchGroup[] = []
 
-  // Add batch groups in order
+  // Add batch events in order
   for (const batch of batches.value) {
     const shifts = batchMap.get(batch.id) ?? []
     if (shifts.length > 0) {
-      groups.push({ batch, shifts })
+      events.push({ batch, shifts })
     }
   }
 
   // Add unbatched shifts if any
   if (unbatched.length > 0) {
-    groups.push({ batch: null, shifts: unbatched })
+    events.push({ batch: null, shifts: unbatched })
   }
 
-  return groups
+  return events
 })
 
 // --- Filters ---
@@ -172,9 +172,9 @@ const isFilterActive = computed(
   () => filterLocation.value !== null || filterCategory.value !== null,
 )
 
-// Visible batch groups (groups with at least one shift matching the filter)
+// Visible batch events (events with at least one shift matching the filter)
 const visibleBatchGroups = computed(() => {
-  return shiftsByBatch.value.filter((group) => filterShifts(group.shifts).length > 0)
+  return shiftsByBatch.value.filter((event) => filterShifts(event.shifts).length > 0)
 })
 
 // Count of shifts hidden by the active filter
@@ -200,7 +200,7 @@ const sharedCategory = computed(() => {
   return null
 })
 
-// Filter shifts within a group
+// Filter shifts within a event
 const filterShifts = (shifts: ShiftRead[]) => {
   return shifts.filter((shift) => {
     if (filterLocation.value && shift.location !== filterLocation.value) return false
@@ -209,22 +209,22 @@ const filterShifts = (shifts: ShiftRead[]) => {
   })
 }
 
-// Group shifts by date (for rendering within a batch group)
+// Group shifts by date (for rendering within a batch event)
 const groupByDate = (shifts: ShiftRead[]) => {
-  const groups: Record<string, ShiftRead[]> = {}
+  const events: Record<string, ShiftRead[]> = {}
   for (const shift of shifts) {
     const date = shift.date
-    if (!groups[date]) groups[date] = []
-    groups[date].push(shift)
+    if (!events[date]) events[date] = []
+    events[date].push(shift)
   }
-  for (const dateShifts of Object.values(groups)) {
+  for (const dateShifts of Object.values(events)) {
     dateShifts.sort(
       (a, b) =>
         (a.start_time ?? '').localeCompare(b.start_time ?? '') ||
         (a.end_time ?? '').localeCompare(b.end_time ?? ''),
     )
   }
-  return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  return Object.entries(events).sort(([a], [b]) => a.localeCompare(b))
 }
 
 const myBookedShiftIds = computed(() => {
@@ -797,8 +797,8 @@ onMounted(async () => {
         <!-- Batch-grouped shifts -->
         <div v-else class="space-y-6">
           <template
-            v-for="(group, groupIdx) in visibleBatchGroups"
-            :key="group.batch?.id ?? 'unbatched'"
+            v-for="(event, eventIdx) in visibleBatchGroups"
+            :key="event.batch?.id ?? 'unbatched'"
           >
             <div class="space-y-3">
               <!-- Batch header (only when there are multiple batches) -->
@@ -806,30 +806,30 @@ onMounted(async () => {
                 <div class="flex items-center gap-2">
                   <h3 class="font-semibold text-lg">
                     {{
-                      group.batch
-                        ? batchLabel(group.batch)
+                      event.batch
+                        ? batchLabel(event.batch)
                         : t('duties.tasks.detail.unbatchedShifts')
                     }}
                   </h3>
                   <Badge variant="outline">
                     {{
                       t('duties.tasks.detail.shiftsCount', {
-                        count: filterShifts(group.shifts).length,
+                        count: filterShifts(event.shifts).length,
                       })
                     }}
                   </Badge>
-                  <template v-if="group.batch">
-                    <Badge v-if="group.batch.location" variant="secondary" class="text-xs">
+                  <template v-if="event.batch">
+                    <Badge v-if="event.batch.location" variant="secondary" class="text-xs">
                       <MapPin class="mr-1 h-3 w-3" />
-                      {{ group.batch.location }}
+                      {{ event.batch.location }}
                     </Badge>
-                    <Badge v-if="group.batch.category" variant="outline" class="text-xs">
+                    <Badge v-if="event.batch.category" variant="outline" class="text-xs">
                       <Tag class="mr-1 h-3 w-3" />
-                      {{ group.batch.category }}
+                      {{ event.batch.category }}
                     </Badge>
                   </template>
                 </div>
-                <div v-if="canManage && group.batch" class="flex gap-1">
+                <div v-if="canManage && event.batch" class="flex gap-1">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -837,7 +837,7 @@ onMounted(async () => {
                       router.push({
                         name: 'task-edit',
                         params: { eventId: task!.id },
-                        query: { batchId: group.batch!.id },
+                        query: { batchId: event.batch!.id },
                       })
                     "
                   >
@@ -848,7 +848,7 @@ onMounted(async () => {
                     variant="ghost"
                     size="sm"
                     class="text-destructive hover:text-destructive"
-                    @click="handleDeleteBatch(group.batch!)"
+                    @click="handleDeleteBatch(event.batch!)"
                   >
                     <Trash2 class="h-3.5 w-3.5" />
                   </Button>
@@ -857,7 +857,7 @@ onMounted(async () => {
 
               <!-- Shifts grouped by date within this batch -->
               <div
-                v-for="[date, shifts] in groupByDate(filterShifts(group.shifts))"
+                v-for="[date, shifts] in groupByDate(filterShifts(event.shifts))"
                 :key="date"
                 class="space-y-2"
               >
@@ -871,7 +871,7 @@ onMounted(async () => {
                   <Card
                     v-for="shift in shifts"
                     :key="shift.id"
-                    class="group relative cursor-pointer select-none transition-all"
+                    class="event relative cursor-pointer select-none transition-all"
                     :class="[
                       myBookedShiftIds.has(shift.id)
                         ? 'ring-2 ring-primary bg-primary/5'
@@ -890,7 +890,7 @@ onMounted(async () => {
 
                       <!-- Expand button (visible on hover) -->
                       <button
-                        class="absolute top-1 left-1 flex h-5 w-5 items-center justify-center rounded-sm opacity-0 transition-opacity group-hover:opacity-100 hover:bg-muted"
+                        class="absolute top-1 left-1 flex h-5 w-5 items-center justify-center rounded-sm opacity-0 transition-opacity event-hover:opacity-100 hover:bg-muted"
                         :title="t('duties.shifts.detail.openDetails')"
                         @click.stop="openShiftDetail(shift)"
                       >
@@ -957,8 +957,8 @@ onMounted(async () => {
                 </div>
               </div>
 
-              <!-- Separator between batch groups -->
-              <Separator v-if="hasBatches && groupIdx < visibleBatchGroups.length - 1" />
+              <!-- Separator between batch events -->
+              <Separator v-if="hasBatches && eventIdx < visibleBatchGroups.length - 1" />
             </div>
           </template>
 

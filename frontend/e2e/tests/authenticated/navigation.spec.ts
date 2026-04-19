@@ -12,7 +12,7 @@ test.describe('Sidebar – links', () => {
     await expect(page.getByTestId('sidebar-link-home')).toBeVisible()
   })
 
-  test('shows Task Groups link', async ({ adminPage: page }) => {
+  test('shows Task Events link', async ({ adminPage: page }) => {
     await page.goto('/app/home')
     await expect(page.getByTestId('sidebar-link-events')).toBeVisible()
   })
@@ -52,7 +52,7 @@ test.describe('Sidebar – navigation', () => {
     await expect(page).toHaveURL(/\/app\/home/)
   })
 
-  test('Task Groups link navigates correctly', async ({ adminPage: page }) => {
+  test('Task Events link navigates correctly', async ({ adminPage: page }) => {
     await page.goto('/app/home')
     await page.getByTestId('sidebar-link-events').click()
     await expect(page).toHaveURL(/\/app\/events/)

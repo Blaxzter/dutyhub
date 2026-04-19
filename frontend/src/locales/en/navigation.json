@@ -16,7 +16,7 @@
         "items": {
             "events": {
                 "description": "Browse task programmes",
-                "label": "Task Groups"
+                "label": "Events"
             },
             "home": {
                 "label": "Home"

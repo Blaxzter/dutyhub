@@ -77,11 +77,11 @@
         },
         "steps": {
             "dates": {
-                "description": "Select a single date, a continuous date range, or pick specific individual dates. If linked to an task group, dates are constrained to the group's timeframe.",
+                "description": "Select a single date, a continuous date range, or pick specific individual dates. If linked to an event, dates are constrained to the event's timeframe.",
                 "title": "2. Choose Dates"
             },
             "details": {
-                "description": "Start by giving your task a name, description, location, and category. Optionally link it to an task group like a conference or festival.",
+                "description": "Start by giving your task a name, description, location, and category. Optionally link it to an event like a conference or festival.",
                 "title": "1. Task Details"
             },
             "preview": {
@@ -168,8 +168,8 @@
                     "title": "Task Detail"
                 },
                 "events": {
-                    "description": "Organize related tasks into groups like conferences or festivals for easy management.",
-                    "title": "Task Groups"
+                    "description": "Organize related tasks into events like conferences or festivals for easy management.",
+                    "title": "Events"
                 },
                 "notificationPreferences": {
                     "description": "Fine-tune how you receive notifications — via email, push, or Telegram — for each notification type.",

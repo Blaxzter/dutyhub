@@ -24,7 +24,7 @@ class TestAddShiftsCoverage:
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test that add-shifts validates dates against task group range."""
+        """Test that add-shifts validates dates against event range."""
         group = Event(
             name="Constrained Group",
             start_date=date(2026, 7, 1),

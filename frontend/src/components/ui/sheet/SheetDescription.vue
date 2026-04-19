@@ -13,7 +13,7 @@ const delegatedProps = reactiveOmit(props, 'class')
 
 <template>
   <DialogDescription
-    data-shift="sheet-description"
+    data-slot="sheet-description"
     :class="cn('text-muted-foreground text-sm', props.class)"
     v-bind="delegatedProps"
   >

@@ -79,7 +79,7 @@ router.afterEach(() => {
 })
 
 /**
- * Compute urgency badge variant for an task based on its next open shift.
+ * Compute urgency badge variant for a task based on its next open shift.
  * - Within 15 min → destructive (red)
  * - Today → default (primary)
  * - Otherwise → secondary (neutral)
@@ -129,7 +129,7 @@ const navMain = computed(() => {
   const groupItems: NavSubItem[] = sidebarStore.events.map((g) => ({
     title: g.name,
     routeName: 'event-detail',
-    routeParams: { groupId: g.id },
+    routeParams: { eventId: g.id },
     badge: g.status && g.status !== 'published' ? statusBadge(g.status) : undefined,
   }))
 
@@ -151,7 +151,7 @@ const navMain = computed(() => {
 
   return [
     {
-      title: 'Task Groups',
+      title: 'Events',
       titleKey: 'navigation.sidebar.items.events.label',
       icon: CalendarRange,
       routeName: 'events',
@@ -275,14 +275,14 @@ const navAdmin = computed(() =>
       v-if="navManager.length > 0"
       :items="navManager"
       :open="props.open"
-      group-label-key="navigation.sidebar.items.management.label"
+      event-label-key="navigation.sidebar.items.management.label"
       class="shrink-0 px-2 pb-2"
     />
     <NavMain
       v-if="navAdmin.length > 0"
       :items="navAdmin"
       :open="props.open"
-      group-label-key="admin.sidebar.section"
+      event-label-key="admin.sidebar.section"
       class="shrink-0 px-2 pb-2"
     />
     <SidebarFooter class="flex flex-col gap-1 p-2 pb-1">
@@ -290,7 +290,7 @@ const navAdmin = computed(() =>
       <RouterLink
         :to="{ name: 'changelog' }"
         data-testid="sidebar-version-link"
-        class="inline-flex items-center justify-center gap-1 w-full text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors pb-1 group-data-[collapsible=icon]:hidden"
+        class="inline-flex items-center justify-center gap-1 w-full text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors pb-1 event-data-[collapsible=icon]:hidden"
       >
         <span>WirkSam {{ appVersion }}</span>
         <span v-if="hasNewVersions" class="size-1.5 rounded-full bg-primary" />

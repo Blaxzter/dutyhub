@@ -13,11 +13,11 @@ const delegatedProps = reactiveOmit(props, 'class')
 
 <template>
   <Label
-    data-shift="label"
+    data-slot="label"
     v-bind="delegatedProps"
     :class="
       cn(
-        'flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-tasks-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
+        'flex items-center gap-2 text-sm leading-none font-medium select-none event-data-[disabled=true]:pointer-tasks-none event-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
         props.class,
       )
     "

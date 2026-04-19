@@ -33,7 +33,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 <template>
   <TooltipPortal>
     <TooltipContent
-      data-shift="tooltip-content"
+      data-slot="tooltip-content"
       v-bind="{ ...forwarded, ...$attrs }"
       :class="
         cn(

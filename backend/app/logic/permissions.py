@@ -12,7 +12,7 @@ async def require_event_access(
     session: AsyncSession,
     event_id: uuid.UUID | None,
 ) -> None:
-    """Raise 403 unless the user has access to manage the given task group.
+    """Raise 403 unless the user has access to manage the given event.
 
     Access is granted when ANY of these is true:
     - user.is_admin (global admin)

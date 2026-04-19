@@ -5,7 +5,7 @@
         "admin": "Admin",
         "availability": "Availability",
         "booking": "Bookings",
-        "event": "Task Groups",
+        "event": "Events",
         "shift": "Duty Shifts",
         "task": "Tasks",
         "user": "Account"
@@ -137,7 +137,7 @@
     "types": {
         "availability": {
             "reminder": {
-                "description": "Reminder to submit your availability for a published task group",
+                "description": "Reminder to submit your availability for a published event",
                 "name": "Availability Reminder"
             }
         },
@@ -165,8 +165,8 @@
         },
         "event": {
             "published": {
-                "description": "When a new task group is published",
-                "name": "Task Group Published"
+                "description": "When a new event is published",
+                "name": "Event Published"
             }
         },
         "shift": {

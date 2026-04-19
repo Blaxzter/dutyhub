@@ -2,19 +2,19 @@
     "demoData": {
         "create": {
             "button": "Demodaten erstellen",
-            "description": "Tasks, Taskgruppen, Benutzer und Dienstshifts mit dem Präfix [DEMO] generieren.",
+            "description": "Tasks, Veranstaltungen, Benutzer und Dienstshifts mit dem Präfix [DEMO] generieren.",
             "title": "Demodaten erstellen"
         },
-        "createSuccess": "{tasks} Tasks, {groups} Gruppen, {users} Benutzer, {shifts} Shifts und {bookings} Buchungen erstellt.",
+        "createSuccess": "{tasks} Tasks, {events} Gruppen, {users} Benutzer, {shifts} Shifts und {bookings} Buchungen erstellt.",
         "delete": {
             "button": "Alle Demodaten löschen",
             "description": "Alle Demodaten aus dem System entfernen.",
-            "info": "Dies löscht alle mit [DEMO] gekennzeichneten Einträge — Tasks, Taskgruppen, Dienstshifts, Buchungen und Demobenutzer.",
+            "info": "Dies löscht alle mit [DEMO] gekennzeichneten Einträge — Tasks, Veranstaltungen, Dienstshifts, Buchungen und Demobenutzer.",
             "title": "Demodaten löschen"
         },
-        "deleteSuccess": "{tasks} Tasks, {groups} Gruppen, {users} Benutzer, {shifts} Shifts und {bookings} Buchungen gelöscht.",
+        "deleteSuccess": "{tasks} Tasks, {events} Gruppen, {users} Benutzer, {shifts} Shifts und {bookings} Buchungen gelöscht.",
         "fields": {
-            "numEvents": "Anzahl Taskgruppen",
+            "numEvents": "Anzahl Veranstaltungen",
             "numShiftsPerTask": "Shifts pro Task",
             "numTasks": "Anzahl Tasks",
             "numUsers": "Anzahl Demobenutzer",

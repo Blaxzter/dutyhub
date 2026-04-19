@@ -20,7 +20,7 @@ async def list_batches(
     session: DBDep,
     _current_user: CurrentUser,
 ) -> list[ShiftBatchRead]:
-    """List all shift batches for an task."""
+    """List all shift batches for a task."""
     await crud_task.get(session, task_id, raise_404_error=True)
     batches = await crud_shift_batch.get_by_task(session, task_id=task_id)
     return [ShiftBatchRead.model_validate(b) for b in batches]

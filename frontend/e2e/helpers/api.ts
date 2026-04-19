@@ -70,8 +70,8 @@ export async function api<T = unknown>(page: Page, method: string, path: string,
   return result.__body as T
 }
 
-/** Create an task group (draft or published). Admin token required. */
-export async function createGroup(
+/** Create an event (draft or published). Admin token required. */
+export async function createEvent(
   page: Page,
   name: string,
   status: 'draft' | 'published' = 'published',
@@ -84,21 +84,21 @@ export async function createGroup(
   })
 }
 
-/** Delete an task group. Admin token required. */
-export async function deleteGroup(page: Page, id: string): Promise<void> {
+/** Delete an event. Admin token required. */
+export async function deleteEvent(page: Page, id: string): Promise<void> {
   if (!id || id === 'undefined') return
   await api(page, 'DELETE', `/events/${id}`)
 }
 
-/** Remove the current user's availability for a group (best-effort). */
-export async function clearAvailability(page: Page, groupId: string): Promise<void> {
-  if (!groupId || groupId === 'undefined') return
-  await api(page, 'DELETE', `/events/${groupId}/availability/me`)
+/** Remove the current user's availability for an event (best-effort). */
+export async function clearAvailability(page: Page, eventId: string): Promise<void> {
+  if (!eventId || eventId === 'undefined') return
+  await api(page, 'DELETE', `/events/${eventId}/availability/me`)
 }
 
 // ── Task helpers ──────────────────────────────────────────────────────────────
 
-/** Create an task with auto-generated shifts via the /tasks/with-shifts endpoint. */
+/** Create a task with auto-generated shifts via the /tasks/with-shifts endpoint. */
 export async function createTaskWithShifts(
   page: Page,
   opts: {
@@ -141,18 +141,18 @@ export async function createTaskWithShifts(
   })
 }
 
-/** Delete an task. Admin token required. */
+/** Delete a task. Admin token required. */
 export async function deleteTask(page: Page, id: string): Promise<void> {
   if (!id || id === 'undefined') return
   await api(page, 'DELETE', `/tasks/${id}`)
 }
 
-/** Publish an task (set status to published). */
+/** Publish a task (set status to published). */
 export async function publishTask(page: Page, id: string): Promise<TaskRead> {
   return api<TaskRead>(page, 'PATCH', `/tasks/${id}`, { status: 'published' })
 }
 
-/** List duty shifts for an task. */
+/** List duty shifts for a task. */
 export async function listShifts(page: Page, eventId: string): Promise<ShiftRead[]> {
   const res = await api<{ items: ShiftRead[] }>(page, 'GET', `/shifts/?task_id=${eventId}&limit=200`)
   return res.items

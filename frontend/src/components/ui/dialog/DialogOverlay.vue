@@ -14,7 +14,7 @@ const delegatedProps = reactiveOmit(props, 'class')
 
 <template>
   <DialogOverlay
-    data-shift="dialog-overlay"
+    data-slot="dialog-overlay"
     v-bind="delegatedProps"
     :class="
       cn(

@@ -1,21 +1,21 @@
 /**
- * E2E tests for scoped group manager visibility and access control.
+ * E2E tests for scoped event manager visibility and access control.
  *
  * Covers the fixes for:
- * 1. Unpublished tasks/groups visible to scoped managers
+ * 1. Unpublished tasks/events visible to scoped managers
  * 2. Task detail manage controls shown only for managed tasks
  * 3. Edit/add-shifts pages redirect if user cannot manage the task
  * 4. Sidebar shows unpublished items for scoped managers
  * 5. Reporting accessible to scoped managers
- * 6. Cross-group isolation (manager of group A cannot access group B data)
+ * 6. Cross-event isolation (manager of event A cannot access event B data)
  */
 import { expect, test } from '../../fixtures.js'
 import {
   type EventRead,
   type TaskRead,
   api,
-  createGroup,
-  deleteGroup,
+  createEvent,
+  deleteEvent,
   deleteTask,
   futureDate,
   uniqueName,
@@ -36,15 +36,15 @@ async function getMemberId(
   return member.id
 }
 
-/** Assign a user as group manager and reload their profile so the frontend picks it up. */
+/** Assign a user as event manager and reload their profile so the frontend picks it up. */
 async function assignManager(
   adminPage: import('@playwright/test').Page,
-  groupId: string,
+  eventId: string,
   memberEmail: string,
   memberPage?: import('@playwright/test').Page,
 ) {
   const memberId = await getMemberId(adminPage, memberEmail)
-  await api(adminPage, 'POST', `/events/${groupId}/managers/${memberId}`)
+  await api(adminPage, 'POST', `/events/${eventId}/managers/${memberId}`)
   // Full page reload so Pinia stores are re-created and profile re-fetched from backend
   if (memberPage) {
     await memberPage.reload()
@@ -52,15 +52,15 @@ async function assignManager(
   }
 }
 
-/** Create an task in a group via API. */
-function eventPayload(groupId: string, name: string, status: 'draft' | 'published' = 'published') {
+/** Create a task in an event via API. */
+function eventPayload(eventId: string, name: string, status: 'draft' | 'published' = 'published') {
   const date = futureDate(30)
   return {
     name,
     start_date: date,
     end_date: date,
     status,
-    event_id: groupId,
+    event_id: eventId,
     schedule: {
       default_start_time: '10:00:00',
       default_end_time: '12:00:00',
@@ -73,47 +73,47 @@ function eventPayload(groupId: string, name: string, status: 'draft' | 'publishe
   }
 }
 
-// ── Visibility: unpublished tasks & groups ─────────────────────────────────
+// ── Visibility: unpublished tasks & events ─────────────────────────────────
 
-test.describe('Group Manager – unpublished visibility', () => {
-  let group: EventRead
+test.describe('Event Manager – unpublished visibility', () => {
+  let event: EventRead
   let task: { id: string }
 
   test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
-    // Create a draft group and assign member as manager
-    group = await createGroup(adminPage, uniqueName('E2E Visibility'), 'draft')
-    await assignManager(adminPage, group.id, memberUser.email, memberPage)
+    // Create a draft event and assign member as manager
+    event = await createEvent(adminPage, uniqueName('E2E Visibility'), 'draft')
+    await assignManager(adminPage, event.id, memberUser.email, memberPage)
 
-    // Create a draft task in the group (as admin)
+    // Create a draft task in the event (as admin)
     const result = await api<{ task: { id: string } }>(
       adminPage,
       'POST',
       '/tasks/with-shifts',
-      eventPayload(group.id, 'Draft Task', 'draft'),
+      eventPayload(event.id, 'Draft Task', 'draft'),
     )
     task = result.task
   })
 
   test.afterEach(async ({ adminPage }) => {
     await deleteTask(adminPage, task?.id).catch(() => {})
-    await deleteGroup(adminPage, group?.id).catch(() => {})
+    await deleteEvent(adminPage, event?.id).catch(() => {})
   })
 
-  test('scoped manager can see unpublished group in list', async ({ memberPage }) => {
-    const groups = await api<{ items: EventRead[] }>(
+  test('scoped manager can see unpublished event in list', async ({ memberPage }) => {
+    const events = await api<{ items: EventRead[] }>(
       memberPage,
       'GET',
       '/events/?limit=100',
     )
-    const found = groups.items.find((g) => g.id === group.id)
+    const found = events.items.find((g) => g.id === event.id)
     expect(found).toBeTruthy()
     expect(found!.status).toBe('draft')
   })
 
-  test('scoped manager can view unpublished group detail page', async ({
+  test('scoped manager can view unpublished event detail page', async ({
     memberPage,
   }) => {
-    await memberPage.goto(`/app/events/${group.id}`)
+    await memberPage.goto(`/app/events/${event.id}`)
     await expect(memberPage.getByTestId('page-heading')).toBeVisible()
   })
 
@@ -137,52 +137,52 @@ test.describe('Group Manager – unpublished visibility', () => {
   })
 
   // eslint-disable-next-line playwright/expect-expect
-  test('regular member cannot see unpublished group', async ({ adminPage, memberUser }) => {
+  test('regular member cannot see unpublished event', async ({ adminPage, memberUser }) => {
     // Remove the manager assignment
     const memberId = await getMemberId(adminPage, memberUser.email)
-    await api(adminPage, 'DELETE', `/events/${group.id}/managers/${memberId}`)
+    await api(adminPage, 'DELETE', `/events/${event.id}/managers/${memberId}`)
 
     // Reload member profile to clear cached managed IDs, then check API
     try {
-      await api<EventRead>(adminPage, 'GET', `/events/${group.id}`)
+      await api<EventRead>(adminPage, 'GET', `/events/${event.id}`)
     } catch {
       // admin can still see it, that's fine
     }
 
-    // Verify the member user (without manager role) doesn't get the group
+    // Verify the member user (without manager role) doesn't get the event
     // We use adminPage to check the member-scoped API response isn't accessible
-    // The real check: member API call should not return this group
+    // The real check: member API call should not return this event
   })
 })
 
 // ── Manage controls on task detail ─────────────────────────────────────────
 
-test.describe('Group Manager – task detail controls', () => {
-  let group: EventRead
+test.describe('Event Manager – task detail controls', () => {
+  let event: EventRead
   let managedTask: { id: string }
   let unmanagedTask: { id: string }
 
   test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
-    // Group A: member is manager
-    group = await createGroup(adminPage, uniqueName('E2E Controls'))
-    await assignManager(adminPage, group.id, memberUser.email, memberPage)
+    // Event A: member is manager
+    event = await createEvent(adminPage, uniqueName('E2E Controls'))
+    await assignManager(adminPage, event.id, memberUser.email, memberPage)
 
-    // Create a published task in the managed group
+    // Create a published task in the managed event
     const result = await api<{ task: { id: string } }>(
       adminPage,
       'POST',
       '/tasks/with-shifts',
-      eventPayload(group.id, 'Managed Task'),
+      eventPayload(event.id, 'Managed Task'),
     )
     managedTask = result.task
 
-    // Create a published task without a group (admin-only)
+    // Create a published task without an event (admin-only)
     const result2 = await api<{ task: { id: string } }>(
       adminPage,
       'POST',
       '/tasks/with-shifts',
       {
-        ...eventPayload(group.id, 'Unmanaged Task'),
+        ...eventPayload(event.id, 'Unmanaged Task'),
         event_id: null,
       },
     )
@@ -192,7 +192,7 @@ test.describe('Group Manager – task detail controls', () => {
   test.afterEach(async ({ adminPage }) => {
     await deleteTask(adminPage, managedTask?.id).catch(() => {})
     await deleteTask(adminPage, unmanagedTask?.id).catch(() => {})
-    await deleteGroup(adminPage, group?.id).catch(() => {})
+    await deleteEvent(adminPage, event?.id).catch(() => {})
   })
 
   test('scoped manager sees manage controls on managed task', async ({
@@ -216,20 +216,20 @@ test.describe('Group Manager – task detail controls', () => {
 
 // ── Edit/add-shifts redirect for unmanaged tasks ────────────────────────────
 
-test.describe('Group Manager – edit page access', () => {
-  let group: EventRead
+test.describe('Event Manager – edit page access', () => {
+  let event: EventRead
   let managedTask: { id: string }
   let unmanagedTask: { id: string }
 
   test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
-    group = await createGroup(adminPage, uniqueName('E2E Edit Access'))
-    await assignManager(adminPage, group.id, memberUser.email, memberPage)
+    event = await createEvent(adminPage, uniqueName('E2E Edit Access'))
+    await assignManager(adminPage, event.id, memberUser.email, memberPage)
 
     const result = await api<{ task: { id: string } }>(
       adminPage,
       'POST',
       '/tasks/with-shifts',
-      eventPayload(group.id, 'Editable Task'),
+      eventPayload(event.id, 'Editable Task'),
     )
     managedTask = result.task
 
@@ -238,7 +238,7 @@ test.describe('Group Manager – edit page access', () => {
       'POST',
       '/tasks/with-shifts',
       {
-        ...eventPayload(group.id, 'Non-Editable'),
+        ...eventPayload(event.id, 'Non-Editable'),
         event_id: null,
       },
     )
@@ -248,7 +248,7 @@ test.describe('Group Manager – edit page access', () => {
   test.afterEach(async ({ adminPage }) => {
     await deleteTask(adminPage, managedTask?.id).catch(() => {})
     await deleteTask(adminPage, unmanagedTask?.id).catch(() => {})
-    await deleteGroup(adminPage, group?.id).catch(() => {})
+    await deleteEvent(adminPage, event?.id).catch(() => {})
   })
 
   test('scoped manager can access edit page for managed task', async ({
@@ -270,26 +270,26 @@ test.describe('Group Manager – edit page access', () => {
 
 // ── Actual edit/update/delete operations ────────────────────────────────────
 
-test.describe('Group Manager – CRUD operations', () => {
-  let group: EventRead
+test.describe('Event Manager – CRUD operations', () => {
+  let event: EventRead
   let task: { id: string }
 
   test.beforeEach(async ({ adminPage, memberUser }) => {
-    group = await createGroup(adminPage, uniqueName('E2E CRUD'))
-    await assignManager(adminPage, group.id, memberUser.email)
+    event = await createEvent(adminPage, uniqueName('E2E CRUD'))
+    await assignManager(adminPage, event.id, memberUser.email)
 
     const result = await api<{ task: { id: string } }>(
       adminPage,
       'POST',
       '/tasks/with-shifts',
-      eventPayload(group.id, 'CRUD Test Task'),
+      eventPayload(event.id, 'CRUD Test Task'),
     )
     task = result.task
   })
 
   test.afterEach(async ({ adminPage }) => {
     await deleteTask(adminPage, task?.id).catch(() => {})
-    await deleteGroup(adminPage, group?.id).catch(() => {})
+    await deleteEvent(adminPage, event?.id).catch(() => {})
   })
 
   test('scoped manager can update task name', async ({ memberPage }) => {
@@ -320,7 +320,7 @@ test.describe('Group Manager – CRUD operations', () => {
     expect(draft.status).toBe('draft')
   })
 
-  test('scoped manager can delete task in managed group', async ({ memberPage }) => {
+  test('scoped manager can delete task in managed event', async ({ memberPage }) => {
     await api(memberPage, 'DELETE', `/tasks/${task.id}`)
     // Verify it's gone
     try {
@@ -348,35 +348,35 @@ test.describe('Group Manager – CRUD operations', () => {
     await api(memberPage, 'DELETE', `/shifts/${shift.id}`)
   })
 
-  test('scoped manager can update task group name', async ({ memberPage }) => {
+  test('scoped manager can update event name', async ({ memberPage }) => {
     const updated = await api<EventRead>(
       memberPage,
       'PATCH',
-      `/events/${group.id}`,
-      { name: 'Group Renamed by Manager' },
+      `/events/${event.id}`,
+      { name: 'Event Renamed by Manager' },
     )
-    expect(updated.name).toBe('Group Renamed by Manager')
+    expect(updated.name).toBe('Event Renamed by Manager')
   })
 
-  test('scoped manager can publish task group', async ({ memberPage }) => {
+  test('scoped manager can publish event', async ({ memberPage }) => {
     const published = await api<EventRead>(
       memberPage,
       'PATCH',
-      `/events/${group.id}`,
+      `/events/${event.id}`,
       { status: 'published' },
     )
     expect(published.status).toBe('published')
   })
 
   // eslint-disable-next-line playwright/expect-expect
-  test('scoped manager can delete managed task group', async ({ memberPage }) => {
+  test('scoped manager can delete managed event', async ({ memberPage }) => {
     // Delete the task first (cascade might handle it, but be explicit)
     await api(memberPage, 'DELETE', `/tasks/${task.id}`)
     task = { id: '' }
 
-    await api(memberPage, 'DELETE', `/events/${group.id}`)
+    await api(memberPage, 'DELETE', `/events/${event.id}`)
     // Prevent afterEach from trying to delete again
-    group = { id: '' } as EventRead
+    event = { id: '' } as EventRead
   })
 
   test('scoped manager can add shifts to task', async ({ memberPage }) => {
@@ -402,34 +402,34 @@ test.describe('Group Manager – CRUD operations', () => {
   })
 })
 
-// ── Cross-group isolation ───────────────────────────────────────────────────
+// ── Cross-event isolation ───────────────────────────────────────────────────
 
-test.describe('Group Manager – cross-group isolation', () => {
+test.describe('Event Manager – cross-event isolation', () => {
   let groupA: EventRead
   let groupB: EventRead
 
   test.beforeEach(async ({ adminPage, memberUser }) => {
-    groupA = await createGroup(adminPage, uniqueName('E2E Group A'))
-    groupB = await createGroup(adminPage, uniqueName('E2E Group B'))
-    // Member manages group A only
+    groupA = await createEvent(adminPage, uniqueName('E2E Event A'))
+    groupB = await createEvent(adminPage, uniqueName('E2E Event B'))
+    // Member manages event A only
     await assignManager(adminPage, groupA.id, memberUser.email)
   })
 
   test.afterEach(async ({ adminPage }) => {
-    await deleteGroup(adminPage, groupA?.id).catch(() => {})
-    await deleteGroup(adminPage, groupB?.id).catch(() => {})
+    await deleteEvent(adminPage, groupA?.id).catch(() => {})
+    await deleteEvent(adminPage, groupB?.id).catch(() => {})
   })
 
-  test('scoped manager cannot update task in unmanaged group', async ({
+  test('scoped manager cannot update task in unmanaged event', async ({
     memberPage,
   }) => {
-    // Create task in group B (as member via API — should fail)
+    // Create task in event B (as member via API — should fail)
     try {
       await api(
         memberPage,
         'POST',
         '/tasks/with-shifts',
-        eventPayload(groupB.id, 'Cross-group Attempt'),
+        eventPayload(groupB.id, 'Cross-event Attempt'),
       )
       expect(true, 'Expected 403 but request succeeded').toBe(false)
     } catch (e) {
@@ -438,7 +438,7 @@ test.describe('Group Manager – cross-group isolation', () => {
     }
   })
 
-  test('scoped manager cannot access availabilities of unmanaged group', async ({
+  test('scoped manager cannot access availabilities of unmanaged event', async ({
     memberPage,
   }) => {
     try {
@@ -450,7 +450,7 @@ test.describe('Group Manager – cross-group isolation', () => {
     }
   })
 
-  test('scoped manager cannot access managers list of unmanaged group', async ({
+  test('scoped manager cannot access managers list of unmanaged event', async ({
     memberPage,
   }) => {
     try {
@@ -465,16 +465,16 @@ test.describe('Group Manager – cross-group isolation', () => {
 
 // ── Reporting access ────────────────────────────────────────────────────────
 
-test.describe('Group Manager – reporting', () => {
-  let group: EventRead
+test.describe('Event Manager – reporting', () => {
+  let event: EventRead
 
   test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
-    group = await createGroup(adminPage, uniqueName('E2E Reporting'))
-    await assignManager(adminPage, group.id, memberUser.email, memberPage)
+    event = await createEvent(adminPage, uniqueName('E2E Reporting'))
+    await assignManager(adminPage, event.id, memberUser.email, memberPage)
   })
 
   test.afterEach(async ({ adminPage }) => {
-    await deleteGroup(adminPage, group?.id).catch(() => {})
+    await deleteEvent(adminPage, event?.id).catch(() => {})
   })
 
   test('scoped manager can access reporting page', async ({ memberPage }) => {
@@ -489,21 +489,21 @@ test.describe('Group Manager – reporting', () => {
   })
 })
 
-// ── Task group create restriction ──────────────────────────────────────────
+// ── Task event create restriction ──────────────────────────────────────────
 
-test.describe('Group Manager – create group restriction', () => {
-  let group: EventRead
+test.describe('Event Manager – create event restriction', () => {
+  let event: EventRead
 
   test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
-    group = await createGroup(adminPage, uniqueName('E2E No Create'))
-    await assignManager(adminPage, group.id, memberUser.email, memberPage)
+    event = await createEvent(adminPage, uniqueName('E2E No Create'))
+    await assignManager(adminPage, event.id, memberUser.email, memberPage)
   })
 
   test.afterEach(async ({ adminPage }) => {
-    await deleteGroup(adminPage, group?.id).catch(() => {})
+    await deleteEvent(adminPage, event?.id).catch(() => {})
   })
 
-  test('scoped manager cannot create new task groups via API', async ({
+  test('scoped manager cannot create new events via API', async ({
     memberPage,
   }) => {
     try {
@@ -519,39 +519,39 @@ test.describe('Group Manager – create group restriction', () => {
     }
   })
 
-  test('scoped manager does not see create group button', async ({
+  test('scoped manager does not see create event button', async ({
     memberPage,
   }) => {
     await memberPage.goto('/app/events')
-    await expect(memberPage.getByTestId('btn-create-group')).toBeHidden()
+    await expect(memberPage.getByTestId('btn-create-event')).toBeHidden()
   })
 })
 
 // ── Sidebar unpublished indicators ──────────────────────────────────────────
 
-test.describe('Group Manager – sidebar visibility', () => {
-  let group: EventRead
+test.describe('Event Manager – sidebar visibility', () => {
+  let event: EventRead
   let task: { id: string }
 
   test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
-    group = await createGroup(adminPage, uniqueName('E2E Sidebar'), 'draft')
-    await assignManager(adminPage, group.id, memberUser.email, memberPage)
+    event = await createEvent(adminPage, uniqueName('E2E Sidebar'), 'draft')
+    await assignManager(adminPage, event.id, memberUser.email, memberPage)
 
     const result = await api<{ task: { id: string } }>(
       adminPage,
       'POST',
       '/tasks/with-shifts',
-      eventPayload(group.id, 'Sidebar Draft Task', 'draft'),
+      eventPayload(event.id, 'Sidebar Draft Task', 'draft'),
     )
     task = result.task
   })
 
   test.afterEach(async ({ adminPage }) => {
     await deleteTask(adminPage, task?.id).catch(() => {})
-    await deleteGroup(adminPage, group?.id).catch(() => {})
+    await deleteEvent(adminPage, event?.id).catch(() => {})
   })
 
-  test('sidebar API returns unpublished group with status for scoped manager', async ({
+  test('sidebar API returns unpublished event with status for scoped manager', async ({
     memberPage,
   }) => {
     // Retry because the manager assignment commit may not be visible yet
@@ -561,9 +561,9 @@ test.describe('Group Manager – sidebar visibility', () => {
         tasks: { id: string; status: string }[]
       }>(memberPage, 'GET', '/dashboard/sidebar')
 
-      const sidebarGroup = sidebar.events.find((g) => g.id === group.id)
-      expect(sidebarGroup).toBeTruthy()
-      expect(sidebarGroup!.status).toBe('draft')
+      const sidebarEvent = sidebar.events.find((g) => g.id === event.id)
+      expect(sidebarEvent).toBeTruthy()
+      expect(sidebarEvent!.status).toBe('draft')
     }).toPass({ timeout: 10_000 })
   })
 })

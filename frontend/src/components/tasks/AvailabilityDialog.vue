@@ -34,7 +34,7 @@ interface DateEntry {
 }
 
 const props = defineProps<{
-  group: EventRead
+  event: EventRead
   existingAvailability?: UserAvailabilityRead | null
 }>()
 
@@ -62,13 +62,13 @@ const form = ref({
 })
 const dateEntries = ref<DateEntry[]>([])
 
-const groupMinDate = computed((): DateValue => parseDate(props.group.start_date))
-const groupMaxDate = computed((): DateValue => parseDate(props.group.end_date))
+const eventMinDate = computed((): DateValue => parseDate(props.event.start_date))
+const eventMaxDate = computed((): DateValue => parseDate(props.event.end_date))
 
 const dateRangeLabel = computed(() =>
   t('duties.availability.fields.datesWithRange', {
-    start: formatDate(props.group.start_date),
-    end: formatDate(props.group.end_date),
+    start: formatDate(props.event.start_date),
+    end: formatDate(props.event.end_date),
   }),
 )
 
@@ -236,8 +236,8 @@ defineExpose({ resetForm })
                   <DatePicker
                     :model-value="(entry.date as DateValue | undefined)"
                     :placeholder="t('duties.events.pickDate')"
-                    :min-value="groupMinDate"
-                    :max-value="groupMaxDate"
+                    :min-value="eventMinDate"
+                    :max-value="eventMaxDate"
                     @update:model-value="
                       (val: DateValue | undefined) => (dateEntries[idx].date = val)
                     "

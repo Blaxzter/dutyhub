@@ -40,7 +40,7 @@ const authStore = useAuthStore()
 const { get, post, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 
-const groups = ref<EventRead[]>([])
+const events = ref<EventRead[]>([])
 const loading = ref(false)
 const searchQuery = ref('')
 const showCreateDialog = ref(false)
@@ -66,15 +66,15 @@ const createForm = ref({ name: '', description: '' })
 const startDate = ref<DateValue>()
 const endDate = ref<DateValue>()
 
-const filteredGroups = computed(() => {
-  if (!searchQuery.value) return groups.value
+const filteredEvents = computed(() => {
+  if (!searchQuery.value) return events.value
   const query = searchQuery.value.toLowerCase()
-  return groups.value.filter(
+  return events.value.filter(
     (g) => g.name.toLowerCase().includes(query) || g.description?.toLowerCase().includes(query),
   )
 })
 
-const loadGroups = async () => {
+const loadEvents = async () => {
   loading.value = true
   try {
     const query: Record<string, unknown> = { limit: 100 }
@@ -85,7 +85,7 @@ const loadGroups = async () => {
       url: '/events/',
       query,
     })
-    groups.value = response.data.items
+    events.value = response.data.items
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -93,7 +93,7 @@ const loadGroups = async () => {
   }
 }
 
-watch([dateFrom, dateTo], () => loadGroups())
+watch([dateFrom, dateTo], () => loadEvents())
 
 const handleCreate = async () => {
   if (!startDate.value || !endDate.value) return
@@ -112,30 +112,30 @@ const handleCreate = async () => {
     startDate.value = undefined
     endDate.value = undefined
     toast.success(t('duties.events.create'))
-    await loadGroups()
+    await loadEvents()
   } catch (error) {
     toastApiError(error)
   }
 }
 
-const handleDelete = async (group: EventRead) => {
+const handleDelete = async (event: EventRead) => {
   const confirmed = await confirmDestructive(t('duties.events.deleteConfirm'))
   if (!confirmed) return
 
   try {
-    await del({ url: `/events/${group.id}` })
+    await del({ url: `/events/${event.id}` })
     toast.success(t('duties.events.delete'))
-    await loadGroups()
+    await loadEvents()
   } catch (error) {
     toastApiError(error)
   }
 }
 
-const navigateToGroup = (group: EventRead) => {
-  router.push({ name: 'event-detail', params: { groupId: group.id } })
+const navigateToEvent = (event: EventRead) => {
+  router.push({ name: 'event-detail', params: { eventId: event.id } })
 }
 
-onMounted(loadGroups)
+onMounted(loadEvents)
 </script>
 
 <template>
@@ -150,7 +150,7 @@ onMounted(loadGroups)
       </div>
       <Button
         v-if="authStore.isAdmin || authStore.isTaskManager"
-        data-testid="btn-create-group"
+        data-testid="btn-create-event"
         class="max-xl:hidden"
         @click="showCreateDialog = true"
       >
@@ -186,37 +186,37 @@ onMounted(loadGroups)
     </div>
 
     <template v-else>
-      <div v-if="filteredGroups.length === 0" class="py-12 text-center text-muted-foreground">
+      <div v-if="filteredEvents.length === 0" class="py-12 text-center text-muted-foreground">
         {{ t('duties.events.empty') }}
       </div>
 
       <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card
-          v-for="group in filteredGroups"
-          :key="group.id"
+          v-for="event in filteredEvents"
+          :key="event.id"
           class="cursor-pointer transition-colors hover:bg-muted/50"
-          @click="navigateToGroup(group)"
+          @click="navigateToEvent(event)"
         >
           <CardHeader class="pb-3">
             <div class="flex items-start justify-between">
-              <CardTitle class="text-lg">{{ group.name }}</CardTitle>
-              <Badge data-testid="group-status" :variant="statusVariant(group.status)">
-                {{ t(`duties.events.statuses.${group.status ?? 'draft'}`) }}
+              <CardTitle class="text-lg">{{ event.name }}</CardTitle>
+              <Badge data-testid="event-status" :variant="statusVariant(event.status)">
+                {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
               </Badge>
             </div>
-            <CardDescription v-if="group.description">
-              {{ group.description }}
+            <CardDescription v-if="event.description">
+              {{ event.description }}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div class="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{{ formatDate(group.start_date) }} – {{ formatDate(group.end_date) }}</span>
+              <span>{{ formatDate(event.start_date) }} – {{ formatDate(event.end_date) }}</span>
               <Button
-                v-if="authStore.canManageEvent(group.id)"
+                v-if="authStore.canManageEvent(event.id)"
                 variant="ghost"
                 size="icon"
                 class="h-8 w-8"
-                @click.stop="handleDelete(group)"
+                @click.stop="handleDelete(event)"
               >
                 <Trash2 class="h-4 w-4 text-destructive" />
               </Button>
@@ -262,12 +262,12 @@ onMounted(loadGroups)
       </DialogContent>
     </Dialog>
 
-    <!-- Mobile FAB: create group -->
+    <!-- Mobile FAB: create event -->
     <Button
       v-if="authStore.isAdmin || authStore.isTaskManager"
       size="icon"
       class="xl:hidden fixed bottom-24 md:bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
-      data-testid="fab-create-group"
+      data-testid="fab-create-event"
       :aria-label="t('duties.events.create')"
       @click="showCreateDialog = true"
     >

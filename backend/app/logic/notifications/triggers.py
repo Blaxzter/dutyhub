@@ -214,7 +214,7 @@ async def dispatch_task_published(
     task_name: str,
     event_id: uuid.UUID | None = None,
 ) -> None:
-    """Notify all active users that an task was published."""
+    """Notify all active users that a task was published."""
     try:
         from sqlalchemy import select
         from sqlmodel import col
@@ -252,7 +252,7 @@ async def dispatch_event_published(
     event_id: uuid.UUID,
     event_name: str,
 ) -> None:
-    """Notify all active users that an task group was published."""
+    """Notify all active users that an event was published."""
     try:
         from sqlalchemy import select
         from sqlmodel import col

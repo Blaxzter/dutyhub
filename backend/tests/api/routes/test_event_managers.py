@@ -29,7 +29,7 @@ class TestEventManagerEndpoints:
         test_event: Event,
         as_task_manager: None,
     ):
-        """Test that an task_manager can list managers for a group."""
+        """Test that a task_manager can list managers for a group."""
         r = await async_client.get(f"/api/v1/events/{test_event.id}/managers")
 
         assert r.status_code == 200
@@ -51,7 +51,7 @@ class TestEventManagerEndpoints:
         test_task_manager_user: User,
         as_admin: None,
     ):
-        """Test that an admin can assign a user as group manager."""
+        """Test that an admin can assign a user as event manager."""
         r = await async_client.post(
             f"/api/v1/events/{test_event.id}/managers/{test_task_manager_user.id}"
         )
@@ -86,7 +86,7 @@ class TestEventManagerEndpoints:
         test_user: User,
         as_task_manager: None,
     ):
-        """Test that an task_manager cannot assign group managers (admin only)."""
+        """Test that a task_manager cannot assign event managers (admin only)."""
         r = await async_client.post(
             f"/api/v1/events/{test_event.id}/managers/{test_user.id}"
         )
@@ -99,7 +99,7 @@ class TestEventManagerEndpoints:
         test_event: Event,
         test_user: User,
     ):
-        """Test that a plain user cannot assign group managers."""
+        """Test that a plain user cannot assign event managers."""
         r = await async_client.post(
             f"/api/v1/events/{test_event.id}/managers/{test_user.id}"
         )
@@ -113,7 +113,7 @@ class TestEventManagerEndpoints:
         test_task_manager_user: User,
         as_admin: None,
     ):
-        """Test that an admin can remove a group manager assignment."""
+        """Test that an admin can remove a event manager assignment."""
         # First assign
         await async_client.post(
             f"/api/v1/events/{test_event.id}/managers/{test_task_manager_user.id}"
@@ -133,7 +133,7 @@ class TestEventManagerEndpoints:
         test_user: User,
         as_task_manager: None,
     ):
-        """Test that an task_manager cannot remove group manager assignments."""
+        """Test that a task_manager cannot remove event manager assignments."""
         r = await async_client.delete(
             f"/api/v1/events/{test_event.id}/managers/{test_user.id}"
         )

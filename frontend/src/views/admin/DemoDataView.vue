@@ -71,7 +71,7 @@ async function handleCreate() {
     toast.success(
       t('admin.demoData.createSuccess', {
         tasks: d.tasks_created,
-        groups: d.events_created,
+        events: d.events_created,
         users: d.users_created,
         shifts: d.shifts_created,
         bookings: d.bookings_created,
@@ -94,7 +94,7 @@ async function handleDelete() {
     toast.success(
       t('admin.demoData.deleteSuccess', {
         tasks: d.tasks_deleted,
-        groups: d.events_deleted,
+        events: d.events_deleted,
         users: d.users_deleted,
         shifts: d.shifts_deleted,
         bookings: d.bookings_deleted,

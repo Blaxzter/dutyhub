@@ -143,7 +143,7 @@ class TestShiftsTaskManagerRole:
         as_task_manager: None,
         test_task: Task,
     ):
-        """Test that an task_manager can create duty shifts."""
+        """Test that a task_manager can create duty shifts."""
         r = await async_client.post(
             "/api/v1/shifts/",
             json={
@@ -183,7 +183,7 @@ class TestShiftsTaskManagerRole:
         as_task_manager: None,
         test_shift: Shift,
     ):
-        """Test that an task_manager can update duty shifts."""
+        """Test that a task_manager can update duty shifts."""
         r = await async_client.patch(
             f"/api/v1/shifts/{test_shift.id}",
             json={"title": "Updated by Manager"},
@@ -212,7 +212,7 @@ class TestShiftsTaskManagerRole:
         db_session: AsyncSession,
         test_task: Task,
     ):
-        """Test that an task_manager can delete duty shifts."""
+        """Test that a task_manager can delete duty shifts."""
         shift = Shift(
             task_id=test_task.id,
             title="Manager Delete Me",

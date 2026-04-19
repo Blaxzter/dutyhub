@@ -23,13 +23,13 @@ import { toastApiError } from '@/lib/api-errors'
 import { formatDate } from '@/lib/format'
 
 const props = defineProps<{
-  group: EventRead
-  groupId: string
+  event: EventRead
+  eventId: string
   tasks: TaskRead[]
 }>()
 
 const emit = defineEmits<{
-  updated: [group: EventRead]
+  updated: [event: EventRead]
   cancel: []
 }>()
 
@@ -37,8 +37,8 @@ const { t } = useI18n()
 const { get, patch, post } = useAuthenticatedClient()
 
 // ── Edit form state ──
-const name = ref(props.group.name)
-const description = ref(props.group.description ?? '')
+const name = ref(props.event.name)
+const description = ref(props.event.description ?? '')
 const startDate = ref<DateValue>()
 const endDate = ref<DateValue>()
 const saving = ref(false)
@@ -80,13 +80,13 @@ const shifting = ref(false)
 
 const shiftDays = computed(() => {
   if (!shiftTargetDate.value || !startDate.value) return 0
-  return shiftTargetDate.value.compare(parseDate(props.group.start_date))
+  return shiftTargetDate.value.compare(parseDate(props.event.start_date))
 })
 
 async function loadTaskDateBounds() {
   try {
     const res = await get<{ data: { earliest_start: string | null; latest_end: string | null } }>({
-      url: `/events/${props.groupId}/task-date-bounds`,
+      url: `/events/${props.eventId}/task-date-bounds`,
     })
     earliestTaskDate.value = res.data.earliest_start
       ? parseDate(res.data.earliest_start)
@@ -102,7 +102,7 @@ async function handleSubmit() {
   saving.value = true
   try {
     const res = await patch<{ data: EventRead }>({
-      url: `/events/${props.groupId}`,
+      url: `/events/${props.eventId}`,
       body: {
         name: name.value.trim(),
         description: description.value.trim() || null,
@@ -124,7 +124,7 @@ async function handleShiftDates() {
   shifting.value = true
   try {
     const res = await post<{ data: EventRead }>({
-      url: `/events/${props.groupId}/shift-dates`,
+      url: `/events/${props.eventId}/shift-dates`,
       body: { new_start_date: shiftTargetDate.value.toString() },
     })
     emit('updated', res.data)
@@ -137,14 +137,14 @@ async function handleShiftDates() {
 }
 
 onMounted(() => {
-  startDate.value = parseDate(props.group.start_date)
-  endDate.value = parseDate(props.group.end_date)
+  startDate.value = parseDate(props.event.start_date)
+  endDate.value = parseDate(props.event.end_date)
   loadTaskDateBounds()
 })
 </script>
 
 <template>
-  <!-- Edit group details -->
+  <!-- Edit event details -->
   <Card>
     <CardHeader>
       <CardTitle>{{ t('duties.events.edit') }}</CardTitle>

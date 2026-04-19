@@ -249,11 +249,11 @@ test(`Take How It Works step screenshots [${LANG}]`, async ({ page }) => {
   })
   console.log(`  Saved: ${SCREENSHOT_DIR}/create-step1-details.png`)
 
-  // Click Next to move to Task Group
+  // Click Next to move to Event
   await page.getByRole('button', { name: labels.next }).click()
   await page.waitForTimeout(500)
 
-  // Skip Task Group, click Next to move to Dates
+  // Skip Event, click Next to move to Dates
   await page.getByRole('button', { name: labels.next }).click()
   await page.waitForTimeout(500)
 

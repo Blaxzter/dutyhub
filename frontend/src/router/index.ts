@@ -86,23 +86,23 @@ const router = createRouter({
           name: 'events',
           component: () => import('@/views/events/EventsView.vue'),
           meta: {
-            breadcrumbs: [{ title: 'Task Groups', titleKey: 'duties.events.title' }],
+            breadcrumbs: [{ title: 'Events', titleKey: 'duties.events.title' }],
           },
         },
         {
-          path: 'events/:groupId/:section?',
+          path: 'events/:eventId/:section?',
           name: 'event-detail',
           component: () => import('@/views/events/EventDetailView.vue'),
           meta: {
-            routerViewKey: (route: { params: { groupId?: string } }) =>
-              `event-${route.params.groupId}`,
+            routerViewKey: (route: { params: { eventId?: string } }) =>
+              `event-${route.params.eventId}`,
             breadcrumbs: [
               {
-                title: 'Task Groups',
+                title: 'Events',
                 titleKey: 'duties.events.title',
                 to: { name: 'events' },
               },
-              { title: 'Task Group Details', titleKey: 'duties.events.detail.title' },
+              { title: 'Event Details', titleKey: 'duties.events.detail.title' },
             ],
           },
         },
@@ -285,7 +285,7 @@ const router = createRouter({
           component: () => import('@/views/print/PrintTaskView.vue'),
         },
         {
-          path: 'events/:groupId',
+          path: 'events/:eventId',
           name: 'print-event',
           component: () => import('@/views/print/PrintEventView.vue'),
         },
@@ -360,10 +360,10 @@ router.beforeEach(async (to) => {
 
   const requiredRoles = normalizeRoles(to.meta.requiresRole)
   const hasRole = requiredRoles.some((role) => authStore.roles.includes(role))
-  // Scoped group managers are allowed on routes that accept task_manager
-  const groupManagerAllowed =
+  // Scoped event managers are allowed on routes that accept task_manager
+  const eventManagerAllowed =
     !hasRole && requiredRoles.includes('task_manager') && authStore.isEventManager
-  if (!hasRole && !groupManagerAllowed) {
+  if (!hasRole && !eventManagerAllowed) {
     return { name: 'home' }
   }
 

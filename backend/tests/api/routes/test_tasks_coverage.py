@@ -117,7 +117,7 @@ class TestTaskCrudCoverage:
         test_task: Task,
         test_user: User,
     ):
-        """Test listing all confirmed bookings for an task."""
+        """Test listing all confirmed bookings for a task."""
         shift = Shift(
             task_id=test_task.id,
             title="Bookings List Shift",
@@ -157,7 +157,7 @@ class TestTaskCrudCoverage:
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test deleting an task."""
+        """Test deleting a task."""
         task = Task(
             name="Delete Me",
             start_date=date(2026, 10, 1),
@@ -178,7 +178,7 @@ class TestTaskCrudCoverage:
         db_session: AsyncSession,
         test_user: User,
     ):
-        """Test deleting an task cancels all confirmed bookings."""
+        """Test deleting a task cancels all confirmed bookings."""
         task = Task(
             name="Delete With Bookings",
             start_date=date(2026, 10, 10),
@@ -219,7 +219,7 @@ class TestTaskCrudCoverage:
         as_admin: None,
         test_draft_task: Task,
     ):
-        """Test that publishing an task dispatches notification."""
+        """Test that publishing a task dispatches notification."""
         r = await async_client.patch(
             f"/api/v1/tasks/{test_draft_task.id}",
             json={"status": "published"},

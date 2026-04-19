@@ -133,7 +133,7 @@ class TestReportingTaskManagerRole:
         async_client: AsyncClient,
         as_task_manager: None,
     ):
-        """Test that an task_manager can access the reporting overview."""
+        """Test that a task_manager can access the reporting overview."""
         r = await async_client.get("/api/v1/reporting/overview")
 
         assert r.status_code == 200
@@ -146,7 +146,7 @@ class TestReportingTaskManagerRole:
         async_client: AsyncClient,
         as_task_manager: None,
     ):
-        """Test that an task_manager can access the CSV export."""
+        """Test that a task_manager can access the CSV export."""
         r = await async_client.get("/api/v1/reporting/export")
 
         assert r.status_code == 200
@@ -185,7 +185,7 @@ class TestReportingTaskManagerRole:
         from app.api import deps as deps_module
         from app.models.task import Task as TaskModel
 
-        # Create an task owned by the task_manager user in the managed group
+        # Create a task owned by the task_manager user in the managed group
         task = TaskModel(
             name="Manager's Task",
             start_date=date(2026, 7, 1),

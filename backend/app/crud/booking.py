@@ -140,7 +140,7 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         *,
         task_id: uuid.UUID,
     ) -> list[Booking]:
-        """Get all confirmed bookings for every shift belonging to an task, with user data."""
+        """Get all confirmed bookings for every shift belonging to a task, with user data."""
         query = (
             select(Booking)
             .join(Shift, col(Booking.shift_id) == col(Shift.id))

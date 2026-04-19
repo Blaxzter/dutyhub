@@ -169,7 +169,7 @@ export const zDashboardBookingItem = z
 /**
  * DashboardEvent
  *
- * Slim task group for the dashboard calendar.
+ * Slim event for the dashboard calendar.
  */
 export const zDashboardEvent = z
   .object({
@@ -179,7 +179,7 @@ export const zDashboardEvent = z
     end_date: z.iso.date(),
   })
   .register(z.globalRegistry, {
-    description: 'Slim task group for the dashboard calendar.',
+    description: 'Slim event for the dashboard calendar.',
   })
 
 /**
@@ -1298,7 +1298,7 @@ export const zUserProfile = z.object({
   managed_event_ids: z
     .array(z.uuid())
     .register(z.globalRegistry, {
-      description: 'IDs of task groups this user manages (via event_managers)',
+      description: 'IDs of events this user manages (via event_managers)',
     })
     .optional(),
 })
@@ -1968,21 +1968,21 @@ export const zEventsShiftEventDatesPath = z.object({
  */
 export const zEventsShiftEventDatesResponse = zEventRead
 
-export const zEventsListGroupAvailabilitiesPath = z.object({
+export const zEventsListEventAvailabilitiesPath = z.object({
   group_id: z.uuid(),
 })
 
-export const zEventsListGroupAvailabilitiesQuery = z.object({
+export const zEventsListEventAvailabilitiesQuery = z.object({
   skip: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(500).optional().default(200),
 })
 
 /**
- * Response Events-List Group Availabilities
+ * Response Events-List Event Availabilities
  *
  * Successful Response
  */
-export const zEventsListGroupAvailabilitiesResponse = z
+export const zEventsListEventAvailabilitiesResponse = z
   .array(zUserAvailabilityWithUser)
   .register(z.globalRegistry, {
     description: 'Successful Response',
@@ -2019,16 +2019,16 @@ export const zEventsSetMyAvailabilityPath = z.object({
  */
 export const zEventsSetMyAvailabilityResponse = zUserAvailabilityRead
 
-export const zEventsListGroupManagersPath = z.object({
+export const zEventsListEventManagersPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
- * Response Events-List Group Managers
+ * Response Events-List Event Managers
  *
  * Successful Response
  */
-export const zEventsListGroupManagersResponse = z.array(zUserRead).register(z.globalRegistry, {
+export const zEventsListEventManagersResponse = z.array(zUserRead).register(z.globalRegistry, {
   description: 'Successful Response',
 })
 

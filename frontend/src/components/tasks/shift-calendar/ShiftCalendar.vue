@@ -54,7 +54,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   navigateTask: [task: CalendarTask]
-  navigateGroup: [group: CalendarEvent]
+  navigateGroup: [event: CalendarEvent]
   navigateBooking: [booking: BookingCalendarItem]
   'update:dateRange': [range: DateRange]
   'update:calendarViewMode': [mode: ViewMode]
@@ -67,7 +67,7 @@ const viewMode = ref<ViewMode>(props.calendarViewMode ?? props.defaultView)
 const calendarDate = ref(
   props.calendarDate ? new Date(props.calendarDate + 'T00:00:00') : new Date(),
 )
-const hoveredGroupId = ref<string | null>(null)
+const hoveredEventId = ref<string | null>(null)
 const hoveredTaskId = ref<string | null>(null)
 
 // ── Helpers ──
@@ -85,7 +85,7 @@ function buildDay(date: Date): CalendarDayType {
     tasks: props.showTasks
       ? props.tasks.filter((e) => e.start_date <= dateStr && e.end_date >= dateStr)
       : [],
-    groups: props.showGroups
+    events: props.showGroups
       ? props.events.filter((g) => g.start_date <= dateStr && g.end_date >= dateStr)
       : [],
     bookings: props.showBookings ? props.bookings.filter((b) => b.date === dateStr) : [],
@@ -401,12 +401,12 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
     v-if="viewMode === 'month'"
     :weeks="calendarWeeks"
     :weekday-names="weekdayNames"
-    :hovered-group-id="hoveredGroupId"
+    :hovered-event-id="hoveredEventId"
     :hovered-task-id="hoveredTaskId"
     @navigate-task="emit('navigateTask', $event)"
-    @navigate-group="emit('navigateGroup', $event)"
+    @navigate-event="emit('navigateGroup', $event)"
     @navigate-booking="emit('navigateBooking', $event)"
-    @hover-group="hoveredGroupId = $event"
+    @hover-event="hoveredEventId = $event"
     @hover-task="hoveredTaskId = $event"
     @select-day="goToDay"
   />
@@ -415,12 +415,12 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
     v-else-if="viewMode === 'week'"
     :week="currentWeek"
     :weekday-names="weekdayNames"
-    :hovered-group-id="hoveredGroupId"
+    :hovered-event-id="hoveredEventId"
     :hovered-task-id="hoveredTaskId"
     @navigate-task="emit('navigateTask', $event)"
-    @navigate-group="emit('navigateGroup', $event)"
+    @navigate-event="emit('navigateGroup', $event)"
     @navigate-booking="emit('navigateBooking', $event)"
-    @hover-group="hoveredGroupId = $event"
+    @hover-event="hoveredEventId = $event"
     @hover-task="hoveredTaskId = $event"
     @select-day="goToDay"
   />
@@ -429,7 +429,7 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
     v-else
     :day="currentDay"
     @navigate-task="emit('navigateTask', $event)"
-    @navigate-group="emit('navigateGroup', $event)"
+    @navigate-event="emit('navigateGroup', $event)"
     @navigate-booking="emit('navigateBooking', $event)"
   />
 </template>

@@ -14,7 +14,7 @@ class TestEventRoutes:
     """Test suite for /events/ routes."""
 
     async def test_list_events(self, async_client: AsyncClient, test_event: Event):
-        """Test listing task groups returns published groups for normal users."""
+        """Test listing events returns published groups for normal users."""
         r = await async_client.get("/api/v1/events/")
 
         assert r.status_code == 200
@@ -52,7 +52,7 @@ class TestEventRoutes:
         assert test_draft_event.name in names
 
     async def test_get_event(self, async_client: AsyncClient, test_event: Event):
-        """Test getting a single published task group."""
+        """Test getting a single published event."""
         r = await async_client.get(f"/api/v1/events/{test_event.id}")
 
         assert r.status_code == 200
@@ -62,7 +62,7 @@ class TestEventRoutes:
     async def test_draft_event_hidden_from_normal_user(
         self, async_client: AsyncClient, test_draft_event: Event
     ):
-        """Test that a normal user cannot access a draft task group."""
+        """Test that a normal user cannot access a draft event."""
         r = await async_client.get(f"/api/v1/events/{test_draft_event.id}")
 
         assert r.status_code == 403
@@ -73,14 +73,14 @@ class TestEventRoutes:
         test_draft_event: Event,
         as_admin: None,
     ):
-        """Test that an admin can access a draft task group."""
+        """Test that an admin can access a draft event."""
         r = await async_client.get(f"/api/v1/events/{test_draft_event.id}")
 
         assert r.status_code == 200
         assert r.json()["status"] == "draft"
 
     async def test_get_nonexistent_event(self, async_client: AsyncClient):
-        """Test getting a non-existent task group returns 404."""
+        """Test getting a non-existent event returns 404."""
         import uuid
 
         r = await async_client.get(f"/api/v1/events/{uuid.uuid4()}")
@@ -89,7 +89,7 @@ class TestEventRoutes:
     async def test_create_event_as_admin(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test that an admin can create an task group."""
+        """Test that an admin can create an event."""
         r = await async_client.post(
             "/api/v1/events/",
             json={
@@ -109,7 +109,7 @@ class TestEventRoutes:
         test_event: Event,
         as_admin: None,
     ):
-        """Test that an admin can update an task group."""
+        """Test that an admin can update an event."""
         r = await async_client.patch(
             f"/api/v1/events/{test_event.id}",
             json={"name": "Renamed Group"},
@@ -124,12 +124,12 @@ class TestEventRoutes:
         test_event: Event,
         as_admin: None,
     ):
-        """Test that an admin can delete an task group."""
+        """Test that an admin can delete an event."""
         r = await async_client.delete(f"/api/v1/events/{test_event.id}")
         assert r.status_code == 204
 
     async def test_search_events(self, async_client: AsyncClient, test_event: Event):
-        """Test searching task groups by name."""
+        """Test searching events by name."""
         r = await async_client.get("/api/v1/events/", params={"search": "Kirchentags"})
 
         assert r.status_code == 200
@@ -294,7 +294,7 @@ class TestEventsTaskManagerRole:
         async_client: AsyncClient,
         as_task_manager: None,
     ):
-        """Test that an task_manager can create an task group."""
+        """Test that a task_manager can create an event."""
         r = await async_client.post(
             "/api/v1/events/",
             json={
@@ -311,7 +311,7 @@ class TestEventsTaskManagerRole:
         self,
         async_client: AsyncClient,
     ):
-        """Test that a plain user cannot create task groups."""
+        """Test that a plain user cannot create events."""
         r = await async_client.post(
             "/api/v1/events/",
             json={
@@ -329,7 +329,7 @@ class TestEventsTaskManagerRole:
         test_event: Event,
         as_task_manager: None,
     ):
-        """Test that an task_manager can update any task group."""
+        """Test that a task_manager can update any event."""
         r = await async_client.patch(
             f"/api/v1/events/{test_event.id}",
             json={"name": "Updated by Manager"},
@@ -343,7 +343,7 @@ class TestEventsTaskManagerRole:
         async_client: AsyncClient,
         test_event: Event,
     ):
-        """Test that a plain user cannot update task groups."""
+        """Test that a plain user cannot update events."""
         r = await async_client.patch(
             f"/api/v1/events/{test_event.id}",
             json={"name": "Should Fail"},
@@ -357,7 +357,7 @@ class TestEventsTaskManagerRole:
         test_event: Event,
         as_task_manager: None,
     ):
-        """Test that an task_manager can delete any task group."""
+        """Test that a task_manager can delete any event."""
         r = await async_client.delete(f"/api/v1/events/{test_event.id}")
 
         assert r.status_code == 204
@@ -367,7 +367,7 @@ class TestEventsTaskManagerRole:
         async_client: AsyncClient,
         test_event: Event,
     ):
-        """Test that a plain user cannot delete task groups."""
+        """Test that a plain user cannot delete events."""
         r = await async_client.delete(f"/api/v1/events/{test_event.id}")
 
         assert r.status_code == 403
@@ -379,7 +379,7 @@ class TestEventsTaskManagerRole:
         test_user_availability: UserAvailability,
         as_task_manager: None,
     ):
-        """Test that an task_manager can list availabilities for a group."""
+        """Test that a task_manager can list availabilities for a group."""
         r = await async_client.get(f"/api/v1/events/{test_event.id}/availabilities")
 
         assert r.status_code == 200

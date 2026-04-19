@@ -15,7 +15,7 @@ export interface CalendarTask {
   end_date: string
 }
 
-/** Minimal task group shape used by the calendar. */
+/** Minimal task event shape used by the calendar. */
 export interface CalendarEvent {
   id: string
   name: string
@@ -36,12 +36,12 @@ export interface CalendarDay {
   date: Date | null
   dateStr: string | null
   tasks: CalendarTask[]
-  groups: CalendarEvent[]
+  events: CalendarEvent[]
   bookings: BookingCalendarItem[]
 }
 
-export interface GroupBar {
-  group: CalendarEvent
+export interface EventBar {
+  event: CalendarEvent
   startCol: number
   span: number
   lane: number
@@ -60,7 +60,7 @@ export interface TaskBar {
 
 export interface CalendarWeek {
   days: CalendarDay[]
-  groupBars: GroupBar[]
+  groupBars: EventBar[]
   eventBars: TaskBar[]
   barLaneCount: number
   eventBarLaneCount: number
@@ -70,7 +70,7 @@ export type ViewMode = 'month' | 'week' | 'day'
 
 export interface ShiftCalendarEmits {
   navigateTask: [task: CalendarTask]
-  navigateGroup: [group: CalendarEvent]
+  navigateGroup: [event: CalendarEvent]
   navigateBooking: [booking: BookingCalendarItem]
 }
 
@@ -78,15 +78,15 @@ export const EMPTY_DAY: CalendarDay = {
   date: null,
   dateStr: null,
   tasks: [],
-  groups: [],
+  events: [],
   bookings: [],
 }
 
-export function computeEventBars(weekDays: CalendarDay[]): GroupBar[] {
+export function computeEventBars(weekDays: CalendarDay[]): EventBar[] {
   const seen = new Set<string>()
   const groupsInWeek: CalendarEvent[] = []
   for (const day of weekDays) {
-    for (const g of day.groups) {
+    for (const g of day.events) {
       if (!seen.has(g.id)) {
         seen.add(g.id)
         groupsInWeek.push(g)
@@ -94,11 +94,11 @@ export function computeEventBars(weekDays: CalendarDay[]): GroupBar[] {
     }
   }
 
-  return groupsInWeek.map((group, lane) => {
+  return groupsInWeek.map((event, lane) => {
     let startCol = -1
     let endCol = -1
     for (let col = 0; col < weekDays.length; col++) {
-      if (weekDays[col].groups.some((g) => g.id === group.id)) {
+      if (weekDays[col].events.some((g) => g.id === event.id)) {
         if (startCol === -1) startCol = col
         endCol = col
       }
@@ -106,10 +106,10 @@ export function computeEventBars(weekDays: CalendarDay[]): GroupBar[] {
 
     const startDay = weekDays[startCol]
     const endDay = weekDays[endCol]
-    const isStart = startDay.dateStr === group.start_date
-    const isEnd = endDay.dateStr === group.end_date
+    const isStart = startDay.dateStr === event.start_date
+    const isEnd = endDay.dateStr === event.end_date
 
-    return { group, startCol, span: endCol - startCol + 1, lane, isStart, isEnd }
+    return { event, startCol, span: endCol - startCol + 1, lane, isStart, isEnd }
   })
 }
 
@@ -144,7 +144,7 @@ export function computeTaskBars(weekDays: CalendarDay[]): TaskBar[] {
   })
 }
 
-/** Check if an task spans multiple days */
+/** Check if a task spans multiple days */
 export function isMultiDayTask(task: CalendarTask): boolean {
   return task.start_date !== task.end_date
 }

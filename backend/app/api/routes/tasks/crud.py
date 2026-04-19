@@ -38,7 +38,7 @@ async def list_tasks(
 ) -> TaskListResponse:
     """List published tasks (all users) or all tasks (admin/manager).
 
-    Scoped group managers see published tasks plus tasks in their managed groups.
+    Scoped event managers see published tasks plus tasks in their managed groups.
     """
     effective_status = status
     also_include_group_ids = None
@@ -47,7 +47,7 @@ async def list_tasks(
         # Global admin/task_manager — see everything
         pass
     else:
-        # Check for scoped group manager
+        # Check for scoped event manager
         result = await session.execute(
             select(col(EventManager.event_id)).where(
                 col(EventManager.user_id) == current_user.id
@@ -96,7 +96,7 @@ async def get_task(
 ) -> Task:
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
     if not current_user.is_manager and db_task.status != "published":
-        # Allow scoped group managers to see their unpublished tasks
+        # Allow scoped event managers to see their unpublished tasks
         if not db_task.event_id or not await crud_egm.is_manager(
             session, user_id=current_user.id, event_id=db_task.event_id
         ):
@@ -150,7 +150,7 @@ async def list_task_bookings(
     session: DBDep,
     _current_user: CurrentUser,
 ) -> list[TaskBookingEntry]:
-    """List all confirmed bookings for every shift in an task, with user info."""
+    """List all confirmed bookings for every shift in a task, with user info."""
     import uuid as _uuid
 
     await crud_task.get(session, task_id, raise_404_error=True)

@@ -1,22 +1,22 @@
 <script setup lang="ts">
-import type { CalendarEvent, GroupBar } from './types'
+import type { CalendarEvent, EventBar } from './types'
 
 defineProps<{
-  bars: GroupBar[]
-  hoveredGroupId: string | null
+  bars: EventBar[]
+  hoveredEventId: string | null
   topOffset?: number
 }>()
 
 const emit = defineEmits<{
-  navigateGroup: [group: CalendarEvent]
-  hover: [groupId: string | null]
+  navigateGroup: [event: CalendarEvent]
+  hover: [eventId: string | null]
 }>()
 </script>
 
 <template>
   <div
     v-for="bar in bars"
-    :key="'bar-' + bar.group.id"
+    :key="'bar-' + bar.event.id"
     class="absolute z-10 hidden sm:block cursor-pointer"
     :style="{
       top: `${(topOffset ?? 28) + bar.lane * 22}px`,
@@ -35,7 +35,7 @@ const emit = defineEmits<{
             : bar.isEnd
               ? 'rounded-r'
               : '',
-        hoveredGroupId === bar.group.id ? 'bg-amber-500/25' : 'bg-amber-500/15',
+        hoveredEventId === bar.event.id ? 'bg-amber-500/25' : 'bg-amber-500/15',
       ]"
       :style="{
         marginLeft: bar.isStart ? '0' : '-4px',
@@ -49,11 +49,11 @@ const emit = defineEmits<{
                 ? 'calc(100% + 4px)'
                 : undefined,
       }"
-      @mouseenter="emit('hover', bar.group.id)"
+      @mouseenter="emit('hover', bar.event.id)"
       @mouseleave="emit('hover', null)"
-      @click="emit('navigateGroup', bar.group)"
+      @click="emit('navigateGroup', bar.event)"
     >
-      <span v-if="bar.isStart || bar.startCol === 0" class="truncate">{{ bar.group.name }}</span>
+      <span v-if="bar.isStart || bar.startCol === 0" class="truncate">{{ bar.event.name }}</span>
     </button>
   </div>
 </template>

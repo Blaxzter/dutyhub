@@ -172,7 +172,7 @@ def current_user(
     any_of_roles_list = _normalize_required_roles(any_of_roles)
 
     async def _is_any_group_manager(session: AsyncSession, user: User) -> bool:
-        """Check if user manages at least one task group."""
+        """Check if user manages at least one event."""
         result = await session.execute(
             select(col(EventManager.id))
             .where(col(EventManager.user_id) == user.id)

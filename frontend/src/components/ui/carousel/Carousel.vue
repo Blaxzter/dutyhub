@@ -50,7 +50,7 @@ function onKeyDown(task: KeyboardEvent) {
 
 <template>
   <div
-    data-shift="carousel"
+    data-slot="carousel"
     :class="cn('relative', props.class)"
     role="region"
     aria-roledescription="carousel"

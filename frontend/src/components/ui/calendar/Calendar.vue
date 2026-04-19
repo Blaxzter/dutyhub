@@ -180,7 +180,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     v-slot="{ grid, weekDays, date }"
     v-bind="forwarded"
     v-model:placeholder="placeholder"
-    data-shift="calendar"
+    data-slot="calendar"
     :class="cn('p-3', props.class)"
   >
     <CalendarHeader class="pt-0">

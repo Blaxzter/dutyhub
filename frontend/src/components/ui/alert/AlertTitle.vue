@@ -10,7 +10,7 @@ const props = defineProps<{
 
 <template>
   <div
-    data-shift="alert-title"
+    data-slot="alert-title"
     :class="cn('col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight', props.class)"
   >
     <slot />

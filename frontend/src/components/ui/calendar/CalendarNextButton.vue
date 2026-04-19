@@ -19,7 +19,7 @@ const forwardedProps = useForwardProps(delegatedProps)
 
 <template>
   <CalendarNext
-    data-shift="calendar-next-button"
+    data-slot="calendar-next-button"
     :class="
       cn(
         buttonVariants({ variant: 'outline' }),

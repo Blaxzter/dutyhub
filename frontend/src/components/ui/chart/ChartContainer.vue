@@ -38,7 +38,7 @@ provideChartContext({
 
 <template>
   <div
-    data-shift="chart"
+    data-slot="chart"
     :data-chart="chartId"
     :class="
       cn(

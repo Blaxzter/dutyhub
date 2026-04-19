@@ -62,7 +62,7 @@ function handleNotificationClick(notification: (typeof notifications.value)[0]) 
       emit('navigate')
       router.push({
         name: 'event-detail',
-        params: { groupId: data.event_id as string },
+        params: { eventId: data.event_id as string },
       })
     } else if (data.booking_id) {
       emit('navigate')
@@ -115,7 +115,7 @@ function getNotificationIcon(typeCode: string): string {
     <div
       v-for="notification in notifications"
       :key="notification.id"
-      class="group hover:bg-muted/50 flex cursor-pointer gap-3 px-4 py-3 transition-colors"
+      class="event hover:bg-muted/50 flex cursor-pointer gap-3 px-4 py-3 transition-colors"
       :class="{ 'bg-muted/30': !notification.is_read }"
       @click="handleNotificationClick(notification)"
     >
@@ -140,7 +140,7 @@ function getNotificationIcon(typeCode: string): string {
         <span v-else class="h-2 w-2" />
       </div>
 
-      <div class="hidden flex-shrink-0 flex-col gap-1 group-hover:flex">
+      <div class="hidden flex-shrink-0 flex-col gap-1 event-hover:flex">
         <Button
           v-if="!notification.is_read"
           variant="ghost"

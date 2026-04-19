@@ -19,7 +19,7 @@ const delegatedProps = reactiveOmit(props, 'class')
 
 <template>
   <ScrollAreaScrollbar
-    data-shift="scroll-area-scrollbar"
+    data-slot="scroll-area-scrollbar"
     v-bind="delegatedProps"
     :class="
       cn(
@@ -30,6 +30,6 @@ const delegatedProps = reactiveOmit(props, 'class')
       )
     "
   >
-    <ScrollAreaThumb data-shift="scroll-area-thumb" class="bg-border relative flex-1 rounded-full" />
+    <ScrollAreaThumb data-slot="scroll-area-thumb" class="bg-border relative flex-1 rounded-full" />
   </ScrollAreaScrollbar>
 </template>

@@ -12,7 +12,7 @@ const props = defineProps<{
 
 <template>
   <li
-    data-shift="breadcrumb-separator"
+    data-slot="breadcrumb-separator"
     role="presentation"
     aria-hidden="true"
     :class="cn('[&>svg]:size-3.5', props.class)"

@@ -12,11 +12,11 @@ const props = defineProps<{
 
 <template>
   <ScrollArea
-    data-shift="sidebar-content"
+    data-slot="sidebar-content"
     data-sidebar="content"
     :class="
       cn(
-        'min-h-0 flex-1 group-data-[collapsible=icon]:[&_[data-shift=scroll-area-viewport]]:overflow-hidden group-data-[collapsible=icon]:[&_[data-shift=scroll-area-scrollbar]]:hidden',
+        'min-h-0 flex-1 event-data-[collapsible=icon]:[&_[data-slot=scroll-area-viewport]]:overflow-hidden event-data-[collapsible=icon]:[&_[data-slot=scroll-area-scrollbar]]:hidden',
         props.class,
       )
     "

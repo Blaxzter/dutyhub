@@ -402,7 +402,7 @@ export type DashboardBookingItem = {
 /**
  * DashboardEvent
  *
- * Slim task group for the dashboard calendar.
+ * Slim event for the dashboard calendar.
  */
 export type DashboardEvent = {
   /**
@@ -2754,7 +2754,7 @@ export type UserProfile = {
   /**
    * Managed Event Ids
    *
-   * IDs of task groups this user manages (via event_managers)
+   * IDs of events this user manages (via event_managers)
    */
   managed_event_ids?: Array<string>
 }
@@ -6467,7 +6467,7 @@ export type EventsShiftEventDatesResponses = {
 export type EventsShiftEventDatesResponse =
   EventsShiftEventDatesResponses[keyof EventsShiftEventDatesResponses]
 
-export type EventsListGroupAvailabilitiesData = {
+export type EventsListEventAvailabilitiesData = {
   body?: never
   path: {
     /**
@@ -6488,7 +6488,7 @@ export type EventsListGroupAvailabilitiesData = {
   url: '/api/v1/events/{group_id}/availabilities'
 }
 
-export type EventsListGroupAvailabilitiesErrors = {
+export type EventsListEventAvailabilitiesErrors = {
   /**
    * Bad Request
    */
@@ -6523,20 +6523,20 @@ export type EventsListGroupAvailabilitiesErrors = {
   500: ProblemDetails
 }
 
-export type EventsListGroupAvailabilitiesError =
-  EventsListGroupAvailabilitiesErrors[keyof EventsListGroupAvailabilitiesErrors]
+export type EventsListEventAvailabilitiesError =
+  EventsListEventAvailabilitiesErrors[keyof EventsListEventAvailabilitiesErrors]
 
-export type EventsListGroupAvailabilitiesResponses = {
+export type EventsListEventAvailabilitiesResponses = {
   /**
-   * Response Events-List Group Availabilities
+   * Response Events-List Event Availabilities
    *
    * Successful Response
    */
   200: Array<UserAvailabilityWithUser>
 }
 
-export type EventsListGroupAvailabilitiesResponse =
-  EventsListGroupAvailabilitiesResponses[keyof EventsListGroupAvailabilitiesResponses]
+export type EventsListEventAvailabilitiesResponse =
+  EventsListEventAvailabilitiesResponses[keyof EventsListEventAvailabilitiesResponses]
 
 export type EventsDeleteMyAvailabilityData = {
   body?: never
@@ -6718,7 +6718,7 @@ export type EventsSetMyAvailabilityResponses = {
 export type EventsSetMyAvailabilityResponse =
   EventsSetMyAvailabilityResponses[keyof EventsSetMyAvailabilityResponses]
 
-export type EventsListGroupManagersData = {
+export type EventsListEventManagersData = {
   body?: never
   path: {
     /**
@@ -6730,7 +6730,7 @@ export type EventsListGroupManagersData = {
   url: '/api/v1/events/{group_id}/managers'
 }
 
-export type EventsListGroupManagersErrors = {
+export type EventsListEventManagersErrors = {
   /**
    * Bad Request
    */
@@ -6765,20 +6765,20 @@ export type EventsListGroupManagersErrors = {
   500: ProblemDetails
 }
 
-export type EventsListGroupManagersError =
-  EventsListGroupManagersErrors[keyof EventsListGroupManagersErrors]
+export type EventsListEventManagersError =
+  EventsListEventManagersErrors[keyof EventsListEventManagersErrors]
 
-export type EventsListGroupManagersResponses = {
+export type EventsListEventManagersResponses = {
   /**
-   * Response Events-List Group Managers
+   * Response Events-List Event Managers
    *
    * Successful Response
    */
   200: Array<UserRead>
 }
 
-export type EventsListGroupManagersResponse =
-  EventsListGroupManagersResponses[keyof EventsListGroupManagersResponses]
+export type EventsListEventManagersResponse =
+  EventsListEventManagersResponses[keyof EventsListEventManagersResponses]
 
 export type EventsRemoveGroupManagerData = {
   body?: never

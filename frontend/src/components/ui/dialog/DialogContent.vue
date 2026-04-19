@@ -30,7 +30,7 @@ defineOptions({ inheritAttrs: false })
   <DialogPortal>
     <DialogOverlay :class="priority ? '!z-60' : undefined" />
     <DialogContent
-      data-shift="dialog-content"
+      data-slot="dialog-content"
       v-bind="{ ...forwarded, ...$attrs }"
       :class="
         cn(

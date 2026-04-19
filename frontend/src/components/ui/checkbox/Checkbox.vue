@@ -18,7 +18,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 
 <template>
   <CheckboxRoot
-    data-shift="checkbox"
+    data-slot="checkbox"
     v-bind="forwarded"
     :class="
       cn(
@@ -28,7 +28,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     "
   >
     <CheckboxIndicator
-      data-shift="checkbox-indicator"
+      data-slot="checkbox-indicator"
       class="flex items-center justify-center text-current transition-none"
     >
       <slot>

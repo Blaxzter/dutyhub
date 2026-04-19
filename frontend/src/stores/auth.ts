@@ -36,7 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
   const isManager = computed(() => isAdmin.value || isTaskManager.value || isEventManager.value)
   const isActive = computed(() => profile.value?.is_active ?? true)
 
-  /** Check if current user can manage an task/group by its event_id. */
+  /** Check if current user can manage a task/event by its event_id. */
   function canManageEvent(eventId: string | null | undefined): boolean {
     if (isAdmin.value || isTaskManager.value) return true
     return !!eventId && managedEventIds.value.includes(eventId)

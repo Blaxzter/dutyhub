@@ -52,8 +52,8 @@ const router = useRouter()
 const { get, post } = useAuthenticatedClient()
 const authStore = useAuthStore()
 
-// Prefill task group from query param (e.g. when creating from EventDetailView)
-const prefillGroupId = route.query.groupId as string | undefined
+// Prefill task event from query param (e.g. when creating from EventDetailView)
+const prefillGroupId = route.query.eventId as string | undefined
 
 // --- Form state ---
 const name = ref('')
@@ -61,7 +61,7 @@ const description = ref('')
 const location = ref('')
 const category = ref('')
 
-// Task group
+// Task event
 const isScopedManagerOnly = computed(
   () => !authStore.isAdmin && !authStore.isTaskManager && authStore.isEventManager,
 )
@@ -70,10 +70,10 @@ const eventMode = ref<'none' | 'existing' | 'new'>(
 )
 const selectedEventId = ref<string>('')
 const events = ref<EventRead[]>([])
-const newGroupName = ref('')
-const newGroupDescription = ref('')
-const newGroupStartDate = ref<DateValue>()
-const newGroupEndDate = ref<DateValue>()
+const newEventName = ref('')
+const newEventDescription = ref('')
+const newEventStartDate = ref<DateValue>()
+const newEventEndDate = ref<DateValue>()
 
 // Dates
 const dateMode = ref<'single' | 'range' | 'specific'>('single')
@@ -112,27 +112,27 @@ const endDate = computed((): DateValue | undefined => {
   return undefined
 })
 
-// Date constraints from task group
-const selectedGroup = computed(() => {
+// Date constraints from task event
+const selectedEvent = computed(() => {
   if (eventMode.value === 'existing' && selectedEventId.value) {
     return events.value.find((g) => g.id === selectedEventId.value)
   }
   return null
 })
 
-const groupMinDate = computed(() => {
-  if (selectedGroup.value) return parseDate(selectedGroup.value.start_date)
-  if (eventMode.value === 'new' && newGroupStartDate.value) return newGroupStartDate.value
+const eventMinDate = computed(() => {
+  if (selectedEvent.value) return parseDate(selectedEvent.value.start_date)
+  if (eventMode.value === 'new' && newEventStartDate.value) return newEventStartDate.value
   return undefined
 })
 
-const groupMaxDate = computed(() => {
-  if (selectedGroup.value) return parseDate(selectedGroup.value.end_date)
-  if (eventMode.value === 'new' && newGroupEndDate.value) return newGroupEndDate.value
+const eventMaxDate = computed(() => {
+  if (selectedEvent.value) return parseDate(selectedEvent.value.end_date)
+  if (eventMode.value === 'new' && newEventEndDate.value) return newEventEndDate.value
   return undefined
 })
 
-const hasGroupDateConstraint = computed(() => !!groupMinDate.value && !!groupMaxDate.value)
+const hasEventDateConstraint = computed(() => !!eventMinDate.value && !!eventMaxDate.value)
 
 // Add specific date
 const addSpecificDate = () => {
@@ -160,7 +160,7 @@ watch(dateMode, () => {
   overrides.value = []
 })
 
-// Clear dates when group changes (constraints may have changed)
+// Clear dates when event changes (constraints may have changed)
 watch([eventMode, selectedEventId], () => {
   singleDate.value = undefined
   rangeStartDate.value = undefined
@@ -189,7 +189,7 @@ const isDetailsValid = computed(() => {
 const isEventValid = computed(() => {
   if (eventMode.value === 'existing') return !!selectedEventId.value
   if (eventMode.value === 'new') {
-    return !!newGroupName.value.trim() && !!newGroupStartDate.value && !!newGroupEndDate.value
+    return !!newEventName.value.trim() && !!newEventStartDate.value && !!newEventEndDate.value
   }
   return true
 })
@@ -256,7 +256,7 @@ watch(rangeStartDate, (val) => {
   }
 })
 
-// --- Load task groups ---
+// --- Load task events ---
 const loadEvents = async () => {
   try {
     const response = await get<{ data: EventListResponse }>({
@@ -265,7 +265,7 @@ const loadEvents = async () => {
     })
     let items = response.data.items
 
-    // Scoped group managers can only create tasks in their managed groups
+    // Scoped event managers can only create tasks in their managed events
     const managedIds = authStore.managedEventIds
     if (!authStore.isAdmin && !authStore.isTaskManager && managedIds.length > 0) {
       items = items.filter((g) => managedIds.includes(g.id))
@@ -273,13 +273,13 @@ const loadEvents = async () => {
 
     events.value = items
 
-    // Prefill task group selection if groupId query param is present
+    // Prefill task event selection if eventId query param is present
     if (prefillGroupId && events.value.some((g) => g.id === prefillGroupId)) {
       eventMode.value = 'existing'
       selectedEventId.value = prefillGroupId
     }
   } catch {
-    // Non-critical, just won't have groups to select from
+    // Non-critical, just won't have events to select from
   }
 }
 
@@ -357,10 +357,10 @@ const handleSubmit = async () => {
       body.event_id = selectedEventId.value
     } else if (eventMode.value === 'new') {
       body.new_event = {
-        name: newGroupName.value,
-        description: newGroupDescription.value || null,
-        start_date: newGroupStartDate.value!.toString(),
-        end_date: newGroupEndDate.value!.toString(),
+        name: newEventName.value,
+        description: newEventDescription.value || null,
+        start_date: newEventStartDate.value!.toString(),
+        end_date: newEventEndDate.value!.toString(),
       }
     }
 
@@ -444,7 +444,7 @@ const handleSubmit = async () => {
         </AccordionContent>
       </AccordionItem>
 
-      <!-- Section 2: Task Group -->
+      <!-- Section 2: Event -->
       <AccordionItem value="event" data-testid="section-event" class="rounded-lg border">
         <AccordionTrigger class="px-6 hover:no-underline">
           <div class="flex items-center gap-3">
@@ -475,7 +475,7 @@ const handleSubmit = async () => {
             </div>
           </RadioGroup>
 
-          <!-- Select existing group -->
+          <!-- Select existing event -->
           <div v-if="eventMode === 'existing'" class="mt-4">
             <Select v-model="selectedEventId">
               <SelectTrigger>
@@ -484,34 +484,34 @@ const handleSubmit = async () => {
                 />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="group in events" :key="group.id" :value="group.id">
-                  {{ group.name }}
+                <SelectItem v-for="event in events" :key="event.id" :value="event.id">
+                  {{ event.name }}
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <!-- Create new group -->
+          <!-- Create new event -->
           <div v-if="eventMode === 'new'" class="mt-4 space-y-4 rounded-md border p-4">
             <div class="space-y-2">
               <Label>{{ t('duties.events.fields.name') }} *</Label>
-              <Input v-model="newGroupName" />
+              <Input v-model="newEventName" />
             </div>
             <div class="space-y-2">
               <Label>{{ t('duties.events.fields.description') }}</Label>
-              <Input v-model="newGroupDescription" />
+              <Input v-model="newEventDescription" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
                 <Label>{{ t('duties.events.fields.startDate') }} *</Label>
-                <DatePicker v-model="newGroupStartDate" :max-value="newGroupEndDate" />
+                <DatePicker v-model="newEventStartDate" :max-value="newEventEndDate" />
               </div>
               <div class="space-y-2">
                 <Label>{{ t('duties.events.fields.endDate') }} *</Label>
                 <DatePicker
-                  v-model="newGroupEndDate"
-                  :min-value="newGroupStartDate"
-                  :highlight="newGroupStartDate"
+                  v-model="newEventEndDate"
+                  :min-value="newEventStartDate"
+                  :highlight="newEventStartDate"
                 />
               </div>
             </div>
@@ -539,12 +539,12 @@ const handleSubmit = async () => {
         </AccordionTrigger>
         <AccordionContent class="px-6 pb-6">
           <div class="space-y-4">
-            <!-- Group date constraint hint -->
-            <p v-if="hasGroupDateConstraint" class="text-sm text-muted-foreground">
+            <!-- Event date constraint hint -->
+            <p v-if="hasEventDateConstraint" class="text-sm text-muted-foreground">
               {{
-                t('duties.tasks.createView.groupDateHint', {
-                  start: formatDateLabel(groupMinDate!.toString()),
-                  end: formatDateLabel(groupMaxDate!.toString()),
+                t('duties.tasks.createView.eventDateHint', {
+                  start: formatDateLabel(eventMinDate!.toString()),
+                  end: formatDateLabel(eventMaxDate!.toString()),
                 })
               }}
             </p>
@@ -572,8 +572,8 @@ const handleSubmit = async () => {
               <Label>{{ t('duties.shifts.fields.date') }} *</Label>
               <DatePicker
                 v-model="singleDate"
-                :min-value="groupMinDate"
-                :max-value="groupMaxDate"
+                :min-value="eventMinDate"
+                :max-value="eventMaxDate"
               />
             </div>
 
@@ -583,16 +583,16 @@ const handleSubmit = async () => {
                 <Label>{{ t('duties.tasks.fields.startDate') }} *</Label>
                 <DatePicker
                   v-model="rangeStartDate"
-                  :min-value="groupMinDate"
-                  :max-value="rangeEndDate ?? groupMaxDate"
+                  :min-value="eventMinDate"
+                  :max-value="rangeEndDate ?? eventMaxDate"
                 />
               </div>
               <div class="space-y-2">
                 <Label>{{ t('duties.tasks.fields.endDate') }} *</Label>
                 <DatePicker
                   v-model="rangeEndDate"
-                  :min-value="rangeStartDate ?? groupMinDate"
-                  :max-value="groupMaxDate"
+                  :min-value="rangeStartDate ?? eventMinDate"
+                  :max-value="eventMaxDate"
                   :highlight="rangeStartDate"
                 />
               </div>
@@ -605,8 +605,8 @@ const handleSubmit = async () => {
                   <Label>{{ t('duties.tasks.createView.addDate') }}</Label>
                   <DatePicker
                     v-model="specificDatePicker"
-                    :min-value="groupMinDate"
-                    :max-value="groupMaxDate"
+                    :min-value="eventMinDate"
+                    :max-value="eventMaxDate"
                   />
                 </div>
                 <Button :disabled="!specificDatePicker" @click="addSpecificDate">

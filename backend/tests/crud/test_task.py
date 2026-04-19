@@ -32,7 +32,7 @@ class TestCRUDTask:
         assert task.id is not None
 
     async def test_get_task(self, db_session: AsyncSession, test_task: Task):
-        """Test getting an task by ID."""
+        """Test getting a task by ID."""
         task = await crud_task.get(db_session, test_task.id)
 
         assert task is not None
@@ -40,7 +40,7 @@ class TestCRUDTask:
         assert task.id == test_task.id
 
     async def test_update_task(self, db_session: AsyncSession, test_task: Task):
-        """Test updating an task."""
+        """Test updating a task."""
         update = TaskUpdate(name="Updated Task")
         updated = await crud_task.update(db_session, db_obj=test_task, obj_in=update)
 
@@ -76,7 +76,7 @@ class TestCRUDTask:
         assert any(e.id == test_task.id for e in results)
 
     async def test_remove_task(self, db_session: AsyncSession, test_task: Task):
-        """Test removing an task."""
+        """Test removing a task."""
         task_id = test_task.id
         removed = await crud_task.remove(db_session, id=task_id)
 

@@ -15,15 +15,15 @@ import { isMultiDayTask, isToday } from './types'
 defineProps<{
   weeks: CalendarWeek[]
   weekdayNames: string[]
-  hoveredGroupId: string | null
+  hoveredEventId: string | null
   hoveredTaskId: string | null
 }>()
 
 const emit = defineEmits<{
   navigateTask: [task: CalendarTask]
-  navigateGroup: [group: CalendarEvent]
+  navigateGroup: [event: CalendarEvent]
   navigateBooking: [booking: BookingCalendarItem]
-  hoverGroup: [groupId: string | null]
+  hoverGroup: [eventId: string | null]
   hoverTask: [eventId: string | null]
   selectDay: [day: CalendarDay]
 }>()
@@ -54,9 +54,9 @@ const { t } = useI18n()
       <!-- Group bars overlay -->
       <EventBars
         :bars="week.groupBars"
-        :hovered-group-id="hoveredGroupId"
+        :hovered-event-id="hoveredEventId"
         :top-offset="28"
-        @navigate-group="emit('navigateGroup', $event)"
+        @navigate-event="emit('navigateGroup', $event)"
         @hover="emit('hoverGroup', $event)"
       />
 
@@ -94,20 +94,20 @@ const { t } = useI18n()
               {{ day.date.getDate() }}
             </button>
 
-            <!-- Spacer for group + task bar lanes (desktop) -->
+            <!-- Spacer for event + task bar lanes (desktop) -->
             <div
               v-if="week.barLaneCount + week.eventBarLaneCount > 0"
               class="hidden sm:block"
               :style="{ height: `${(week.barLaneCount + week.eventBarLaneCount) * 22}px` }"
             />
 
-            <!-- Mobile: group dots -->
-            <template v-if="day.groups.length > 0">
+            <!-- Mobile: event dots -->
+            <template v-if="day.events.length > 0">
               <div
-                v-for="group in day.groups.slice(0, 2)"
-                :key="'mg-' + group.id"
+                v-for="event in day.events.slice(0, 2)"
+                :key="'mg-' + event.id"
                 class="flex items-center sm:hidden cursor-pointer"
-                @click="emit('navigateGroup', group)"
+                @click="emit('navigateGroup', event)"
               >
                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
               </div>

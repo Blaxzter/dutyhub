@@ -19,7 +19,7 @@ import type { UserRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const props = defineProps<{
-  groupId: string
+  eventId: string
   managers: UserRead[]
   canEdit?: boolean
 }>()
@@ -76,7 +76,7 @@ const assignManager = async (userId: string) => {
   assigningUserId.value = userId
   try {
     await post<{ data: UserRead }>({
-      url: `/events/${props.groupId}/managers/${userId}`,
+      url: `/events/${props.eventId}/managers/${userId}`,
     })
     emit('updated')
     toast.success(t('duties.events.detail.managerAdded'))
@@ -90,7 +90,7 @@ const assignManager = async (userId: string) => {
 const removeManager = async (userId: string) => {
   removingManagerId.value = userId
   try {
-    await del({ url: `/events/${props.groupId}/managers/${userId}` })
+    await del({ url: `/events/${props.eventId}/managers/${userId}` })
     emit('updated')
     toast.success(t('duties.events.detail.managerRemoved'))
   } catch (error) {
@@ -102,7 +102,7 @@ const removeManager = async (userId: string) => {
 </script>
 
 <template>
-  <Card data-testid="section-group-managers">
+  <Card data-testid="section-event-managers">
     <CardHeader>
       <div class="flex items-center justify-between gap-2">
         <div class="space-y-1">

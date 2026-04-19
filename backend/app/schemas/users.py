@@ -50,5 +50,5 @@ class UserProfile(BaseModel):
     )
     managed_event_ids: list[uuid.UUID] = Field(
         default_factory=list,
-        description="IDs of task groups this user manages (via event_managers)",
+        description="IDs of events this user manages (via event_managers)",
     )

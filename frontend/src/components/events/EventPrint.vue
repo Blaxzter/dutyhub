@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/card'
 
 const props = defineProps<{
-  groupId: string
+  eventId: string
 }>()
 
 const { t } = useI18n()
@@ -39,7 +39,7 @@ const router = useRouter()
           @click="
             router.push({
               name: 'print-event',
-              params: { groupId: props.groupId },
+              params: { eventId: props.eventId },
               query: { mode: 'overview' },
             })
           "
@@ -53,7 +53,7 @@ const router = useRouter()
           @click="
             router.push({
               name: 'print-event',
-              params: { groupId: props.groupId },
+              params: { eventId: props.eventId },
               query: { mode: 'all' },
             })
           "

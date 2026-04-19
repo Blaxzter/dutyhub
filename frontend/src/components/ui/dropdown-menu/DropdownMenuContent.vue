@@ -28,7 +28,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 <template>
   <DropdownMenuPortal>
     <DropdownMenuContent
-      data-shift="dropdown-menu-content"
+      data-slot="dropdown-menu-content"
       v-bind="forwarded"
       :class="
         cn(

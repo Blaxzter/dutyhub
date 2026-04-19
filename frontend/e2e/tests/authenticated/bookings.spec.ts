@@ -125,8 +125,8 @@ test.describe('My Bookings – grouping', () => {
     await bookShift(page, shifts[0].id)
     await page.goto('/app/bookings')
 
-    await expect(page.getByTestId('btn-group-date')).toBeVisible()
-    await expect(page.getByTestId('btn-group-task')).toBeVisible()
-    await expect(page.getByTestId('btn-group-location')).toBeVisible()
+    await expect(page.getByTestId('btn-event-date')).toBeVisible()
+    await expect(page.getByTestId('btn-event-task')).toBeVisible()
+    await expect(page.getByTestId('btn-event-location')).toBeVisible()
   })
 })

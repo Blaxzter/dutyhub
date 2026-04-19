@@ -144,7 +144,7 @@ const loadTasks = async () => {
     const requests: Promise<unknown>[] = [
       get<{ data: TaskFeedResponse }>({ url: '/tasks/feed', query }),
     ]
-    // Task groups are only needed for calendar view
+    // Task events are only needed for calendar view
     if (filters.viewMode === 'calendar') {
       const groupQuery: Record<string, unknown> = { limit: 100 }
       if (calendarRange.value) {
@@ -223,8 +223,8 @@ const navigateToTask = (task: { id: string }) => {
   router.push({ name: 'task-detail', params: { eventId: task.id } })
 }
 
-const navigateToGroup = (group: { id: string }) => {
-  router.push({ name: 'event-detail', params: { groupId: group.id } })
+const navigateToEvent = (event: { id: string }) => {
+  router.push({ name: 'event-detail', params: { eventId: event.id } })
 }
 
 const handleCalendarDateRange = (range: DateRange) => {
@@ -373,7 +373,7 @@ onMounted(loadTasks)
         :calendar-view-mode="calViewMode"
         :calendar-date="calDate"
         @navigate="navigateToTask"
-        @navigate-group="navigateToGroup"
+        @navigate-event="navigateToEvent"
         @update:date-range="handleCalendarDateRange"
         @update:calendar-view-mode="calViewMode = $event"
         @update:calendar-date="calDate = $event"

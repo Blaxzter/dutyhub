@@ -68,7 +68,7 @@ test.describe('Tasks – list view', () => {
     await expect(content.getByText(created.task.name)).toBeHidden()
   })
 
-  test('clicking an task card navigates to detail', async ({ adminPage: page }) => {
+  test('clicking a task card navigates to detail', async ({ adminPage: page }) => {
     const content = page.getByTestId('main-content')
     // Search to find the task in the paginated list
     await page.getByTestId('input-search').fill(created.task.name)

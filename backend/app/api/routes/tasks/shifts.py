@@ -41,10 +41,10 @@ async def create_task_with_shifts(
     session: DBDep,
     current_user: CurrentUser,
 ) -> TaskCreateWithShiftsResponse:
-    """Create an task with auto-generated duty shifts in a single transaction."""
-    # Check access for the target task group (if any)
+    """Create a task with auto-generated duty shifts in a single transaction."""
+    # Check access for the target event (if any)
     await require_event_access(current_user, session, payload.event_id)
-    # 1. Optionally create a new task group
+    # 1. Optionally create a new event
     event_read: EventRead | None = None
     event_id = payload.event_id
 
@@ -140,7 +140,7 @@ async def add_shifts_to_task(
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
     await require_event_access(current_user, session, db_task.event_id)
 
-    # Validate dates against task group constraints
+    # Validate dates against event constraints
     if db_task.event_id:
         db_group = await crud_event.get(session, db_task.event_id, raise_404_error=True)
         if (
@@ -151,7 +151,7 @@ async def add_shifts_to_task(
                 400,
                 code="dates_outside_event",
                 detail=(
-                    f"Shift dates must fall within the task group date range "
+                    f"Shift dates must fall within the event date range "
                     f"({db_group.start_date} to {db_group.end_date})"
                 ),
             )
@@ -216,7 +216,7 @@ async def regenerate_task_shifts(
     dry_run: bool = Query(default=False),
     batch_id: str | None = Query(default=None),
 ) -> ShiftRegenerationResult:
-    """Regenerate duty shifts for an task, preserving bookings where shifts match.
+    """Regenerate duty shifts for a task, preserving bookings where shifts match.
 
     When dry_run=True, returns a preview without making changes.
     When batch_id is provided, only regenerates shifts belonging to that batch.

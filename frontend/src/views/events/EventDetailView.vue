@@ -65,17 +65,17 @@ const isDesktop = useMediaQuery('(min-width: 1280px)')
 
 const [DefineSectionContent, SectionContent] = createReusableTemplate<{ id: string }>()
 
-const groupId = computed(() => route.params.groupId as string)
+const eventId = computed(() => route.params.eventId as string)
 
-const canManageEvent = computed(() => authStore.canManageEvent(groupId.value))
+const canManageEvent = computed(() => authStore.canManageEvent(eventId.value))
 
-const group = ref<EventRead | null>(null)
+const event = ref<EventRead | null>(null)
 const groupTasks = ref<TaskRead[]>([])
 const myAvailability = ref<UserAvailabilityRead | null>(null)
 const allAvailabilities = ref<UserAvailabilityWithUser[]>([])
 const loading = ref(false)
 const showAvailabilityDialog = ref(false)
-const groupManagers = ref<UserRead[]>([])
+const eventManagers = ref<UserRead[]>([])
 
 // ── Navigation ──
 const navItems = computed<NavItem[]>(() => [
@@ -128,7 +128,7 @@ const activeSection = computed({
     router.replace({
       name: 'event-detail',
       params: {
-        groupId: groupId.value,
+        eventId: eventId.value,
         section: id === 'tasks' ? undefined : id,
       },
     })
@@ -172,21 +172,21 @@ watch(activeSection, (id) => {
 })
 
 // ── Breadcrumbs ──
-// Drive a 3-element trail ("Task Groups > Group Name > Section") reactively.
-// The group crumb is marked mobileSkip so mobile back-link walks past it
-// to "Task Groups" instead of self-linking the same page.
+// Drive a 3-element trail ("Events > Event Name > Section") reactively.
+// The event crumb is marked mobileSkip so mobile back-link walks past it
+// to "Events" instead of self-linking the same page.
 // Published synchronously with an ellipsis placeholder so the structure
-// doesn't flicker against the 2-element meta.breadcrumbs while the group loads.
+// doesn't flicker against the 2-element meta.breadcrumbs while the event loads.
 const breadcrumbItems = computed(() => [
   {
-    title: 'Task Groups',
+    title: 'Events',
     titleKey: 'duties.events.title',
     to: { name: 'events' },
   },
   {
-    title: group.value?.name ?? '…',
+    title: event.value?.name ?? '…',
     mobileSkip: true,
-    to: { name: 'event-detail', params: { groupId: groupId.value } },
+    to: { name: 'event-detail', params: { eventId: eventId.value } },
   },
   {
     title: '',
@@ -204,18 +204,18 @@ watch(
 
 // ── Data loading ──
 const handleGroupUpdated = (updated: EventRead) => {
-  group.value = updated
+  event.value = updated
   activeSection.value = 'tasks'
 }
 
 const handleStatusChange = async (status: 'draft' | 'published' | 'archived') => {
-  if (!group.value || group.value.status === status) return
+  if (!event.value || event.value.status === status) return
   try {
     const res = await patch<{ data: EventRead }>({
-      url: `/events/${groupId.value}`,
+      url: `/events/${eventId.value}`,
       body: { status },
     })
-    group.value = res.data
+    event.value = res.data
     toast.success(t(`duties.events.statuses.${status}`))
   } catch (error) {
     toastApiError(error)
@@ -225,32 +225,32 @@ const handleStatusChange = async (status: 'draft' | 'published' | 'archived') =>
 const loadManagers = async () => {
   try {
     const res = await get<{ data: UserRead[] }>({
-      url: `/events/${groupId.value}/managers`,
+      url: `/events/${eventId.value}/managers`,
     })
-    groupManagers.value = res.data
+    eventManagers.value = res.data
   } catch {
-    groupManagers.value = []
+    eventManagers.value = []
   }
 }
 
-const loadGroup = async () => {
-  if (!groupId.value) return
+const loadEvent = async () => {
+  if (!eventId.value) return
   loading.value = true
   try {
     const [groupRes, tasksRes] = await Promise.all([
-      get<{ data: EventRead }>({ url: `/events/${groupId.value}` }),
+      get<{ data: EventRead }>({ url: `/events/${eventId.value}` }),
       get<{ data: TaskListResponse }>({
         url: '/tasks/',
-        query: { limit: 200, event_id: groupId.value },
+        query: { limit: 200, event_id: eventId.value },
       }),
     ])
-    group.value = groupRes.data
+    event.value = groupRes.data
     groupTasks.value = tasksRes.data.items
 
 
     try {
       const availRes = await get<{ data: UserAvailabilityRead }>({
-        url: `/events/${groupId.value}/availability/me`,
+        url: `/events/${eventId.value}/availability/me`,
       })
       myAvailability.value = availRes.data
     } catch {
@@ -264,7 +264,7 @@ const loadGroup = async () => {
     if (canManageEvent.value) {
       try {
         const adminRes = await get<{ data: UserAvailabilityWithUser[] }>({
-          url: `/events/${groupId.value}/availabilities`,
+          url: `/events/${eventId.value}/availabilities`,
         })
         allAvailabilities.value = adminRes.data
       } catch {
@@ -287,7 +287,7 @@ const handleSaveAvailability = async (payload: {
 }) => {
   try {
     const res = await post<{ data: UserAvailabilityRead }>({
-      url: `/events/${groupId.value}/availability`,
+      url: `/events/${eventId.value}/availability`,
       body: {
         availability_type: payload.availability_type,
         notes: payload.notes,
@@ -301,7 +301,7 @@ const handleSaveAvailability = async (payload: {
     toast.success(t('duties.availability.update'))
     if (canManageEvent.value) {
       const adminRes = await get<{ data: UserAvailabilityWithUser[] }>({
-        url: `/events/${groupId.value}/availabilities`,
+        url: `/events/${eventId.value}/availabilities`,
       })
       allAvailabilities.value = adminRes.data
     }
@@ -315,12 +315,12 @@ const handleRemoveAvailability = async () => {
   if (!confirmed) return
 
   try {
-    await del({ url: `/events/${groupId.value}/availability/me` })
+    await del({ url: `/events/${eventId.value}/availability/me` })
     myAvailability.value = null
     toast.success(t('duties.availability.remove'))
     if (canManageEvent.value) {
       const adminRes = await get<{ data: UserAvailabilityWithUser[] }>({
-        url: `/events/${groupId.value}/availabilities`,
+        url: `/events/${eventId.value}/availabilities`,
       })
       allAvailabilities.value = adminRes.data
     }
@@ -329,7 +329,7 @@ const handleRemoveAvailability = async () => {
   }
 }
 
-onMounted(loadGroup)
+onMounted(loadEvent)
 </script>
 
 <template>
@@ -342,7 +342,7 @@ onMounted(loadGroup)
       <EventTasks
         v-if="id === 'tasks'"
         :tasks="groupTasks"
-        :group-id="groupId"
+        :event-id="eventId"
         :can-manage="canManageEvent"
       />
 
@@ -355,12 +355,12 @@ onMounted(loadGroup)
         @remove="handleRemoveAvailability"
       />
 
-      <EventPrint v-if="id === 'print'" :group-id="groupId" />
+      <EventPrint v-if="id === 'print'" :event-id="eventId" />
 
       <EventEditForm
         v-if="id === 'details'"
-        :group="group!"
-        :group-id="groupId"
+        :event="event!"
+        :event-id="eventId"
         :tasks="groupTasks"
         @updated="handleGroupUpdated"
         @cancel="activeSection = 'tasks'"
@@ -368,8 +368,8 @@ onMounted(loadGroup)
 
       <EventManagers
         v-if="id === 'management'"
-        :group-id="groupId"
-        :managers="groupManagers"
+        :event-id="eventId"
+        :managers="eventManagers"
         :can-edit="authStore.isAdmin"
         @updated="loadManagers"
       />
@@ -394,10 +394,10 @@ onMounted(loadGroup)
         {{ t('common.states.loading') }}
       </div>
 
-      <template v-else-if="group">
+      <template v-else-if="event">
         <EventHeader
-          :group="group"
-          :group-id="groupId"
+          :event="event"
+          :event-id="eventId"
           :can-manage="canManageEvent"
           @status-change="handleStatusChange"
         />
@@ -405,7 +405,7 @@ onMounted(loadGroup)
     </div>
 
     <!-- ==================== MOBILE / TABLET (<xl) ==================== -->
-    <div v-if="!loading && group && !isDesktop" class="mx-auto max-w-4xl space-y-4">
+    <div v-if="!loading && event && !isDesktop" class="mx-auto max-w-4xl space-y-4">
       <ChipNav v-model="mobileSlide" :items="chipItems" />
 
       <Carousel class="w-full" @init-api="onCarouselInit" :opts="{ watchDrag: true }">
@@ -419,18 +419,18 @@ onMounted(loadGroup)
 
     <!-- Mobile FAB: create task (tasks section only) -->
     <Button
-      v-if="!loading && group && !isDesktop && canManageEvent && activeSection === 'tasks'"
+      v-if="!loading && event && !isDesktop && canManageEvent && activeSection === 'tasks'"
       size="icon"
       class="fixed bottom-24 md:bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
       data-testid="fab-create-task"
       :aria-label="t('duties.tasks.create')"
-      @click="router.push({ name: 'task-create', query: { groupId } })"
+      @click="router.push({ name: 'task-create', query: { eventId } })"
     >
       <Plus class="size-7" :stroke-width="2.5" />
     </Button>
 
     <!-- ==================== DESKTOP (xl+) ==================== -->
-    <template v-if="!loading && group && isDesktop">
+    <template v-if="!loading && event && isDesktop">
       <!-- Nav in left gutter -->
       <div class="row-start-2 flex justify-end pr-8">
         <nav class="w-44 sticky top-8 self-start space-y-1">
@@ -462,9 +462,9 @@ onMounted(loadGroup)
 
     <!-- Availability Dialog -->
     <AvailabilityDialog
-      v-if="group"
+      v-if="event"
       v-model:open="showAvailabilityDialog"
-      :group="group"
+      :event="event"
       :existing-availability="myAvailability"
       @save="handleSaveAvailability"
     />

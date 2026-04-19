@@ -19,7 +19,7 @@ class DashboardTask(BaseModel):
 
 
 class DashboardEvent(BaseModel):
-    """Slim task group for the dashboard calendar."""
+    """Slim event for the dashboard calendar."""
 
     model_config = ConfigDict(from_attributes=True)
 

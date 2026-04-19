@@ -26,7 +26,7 @@ const forwardedProps = useForwardProps(delegatedProps)
 
 <template>
   <DropdownMenuItem
-    data-shift="dropdown-menu-item"
+    data-slot="dropdown-menu-item"
     :data-inset="inset ? '' : undefined"
     :data-variant="variant"
     v-bind="forwardedProps"

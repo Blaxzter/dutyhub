@@ -19,7 +19,7 @@ const forwardedProps = useForwardProps(delegatedProps)
 
 <template>
   <SelectTrigger
-    data-shift="select-trigger"
+    data-slot="select-trigger"
     :data-size="size"
     v-bind="forwardedProps"
     :class="

@@ -91,7 +91,7 @@ async def as_admin(app: FastAPI, test_admin_user: User) -> AsyncGenerator[None, 
 async def as_task_manager(
     app: FastAPI, test_task_manager_user: User
 ) -> AsyncGenerator[None, None]:
-    """Temporarily override CurrentUser, CurrentManager, CurrentGlobalManager to return an task_manager user.
+    """Temporarily override CurrentUser, CurrentManager, CurrentGlobalManager to return a task_manager user.
 
     CurrentSuperuser is overridden to raise 403 because task_managers are not admins.
     """

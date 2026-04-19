@@ -116,8 +116,8 @@ TASK_PUBLISHED = NotificationTypeDef(
 
 EVENT_PUBLISHED = NotificationTypeDef(
     code="event.published",
-    name="Task Group Published",
-    description="Notification when a new task group is published",
+    name="Event Published",
+    description="Notification when a new event is published",
     category="event",
     default_channels=["email"],
 )
@@ -127,7 +127,7 @@ EVENT_PUBLISHED = NotificationTypeDef(
 AVAILABILITY_REMINDER = NotificationTypeDef(
     code="availability.reminder",
     name="Availability Reminder",
-    description="Reminder to submit your availability for a published task group",
+    description="Reminder to submit your availability for a published event",
     category="availability",
     default_channels=["email", "push"],
 )

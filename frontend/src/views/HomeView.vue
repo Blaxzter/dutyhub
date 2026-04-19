@@ -53,7 +53,7 @@ const openBookingDetail = (calendarItem: BookingCalendarItem) => {
 }
 
 const showTasks = useLocalStorage('wirksam-calendar-show-tasks', true)
-const showGroups = useLocalStorage('wirksam-calendar-show-groups', true)
+const showGroups = useLocalStorage('wirksam-calendar-show-events', true)
 const showBookings = useLocalStorage('wirksam-calendar-show-bookings', true)
 
 const hiddenFilterCount = computed(
@@ -101,8 +101,8 @@ const navigateToTask = (task: { id: string }) => {
   router.push({ name: 'task-detail', params: { eventId: task.id } })
 }
 
-const navigateToGroup = (group: { id: string }) => {
-  router.push({ name: 'event-detail', params: { groupId: group.id } })
+const navigateToEvent = (event: { id: string }) => {
+  router.push({ name: 'event-detail', params: { eventId: event.id } })
 }
 
 onMounted(loadStats)
@@ -212,10 +212,10 @@ onMounted(loadStats)
                       <Switch id="filter-tasks" v-model="showTasks" />
                     </div>
                     <div class="flex items-center justify-between">
-                      <Label for="filter-groups">{{
-                        t('dashboard.home.calendar.filters.groups')
+                      <Label for="filter-events">{{
+                        t('dashboard.home.calendar.filters.events')
                       }}</Label>
-                      <Switch id="filter-groups" v-model="showGroups" />
+                      <Switch id="filter-events" v-model="showGroups" />
                     </div>
                     <div class="flex items-center justify-between">
                       <Label for="filter-bookings">{{
@@ -266,10 +266,10 @@ onMounted(loadStats)
         :events="events"
         :bookings="bookings"
         :show-tasks="showTasks"
-        :show-groups="showGroups"
+        :show-events="showGroups"
         :show-bookings="showBookings"
         @navigate-task="navigateToTask"
-        @navigate-group="navigateToGroup"
+        @navigate-event="navigateToEvent"
         @navigate-booking="openBookingDetail"
       />
     </div>

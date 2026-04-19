@@ -12,7 +12,7 @@ export interface BreadcrumbItem {
   /**
    * When true, the mobile parent-link walker skips this item and looks
    * further up the chain. Useful for crumbs that represent the same
-   * routed page as the current section (e.g. a group-detail root whose
+   * routed page as the current section (e.g. a event-detail root whose
    * sub-tabs are internal sections).
    */
   mobileSkip?: boolean

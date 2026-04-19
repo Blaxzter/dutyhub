@@ -82,14 +82,14 @@
         "reasonPlaceholder": "e.g. Task rescheduled, no longer needed..."
     },
     "events": {
-        "create": "Create Task Group",
-        "delete": "Delete Task Group",
-        "deleteConfirm": "Are you sure you want to delete this task group? All related availability data will be lost.",
+        "create": "Create Event",
+        "delete": "Delete Event",
+        "deleteConfirm": "Are you sure you want to delete this event? All related availability data will be lost.",
         "detail": {
             "addManager": "Add Manager",
             "dateConstraintHint": "Date range is limited by existing tasks. Use \"Shift Dates\" below to move everything at once.",
             "earliestTask": "Earliest task: {date}",
-            "editDescription": "Update the name, description, and date range for this task group.",
+            "editDescription": "Update the name, description, and date range for this event.",
             "latestTask": "Latest task: {date}",
             "legend": {
                 "eventDay": "Task day",
@@ -99,7 +99,7 @@
             },
             "managerAdded": "Manager added.",
             "managerRemoved": "Manager removed.",
-            "managers": "Group Managers",
+            "managers": "Event Managers",
             "managersEmpty": "No scoped managers assigned to this group.",
             "managersNoResults": "No users found.",
             "managersSearch": "Search users by name or email...",
@@ -123,12 +123,12 @@
             "shiftSuccess": "All dates shifted successfully.",
             "tasks": "Tasks in this Group",
             "tasksEmpty": "No tasks assigned to this group yet.",
-            "title": "Task Group Details",
+            "title": "Event Details",
             "updated": "Task group updated."
         },
-        "draftBanner": "This task group is a draft and is not visible to regular users. Change the status to \"Published\" to make it available.",
-        "edit": "Edit Task Group",
-        "empty": "No task groups found.",
+        "draftBanner": "This event is a draft and is not visible to regular users. Change the status to \"Published\" to make it available.",
+        "edit": "Edit Event",
+        "empty": "No events found.",
         "fields": {
             "description": "Description",
             "endDate": "End Date",
@@ -143,7 +143,7 @@
             "published": "Published"
         },
         "subtitle": "Browse upcoming task programmes",
-        "title": "Task Groups"
+        "title": "Events"
     },
     "shifts": {
         "availability": "{current} / {max} booked",
@@ -224,9 +224,9 @@
             "eventOption": {
                 "existing": "Select existing",
                 "new": "Create new",
-                "none": "No task group"
+                "none": "No event"
             },
-            "groupDateHint": "Dates are restricted to the selected task group ({start} – {end})",
+            "groupDateHint": "Dates are restricted to the selected event ({start} – {end})",
             "noDatesSelected": "No dates selected yet",
             "preview": {
                 "clickToExclude": "Click on any shift to exclude it from being created.",
@@ -257,7 +257,7 @@
                 "datesDesc": "Choose when this task takes place",
                 "details": "Task Details",
                 "detailsDesc": "Basic information about the task",
-                "event": "Task Group",
+                "event": "Event",
                 "eventDesc": "Optionally assign this task to a group",
                 "preview": "Preview",
                 "previewDesc": "Review the shifts that will be generated",

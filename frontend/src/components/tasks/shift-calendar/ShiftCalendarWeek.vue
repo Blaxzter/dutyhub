@@ -13,15 +13,15 @@ import { formatTimeRange, isMultiDayTask, isToday } from './types'
 defineProps<{
   week: CalendarWeek
   weekdayNames: string[]
-  hoveredGroupId: string | null
+  hoveredEventId: string | null
   hoveredTaskId: string | null
 }>()
 
 const emit = defineEmits<{
   navigateTask: [task: CalendarTask]
-  navigateGroup: [group: CalendarEvent]
+  navigateGroup: [event: CalendarEvent]
   navigateBooking: [booking: BookingCalendarItem]
-  hoverGroup: [groupId: string | null]
+  hoverGroup: [eventId: string | null]
   hoverTask: [eventId: string | null]
   selectDay: [day: CalendarDay]
 }>()
@@ -49,9 +49,9 @@ const emit = defineEmits<{
       <!-- Group bars -->
       <EventBars
         :bars="week.groupBars"
-        :hovered-group-id="hoveredGroupId"
+        :hovered-event-id="hoveredEventId"
         :top-offset="4"
-        @navigate-group="emit('navigateGroup', $event)"
+        @navigate-event="emit('navigateGroup', $event)"
         @hover="emit('hoverGroup', $event)"
       />
 
@@ -76,7 +76,7 @@ const emit = defineEmits<{
           ]"
         >
           <template v-if="day.date">
-            <!-- Spacer for group + task bar lanes -->
+            <!-- Spacer for event + task bar lanes -->
             <div
               v-if="week.barLaneCount + week.eventBarLaneCount > 0"
               class="hidden sm:block"

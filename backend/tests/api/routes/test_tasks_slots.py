@@ -13,7 +13,7 @@ class TestTaskShiftsRoutes:
     async def test_create_task_with_shifts(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test creating an task with auto-generated shifts."""
+        """Test creating a task with auto-generated shifts."""
         r = await async_client.post(
             "/api/v1/tasks/with-shifts",
             json={
@@ -39,7 +39,7 @@ class TestTaskShiftsRoutes:
     async def test_create_task_with_shifts_and_group(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test creating an task with a new task group."""
+        """Test creating a task with a new event."""
         r = await async_client.post(
             "/api/v1/tasks/with-shifts",
             json={
@@ -136,7 +136,7 @@ class TestTaskShiftsRoutes:
         assert data["shifts_added"] >= 1
 
     async def test_list_batches(self, async_client: AsyncClient, test_task: Task):
-        """Test listing shift batches for an task."""
+        """Test listing shift batches for a task."""
         r = await async_client.get(f"/api/v1/tasks/{test_task.id}/batches")
 
         assert r.status_code == 200
