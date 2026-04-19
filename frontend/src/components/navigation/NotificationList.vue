@@ -55,14 +55,14 @@ function handleNotificationClick(notification: (typeof notifications.value)[0]) 
 
   const data = notification.data
   if (data) {
-    if (data.event_id) {
+    if (data.task_id) {
       emit('navigate')
-      router.push({ name: 'event-detail', params: { eventId: data.event_id as string } })
-    } else if (data.event_group_id) {
+      router.push({ name: 'task-detail', params: { eventId: data.task_id as string } })
+    } else if (data.event_id) {
       emit('navigate')
       router.push({
-        name: 'event-group-detail',
-        params: { groupId: data.event_group_id as string },
+        name: 'event-detail',
+        params: { groupId: data.event_id as string },
       })
     } else if (data.booking_id) {
       emit('navigate')
@@ -92,9 +92,9 @@ function getNotificationIcon(typeCode: string): string {
     'booking.cancelled_by_user': '✕',
     'booking.cancelled_by_admin': '⚠',
     'booking.slot_cobooked': '👥',
-    'slot.time_changed': '🕐',
-    'event.published': '📅',
-    'event_group.published': '📋',
+    'shift.time_changed': '🕐',
+    'task.published': '📅',
+    'event.published': '📋',
     'user.registered': '👤',
     'user.approved': '✓',
     'user.rejected': '✕',

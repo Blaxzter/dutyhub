@@ -1,169 +1,91 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import {
-  Calendar,
-  CalendarClock,
-  CalendarSearch,
-  Grid2x2,
-  List,
-  Plus,
-  Search,
-} from 'lucide-vue-next'
+import type { DateValue } from '@internationalized/date'
+import { Plus, Search, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { useAuthStore } from '@/stores/auth'
-import { useEventFiltersStore } from '@/stores/eventFilters'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { useDialog } from '@/composables/useDialog'
 
+import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { DatePicker } from '@/components/ui/date-picker'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import Input from '@/components/ui/input/Input.vue'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import Label from '@/components/ui/label/Label.vue'
+import Textarea from '@/components/ui/textarea/Textarea.vue'
 
-import DeleteConfirmationDialog from '@/components/events/DeleteConfirmationDialog.vue'
-import EventCalendarView from '@/components/events/EventCalendarView.vue'
-import EventFilterMenu from '@/components/events/EventFilterMenu.vue'
-import EventListView from '@/components/events/EventListView.vue'
-import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
-import type { DateRange } from '@/components/events/duty-calendar'
-import { EventQuickView } from '@/components/events/quick-view'
-
-import type {
-  EventFeedResponse,
-  EventGroupListResponse,
-  EventGroupRead,
-  FeedEventItem,
-} from '@/client/types.gen'
+import type { EventListResponse, EventRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
+import { formatDate } from '@/lib/format'
+import { statusVariant } from '@/lib/status'
 
 const { t } = useI18n()
-const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
-const filters = useEventFiltersStore()
-const { get, delete: del } = useAuthenticatedClient()
+const { get, post, delete: del } = useAuthenticatedClient()
+const { confirmDestructive } = useDialog()
 
-// ── URL ↔ filter sync ──
-
-const VIEW_MODES = ['list', 'box', 'calendar'] as const
-const FOCUS_MODES = ['today', 'first-available'] as const
-const CAL_VIEW_MODES = ['month', 'week', 'day'] as const
-type CalViewMode = (typeof CAL_VIEW_MODES)[number]
-
-// Calendar internal state (synced to URL)
-const calViewMode = ref<CalViewMode | undefined>(undefined)
-const calDate = ref<string | undefined>(undefined)
-
-// On mount: seed store from URL query params (URL wins over localStorage)
-function readUrlIntoStore() {
-  const q = route.query
-  if (q.view && VIEW_MODES.includes(q.view as (typeof VIEW_MODES)[number]))
-    filters.viewMode = q.view as (typeof VIEW_MODES)[number]
-  if (q.focus && FOCUS_MODES.includes(q.focus as (typeof FOCUS_MODES)[number]))
-    filters.focusMode = q.focus as (typeof FOCUS_MODES)[number]
-  if (q.search !== undefined) filters.searchQuery = String(q.search)
-  if (q.my_bookings !== undefined) filters.myBookingsOnly = q.my_bookings === 'true'
-  if (q.hide_full !== undefined) filters.hideFullSlots = q.hide_full === 'true'
-  if (q.date_from && /^\d{4}-\d{2}-\d{2}$/.test(String(q.date_from)))
-    filters.dateFrom = String(q.date_from)
-  if (q.date_to && /^\d{4}-\d{2}-\d{2}$/.test(String(q.date_to))) filters.dateTo = String(q.date_to)
-  if (q.cal_view && CAL_VIEW_MODES.includes(q.cal_view as CalViewMode))
-    calViewMode.value = q.cal_view as CalViewMode
-  if (q.cal_date && /^\d{4}-\d{2}-\d{2}$/.test(String(q.cal_date)))
-    calDate.value = String(q.cal_date)
-}
-readUrlIntoStore()
-
-// Mirror store → URL (replace, not push, to avoid polluting history)
-const urlQuery = computed(() => {
-  const q: Record<string, string> = {}
-  if (filters.viewMode !== 'list') q.view = filters.viewMode
-  if (filters.focusMode !== 'today') q.focus = filters.focusMode
-  if (filters.searchQuery.trim()) q.search = filters.searchQuery.trim()
-  if (filters.myBookingsOnly) q.my_bookings = 'true'
-  if (filters.hideFullSlots) q.hide_full = 'true'
-  if (filters.dateFrom) q.date_from = filters.dateFrom
-  if (filters.dateTo) q.date_to = filters.dateTo
-  // Calendar-specific params (only when in calendar view)
-  if (filters.viewMode === 'calendar') {
-    if (calViewMode.value && calViewMode.value !== 'month') q.cal_view = calViewMode.value
-    if (calDate.value) q.cal_date = calDate.value
-  }
-  return q
-})
-
-watch(urlQuery, (q) => {
-  router.replace({ query: q })
-})
-
-// ── Data ──
-
-const feedItems = ref<FeedEventItem[]>([])
-const eventGroups = ref<EventGroupRead[]>([])
+const groups = ref<EventRead[]>([])
 const loading = ref(false)
-const calendarRange = ref<DateRange | null>(null)
+const searchQuery = ref('')
+const showCreateDialog = ref(false)
 
-// Slot detail dialog state
-const showSlotDialog = ref(false)
-const selectedSlotId = ref<string | null>(null)
-const selectedSlotEventName = ref<string | null>(null)
+// Date filter
+const dateFrom = ref<string | null>(null)
+const dateTo = ref<string | null>(null)
+const markedDays = ref<Set<string>>(new Set())
 
-// Delete dialog state
-const showDeleteDialog = ref(false)
-const deleteReason = ref('')
-const deleteTarget = ref<FeedEventItem | null>(null)
-
-// Map frontend view names to backend feed view param
-function feedView(): 'list' | 'cards' | 'calendar' {
-  if (filters.viewMode === 'box') return 'cards'
-  return filters.viewMode
+async function handleVisibleMonth(range: { from: string; to: string }) {
+  try {
+    const res = await get<{ data: string[] }>({
+      url: '/tasks/active-dates',
+      query: { date_from: range.from, date_to: range.to },
+    })
+    markedDays.value = new Set(res.data)
+  } catch {
+    // Non-critical
+  }
 }
 
-const loadEvents = async () => {
+const createForm = ref({ name: '', description: '' })
+const startDate = ref<DateValue>()
+const endDate = ref<DateValue>()
+
+const filteredGroups = computed(() => {
+  if (!searchQuery.value) return groups.value
+  const query = searchQuery.value.toLowerCase()
+  return groups.value.filter(
+    (g) => g.name.toLowerCase().includes(query) || g.description?.toLowerCase().includes(query),
+  )
+})
+
+const loadGroups = async () => {
   loading.value = true
   try {
-    const query: Record<string, unknown> = {
-      view: feedView(),
-      focus_mode: filters.focusMode === 'first-available' ? 'first_available' : 'today',
-      limit: 100,
-    }
-    if (filters.myBookingsOnly) query.my_bookings = true
-    if (filters.dateFrom) query.date_from = filters.dateFrom
-    if (filters.dateTo) query.date_to = filters.dateTo
-    if (filters.searchQuery.trim()) query.search = filters.searchQuery.trim()
+    const query: Record<string, unknown> = { limit: 100 }
+    query.date_from = dateFrom.value ?? new Date().toISOString().slice(0, 10)
+    if (dateTo.value) query.date_to = dateTo.value
 
-    // Calendar view: scope to visible date range (overrides dateFrom)
-    if (filters.viewMode === 'calendar' && calendarRange.value) {
-      query.date_from = calendarRange.value.from
-      query.date_to = calendarRange.value.to
-    }
-
-    const requests: Promise<unknown>[] = [
-      get<{ data: EventFeedResponse }>({ url: '/events/feed', query }),
-    ]
-    // Event groups are only needed for calendar view
-    if (filters.viewMode === 'calendar') {
-      const groupQuery: Record<string, unknown> = { limit: 100 }
-      if (calendarRange.value) {
-        groupQuery.date_from = calendarRange.value.from
-        groupQuery.date_to = calendarRange.value.to
-      }
-      requests.push(
-        get<{ data: EventGroupListResponse }>({ url: '/event-groups/', query: groupQuery }),
-      )
-    }
-
-    const results = await Promise.all(requests)
-    const feedRes = results[0] as { data: EventFeedResponse }
-    feedItems.value = feedRes.data.items
-
-    if (filters.viewMode === 'calendar' && results[1]) {
-      const groupsRes = results[1] as { data: EventGroupListResponse }
-      eventGroups.value = groupsRes.data.items
-    }
+    const response = await get<{ data: EventListResponse }>({
+      url: '/events/',
+      query,
+    })
+    groups.value = response.data.items
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -171,69 +93,49 @@ const loadEvents = async () => {
   }
 }
 
-// Debounced search
-let searchTimer: ReturnType<typeof setTimeout> | null = null
-watch(
-  () => filters.searchQuery,
-  () => {
-    if (searchTimer) clearTimeout(searchTimer)
-    searchTimer = setTimeout(() => loadEvents(), 300)
-  },
-)
+watch([dateFrom, dateTo], () => loadGroups())
 
-// Re-fetch when these change
-watch(
-  () => [
-    filters.myBookingsOnly,
-    filters.viewMode,
-    filters.focusMode,
-    filters.dateFrom,
-    filters.dateTo,
-  ],
-  () => loadEvents(),
-)
-
-const handleDelete = (event: FeedEventItem) => {
-  deleteTarget.value = event
-  deleteReason.value = ''
-  showDeleteDialog.value = true
-}
-
-const confirmDeleteEvent = async () => {
-  if (!deleteTarget.value) return
-  showDeleteDialog.value = false
+const handleCreate = async () => {
+  if (!startDate.value || !endDate.value) return
   try {
-    const query: Record<string, string> = {}
-    if (deleteReason.value.trim()) query.cancellation_reason = deleteReason.value.trim()
-    await del({ url: `/events/${deleteTarget.value.id}`, query })
-    toast.success(t('duties.events.delete'))
-    await loadEvents()
+    await post({
+      url: '/events/',
+      body: {
+        name: createForm.value.name,
+        description: createForm.value.description || undefined,
+        start_date: startDate.value.toString(),
+        end_date: endDate.value.toString(),
+      },
+    })
+    showCreateDialog.value = false
+    createForm.value = { name: '', description: '' }
+    startDate.value = undefined
+    endDate.value = undefined
+    toast.success(t('duties.events.create'))
+    await loadGroups()
   } catch (error) {
     toastApiError(error)
   }
 }
 
-const handleClickSlot = (slotId: string, event: FeedEventItem) => {
-  selectedSlotId.value = slotId
-  selectedSlotEventName.value = event.name
-  showSlotDialog.value = true
+const handleDelete = async (group: EventRead) => {
+  const confirmed = await confirmDestructive(t('duties.events.deleteConfirm'))
+  if (!confirmed) return
+
+  try {
+    await del({ url: `/events/${group.id}` })
+    toast.success(t('duties.events.delete'))
+    await loadGroups()
+  } catch (error) {
+    toastApiError(error)
+  }
 }
 
-const navigateToEvent = (event: { id: string }) => {
-  router.push({ name: 'event-detail', params: { eventId: event.id } })
+const navigateToGroup = (group: EventRead) => {
+  router.push({ name: 'event-detail', params: { groupId: group.id } })
 }
 
-const navigateToGroup = (group: { id: string }) => {
-  router.push({ name: 'event-group-detail', params: { groupId: group.id } })
-}
-
-const handleCalendarDateRange = (range: DateRange) => {
-  const changed = calendarRange.value?.from !== range.from || calendarRange.value?.to !== range.to
-  calendarRange.value = range
-  if (changed && filters.viewMode === 'calendar') loadEvents()
-}
-
-onMounted(loadEvents)
+onMounted(loadGroups)
 </script>
 
 <template>
@@ -246,165 +148,128 @@ onMounted(loadEvents)
         </h1>
         <p class="text-muted-foreground">{{ t('duties.events.subtitle') }}</p>
       </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- Focus Mode Toggle -->
-        <TooltipProvider v-if="filters.viewMode === 'list'">
-          <div class="flex overflow-hidden rounded-md border">
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  data-testid="btn-focus-today"
-                  :variant="filters.focusMode === 'today' ? 'default' : 'ghost'"
-                  size="sm"
-                  class="rounded-none border-0"
-                  @click="filters.focusMode = 'today'"
-                >
-                  <CalendarClock class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {{ t('duties.events.focusMode.today') }}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger as-child>
-                <Button
-                  data-testid="btn-focus-first-available"
-                  :variant="filters.focusMode === 'first-available' ? 'default' : 'ghost'"
-                  size="sm"
-                  class="rounded-none border-0 border-l"
-                  @click="filters.focusMode = 'first-available'"
-                >
-                  <CalendarSearch class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {{ t('duties.events.focusMode.firstAvailable') }}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-        </TooltipProvider>
-
-        <!-- View Toggle -->
-        <div class="flex overflow-hidden rounded-md border">
-          <Button
-            data-testid="btn-view-list"
-            :variant="filters.viewMode === 'list' ? 'default' : 'ghost'"
-            size="sm"
-            class="rounded-none border-0"
-            @click="filters.viewMode = 'list'"
-          >
-            <List class="mr-1.5 h-4 w-4" />
-            <span class="hidden sm:inline">{{ t('duties.events.views.list') }}</span>
-          </Button>
-          <Button
-            data-testid="btn-view-cards"
-            :variant="filters.viewMode === 'box' ? 'default' : 'ghost'"
-            size="sm"
-            class="rounded-none border-0 border-l"
-            @click="filters.viewMode = 'box'"
-          >
-            <Grid2x2 class="mr-1.5 h-4 w-4" />
-            <span class="hidden sm:inline">{{ t('duties.events.views.box') }}</span>
-          </Button>
-          <Button
-            data-testid="btn-view-calendar"
-            :variant="filters.viewMode === 'calendar' ? 'default' : 'ghost'"
-            size="sm"
-            class="rounded-none border-0 border-l"
-            @click="filters.viewMode = 'calendar'"
-          >
-            <Calendar class="mr-1.5 h-4 w-4" />
-            <span class="hidden sm:inline">{{ t('duties.events.views.calendar') }}</span>
-          </Button>
-        </div>
-
-        <Button
-          v-if="authStore.isManager"
-          data-testid="btn-create-event"
-          class="max-xl:hidden"
-          @click="router.push({ name: 'event-create' })"
-        >
-          <Plus class="mr-2 h-4 w-4" />
-          {{ t('duties.events.create') }}
-        </Button>
-      </div>
+      <Button
+        v-if="authStore.isAdmin || authStore.isTaskManager"
+        data-testid="btn-create-group"
+        class="max-xl:hidden"
+        @click="showCreateDialog = true"
+      >
+        <Plus class="mr-2 h-4 w-4" />
+        {{ t('duties.events.create') }}
+      </Button>
     </div>
 
-    <!-- Search & Filter (hidden for calendar — it has its own navigation) -->
-    <div v-if="filters.viewMode !== 'calendar'" class="flex flex-wrap items-center gap-4">
+    <!-- Search & Filter -->
+    <div class="flex flex-wrap items-center gap-4">
       <div class="relative flex-1">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          v-model="filters.searchQuery"
+          v-model="searchQuery"
           data-testid="input-search"
           :placeholder="t('common.actions.search')"
           class="pl-10"
         />
       </div>
-      <EventFilterMenu />
+      <DateRangePicker
+        :date-from="dateFrom"
+        :date-to="dateTo"
+        :marked-days="markedDays"
+        @update:date-from="dateFrom = $event"
+        @update:date-to="dateTo = $event"
+        @update:visible-month="handleVisibleMonth"
+      />
     </div>
 
-    <!-- Loading (only shown on initial load, not calendar refetches) -->
-    <div v-if="loading && feedItems.length === 0" class="py-12 text-center text-muted-foreground">
+    <!-- Loading -->
+    <div v-if="loading" class="py-12 text-center text-muted-foreground">
       {{ t('common.states.loading') }}
     </div>
 
     <template v-else>
-      <EventQuickView
-        v-if="filters.viewMode === 'list'"
-        :events="feedItems"
-        :focus-mode="filters.focusMode"
-        :hide-full-slots="filters.hideFullSlots"
-        @navigate="navigateToEvent"
-        @delete="handleDelete"
-        @click-slot="handleClickSlot"
-      />
-      <EventListView
-        v-else-if="filters.viewMode === 'box'"
-        :events="feedItems"
-        @navigate="navigateToEvent"
-        @delete="handleDelete"
-      />
-      <EventCalendarView
-        v-else
-        :events="feedItems"
-        :event-groups="eventGroups"
-        :calendar-view-mode="calViewMode"
-        :calendar-date="calDate"
-        @navigate="navigateToEvent"
-        @navigate-group="navigateToGroup"
-        @update:date-range="handleCalendarDateRange"
-        @update:calendar-view-mode="calViewMode = $event"
-        @update:calendar-date="calDate = $event"
-      />
+      <div v-if="filteredGroups.length === 0" class="py-12 text-center text-muted-foreground">
+        {{ t('duties.events.empty') }}
+      </div>
+
+      <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card
+          v-for="group in filteredGroups"
+          :key="group.id"
+          class="cursor-pointer transition-colors hover:bg-muted/50"
+          @click="navigateToGroup(group)"
+        >
+          <CardHeader class="pb-3">
+            <div class="flex items-start justify-between">
+              <CardTitle class="text-lg">{{ group.name }}</CardTitle>
+              <Badge data-testid="group-status" :variant="statusVariant(group.status)">
+                {{ t(`duties.events.statuses.${group.status ?? 'draft'}`) }}
+              </Badge>
+            </div>
+            <CardDescription v-if="group.description">
+              {{ group.description }}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div class="flex items-center justify-between text-sm text-muted-foreground">
+              <span>{{ formatDate(group.start_date) }} – {{ formatDate(group.end_date) }}</span>
+              <Button
+                v-if="authStore.canManageEvent(group.id)"
+                variant="ghost"
+                size="icon"
+                class="h-8 w-8"
+                @click.stop="handleDelete(group)"
+              >
+                <Trash2 class="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </template>
 
-    <!-- Slot Detail Dialog -->
-    <SlotDetailDialog
-      :slot-id="selectedSlotId"
-      :event-name="selectedSlotEventName"
-      :open="showSlotDialog"
-      @update:open="showSlotDialog = $event"
-      @booking-updated="loadEvents"
-    />
+    <!-- Create Dialog -->
+    <Dialog v-model:open="showCreateDialog">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{{ t('duties.events.create') }}</DialogTitle>
+          <DialogDescription>{{ t('duties.events.subtitle') }}</DialogDescription>
+        </DialogHeader>
+        <form class="space-y-4" @submit.prevent="handleCreate">
+          <div class="space-y-2">
+            <Label>{{ t('duties.events.fields.name') }}</Label>
+            <Input v-model="createForm.name" required />
+          </div>
+          <div class="space-y-2">
+            <Label>{{ t('duties.events.fields.description') }}</Label>
+            <Textarea v-model="createForm.description" />
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>{{ t('duties.events.fields.startDate') }}</Label>
+              <DatePicker v-model="startDate" :placeholder="t('duties.events.pickDate')" />
+            </div>
+            <div class="space-y-2">
+              <Label>{{ t('duties.events.fields.endDate') }}</Label>
+              <DatePicker v-model="endDate" :placeholder="t('duties.events.pickDate')" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" @click="showCreateDialog = false">
+              {{ t('common.actions.cancel') }}
+            </Button>
+            <Button type="submit">{{ t('common.actions.create') }}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
 
-    <!-- Delete Event Dialog -->
-    <DeleteConfirmationDialog
-      v-model:open="showDeleteDialog"
-      v-model:reason="deleteReason"
-      :message="t('duties.events.deleteConfirm')"
-      @confirm="confirmDeleteEvent"
-    />
-
-    <!-- Mobile FAB: create event -->
+    <!-- Mobile FAB: create group -->
     <Button
-      v-if="authStore.isManager"
+      v-if="authStore.isAdmin || authStore.isTaskManager"
       size="icon"
       class="xl:hidden fixed bottom-24 md:bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
-      data-testid="fab-create-event"
+      data-testid="fab-create-group"
       :aria-label="t('duties.events.create')"
-      @click="router.push({ name: 'event-create' })"
+      @click="showCreateDialog = true"
     >
       <Plus class="size-7" :stroke-width="2.5" />
     </Button>

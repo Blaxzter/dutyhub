@@ -145,7 +145,7 @@ const setStatus = (value: StatusFilter) => {
   statusFilter.value = value
 }
 
-const patchUserRoles = async (user: UserRead, role: 'admin' | 'event_manager') => {
+const patchUserRoles = async (user: UserRead, role: 'admin' | 'task_manager') => {
   updatingId.value = user.id
   const hasRole = user.roles.includes(role)
   const newRoles = hasRole ? user.roles.filter((r) => r !== role) : [...user.roles, role]
@@ -158,9 +158,9 @@ const patchUserRoles = async (user: UserRead, role: 'admin' | 'event_manager') =
     const name = user.name ?? user.email
     const messages = {
       admin: hasRole ? 'admin.users.removedAdmin' : 'admin.users.grantedAdmin',
-      event_manager: hasRole
-        ? 'admin.users.removedEventManager'
-        : 'admin.users.grantedEventManager',
+      task_manager: hasRole
+        ? 'admin.users.removedTaskManager'
+        : 'admin.users.grantedTaskManager',
     } as const
     toast.success(t(messages[role], { name }))
   } catch (error) {
@@ -171,7 +171,7 @@ const patchUserRoles = async (user: UserRead, role: 'admin' | 'event_manager') =
 }
 
 const toggleAdmin = (user: UserRead) => patchUserRoles(user, 'admin')
-const toggleEventManager = (user: UserRead) => patchUserRoles(user, 'event_manager')
+const toggleTaskManager = (user: UserRead) => patchUserRoles(user, 'task_manager')
 
 const toggleActive = async (user: UserRead) => {
   updatingId.value = user.id
@@ -322,7 +322,7 @@ onMounted(loadUsers)
         @toggle-active="toggleActive"
         @reject="openRejectDialog"
         @toggle-admin="toggleAdmin"
-        @toggle-event-manager="toggleEventManager"
+        @toggle-task-manager="toggleTaskManager"
         @delete="openDeleteDialog"
       />
       <UsersGroupedList
@@ -332,7 +332,7 @@ onMounted(loadUsers)
         @toggle-active="toggleActive"
         @reject="openRejectDialog"
         @toggle-admin="toggleAdmin"
-        @toggle-event-manager="toggleEventManager"
+        @toggle-task-manager="toggleTaskManager"
         @delete="openDeleteDialog"
       />
     </template>

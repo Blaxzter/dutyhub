@@ -22,9 +22,9 @@ const { t } = useI18n()
 
 const categoryLabels: Record<string, string> = {
   booking: 'notifications.categories.booking',
-  slot: 'notifications.categories.slot',
+  shift: 'notifications.categories.shift',
+  task: 'notifications.categories.task',
   event: 'notifications.categories.event',
-  event_group: 'notifications.categories.eventGroup',
   availability: 'notifications.categories.availability',
   admin: 'notifications.categories.admin',
   user: 'notifications.categories.user',

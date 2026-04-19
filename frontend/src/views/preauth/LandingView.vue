@@ -27,9 +27,9 @@ const { locale, t } = useI18n()
 
 const slideKeys = [
   { key: 'dashboard', file: 'dashboard' },
-  { key: 'eventGroups', file: 'event-groups' },
   { key: 'events', file: 'events' },
-  { key: 'eventDetail', file: 'event-detail' },
+  { key: 'tasks', file: 'tasks' },
+  { key: 'eventDetail', file: 'task-detail' },
   { key: 'bookings', file: 'my-bookings' },
   { key: 'notifications', file: 'notification-bell' },
   { key: 'notificationPreferences', file: 'notification-preferences' },
@@ -187,7 +187,7 @@ const navigateToAbout = () => {
               <div class="space-y-4 px-8">
                 <div class="relative overflow-hidden rounded-xl border bg-background shadow-2xl">
                   <div
-                    class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10 pointer-events-none"
+                    class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10 pointer-tasks-none"
                   />
                   <img
                     :src="slide.image"

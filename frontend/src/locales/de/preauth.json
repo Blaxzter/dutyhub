@@ -57,7 +57,7 @@
     "howItWorks": {
         "backToHome": "Zurück zur Startseite",
         "features": {
-            "batchSlots": {
+            "batchShifts": {
                 "description": "Fügen Sie mehrere Schicht-Batches zur selben Veranstaltung mit unterschiedlichen Zeitplänen, Orten oder Zeiträumen hinzu.",
                 "title": "Multi-Batch Schichten"
             },
@@ -167,13 +167,9 @@
                     "description": "Sehen Sie alle verfügbaren Schichten nach Tag, buchen Sie mit einem Klick und verfolgen Sie die Verfügbarkeit.",
                     "title": "Veranstaltungsdetail"
                 },
-                "eventGroups": {
+                "events": {
                     "description": "Organisieren Sie zusammengehörige Veranstaltungen in Gruppen wie Konferenzen oder Festivals.",
                     "title": "Veranstaltungsgruppen"
-                },
-                "events": {
-                    "description": "Durchsuchen Sie alle Dienst-Veranstaltungen mit Inline-Schichtvorschau, Suche und smarten Filtern.",
-                    "title": "Veranstaltungen & Schichten"
                 },
                 "notificationPreferences": {
                     "description": "Passe an, wie du Benachrichtigungen erhältst — per E-Mail, Push oder Telegram — für jeden Benachrichtigungstyp.",
@@ -182,6 +178,10 @@
                 "notifications": {
                     "description": "Bleibe in Echtzeit über Buchungen, Veranstaltungen und Schichtänderungen informiert — direkt in deinem Dashboard.",
                     "title": "Benachrichtigungen"
+                },
+                "tasks": {
+                    "description": "Durchsuchen Sie alle Dienst-Veranstaltungen mit Inline-Schichtvorschau, Suche und smarten Filtern.",
+                    "title": "Veranstaltungen & Schichten"
                 },
                 "userManagement": {
                     "description": "Admins können Benutzer, Rollen und Genehmigungsabläufe von einem zentralen Dashboard aus verwalten.",

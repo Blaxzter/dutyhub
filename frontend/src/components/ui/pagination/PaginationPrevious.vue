@@ -29,7 +29,7 @@ const forwarded = useForwardProps(delegatedProps)
 
 <template>
   <PaginationPrev
-    data-slot="pagination-previous"
+    data-shift="pagination-previous"
     :class="cn(buttonVariants({ variant: 'ghost', size }), 'gap-1 px-2.5 sm:pr-2.5', props.class)"
     v-bind="forwarded"
   >

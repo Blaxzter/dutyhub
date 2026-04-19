@@ -3,34 +3,34 @@
  */
 import { expect, test } from '../../fixtures.js'
 import {
-  type DutySlotRead,
-  type EventWithSlots,
-  bookSlot,
-  createEventWithSlots,
-  deleteEvent,
-  listSlots,
+  type ShiftRead,
+  type TaskWithShifts,
+  bookShift,
+  createTaskWithShifts,
+  deleteTask,
+  listShifts,
   uniqueName,
 } from '../../helpers/api.js'
 
-let created: EventWithSlots
-let slots: DutySlotRead[]
+let created: TaskWithShifts
+let shifts: ShiftRead[]
 
 test.beforeEach(async ({ adminPage: page }) => {
-  await page.goto('/app/events')
-  created = await createEventWithSlots(page, {
-    name: uniqueName('E2E Booking Event'),
+  await page.goto('/app/tasks')
+  created = await createTaskWithShifts(page, {
+    name: uniqueName('E2E Booking Task'),
     location: 'Room A',
     status: 'published',
     startTime: '10:00',
     endTime: '12:00',
     slotDuration: 60,
-    peoplePerSlot: 5,
+    peoplePerShift: 5,
   })
-  slots = await listSlots(page, created.event.id)
+  shifts = await listShifts(page, created.task.id)
 })
 
 test.afterEach(async ({ adminPage: page }) => {
-  await deleteEvent(page, created.event.id).catch(() => {})
+  await deleteTask(page, created.task.id).catch(() => {})
 })
 
 // ── navigation ───────────────────────────────────────────────────────────────
@@ -70,30 +70,30 @@ test.describe('My Bookings – page structure', () => {
 // ── with bookings ────────────────────────────────────────────────────────────
 
 test.describe('My Bookings – with data', () => {
-  test('booked slot appears in bookings list', async ({ adminPage: page }) => {
+  test('booked shift appears in bookings list', async ({ adminPage: page }) => {
     // eslint-disable-next-line playwright/no-conditional-in-test
-    if (slots.length === 0) return
+    if (shifts.length === 0) return
 
-    await bookSlot(page, slots[0].id)
+    await bookShift(page, shifts[0].id)
     await page.goto('/app/bookings')
 
-    // The event name is dynamic data — use heading role to avoid strict mode violation
-    await expect(page.getByRole('heading', { name: created.event.name })).toBeVisible()
+    // The task name is dynamic data — use heading role to avoid strict mode violation
+    await expect(page.getByRole('heading', { name: created.task.name })).toBeVisible()
   })
 
   test('can cancel a booking from bookings page', async ({ adminPage: page }) => {
     // eslint-disable-next-line playwright/no-conditional-in-test
-    if (slots.length === 0) return
+    if (shifts.length === 0) return
 
-    await bookSlot(page, slots[0].id)
+    await bookShift(page, shifts[0].id)
     await page.goto('/app/bookings')
 
-    // Wait for the booking card to appear (dynamic event name)
-    await expect(page.getByRole('heading', { name: created.event.name })).toBeVisible()
+    // Wait for the booking card to appear (dynamic task name)
+    await expect(page.getByRole('heading', { name: created.task.name })).toBeVisible()
 
     // Click the cancel/trash button (accept the confirm dialog)
     page.on('dialog', (d) => d.accept())
-    const card = page.locator('[class*="Card"]').filter({ hasText: created.event.name }).first()
+    const card = page.locator('[class*="Card"]').filter({ hasText: created.task.name }).first()
     const cancelBtn = card.locator(
       'button[class*="destructive"], button:has(svg.text-destructive), button:has(svg[class*="text-destructive"])',
     )
@@ -120,13 +120,13 @@ test.describe('My Bookings – filters', () => {
 test.describe('My Bookings – grouping', () => {
   test('grouping buttons are visible', async ({ adminPage: page }) => {
     // eslint-disable-next-line playwright/no-conditional-in-test
-    if (slots.length === 0) return
+    if (shifts.length === 0) return
 
-    await bookSlot(page, slots[0].id)
+    await bookShift(page, shifts[0].id)
     await page.goto('/app/bookings')
 
     await expect(page.getByTestId('btn-group-date')).toBeVisible()
-    await expect(page.getByTestId('btn-group-event')).toBeVisible()
+    await expect(page.getByTestId('btn-group-task')).toBeVisible()
     await expect(page.getByTestId('btn-group-location')).toBeVisible()
   })
 })

@@ -15,7 +15,7 @@ export async function pickDate(trigger: Locator, dateStr: string) {
 
   // The calendar appears inside the popover
   const page = trigger.page()
-  const calendar = page.locator('[data-slot="calendar"]')
+  const calendar = page.locator('[data-shift="calendar"]')
   await calendar.waitFor()
 
   // Navigate to the correct month/year via the native <select> dropdowns
@@ -25,7 +25,7 @@ export async function pickDate(trigger: Locator, dateStr: string) {
 
   // Click the day cell (exclude outside-view days from adjacent months)
   await calendar
-    .locator('[data-slot="calendar-cell-trigger"]:not([data-outside-view])')
+    .locator('[data-shift="calendar-cell-trigger"]:not([data-outside-view])')
     .getByText(String(day), { exact: true })
     .click()
 }

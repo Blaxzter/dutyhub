@@ -15,7 +15,7 @@ const props = defineProps<
 
 <template>
   <Primitive
-    data-slot="sidebar-group-action"
+    data-shift="sidebar-group-action"
     data-sidebar="group-action"
     :as="as"
     :as-child="asChild"

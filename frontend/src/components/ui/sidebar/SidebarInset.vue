@@ -10,7 +10,7 @@ const props = defineProps<{
 
 <template>
   <main
-    data-slot="sidebar-inset"
+    data-shift="sidebar-inset"
     :class="
       cn(
         'bg-background relative flex w-full flex-1 flex-col',

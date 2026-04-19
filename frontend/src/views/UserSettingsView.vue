@@ -216,7 +216,7 @@ watch(activeSection, (id) => {
   }
 })
 
-// Handle profile updated event
+// Handle profile updated task
 const handleProfileUpdated = async (values: Record<string, unknown>) => {
   authStore.updateUser({
     ...authStore.user,

@@ -21,7 +21,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 
 <template>
   <DropdownMenuSubContent
-    data-slot="dropdown-menu-sub-content"
+    data-shift="dropdown-menu-sub-content"
     v-bind="forwarded"
     :class="
       cn(

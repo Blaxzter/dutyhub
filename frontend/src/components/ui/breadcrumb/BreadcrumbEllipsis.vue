@@ -12,7 +12,7 @@ const props = defineProps<{
 
 <template>
   <span
-    data-slot="breadcrumb-ellipsis"
+    data-shift="breadcrumb-ellipsis"
     role="presentation"
     aria-hidden="true"
     :class="cn('flex size-9 items-center justify-center', props.class)"

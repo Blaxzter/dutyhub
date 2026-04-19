@@ -23,7 +23,7 @@ const emit = defineEmits<{
   toggleActive: [user: UserRead]
   reject: [user: UserRead]
   toggleAdmin: [user: UserRead]
-  toggleEventManager: [user: UserRead]
+  toggleTaskManager: [user: UserRead]
   delete: [user: UserRead]
 }>()
 
@@ -125,7 +125,7 @@ const formatDate = (iso: string) =>
             @toggle-active="emit('toggleActive', $event)"
             @reject="emit('reject', $event)"
             @toggle-admin="emit('toggleAdmin', $event)"
-            @toggle-event-manager="emit('toggleEventManager', $event)"
+            @toggle-task-manager="emit('toggleTaskManager', $event)"
             @delete="emit('delete', $event)"
           />
         </div>
@@ -159,7 +159,7 @@ const formatDate = (iso: string) =>
             @toggle-active="emit('toggleActive', $event)"
             @reject="emit('reject', $event)"
             @toggle-admin="emit('toggleAdmin', $event)"
-            @toggle-event-manager="emit('toggleEventManager', $event)"
+            @toggle-task-manager="emit('toggleTaskManager', $event)"
             @delete="emit('delete', $event)"
           />
         </div>

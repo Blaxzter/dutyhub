@@ -5,22 +5,18 @@
     },
     "mobileBottomNav": {
         "bookings": "Bookings",
-        "events": "Events",
-        "inbox": "Inbox"
+        "inbox": "Inbox",
+        "tasks": "Tasks"
     },
     "sidebar": {
         "badges": {
             "managersOnly": "Only visible to managers",
-            "openSlots": "{count} open slot | {count} open slots"
+            "openShifts": "{count} open shift | {count} open shifts"
         },
         "items": {
-            "eventGroups": {
-                "description": "Browse event programmes",
-                "label": "Event Groups"
-            },
             "events": {
-                "description": "Browse duty events",
-                "label": "Events"
+                "description": "Browse task programmes",
+                "label": "Task Groups"
             },
             "home": {
                 "label": "Home"
@@ -32,7 +28,11 @@
                 "description": "Your reservations",
                 "label": "My Bookings"
             },
-            "settings": "Settings"
+            "settings": "Settings",
+            "tasks": {
+                "description": "Browse duty tasks",
+                "label": "Tasks"
+            }
         },
         "platform": "Platform",
         "sections": {}

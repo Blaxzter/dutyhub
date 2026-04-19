@@ -4,37 +4,37 @@
 import { expect, test } from '../../fixtures.js'
 import {
   type BookingRead,
-  type DutySlotRead,
-  type EventWithSlots,
-  bookSlot,
-  createEventWithSlots,
-  deleteEvent,
-  listSlots,
+  type ShiftRead,
+  type TaskWithShifts,
+  bookShift,
+  createTaskWithShifts,
+  deleteTask,
+  listShifts,
   uniqueName,
 } from '../../helpers/api.js'
 
-let created: EventWithSlots
-let slots: DutySlotRead[]
+let created: TaskWithShifts
+let shifts: ShiftRead[]
 let booking: BookingRead
 
 test.beforeEach(async ({ adminPage: page }) => {
-  await page.goto('/app/events')
-  created = await createEventWithSlots(page, {
-    name: uniqueName('E2E Booking Detail Event'),
+  await page.goto('/app/tasks')
+  created = await createTaskWithShifts(page, {
+    name: uniqueName('E2E Booking Detail Task'),
     status: 'published',
     startTime: '10:00',
     endTime: '12:00',
     slotDuration: 60,
-    peoplePerSlot: 5,
+    peoplePerShift: 5,
   })
-  slots = await listSlots(page, created.event.id)
-  if (slots.length > 0) {
-    booking = await bookSlot(page, slots[0].id)
+  shifts = await listShifts(page, created.task.id)
+  if (shifts.length > 0) {
+    booking = await bookShift(page, shifts[0].id)
   }
 })
 
 test.afterEach(async ({ adminPage: page }) => {
-  await deleteEvent(page, created.event.id).catch(() => {})
+  await deleteTask(page, created.task.id).catch(() => {})
 })
 
 test.describe('Booking Detail – navigation', () => {
@@ -68,11 +68,11 @@ test.describe('Booking Detail – page structure', () => {
     await expect(page.getByTestId('booking-status')).toBeVisible()
   })
 
-  test('shows slot info section', async ({ adminPage: page }) => {
+  test('shows shift info section', async ({ adminPage: page }) => {
     // eslint-disable-next-line playwright/no-conditional-in-test
     if (!booking) return
     await page.goto(`/app/bookings/${booking.id}`)
-    await expect(page.getByTestId('section-slot-info')).toBeVisible()
+    await expect(page.getByTestId('section-shift-info')).toBeVisible()
   })
 
   test('shows reminders section', async ({ adminPage: page }) => {

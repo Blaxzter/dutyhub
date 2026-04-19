@@ -55,9 +55,9 @@ function toggleSidebar() {
   return isMobile.value ? setOpenMobile(!openMobile.value) : setOpen(!open.value)
 }
 
-useEventListener('keydown', (event: KeyboardEvent) => {
-  if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
-    event.preventDefault()
+useEventListener('keydown', (task: KeyboardEvent) => {
+  if (task.key === SIDEBAR_KEYBOARD_SHORTCUT && (task.metaKey || task.ctrlKey)) {
+    task.preventDefault()
     toggleSidebar()
   }
 })
@@ -80,7 +80,7 @@ provideSidebarContext({
 <template>
   <TooltipProvider :delay-duration="0">
     <div
-      data-slot="sidebar-wrapper"
+      data-shift="sidebar-wrapper"
       :style="{
         '--sidebar-width': SIDEBAR_WIDTH,
         '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,

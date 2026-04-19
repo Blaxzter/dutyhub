@@ -14,7 +14,7 @@ const delegatedProps = reactiveOmit(props, 'class')
 
 <template>
   <AccordionContent
-    data-slot="accordion-content"
+    data-shift="accordion-content"
     v-bind="delegatedProps"
     class="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden text-sm"
   >

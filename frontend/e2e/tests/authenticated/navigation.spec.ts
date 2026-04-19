@@ -12,14 +12,14 @@ test.describe('Sidebar – links', () => {
     await expect(page.getByTestId('sidebar-link-home')).toBeVisible()
   })
 
-  test('shows Event Groups link', async ({ adminPage: page }) => {
-    await page.goto('/app/home')
-    await expect(page.getByTestId('sidebar-link-event-groups')).toBeVisible()
-  })
-
-  test('shows Events link', async ({ adminPage: page }) => {
+  test('shows Task Groups link', async ({ adminPage: page }) => {
     await page.goto('/app/home')
     await expect(page.getByTestId('sidebar-link-events')).toBeVisible()
+  })
+
+  test('shows Tasks link', async ({ adminPage: page }) => {
+    await page.goto('/app/home')
+    await expect(page.getByTestId('sidebar-link-tasks')).toBeVisible()
   })
 
   test('shows My Bookings link', async ({ adminPage: page }) => {
@@ -47,21 +47,21 @@ test.describe('Sidebar – links', () => {
 
 test.describe('Sidebar – navigation', () => {
   test('Home link navigates to dashboard', async ({ adminPage: page }) => {
-    await page.goto('/app/events')
+    await page.goto('/app/tasks')
     await page.getByTestId('sidebar-link-home').click()
     await expect(page).toHaveURL(/\/app\/home/)
   })
 
-  test('Event Groups link navigates correctly', async ({ adminPage: page }) => {
-    await page.goto('/app/home')
-    await page.getByTestId('sidebar-link-event-groups').click()
-    await expect(page).toHaveURL(/\/app\/event-groups/)
-  })
-
-  test('Events link navigates correctly', async ({ adminPage: page }) => {
+  test('Task Groups link navigates correctly', async ({ adminPage: page }) => {
     await page.goto('/app/home')
     await page.getByTestId('sidebar-link-events').click()
     await expect(page).toHaveURL(/\/app\/events/)
+  })
+
+  test('Tasks link navigates correctly', async ({ adminPage: page }) => {
+    await page.goto('/app/home')
+    await page.getByTestId('sidebar-link-tasks').click()
+    await expect(page).toHaveURL(/\/app\/tasks/)
   })
 
   test('My Bookings link navigates correctly', async ({ adminPage: page }) => {
@@ -91,8 +91,8 @@ test.describe('Breadcrumbs', () => {
     await expect(page.getByRole('navigation', { name: /breadcrumb/i })).toBeVisible()
   })
 
-  test('events page shows breadcrumbs', async ({ adminPage: page }) => {
-    await page.goto('/app/events')
+  test('tasks page shows breadcrumbs', async ({ adminPage: page }) => {
+    await page.goto('/app/tasks')
     await expect(page.getByRole('navigation', { name: /breadcrumb/i })).toBeVisible()
   })
 })

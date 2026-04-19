@@ -5,14 +5,14 @@
 import type { Page } from '@playwright/test'
 import type {
   BookingRead,
-  DutySlotRead,
-  EventCreateWithSlotsResponse,
-  EventGroupRead,
+  ShiftRead,
+  TaskCreateWithShiftsResponse,
   EventRead,
+  TaskRead,
 } from '../../src/client/types.gen.js'
 
-export type { BookingRead, DutySlotRead, EventGroupRead, EventRead }
-export type EventWithSlots = EventCreateWithSlotsResponse
+export type { BookingRead, ShiftRead, EventRead, TaskRead }
+export type TaskWithShifts = TaskCreateWithShiftsResponse
 
 export const API = process.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
 
@@ -70,13 +70,13 @@ export async function api<T = unknown>(page: Page, method: string, path: string,
   return result.__body as T
 }
 
-/** Create an event group (draft or published). Admin token required. */
+/** Create an task group (draft or published). Admin token required. */
 export async function createGroup(
   page: Page,
   name: string,
   status: 'draft' | 'published' = 'published',
-): Promise<EventGroupRead> {
-  return api<EventGroupRead>(page, 'POST', '/event-groups/', {
+): Promise<EventRead> {
+  return api<EventRead>(page, 'POST', '/events/', {
     name,
     status,
     start_date: futureDate(30),
@@ -84,22 +84,22 @@ export async function createGroup(
   })
 }
 
-/** Delete an event group. Admin token required. */
+/** Delete an task group. Admin token required. */
 export async function deleteGroup(page: Page, id: string): Promise<void> {
   if (!id || id === 'undefined') return
-  await api(page, 'DELETE', `/event-groups/${id}`)
+  await api(page, 'DELETE', `/events/${id}`)
 }
 
 /** Remove the current user's availability for a group (best-effort). */
 export async function clearAvailability(page: Page, groupId: string): Promise<void> {
   if (!groupId || groupId === 'undefined') return
-  await api(page, 'DELETE', `/event-groups/${groupId}/availability/me`)
+  await api(page, 'DELETE', `/events/${groupId}/availability/me`)
 }
 
-// ── Event helpers ──────────────────────────────────────────────────────────────
+// ── Task helpers ──────────────────────────────────────────────────────────────
 
-/** Create an event with auto-generated slots via the /events/with-slots endpoint. */
-export async function createEventWithSlots(
+/** Create an task with auto-generated shifts via the /tasks/with-shifts endpoint. */
+export async function createTaskWithShifts(
   page: Page,
   opts: {
     name: string
@@ -109,18 +109,18 @@ export async function createEventWithSlots(
     status?: 'draft' | 'published' | 'archived'
     location?: string
     category?: string
-    eventGroupId?: string
+    eventId?: string
     startTime?: string
     endTime?: string
     slotDuration?: number
-    peoplePerSlot?: number
+    peoplePerShift?: number
   },
-): Promise<EventCreateWithSlotsResponse> {
-  // Use tomorrow to avoid the backend's future_slots_cutoff filtering out past-time slots
+): Promise<TaskCreateWithShiftsResponse> {
+  // Use tomorrow to avoid the backend's future_shifts_cutoff filtering out past-time shifts
   const defaultDate = futureDate(1)
   const startDate = opts.startDate ?? defaultDate
   const endDate = opts.endDate ?? defaultDate
-  return api<EventCreateWithSlotsResponse>(page, 'POST', '/events/with-slots', {
+  return api<TaskCreateWithShiftsResponse>(page, 'POST', '/tasks/with-shifts', {
     name: opts.name,
     description: opts.description ?? null,
     start_date: startDate,
@@ -128,39 +128,39 @@ export async function createEventWithSlots(
     status: opts.status ?? 'draft',
     location: opts.location ?? null,
     category: opts.category ?? null,
-    event_group_id: opts.eventGroupId ?? null,
+    event_id: opts.eventId ?? null,
     schedule: {
       default_start_time: (opts.startTime ?? '10:00') + ':00',
       default_end_time: (opts.endTime ?? '12:00') + ':00',
-      slot_duration_minutes: opts.slotDuration ?? 60,
-      people_per_slot: opts.peoplePerSlot ?? 2,
+      shift_duration_minutes: opts.slotDuration ?? 60,
+      people_per_shift: opts.peoplePerShift ?? 2,
       remainder_mode: 'drop',
       overrides: [],
-      excluded_slots: [],
+      excluded_shifts: [],
     },
   })
 }
 
-/** Delete an event. Admin token required. */
-export async function deleteEvent(page: Page, id: string): Promise<void> {
+/** Delete an task. Admin token required. */
+export async function deleteTask(page: Page, id: string): Promise<void> {
   if (!id || id === 'undefined') return
-  await api(page, 'DELETE', `/events/${id}`)
+  await api(page, 'DELETE', `/tasks/${id}`)
 }
 
-/** Publish an event (set status to published). */
-export async function publishEvent(page: Page, id: string): Promise<EventRead> {
-  return api<EventRead>(page, 'PATCH', `/events/${id}`, { status: 'published' })
+/** Publish an task (set status to published). */
+export async function publishTask(page: Page, id: string): Promise<TaskRead> {
+  return api<TaskRead>(page, 'PATCH', `/tasks/${id}`, { status: 'published' })
 }
 
-/** List duty slots for an event. */
-export async function listSlots(page: Page, eventId: string): Promise<DutySlotRead[]> {
-  const res = await api<{ items: DutySlotRead[] }>(page, 'GET', `/duty-slots/?event_id=${eventId}&limit=200`)
+/** List duty shifts for an task. */
+export async function listShifts(page: Page, eventId: string): Promise<ShiftRead[]> {
+  const res = await api<{ items: ShiftRead[] }>(page, 'GET', `/shifts/?task_id=${eventId}&limit=200`)
   return res.items
 }
 
-/** Book a duty slot. */
-export async function bookSlot(page: Page, slotId: string): Promise<BookingRead> {
-  return api<BookingRead>(page, 'POST', '/bookings/', { duty_slot_id: slotId })
+/** Book a duty shift. */
+export async function bookShift(page: Page, slotId: string): Promise<BookingRead> {
+  return api<BookingRead>(page, 'POST', '/bookings/', { shift_id: slotId })
 }
 
 /** Cancel a booking. */

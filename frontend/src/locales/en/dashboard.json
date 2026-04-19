@@ -6,14 +6,14 @@
             "filterTooltipNone": "Filter calendar items",
             "filters": {
                 "bookings": "My Bookings",
-                "events": "Events",
-                "groups": "Event Groups"
+                "groups": "Task Groups",
+                "tasks": "Tasks"
             },
             "hiddenCount": "{count} category hidden | {count} categories hidden",
             "title": "Calendar"
         },
         "quickActions": {
-            "browseEvents": "Browse Events",
+            "browseTasks": "Browse Tasks",
             "howItWorks": "How It Works",
             "myBookings": "My Bookings",
             "title": "Quick Actions"
@@ -23,9 +23,9 @@
                 "description": "Your confirmed duty bookings",
                 "title": "My Bookings"
             },
-            "events": {
-                "description": "Available events to browse",
-                "title": "Events"
+            "tasks": {
+                "description": "Available tasks to browse",
+                "title": "Tasks"
             },
             "users": {
                 "description": "Users awaiting approval",

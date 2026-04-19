@@ -17,7 +17,7 @@ const forwardedProps = useForwardProps(delegatedProps)
 <template>
   <AccordionItem
     v-slot="slotProps"
-    data-slot="accordion-item"
+    data-shift="accordion-item"
     v-bind="forwardedProps"
     :class="cn(props.class)"
   >

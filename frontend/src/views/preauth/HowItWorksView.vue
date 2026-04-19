@@ -46,10 +46,10 @@ const steps = computed(() =>
   })),
 )
 
-const features = ['batchSlots', 'smartRegeneration', 'dryRun', 'overrides']
+const features = ['batchShifts', 'smartRegeneration', 'dryRun', 'overrides']
 
 const featureIcons: Record<string, string> = {
-  batchSlots:
+  batchShifts:
     'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
   smartRegeneration:
     'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15',
@@ -60,11 +60,11 @@ const featureIcons: Record<string, string> = {
 }
 
 const flowSteps = [
-  'Event Dates',
+  'Task Dates',
   'Schedule Config',
   'Per-Day Overrides',
-  'Generate Slots',
-  'Exclude Slots',
+  'Generate Shifts',
+  'Exclude Shifts',
   'Save & Publish',
 ]
 </script>
@@ -168,7 +168,7 @@ const flowSteps = [
       <h2
         class="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6 text-center"
       >
-        Slot Generation Flow
+        Shift Generation Flow
       </h2>
       <!-- Desktop: horizontal flow -->
       <div class="hidden sm:flex flex-wrap items-center justify-center gap-3 text-sm">
@@ -176,7 +176,7 @@ const flowSteps = [
           <div
             class="px-4 py-2 rounded-lg border font-medium"
             :class="
-              step === 'Generate Slots' ? 'bg-primary text-primary-foreground' : 'bg-background'
+              step === 'Generate Shifts' ? 'bg-primary text-primary-foreground' : 'bg-background'
             "
           >
             {{ step }}
@@ -203,7 +203,7 @@ const flowSteps = [
           <div
             class="px-4 py-2 rounded-lg border font-medium w-full text-center"
             :class="
-              step === 'Generate Slots' ? 'bg-primary text-primary-foreground' : 'bg-background'
+              step === 'Generate Shifts' ? 'bg-primary text-primary-foreground' : 'bg-background'
             "
           >
             {{ step }}

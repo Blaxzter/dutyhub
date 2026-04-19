@@ -22,7 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 <template>
   <Primitive
-    data-slot="button"
+    data-shift="button"
     :data-variant="variant"
     :data-size="size"
     :as="as"

@@ -12,17 +12,17 @@ import {
   futureDate,
   uniqueName,
 } from '../../helpers/api.js'
-import type { EventGroupRead } from '../../helpers/api.js'
+import type { EventRead } from '../../helpers/api.js'
 
 // ── Admin creates group -> member sees it ─────────────────────────────────────
 
 test.describe('Cross-user – visibility', () => {
   test('admin-published group is visible to member', async ({ adminPage, memberPage }) => {
-    await adminPage.goto('/app/event-groups')
+    await adminPage.goto('/app/events')
     const group = await createGroup(adminPage, uniqueName('E2E Cross Published Group'))
 
     try {
-      await memberPage.goto('/app/event-groups')
+      await memberPage.goto('/app/events')
       await expect(memberPage.getByRole('heading', { name: group.name })).toBeVisible()
     } finally {
       await deleteGroup(adminPage, group.id)
@@ -30,11 +30,11 @@ test.describe('Cross-user – visibility', () => {
   })
 
   test('admin draft group is hidden from member', async ({ adminPage, memberPage }) => {
-    await adminPage.goto('/app/event-groups')
+    await adminPage.goto('/app/events')
     const draft = await createGroup(adminPage, uniqueName('E2E Cross Draft Group'), 'draft')
 
     try {
-      await memberPage.goto('/app/event-groups')
+      await memberPage.goto('/app/events')
       await expect(memberPage.getByText(draft.name)).toBeHidden()
     } finally {
       await deleteGroup(adminPage, draft.id)
@@ -45,10 +45,10 @@ test.describe('Cross-user – visibility', () => {
 // ── Member registers availability -> admin sees it ────────────────────────────
 
 test.describe('Cross-user – availability flow', () => {
-  let group: EventGroupRead
+  let group: EventRead
 
   test.beforeEach(async ({ adminPage }) => {
-    await adminPage.goto('/app/event-groups')
+    await adminPage.goto('/app/events')
     group = await createGroup(adminPage, uniqueName('E2E Cross Availability Group'))
   })
 
@@ -58,7 +58,7 @@ test.describe('Cross-user – availability flow', () => {
 
   test('member availability appears in admin member table', async ({ adminPage, memberPage }) => {
     // Member registers availability via UI
-    await memberPage.goto(`/app/event-groups/${group.id}/availability`)
+    await memberPage.goto(`/app/events/${group.id}/availability`)
     const memberSection = memberPage.getByTestId('section-availability')
     await memberSection.getByTestId('btn-availability').click()
     await memberPage.getByTestId('availability-type-fully_available').click()
@@ -66,7 +66,7 @@ test.describe('Cross-user – availability flow', () => {
     await expect(memberSection.getByTestId('btn-availability')).toBeVisible()
 
     // Admin sees the entry in the member availability table
-    await adminPage.goto(`/app/event-groups/${group.id}/availability`)
+    await adminPage.goto(`/app/events/${group.id}/availability`)
     const adminSection = adminPage.getByTestId('section-availability')
     await expect(adminSection.getByTestId('section-admin-availabilities').getByText(/fully.?available|open to be requested/i)).toBeVisible()
 
@@ -78,8 +78,8 @@ test.describe('Cross-user – availability flow', () => {
     memberPage,
   }) => {
     // Pre-seed availability as member via API
-    await memberPage.goto(`/app/event-groups/${group.id}/availability`)
-    await api(memberPage, 'POST', `/event-groups/${group.id}/availability`, {
+    await memberPage.goto(`/app/events/${group.id}/availability`)
+    await api(memberPage, 'POST', `/events/${group.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
     })
@@ -94,22 +94,22 @@ test.describe('Cross-user – availability flow', () => {
     await expect(memberSection.getByTestId('btn-availability')).toBeVisible()
 
     // Admin table shows empty state
-    await adminPage.goto(`/app/event-groups/${group.id}/availability`)
+    await adminPage.goto(`/app/events/${group.id}/availability`)
     const adminSection2 = adminPage.getByTestId('section-availability')
     await expect(adminSection2.getByTestId('section-admin-availabilities').getByText(/no.*(members|registrations|availability)/i)).toBeVisible()
   })
 
   test('multiple members availability visible to admin', async ({ adminPage, memberPage }) => {
     // Admin registers as fully available
-    await adminPage.goto(`/app/event-groups/${group.id}/availability`)
-    await api(adminPage, 'POST', `/event-groups/${group.id}/availability`, {
+    await adminPage.goto(`/app/events/${group.id}/availability`)
+    await api(adminPage, 'POST', `/events/${group.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
     })
 
     // Member registers with specific dates
-    await memberPage.goto(`/app/event-groups/${group.id}/availability`)
-    await api(memberPage, 'POST', `/event-groups/${group.id}/availability`, {
+    await memberPage.goto(`/app/events/${group.id}/availability`)
+    await api(memberPage, 'POST', `/events/${group.id}/availability`, {
       availability_type: 'specific_dates',
       dates: [futureDate(30), futureDate(31)],
     })

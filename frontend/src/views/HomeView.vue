@@ -17,11 +17,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
-import SlotDetailDialog from '@/components/events/SlotDetailDialog.vue'
-import { DutyCalendar } from '@/components/events/duty-calendar'
-import type { BookingCalendarItem } from '@/components/events/duty-calendar'
+import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
+import { ShiftCalendar } from '@/components/tasks/shift-calendar'
+import type { BookingCalendarItem } from '@/components/tasks/shift-calendar'
 
-import type { DashboardEvent, DashboardEventGroup, DashboardFeedResponse } from '@/client'
+import type { DashboardTask, DashboardEvent, DashboardFeedResponse } from '@/client'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -34,30 +34,30 @@ const eventCount = ref(0)
 const myBookingCount = ref(0)
 const loading = ref(true)
 
+const tasks = ref<DashboardTask[]>([])
 const events = ref<DashboardEvent[]>([])
-const eventGroups = ref<DashboardEventGroup[]>([])
 const bookings = ref<BookingCalendarItem[]>([])
 
-// Slot detail dialog
-const showSlotDetail = ref(false)
-const detailSlotId = ref<string | null>(null)
+// Shift detail dialog
+const showShiftDetail = ref(false)
+const detailShiftId = ref<string | null>(null)
 
-// Map booking ID → slot ID for dialog
-const bookingSlotMap = ref<Map<string, string>>(new Map())
+// Map booking ID → shift ID for dialog
+const bookingShiftMap = ref<Map<string, string>>(new Map())
 
 const openBookingDetail = (calendarItem: BookingCalendarItem) => {
-  const slotId = bookingSlotMap.value.get(calendarItem.id)
+  const slotId = bookingShiftMap.value.get(calendarItem.id)
   if (!slotId) return
-  detailSlotId.value = slotId
-  showSlotDetail.value = true
+  detailShiftId.value = slotId
+  showShiftDetail.value = true
 }
 
-const showEvents = useLocalStorage('wirksam-calendar-show-events', true)
+const showTasks = useLocalStorage('wirksam-calendar-show-tasks', true)
 const showGroups = useLocalStorage('wirksam-calendar-show-groups', true)
 const showBookings = useLocalStorage('wirksam-calendar-show-bookings', true)
 
 const hiddenFilterCount = computed(
-  () => [showEvents, showGroups, showBookings].filter((f) => !f.value).length,
+  () => [showTasks, showGroups, showBookings].filter((f) => !f.value).length,
 )
 
 async function loadStats() {
@@ -66,9 +66,9 @@ async function loadStats() {
     const res = await get<{ data: DashboardFeedResponse }>({ url: '/dashboard/feed' })
     const feed = res.data
 
+    tasks.value = feed.tasks
+    eventCount.value = feed.task_count
     events.value = feed.events
-    eventCount.value = feed.event_count
-    eventGroups.value = feed.event_groups
     myBookingCount.value = feed.booking_count
 
     // Update pending user count for admin badge
@@ -89,7 +89,7 @@ async function loadStats() {
         endTime: b.end_time,
       }
     })
-    bookingSlotMap.value = newMap
+    bookingShiftMap.value = newMap
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -97,12 +97,12 @@ async function loadStats() {
   }
 }
 
-const navigateToEvent = (event: { id: string }) => {
-  router.push({ name: 'event-detail', params: { eventId: event.id } })
+const navigateToTask = (task: { id: string }) => {
+  router.push({ name: 'task-detail', params: { eventId: task.id } })
 }
 
 const navigateToGroup = (group: { id: string }) => {
-  router.push({ name: 'event-group-detail', params: { groupId: group.id } })
+  router.push({ name: 'event-detail', params: { groupId: group.id } })
 }
 
 onMounted(loadStats)
@@ -120,20 +120,20 @@ onMounted(loadStats)
     <!-- Stats Cards -->
     <div class="grid auto-rows-min gap-4 md:grid-cols-3">
       <Card
-        data-testid="stat-card-events"
+        data-testid="stat-card-tasks"
         class="cursor-pointer hover:shadow-md transition-shadow"
-        @click="router.push({ name: 'events' })"
+        @click="router.push({ name: 'tasks' })"
       >
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle class="text-sm font-medium">{{
-            t('dashboard.home.stats.events.title')
+            t('dashboard.home.stats.tasks.title')
           }}</CardTitle>
           <CalendarDays class="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-bold">{{ eventCount }}</div>
           <p class="text-xs text-muted-foreground">
-            {{ t('dashboard.home.stats.events.description') }}
+            {{ t('dashboard.home.stats.tasks.description') }}
           </p>
         </CardContent>
       </Card>
@@ -206,10 +206,10 @@ onMounted(loadStats)
                 <PopoverContent align="end" class="w-56">
                   <div class="space-y-4">
                     <div class="flex items-center justify-between">
-                      <Label for="filter-events">{{
-                        t('dashboard.home.calendar.filters.events')
+                      <Label for="filter-tasks">{{
+                        t('dashboard.home.calendar.filters.tasks')
                       }}</Label>
-                      <Switch id="filter-events" v-model="showEvents" />
+                      <Switch id="filter-tasks" v-model="showTasks" />
                     </div>
                     <div class="flex items-center justify-between">
                       <Label for="filter-groups">{{
@@ -260,15 +260,15 @@ onMounted(loadStats)
       <div v-if="loading" class="py-12 text-center text-muted-foreground">
         {{ t('common.states.loading') }}
       </div>
-      <DutyCalendar
+      <ShiftCalendar
         v-else
+        :tasks="tasks"
         :events="events"
-        :event-groups="eventGroups"
         :bookings="bookings"
-        :show-events="showEvents"
+        :show-tasks="showTasks"
         :show-groups="showGroups"
         :show-bookings="showBookings"
-        @navigate-event="navigateToEvent"
+        @navigate-task="navigateToTask"
         @navigate-group="navigateToGroup"
         @navigate-booking="openBookingDetail"
       />
@@ -279,12 +279,12 @@ onMounted(loadStats)
       <h2 class="text-xl font-semibold mb-4">{{ t('dashboard.home.quickActions.title') }}</h2>
       <div class="flex flex-wrap gap-3">
         <Button
-          data-testid="btn-browse-events"
+          data-testid="btn-browse-tasks"
           variant="outline"
-          @click="router.push({ name: 'events' })"
+          @click="router.push({ name: 'tasks' })"
         >
           <CalendarDays class="mr-2 h-4 w-4" />
-          {{ t('dashboard.home.quickActions.browseEvents') }}
+          {{ t('dashboard.home.quickActions.browseTasks') }}
         </Button>
         <Button
           data-testid="btn-my-bookings"
@@ -301,10 +301,10 @@ onMounted(loadStats)
       </div>
     </div>
 
-    <!-- Slot Detail Dialog -->
-    <SlotDetailDialog
-      v-model:open="showSlotDetail"
-      :slot-id="detailSlotId"
+    <!-- Shift Detail Dialog -->
+    <ShiftDetailDialog
+      v-model:open="showShiftDetail"
+      :shift-id="detailShiftId"
       @booking-updated="loadStats"
     />
   </div>

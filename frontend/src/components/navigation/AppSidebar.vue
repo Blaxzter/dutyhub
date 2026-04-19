@@ -79,28 +79,28 @@ router.afterEach(() => {
 })
 
 /**
- * Compute urgency badge variant for an event based on its next open slot.
+ * Compute urgency badge variant for an task based on its next open shift.
  * - Within 15 min → destructive (red)
  * - Today → default (primary)
  * - Otherwise → secondary (neutral)
  */
 function statusBadge(status: string): NavSubItem['badge'] {
   return {
-    text: t(`duties.events.statuses.${status}`),
+    text: t(`duties.tasks.statuses.${status}`),
     tooltip: t('navigation.sidebar.badges.managersOnly'),
     variant: 'secondary',
   }
 }
 
 function eventBadge(
-  openSlots: number,
+  openShifts: number,
   nextDate: string | null,
   nextTime: string | null,
 ): NavSubItem['badge'] | undefined {
-  if (openSlots <= 0) return undefined
+  if (openShifts <= 0) return undefined
 
-  const label = `${openSlots}`
-  const tooltip = t('navigation.sidebar.badges.openSlots', { count: openSlots })
+  const label = `${openShifts}`
+  const tooltip = t('navigation.sidebar.badges.openShifts', { count: openShifts })
   if (!nextDate) return { text: label, tooltip, variant: 'outline' }
 
   const now = new Date()
@@ -126,43 +126,43 @@ function formatBookingTitle(slotDate: string, slotTitle: string): string {
 }
 
 const navMain = computed(() => {
-  const groupItems: NavSubItem[] = sidebarStore.eventGroups.map((g) => ({
+  const groupItems: NavSubItem[] = sidebarStore.events.map((g) => ({
     title: g.name,
-    routeName: 'event-group-detail',
+    routeName: 'event-detail',
     routeParams: { groupId: g.id },
     badge: g.status && g.status !== 'published' ? statusBadge(g.status) : undefined,
   }))
 
-  const eventItems: NavSubItem[] = sidebarStore.events.map((e) => ({
+  const eventItems: NavSubItem[] = sidebarStore.tasks.map((e) => ({
     title: e.name,
-    routeName: 'event-detail',
+    routeName: 'task-detail',
     routeParams: { eventId: e.id },
     badge:
       e.status && e.status !== 'published'
         ? statusBadge(e.status)
-        : eventBadge(e.open_slots, e.next_slot_date ?? null, e.next_slot_start_time ?? null),
+        : eventBadge(e.open_shifts, e.next_shift_date ?? null, e.next_shift_start_time ?? null),
   }))
 
   const bookingItems: NavSubItem[] = sidebarStore.bookings.map((b) => ({
     title: formatBookingTitle(b.slot_date, b.slot_title),
-    routeName: 'event-detail',
-    routeParams: { eventId: b.event_id },
+    routeName: 'task-detail',
+    routeParams: { eventId: b.task_id },
   }))
 
   return [
     {
-      title: 'Event Groups',
-      titleKey: 'navigation.sidebar.items.eventGroups.label',
+      title: 'Task Groups',
+      titleKey: 'navigation.sidebar.items.events.label',
       icon: CalendarRange,
-      routeName: 'event-groups',
+      routeName: 'events',
       isActive: groupItems.length > 0,
       items: groupItems,
     },
     {
-      title: 'Events',
-      titleKey: 'navigation.sidebar.items.events.label',
+      title: 'Tasks',
+      titleKey: 'navigation.sidebar.items.tasks.label',
       icon: CalendarDays,
-      routeName: 'events',
+      routeName: 'tasks',
       isActive: eventItems.length > 0,
       items: eventItems,
     },

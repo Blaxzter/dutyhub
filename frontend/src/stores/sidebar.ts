@@ -9,16 +9,16 @@ import type { SidebarResponse } from '@/client/types.gen'
 export const useSidebarStore = defineStore('sidebar', () => {
   const { get } = useAuthenticatedClient()
 
-  const eventGroups = ref<SidebarResponse['event_groups']>([])
   const events = ref<SidebarResponse['events']>([])
+  const tasks = ref<SidebarResponse['tasks']>([])
   const bookings = ref<SidebarResponse['bookings']>([])
   const loaded = ref(false)
 
   async function fetch() {
     try {
       const res = await get<{ data: SidebarResponse }>({ url: '/dashboard/sidebar' })
-      eventGroups.value = res.data.event_groups
       events.value = res.data.events
+      tasks.value = res.data.tasks
       bookings.value = res.data.bookings
       loaded.value = true
     } catch {
@@ -26,5 +26,5 @@ export const useSidebarStore = defineStore('sidebar', () => {
     }
   }
 
-  return { eventGroups, events, bookings, loaded, fetch }
+  return { events, tasks, bookings, loaded, fetch }
 })

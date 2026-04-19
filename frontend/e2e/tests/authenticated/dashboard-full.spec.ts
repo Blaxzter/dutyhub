@@ -5,9 +5,9 @@
 import { test, expect } from '../../fixtures.js'
 
 test.describe('Dashboard – stats cards', () => {
-  test('shows Events stat card', async ({ adminPage: page }) => {
+  test('shows Tasks stat card', async ({ adminPage: page }) => {
     await page.goto('/app/home')
-    await expect(page.getByTestId('stat-card-events')).toBeVisible()
+    await expect(page.getByTestId('stat-card-tasks')).toBeVisible()
   })
 
   test('shows My Bookings stat card', async ({ adminPage: page }) => {
@@ -20,10 +20,10 @@ test.describe('Dashboard – stats cards', () => {
     await expect(page.getByTestId('stat-card-users')).toBeVisible()
   })
 
-  test('Events card navigates to events', async ({ adminPage: page }) => {
+  test('Tasks card navigates to tasks', async ({ adminPage: page }) => {
     await page.goto('/app/home')
-    await page.getByTestId('stat-card-events').click()
-    await expect(page).toHaveURL(/\/app\/events/)
+    await page.getByTestId('stat-card-tasks').click()
+    await expect(page).toHaveURL(/\/app\/tasks/)
   })
 
   test('My Bookings card navigates to bookings', async ({ adminPage: page }) => {
@@ -51,9 +51,9 @@ test.describe('Dashboard – quick actions', () => {
     await expect(page.getByTestId('dashboard-quick-actions')).toBeVisible()
   })
 
-  test('shows Browse Events button', async ({ adminPage: page }) => {
+  test('shows Browse Tasks button', async ({ adminPage: page }) => {
     await page.goto('/app/home')
-    await expect(page.getByTestId('btn-browse-events')).toBeVisible()
+    await expect(page.getByTestId('btn-browse-tasks')).toBeVisible()
   })
 
   test('shows My Bookings button', async ({ adminPage: page }) => {
@@ -61,10 +61,10 @@ test.describe('Dashboard – quick actions', () => {
     await expect(page.getByTestId('btn-my-bookings')).toBeVisible()
   })
 
-  test('Browse Events navigates to events page', async ({ adminPage: page }) => {
+  test('Browse Tasks navigates to tasks page', async ({ adminPage: page }) => {
     await page.goto('/app/home')
-    await page.getByTestId('btn-browse-events').click()
-    await expect(page).toHaveURL(/\/app\/events/)
+    await page.getByTestId('btn-browse-tasks').click()
+    await expect(page).toHaveURL(/\/app\/tasks/)
   })
 
   test('My Bookings quick action navigates to bookings', async ({ adminPage: page }) => {

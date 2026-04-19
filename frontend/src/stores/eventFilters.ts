@@ -5,13 +5,13 @@ import { defineStore } from 'pinia'
 export type ViewMode = 'list' | 'box' | 'calendar'
 export type FocusMode = 'today' | 'first-available'
 
-const STORAGE_KEY = 'wirksam:events:filters'
+const STORAGE_KEY = 'wirksam:tasks:filters'
 
 interface PersistedFilters {
   viewMode: ViewMode
   focusMode: FocusMode
   myBookingsOnly: boolean
-  hideFullSlots: boolean
+  hideFullShifts: boolean
   dateFrom: string | null // YYYY-MM-DD or null (= today)
   dateTo: string | null // YYYY-MM-DD or null (= no upper bound)
 }
@@ -25,17 +25,17 @@ function loadFromStorage(): Partial<PersistedFilters> {
   }
 }
 
-export const useEventFiltersStore = defineStore('eventFilters', () => {
+export const useTaskFiltersStore = defineStore('eventFilters', () => {
   const saved = loadFromStorage()
 
   const searchQuery = ref('')
   const viewMode = ref<ViewMode>(saved.viewMode ?? 'list')
   const focusMode = ref<FocusMode>(saved.focusMode ?? 'today')
   const myBookingsOnly = ref(saved.myBookingsOnly ?? false)
-  const hideFullSlots = ref(saved.hideFullSlots ?? false)
-  /** Custom start date for event filtering. null = today (default). */
+  const hideFullShifts = ref(saved.hideFullShifts ?? false)
+  /** Custom start date for task filtering. null = today (default). */
   const dateFrom = ref<string | null>(saved.dateFrom ?? null)
-  /** Custom end date for event filtering. null = no upper bound. */
+  /** Custom end date for task filtering. null = no upper bound. */
   const dateTo = ref<string | null>(saved.dateTo ?? null)
 
   // Persist filter state to localStorage
@@ -43,7 +43,7 @@ export const useEventFiltersStore = defineStore('eventFilters', () => {
     viewMode: viewMode.value,
     focusMode: focusMode.value,
     myBookingsOnly: myBookingsOnly.value,
-    hideFullSlots: hideFullSlots.value,
+    hideFullShifts: hideFullShifts.value,
     dateFrom: dateFrom.value,
     dateTo: dateTo.value,
   }))
@@ -57,7 +57,7 @@ export const useEventFiltersStore = defineStore('eventFilters', () => {
   const activeFilterCount = computed(() => {
     let count = 0
     if (myBookingsOnly.value) count++
-    if (hideFullSlots.value) count++
+    if (hideFullShifts.value) count++
     if (hasCustomDateRange.value) count++
     if (searchQuery.value.trim()) count++
     return count
@@ -66,7 +66,7 @@ export const useEventFiltersStore = defineStore('eventFilters', () => {
   function resetFilters() {
     searchQuery.value = ''
     myBookingsOnly.value = false
-    hideFullSlots.value = false
+    hideFullShifts.value = false
     dateFrom.value = null
     dateTo.value = null
   }
@@ -81,7 +81,7 @@ export const useEventFiltersStore = defineStore('eventFilters', () => {
     viewMode,
     focusMode,
     myBookingsOnly,
-    hideFullSlots,
+    hideFullShifts,
     dateFrom,
     dateTo,
     hasCustomDateRange,

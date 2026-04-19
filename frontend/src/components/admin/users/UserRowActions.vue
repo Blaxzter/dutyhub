@@ -31,7 +31,7 @@ const emit = defineEmits<{
   toggleActive: [user: UserRead]
   reject: [user: UserRead]
   toggleAdmin: [user: UserRead]
-  toggleEventManager: [user: UserRead]
+  toggleTaskManager: [user: UserRead]
   delete: [user: UserRead]
 }>()
 
@@ -68,16 +68,16 @@ const { t } = useI18n()
             : t('admin.users.makeAdmin')
         }}
       </DropdownMenuItem>
-      <DropdownMenuItem @click="emit('toggleEventManager', props.user)">
+      <DropdownMenuItem @click="emit('toggleTaskManager', props.user)">
         <ShieldOff
-          v-if="props.user.roles.includes('event_manager')"
+          v-if="props.user.roles.includes('task_manager')"
           class="mr-2 h-4 w-4 text-amber-500"
         />
         <ShieldCheck v-else class="mr-2 h-4 w-4 text-amber-500" />
         {{
-          props.user.roles.includes('event_manager')
-            ? t('admin.users.removeEventManager')
-            : t('admin.users.makeEventManager')
+          props.user.roles.includes('task_manager')
+            ? t('admin.users.removeTaskManager')
+            : t('admin.users.makeTaskManager')
         }}
       </DropdownMenuItem>
       <DropdownMenuSeparator />

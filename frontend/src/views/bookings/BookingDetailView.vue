@@ -38,10 +38,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Textarea } from '@/components/ui/textarea'
 
-import SlotBookingsTable from '@/components/events/SlotBookingsTable.vue'
+import ShiftBookingsTable from '@/components/tasks/ShiftBookingsTable.vue'
 import ReminderEntryRow from '@/components/notifications/ReminderEntryRow.vue'
 
-import type { BookingRead, DutySlotRead, SlotBookingEntry } from '@/client/types.gen'
+import type { BookingRead, ShiftRead, ShiftBookingEntry } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -63,8 +63,8 @@ const bookingId = computed(() => route.params.bookingId as string)
 
 const loading = ref(true)
 const booking = ref<BookingRead | null>(null)
-const slot = ref<DutySlotRead | null>(null)
-const slotBookings = ref<SlotBookingEntry[]>([])
+const shift = ref<ShiftRead | null>(null)
+const slotBookings = ref<ShiftBookingEntry[]>([])
 const eventName = ref<string | null>(null)
 
 // Notes
@@ -93,7 +93,7 @@ function getReminderOffsetLabel(offset: number): string {
 }
 
 const timeDisplay = computed(() => {
-  const s = slot.value
+  const s = shift.value
   if (!s) return null
   const parts: string[] = []
   if (s.start_time) parts.push(formatTime(s.start_time))
@@ -104,7 +104,7 @@ const timeDisplay = computed(() => {
 const isConfirmed = computed(() => booking.value?.status === 'confirmed')
 
 const isInPast = computed(() => {
-  const s = slot.value
+  const s = shift.value
   if (!s) return false
   const slotDate = new Date(s.date + 'T' + (s.end_time ?? s.start_time ?? '23:59'))
   return slotDate < new Date()
@@ -122,27 +122,27 @@ async function loadData() {
     booking.value = bookingRes.data
     notesValue.value = bookingRes.data.notes ?? ''
 
-    // Load slot if booking has one
-    if (bookingRes.data.duty_slot_id) {
+    // Load shift if booking has one
+    if (bookingRes.data.shift_id) {
       const [slotRes, bookingsRes, reminders] = await Promise.all([
-        get<{ data: DutySlotRead }>({
-          url: `/duty-slots/${bookingRes.data.duty_slot_id}`,
+        get<{ data: ShiftRead }>({
+          url: `/shifts/${bookingRes.data.shift_id}`,
         }),
-        get<{ data: SlotBookingEntry[] }>({
-          url: `/duty-slots/${bookingRes.data.duty_slot_id}/bookings`,
+        get<{ data: ShiftBookingEntry[] }>({
+          url: `/shifts/${bookingRes.data.shift_id}/bookings`,
         }),
         reminderStore.fetchBookingReminders(bookingId.value),
         notificationStore.fetchTelegramBinding(),
       ])
-      slot.value = slotRes.data
+      shift.value = slotRes.data
       slotBookings.value = bookingsRes.data
       bookingReminders.value = reminders
 
-      // Get event name from slot
-      if (slotRes.data.event_id) {
+      // Get task name from shift
+      if (slotRes.data.task_id) {
         try {
           const eventRes = await get<{ data: { name: string } }>({
-            url: `/events/${slotRes.data.event_id}`,
+            url: `/tasks/${slotRes.data.task_id}`,
           })
           eventName.value = eventRes.data.name
         } catch {
@@ -170,12 +170,12 @@ async function saveNotes() {
     })
     booking.value = { ...booking.value, notes: notesValue.value || null }
     editingNotes.value = false
-    toast.success(t('duties.dutySlots.detail.notesSaved'))
+    toast.success(t('duties.shifts.detail.notesSaved'))
 
     // Reload bookings table
-    if (booking.value.duty_slot_id) {
-      const res = await get<{ data: SlotBookingEntry[] }>({
-        url: `/duty-slots/${booking.value.duty_slot_id}/bookings`,
+    if (booking.value.shift_id) {
+      const res = await get<{ data: ShiftBookingEntry[] }>({
+        url: `/shifts/${booking.value.shift_id}/bookings`,
       })
       slotBookings.value = res.data
     }
@@ -260,10 +260,10 @@ async function removeReminder(reminderId: string) {
   }
 }
 
-function navigateToEvent() {
-  const eventId = slot.value?.event_id
+function navigateToTask() {
+  const eventId = shift.value?.task_id
   if (eventId) {
-    router.push({ name: 'event-detail', params: { eventId } })
+    router.push({ name: 'task-detail', params: { eventId } })
   }
 }
 
@@ -291,11 +291,11 @@ onMounted(loadData)
         />
       </div>
 
-      <template v-else-if="booking && slot">
+      <template v-else-if="booking && shift">
         <div class="flex items-start justify-between gap-4">
           <div>
             <h1 data-testid="page-heading" class="text-2xl font-bold tracking-tight">
-              {{ slot.title }}
+              {{ shift.title }}
             </h1>
             <p v-if="eventName" class="text-muted-foreground mt-1">{{ eventName }}</p>
           </div>
@@ -310,29 +310,29 @@ onMounted(loadData)
       </template>
     </div>
 
-    <template v-if="!loading && booking && slot">
-      <!-- Past event banner -->
+    <template v-if="!loading && booking && shift">
+      <!-- Past task banner -->
       <div
         v-if="isInPast"
         class="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-950/20"
       >
         <History class="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
         <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
-          {{ t('duties.bookings.detail.pastEvent') }}
+          {{ t('duties.bookings.detail.pastTask') }}
         </p>
       </div>
 
-      <!-- ── Slot Info Card ──────────────────────────────────── -->
-      <Card data-testid="section-slot-info">
+      <!-- ── Shift Info Card ──────────────────────────────────── -->
+      <Card data-testid="section-shift-info">
         <CardContent class="pt-6">
           <div class="grid gap-4 sm:grid-cols-2">
             <div class="flex items-start gap-2.5">
               <Calendar class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
-                <p class="text-xs text-muted-foreground">{{ t('duties.dutySlots.detail.date') }}</p>
+                <p class="text-xs text-muted-foreground">{{ t('duties.shifts.detail.date') }}</p>
                 <p class="text-sm font-medium">
                   {{
-                    formatDateLabel(slot.date, {
+                    formatDateLabel(shift.date, {
                       weekday: 'long',
                       year: 'numeric',
                       month: 'long',
@@ -345,39 +345,39 @@ onMounted(loadData)
             <div v-if="timeDisplay" class="flex items-start gap-2.5">
               <Clock class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
-                <p class="text-xs text-muted-foreground">{{ t('duties.dutySlots.detail.time') }}</p>
+                <p class="text-xs text-muted-foreground">{{ t('duties.shifts.detail.time') }}</p>
                 <p class="text-sm font-medium font-mono">{{ timeDisplay }}</p>
               </div>
             </div>
-            <div v-if="slot.location" class="flex items-start gap-2.5">
+            <div v-if="shift.location" class="flex items-start gap-2.5">
               <MapPin class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
                 <p class="text-xs text-muted-foreground">
-                  {{ t('duties.dutySlots.detail.location') }}
+                  {{ t('duties.shifts.detail.location') }}
                 </p>
-                <p class="text-sm font-medium">{{ slot.location }}</p>
+                <p class="text-sm font-medium">{{ shift.location }}</p>
               </div>
             </div>
-            <div v-if="slot.category" class="flex items-start gap-2.5">
+            <div v-if="shift.category" class="flex items-start gap-2.5">
               <Tag class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
                 <p class="text-xs text-muted-foreground">
-                  {{ t('duties.dutySlots.detail.category') }}
+                  {{ t('duties.shifts.detail.category') }}
                 </p>
-                <p class="text-sm font-medium">{{ slot.category }}</p>
+                <p class="text-sm font-medium">{{ shift.category }}</p>
               </div>
             </div>
             <div class="flex items-start gap-2.5">
               <Users class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
                 <p class="text-xs text-muted-foreground">
-                  {{ t('duties.dutySlots.detail.capacity') }}
+                  {{ t('duties.shifts.detail.capacity') }}
                 </p>
                 <p class="text-sm font-medium">
                   {{
-                    t('duties.dutySlots.detail.capacityValue', {
-                      current: slot.current_bookings ?? 0,
-                      max: slot.max_bookings ?? 1,
+                    t('duties.shifts.detail.capacityValue', {
+                      current: shift.current_bookings ?? 0,
+                      max: shift.max_bookings ?? 1,
                     })
                   }}
                 </p>
@@ -385,14 +385,14 @@ onMounted(loadData)
             </div>
           </div>
 
-          <p v-if="slot.description" class="text-sm text-muted-foreground mt-4 whitespace-pre-line">
-            {{ slot.description }}
+          <p v-if="shift.description" class="text-sm text-muted-foreground mt-4 whitespace-pre-line">
+            {{ shift.description }}
           </p>
 
           <div class="flex items-center gap-2 mt-4 pt-4 border-t">
-            <Button v-if="eventName" variant="outline" size="sm" @click="navigateToEvent">
+            <Button v-if="eventName" variant="outline" size="sm" @click="navigateToTask">
               <ExternalLink class="mr-1.5 h-3.5 w-3.5" />
-              {{ t('duties.dutySlots.detail.viewEvent') }}
+              {{ t('duties.shifts.detail.viewTask') }}
             </Button>
           </div>
         </CardContent>
@@ -402,7 +402,7 @@ onMounted(loadData)
       <Card v-if="isConfirmed" data-testid="section-notes">
         <CardHeader>
           <div class="flex items-center justify-between">
-            <CardTitle class="text-base">{{ t('duties.dutySlots.detail.myNotes') }}</CardTitle>
+            <CardTitle class="text-base">{{ t('duties.shifts.detail.myNotes') }}</CardTitle>
             <Button
               v-if="!editingNotes"
               variant="ghost"
@@ -419,7 +419,7 @@ onMounted(loadData)
           <div v-if="editingNotes" class="space-y-3">
             <Textarea
               v-model="notesValue"
-              :placeholder="t('duties.dutySlots.detail.notesPlaceholder')"
+              :placeholder="t('duties.shifts.detail.notesPlaceholder')"
               rows="3"
             />
             <div class="flex justify-end gap-2">
@@ -441,7 +441,7 @@ onMounted(loadData)
             </div>
           </div>
           <p v-else class="text-sm text-muted-foreground">
-            {{ booking?.notes || t('duties.dutySlots.detail.noNotes') }}
+            {{ booking?.notes || t('duties.shifts.detail.noNotes') }}
           </p>
         </CardContent>
       </Card>
@@ -512,10 +512,10 @@ onMounted(loadData)
       <!-- ── Co-bookers Card ─────────────────────────────────── -->
       <Card>
         <CardHeader>
-          <CardTitle class="text-base">{{ t('duties.dutySlots.detail.bookedUsers') }}</CardTitle>
+          <CardTitle class="text-base">{{ t('duties.shifts.detail.bookedUsers') }}</CardTitle>
         </CardHeader>
         <CardContent>
-          <SlotBookingsTable :bookings="slotBookings" />
+          <ShiftBookingsTable :bookings="slotBookings" />
         </CardContent>
       </Card>
 

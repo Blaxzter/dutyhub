@@ -17,7 +17,7 @@ const forwardedProps = useForwardProps(delegatedProps)
 
 <template>
   <DropdownMenuSubTrigger
-    data-slot="dropdown-menu-sub-trigger"
+    data-shift="dropdown-menu-sub-trigger"
     v-bind="forwardedProps"
     :class="
       cn(

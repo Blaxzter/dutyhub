@@ -3,14 +3,14 @@
  * Service Worker for Web Push Notifications
  */
 
-self.addEventListener('push', (event) => {
-  if (!event.data) return
+self.addEventListener('push', (task) => {
+  if (!task.data) return
 
   let data
   try {
-    data = event.data.json()
+    data = task.data.json()
   } catch {
-    data = { title: 'Notification', body: event.data.text() }
+    data = { title: 'Notification', body: task.data.text() }
   }
 
   const options = {
@@ -22,24 +22,24 @@ self.addEventListener('push', (event) => {
     renotify: true,
   }
 
-  event.waitUntil(self.registration.showNotification(data.title || 'WirkSam', options))
+  task.waitUntil(self.registration.showNotification(data.title || 'WirkSam', options))
 })
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close()
+self.addEventListener('notificationclick', (task) => {
+  task.notification.close()
 
-  const data = event.notification.data || {}
+  const data = task.notification.data || {}
   let url = '/app/home'
 
-  if (data.event_id) {
+  if (data.task_id) {
+    url = `/app/tasks/${data.task_id}`
+  } else if (data.event_id) {
     url = `/app/events/${data.event_id}`
-  } else if (data.event_group_id) {
-    url = `/app/event-groups/${data.event_group_id}`
   } else if (data.booking_id) {
     url = '/app/bookings'
   }
 
-  event.waitUntil(
+  task.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.includes('/app') && 'focus' in client) {
