@@ -1,24 +1,24 @@
-# Event Watchlist — Feature Plan (Draft)
+# Task Watchlist — Feature Plan (Draft)
 
 **Status:** Idea — not yet approved for implementation
 **Created:** 2026-03-21
 
-**Goal:** Let users mark events they want to keep track of, and surface those events in the sidebar for quick access.
+**Goal:** Let users mark tasks they want to keep track of, and surface those tasks in the sidebar for quick access.
 
-**Motivation:** The left side of the navigation feels sparse. A watchlist section below "Events" would add utility and fill the space with contextually relevant content.
+**Motivation:** The left side of the navigation feels sparse. A watchlist section below "Tasks" would add utility and fill the space with contextually relevant content.
 
 ---
 
 ## Concept
 
-Users can star/bookmark events. Starred events appear in a collapsible list in the sidebar below the "Events" nav item, giving quick navigation to events the user cares about.
+Users can star/bookmark tasks. Starred tasks appear in a collapsible list in the sidebar below the "Tasks" nav item, giving quick navigation to tasks the user cares about.
 
 ### Sidebar sketch
 
 ```
 Home
-Event Groups
 Events
+Tasks
   Watchlist               v
      Morning Shift A
      Weekend Duty
@@ -32,14 +32,14 @@ My Bookings
 
 These need answers before implementation:
 
-### 1. What happens with past events on the watchlist?
-- **Auto-hide** events whose `end_date` is in the past? After how long — immediately, 1 week, 1 month?
+### 1. What happens with past tasks on the watchlist?
+- **Auto-hide** tasks whose `end_date` is in the past? After how long — immediately, 1 week, 1 month?
 - **Auto-remove** from watchlist entirely after some threshold?
 - **Move to a separate section** ("Past" vs "Upcoming")?
 - Or leave it to the user to clean up manually?
 
 ### 2. Should the watchlist tie into notifications?
-- Watching an event could mean "notify me when new slots open" or "notify me of changes"
+- Watching an task could mean "notify me when new shifts open" or "notify me of changes"
 - Or it could be purely a navigation shortcut with no notification side-effects
 - The notification system already exists — extending it would be straightforward but adds scope
 
@@ -49,25 +49,25 @@ These need answers before implementation:
 - "Pinned" / "Angepinnt"
 - "Starred" / "Markiert"
 
-### 4. How many events will users realistically watch?
-- If users watch 2-3 events, a sidebar list works great
+### 4. How many tasks will users realistically watch?
+- If users watch 2-3 tasks, a sidebar list works great
 - If users watch 20+, the sidebar list needs pagination or a "show top N" approach
 - This depends on how the system is actually used in practice
 
 ### 5. Scope of the sidebar section
-- Show only event names (compact)?
-- Show next available slot date (useful but more data to fetch)?
-- Show a badge with open slot count?
+- Show only task names (compact)?
+- Show next available shift date (useful but more data to fetch)?
+- Show a badge with open shift count?
 
 ---
 
 ## Technical Approach (if approved)
 
 ### Backend
-1. New `UserEventWatch` model — simple join table: `user_id` + `event_id` + `created_at`
-2. Endpoints: `POST /events/{id}/watch`, `DELETE /events/{id}/watch`, `GET /users/me/watchlist`
+1. New `UserTaskWatch` model — simple join table: `user_id` + `task_id` + `created_at`
+2. Endpoints: `POST /tasks/{id}/watch`, `DELETE /tasks/{id}/watch`, `GET /users/me/watchlist`
 3. Alembic migration
-4. Optional: filter/sort options (e.g. exclude past events server-side)
+4. Optional: filter/sort options (e.g. exclude past tasks server-side)
 
 ### Frontend
 1. Pinia `watchlist` store

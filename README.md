@@ -42,11 +42,11 @@ All your confirmed duties in one place — filter by upcoming, this month, or vi
 
 <img alt="My Bookings" src="frontend/public/screenshots/en/my-bookings.png" />
 
-### Event Groups
+### Events
 
-Organize related events into groups like conferences or festivals for easy management.
+Organize related tasks under top-level events like camps, conferences, or festivals for easy management.
 
-<img alt="Event Groups" src="frontend/public/screenshots/en/event-groups.png" />
+<img alt="Events" src="frontend/public/screenshots/en/event-groups.png" />
 
 ### Notifications & Preferences
 
