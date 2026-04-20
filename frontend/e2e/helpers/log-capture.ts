@@ -12,7 +12,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { test as base } from '@playwright/test'
 
-const API = process.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
 const LOG_DIR = path.resolve('e2e/test-logs')
 
 export const test = base.extend<{ backendLogs: void }>({

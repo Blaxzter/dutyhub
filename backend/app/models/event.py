@@ -39,3 +39,10 @@ class Event(Base, table=True):
         back_populates="event",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
+
+    @property
+    def is_expired(self) -> bool:
+        """Whether the event's end date is in the past."""
+        from datetime import date as _date
+
+        return self.end_date < _date.today()

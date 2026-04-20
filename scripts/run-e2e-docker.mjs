@@ -22,8 +22,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
 const COMPOSE_FILE = resolve(REPO_ROOT, 'docker-compose.e2e.yml');
 const PROJECT_NAME = 'wirksam-e2e';
-const FRONTEND_PORT = 5173;
-const BACKEND_PORT = 8000;
+const FRONTEND_PORT = 5555;
+const BACKEND_PORT = 8787;
 
 // ── Parse CLI args ───────────────────────────────────────────────────
 

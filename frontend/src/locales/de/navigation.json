@@ -14,9 +14,9 @@
             "openShifts": "{count} offener Platz | {count} offene Plätze"
         },
         "items": {
-            "events": {
-                "description": "Veranstaltungsprogramme durchsuchen",
-                "label": "Veranstaltungsgruppen"
+            "availability": {
+                "description": "Ihre Verfügbarkeit für die ausgewählte Veranstaltung",
+                "label": "Verfügbarkeit"
             },
             "home": {
                 "label": "Startseite"

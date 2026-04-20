@@ -42,7 +42,7 @@ jobs:
             - run: docker compose -f docker-compose.yml down -v --remove-orphans
             - run: docker compose -f docker-compose.yml up -d --wait backend frontend adminer
             - name: Test backend is up
-              run: docker compose -f docker-compose.yml exec backend curl -f http://localhost:8000/api/v1/healthz
+              run: docker compose -f docker-compose.yml exec backend curl -f http://localhost:8787/api/v1/healthz
             - name: Test frontend is up
               run: docker compose -f docker-compose.yml exec backend curl -f http://frontend
             - run: docker compose -f docker-compose.yml down -v --remove-orphans

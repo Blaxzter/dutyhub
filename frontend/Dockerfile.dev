@@ -8,6 +8,6 @@ RUN npm install -g pnpm@10.30.3 && pnpm install
 
 COPY . .
 
-EXPOSE 5173
+EXPOSE 5555
 
 CMD ["pnpm", "dev", "--host"]

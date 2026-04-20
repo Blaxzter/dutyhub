@@ -6,6 +6,7 @@ import {
   BarChart3,
   Bell,
   BookCheck,
+  CalendarCheck,
   CalendarDays,
   CalendarRange,
   Database,
@@ -126,13 +127,6 @@ function formatBookingTitle(slotDate: string, slotTitle: string): string {
 }
 
 const navMain = computed(() => {
-  const groupItems: NavSubItem[] = sidebarStore.events.map((g) => ({
-    title: g.name,
-    routeName: 'event-detail',
-    routeParams: { eventId: g.id },
-    badge: g.status && g.status !== 'published' ? statusBadge(g.status) : undefined,
-  }))
-
   const eventItems: NavSubItem[] = sidebarStore.tasks.map((e) => ({
     title: e.name,
     routeName: 'task-detail',
@@ -151,14 +145,6 @@ const navMain = computed(() => {
 
   return [
     {
-      title: 'Events',
-      titleKey: 'navigation.sidebar.items.events.label',
-      icon: CalendarRange,
-      routeName: 'events',
-      isActive: groupItems.length > 0,
-      items: groupItems,
-    },
-    {
       title: 'Tasks',
       titleKey: 'navigation.sidebar.items.tasks.label',
       icon: CalendarDays,
@@ -173,6 +159,12 @@ const navMain = computed(() => {
       routeName: 'my-bookings',
       isActive: bookingItems.length > 0,
       items: bookingItems,
+    },
+    {
+      title: 'Availability',
+      titleKey: 'navigation.sidebar.items.availability.label',
+      icon: CalendarCheck,
+      routeName: 'availability',
     },
   ]
 })
@@ -190,24 +182,39 @@ const navManager = computed(() => {
   return items
 })
 
-const navAdmin = computed(() =>
-  authStore.isAdmin
-    ? [
-        {
-          title: 'User Management',
-          titleKey: 'admin.users.title',
-          icon: Users,
-          routeName: 'admin-users',
-        },
-        {
-          title: 'Demo Data',
-          titleKey: 'admin.demoData.title',
-          icon: Database,
-          routeName: 'admin-demo-data',
-        },
-      ]
-    : [],
-)
+const navAdmin = computed(() => {
+  const items: {
+    title: string
+    titleKey: string
+    icon: typeof Users
+    routeName: string
+  }[] = []
+  if (authStore.isAdmin || authStore.isTaskManager) {
+    items.push({
+      title: 'Manage Events',
+      titleKey: 'admin.events.title',
+      icon: CalendarRange,
+      routeName: 'admin-events',
+    })
+  }
+  if (authStore.isAdmin) {
+    items.push(
+      {
+        title: 'User Management',
+        titleKey: 'admin.users.title',
+        icon: Users,
+        routeName: 'admin-users',
+      },
+      {
+        title: 'Demo Data',
+        titleKey: 'admin.demoData.title',
+        icon: Database,
+        routeName: 'admin-demo-data',
+      },
+    )
+  }
+  return items
+})
 </script>
 
 <template>

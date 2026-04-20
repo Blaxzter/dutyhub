@@ -1,4 +1,5 @@
 import datetime as dt
+import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Query
 from sqlalchemy import func, select
@@ -9,6 +10,7 @@ from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.booking_reminder import booking_reminder as crud_reminder
 from app.crud.shift import shift as crud_shift
+from app.logic.event_scope import get_user_event_scope
 from app.logic.notifications.triggers import (
     dispatch_booking_cancelled_by_user,
     dispatch_booking_cobooked,
@@ -38,8 +40,18 @@ async def list_my_bookings(
     status: str | None = None,
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
+    event_id: uuid.UUID | None = Query(default=None),
+    all_events: bool = Query(default=False),
 ) -> MyBookingsListResponse:
-    """List the current user's bookings with joined shift + task data."""
+    """List the current user's bookings with joined shift + task data.
+
+    Defaults to scoping by the user's selected event. Pass ``all_events=true``
+    to opt out of scoping (e.g. archived-bookings view).
+    """
+    effective_event_id = event_id
+    if effective_event_id is None and not all_events:
+        effective_event_id = get_user_event_scope(current_user)
+
     items = await crud_booking.get_multi_by_user(
         session,
         user_id=current_user.id,
@@ -49,6 +61,7 @@ async def list_my_bookings(
         with_shift=True,
         date_from=date_from,
         date_to=date_to,
+        event_id=effective_event_id,
     )
     total = await crud_booking.count_by_user(
         session,
@@ -56,6 +69,7 @@ async def list_my_bookings(
         status=status,
         date_from=date_from,
         date_to=date_to,
+        event_id=effective_event_id,
     )
 
     enriched: list[BookingReadWithShift] = []

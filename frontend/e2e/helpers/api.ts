@@ -14,7 +14,7 @@ import type {
 export type { BookingRead, ShiftRead, EventRead, TaskRead }
 export type TaskWithShifts = TaskCreateWithShiftsResponse
 
-export const API = process.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+export const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
 
 /** Return a unique test name to avoid collisions between parallel workers. */
 export function uniqueName(prefix: string): string {

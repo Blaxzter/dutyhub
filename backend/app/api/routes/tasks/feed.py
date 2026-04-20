@@ -13,6 +13,7 @@ from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.event_manager import event_manager as crud_egm
 from app.crud.task import task as crud_task
+from app.logic.event_scope import get_user_event_scope
 from app.models.booking import Booking
 from app.models.event_manager import EventManager
 from app.models.shift import Shift
@@ -292,8 +293,14 @@ async def task_feed(
     date_to: dt.date | None = None,
     my_bookings: bool = Query(default=False),
     days: int = Query(default=5, ge=1, le=31),
+    event_id: uuid.UUID | None = Query(default=None),
+    all_events: bool = Query(default=False),
 ) -> TaskFeedResponse:
-    """Unified feed endpoint — returns tasks with view-specific embedded data."""
+    """Unified feed endpoint — returns tasks with view-specific embedded data.
+
+    Defaults to scoping by the current user's selected event. Pass an explicit
+    ``event_id`` to override, or ``all_events=true`` to disable scoping.
+    """
     effective_status: str | None = None
     also_include_group_ids: list[uuid.UUID] | None = None
 
@@ -309,6 +316,10 @@ async def task_feed(
         effective_status = "published"
         if managed_ids:
             also_include_group_ids = managed_ids
+
+    effective_event_id = event_id
+    if effective_event_id is None and not all_events:
+        effective_event_id = get_user_event_scope(current_user)
 
     booked_by_user_id = str(current_user.id) if my_bookings else None
 
@@ -331,6 +342,7 @@ async def task_feed(
         date_to=ev_date_to,
         has_future_shifts=future_shifts_cutoff,
         also_include_group_ids=also_include_group_ids,
+        event_id=effective_event_id,
     )
     total = await crud_task.get_count_filtered(
         session,
@@ -341,6 +353,7 @@ async def task_feed(
         date_to=ev_date_to,
         has_future_shifts=future_shifts_cutoff,
         also_include_group_ids=also_include_group_ids,
+        event_id=effective_event_id,
     )
 
     if not tasks:

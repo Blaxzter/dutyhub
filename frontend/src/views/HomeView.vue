@@ -102,7 +102,9 @@ const navigateToTask = (task: { id: string }) => {
 }
 
 const navigateToEvent = (event: { id: string }) => {
-  router.push({ name: 'event-detail', params: { eventId: event.id } })
+  if (authStore.isAdmin || authStore.isTaskManager || authStore.canManageEvent(event.id)) {
+    router.push({ name: 'event-settings', query: { eventId: event.id } })
+  }
 }
 
 onMounted(loadStats)

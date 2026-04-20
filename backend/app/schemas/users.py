@@ -52,3 +52,13 @@ class UserProfile(BaseModel):
         default_factory=list,
         description="IDs of events this user manages (via event_managers)",
     )
+    selected_event_id: uuid.UUID | None = Field(
+        default=None,
+        description="Event currently selected as the user's dashboard scope",
+    )
+
+
+class SelectedEventUpdate(BaseModel):
+    """Request body for PUT /users/me/selected-event."""
+
+    selected_event_id: uuid.UUID | None = None

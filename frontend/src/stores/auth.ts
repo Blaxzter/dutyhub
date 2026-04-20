@@ -11,14 +11,14 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import ActionToast from '@/components/ui/sonner/ActionToast.vue'
 
-import type { UserProfile, UserRead } from '@/client/types.gen'
+import type { EventRead, UserProfile, UserRead } from '@/client/types.gen'
 import i18n from '@/locales/i18n'
 
 export type { User }
 
 export const useAuthStore = defineStore('auth', () => {
   const auth0 = useAuth0()
-  const { post, get } = useAuthenticatedClient()
+  const { post, get, put } = useAuthenticatedClient()
   const { t } = useI18n()
   const router = useRouter()
   const loading = ref(false)
@@ -35,6 +35,8 @@ export const useAuthStore = defineStore('auth', () => {
   const isEventManager = computed(() => managedEventIds.value.length > 0)
   const isManager = computed(() => isAdmin.value || isTaskManager.value || isEventManager.value)
   const isActive = computed(() => profile.value?.is_active ?? true)
+  const selectedEventId = computed(() => profile.value?.selected_event_id ?? null)
+  const selectedEvent = ref<EventRead | null>(null)
 
   /** Check if current user can manage a task/event by its event_id. */
   function canManageEvent(eventId: string | null | undefined): boolean {
@@ -73,6 +75,29 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const loadSelectedEvent = async (eventId: string | null) => {
+    if (!eventId) {
+      selectedEvent.value = null
+      return
+    }
+    try {
+      const res = await get<{ data: EventRead }>({ url: `/events/${eventId}` })
+      selectedEvent.value = res.data
+    } catch {
+      selectedEvent.value = null
+    }
+  }
+
+  const setSelectedEvent = async (id: string | null) => {
+    const response = await put<{ data: UserProfile }>({
+      url: '/users/me/selected-event',
+      body: { selected_event_id: id },
+    })
+    profile.value = response.data
+    await loadSelectedEvent(response.data.selected_event_id ?? null)
+    return response.data
+  }
+
   const loadProfile = async () => {
     if (!isAuthenticated.value) return null
     if (profilePromise) return await profilePromise
@@ -108,6 +133,9 @@ export const useAuthStore = defineStore('auth', () => {
       if (response.data.is_admin) {
         checkPendingUsers()
       }
+
+      // Resolve the selected event (best-effort, non-blocking)
+      void loadSelectedEvent(response.data.selected_event_id ?? null)
 
       return response.data
     })()
@@ -172,6 +200,7 @@ export const useAuthStore = defineStore('auth', () => {
   watch(isAuthenticated, (next) => {
     if (!next) {
       profile.value = null
+      selectedEvent.value = null
     }
   })
 
@@ -191,11 +220,14 @@ export const useAuthStore = defineStore('auth', () => {
     pendingUserCount,
     loading,
     profileLoading,
+    selectedEventId,
+    selectedEvent,
     logout,
     getAccessToken,
     updateUser,
     loadProfile,
     ensureProfile,
+    setSelectedEvent,
     callProtectedAPI,
   }
 })

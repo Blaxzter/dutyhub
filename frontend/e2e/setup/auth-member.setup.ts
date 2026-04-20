@@ -70,7 +70,7 @@ setup('authenticate member with Auth0', async ({ page }) => {
 
   // If member is pending approval, activate via admin API
   if (page.url().includes('/pending-approval')) {
-    const API = process.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+    const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
 
     // Wait for admin auth file to be ready (auth-admin may run in parallel)
     const { existsSync } = await import('node:fs')
@@ -83,7 +83,7 @@ setup('authenticate member with Auth0', async ({ page }) => {
     // Use admin storage state to approve the member via API
     const adminCtx = await page.context().browser()!.newContext({ storageState: adminAuthFile })
     const adminPage = await adminCtx.newPage()
-    await adminPage.goto('http://localhost:5173/app/home')
+    await adminPage.goto('http://localhost:5555/app/home')
     await adminPage.waitForTimeout(3000)
 
     // Find member in admin user list and approve

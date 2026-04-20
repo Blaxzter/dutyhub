@@ -56,20 +56,20 @@ services:
       prestart:
         condition: service_completed_successfully
     ports:
-      - "8000:8000"
+      - "8787:8787"
     env_file: .env
     environment:
       - TESTING=true
       - POSTGRES_SERVER=db
       - POSTGRES_PORT=5432
-      - BACKEND_CORS_ORIGINS=http://localhost,http://localhost:5173,http://localhost:4173
+      - BACKEND_CORS_ORIGINS=http://localhost,http://localhost:5555,http://localhost:4173
       - SMTP_HOST=mailcatcher
       - SMTP_PORT=1025
       - SMTP_TLS=False
       - SMTP_SSL=False
-      - FRONTEND_HOST=http://localhost:5173
+      - FRONTEND_HOST=http://localhost:5555
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/healthz"]
+      test: ["CMD", "curl", "-f", "http://localhost:8787/api/v1/healthz"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -80,9 +80,9 @@ services:
       dockerfile: Dockerfile.dev
     restart: "no"
     ports:
-      - "5173:5173"
+      - "5555:5555"
     environment:
-      - VITE_API_URL=http://localhost:8000/api/v1
+      - VITE_API_URL=http://localhost:8787/api/v1
       - VITE_E2E_AUTH_BYPASS=true
 
   mailcatcher:

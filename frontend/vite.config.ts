@@ -38,7 +38,7 @@ export default defineConfig(async ({ mode }) => {
       __APP_VERSION_DATE__: JSON.stringify(gitInfo.date),
     },
     server: {
-      port: 5173,
+      port: 5555,
     },
     plugins: [
       changelogPlugin(),

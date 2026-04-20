@@ -679,6 +679,10 @@ export type EventRead = {
    * Updated At
    */
   updated_at: string
+  /**
+   * Is Expired
+   */
+  readonly is_expired: boolean
 }
 
 /**
@@ -1336,6 +1340,18 @@ export type ScheduleOverride = {
    * End Time
    */
   end_time: string
+}
+
+/**
+ * SelectedEventUpdate
+ *
+ * Request body for PUT /users/me/selected-event.
+ */
+export type SelectedEventUpdate = {
+  /**
+   * Selected Event Id
+   */
+  selected_event_id?: string | null
 }
 
 /**
@@ -2757,6 +2773,12 @@ export type UserProfile = {
    * IDs of events this user manages (via event_managers)
    */
   managed_event_ids?: Array<string>
+  /**
+   * Selected Event Id
+   *
+   * Event currently selected as the user's dashboard scope
+   */
+  selected_event_id?: string | null
 }
 
 /**
@@ -2911,6 +2933,82 @@ export type ProblemDetails = {
   detail?: string
   instance?: string
   errors?: Array<ValidationErrorItem>
+}
+
+/**
+ * EventListResponse
+ */
+export type EventListResponseWritable = {
+  /**
+   * Items
+   */
+  items: Array<EventReadWritable>
+  /**
+   * Total
+   */
+  total: number
+  /**
+   * Skip
+   */
+  skip: number
+  /**
+   * Limit
+   */
+  limit: number
+}
+
+/**
+ * EventRead
+ */
+export type EventReadWritable = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+}
+
+/**
+ * TaskCreateWithShiftsResponse
+ */
+export type TaskCreateWithShiftsResponseWritable = {
+  task: TaskRead
+  /**
+   * Shifts Created
+   */
+  shifts_created: number
+  event?: EventReadWritable | null
 }
 
 export type HealthHealthCheckData = {
@@ -3182,6 +3280,61 @@ export type UsersGetCurrentUserProfileResponses = {
 
 export type UsersGetCurrentUserProfileResponse =
   UsersGetCurrentUserProfileResponses[keyof UsersGetCurrentUserProfileResponses]
+
+export type UsersUpdateSelectedEventData = {
+  body: SelectedEventUpdate
+  path?: never
+  query?: never
+  url: '/api/v1/users/me/selected-event'
+}
+
+export type UsersUpdateSelectedEventErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersUpdateSelectedEventError =
+  UsersUpdateSelectedEventErrors[keyof UsersUpdateSelectedEventErrors]
+
+export type UsersUpdateSelectedEventResponses = {
+  /**
+   * Successful Response
+   */
+  200: UserProfile
+}
+
+export type UsersUpdateSelectedEventResponse =
+  UsersUpdateSelectedEventResponses[keyof UsersUpdateSelectedEventResponses]
 
 export type UsersGetApprovalPasswordStatusData = {
   body?: never
@@ -3859,6 +4012,14 @@ export type TasksTaskFeedData = {
      * Days
      */
     days?: number
+    /**
+     * Event Id
+     */
+    event_id?: string | null
+    /**
+     * All Events
+     */
+    all_events?: boolean
   }
   url: '/api/v1/tasks/feed'
 }
@@ -4070,6 +4231,10 @@ export type TasksListTasksData = {
      * Event Id
      */
     event_id?: string | null
+    /**
+     * All Events
+     */
+    all_events?: boolean
   }
   url: '/api/v1/tasks/'
 }
@@ -5116,6 +5281,14 @@ export type BookingsListMyBookingsData = {
      * Date To
      */
     date_to?: string | null
+    /**
+     * Event Id
+     */
+    event_id?: string | null
+    /**
+     * All Events
+     */
+    all_events?: boolean
   }
   url: '/api/v1/bookings/me'
 }

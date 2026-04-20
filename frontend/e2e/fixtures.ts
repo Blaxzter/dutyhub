@@ -12,7 +12,7 @@
 
 import { test as base, expect, type BrowserContext, type Page } from '@playwright/test'
 
-const API = process.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
 
 export interface TestUser {
   email: string

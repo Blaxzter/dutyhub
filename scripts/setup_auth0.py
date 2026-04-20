@@ -512,11 +512,11 @@ def main() -> None:
             "--type",
             "spa",
             "--callbacks",
-            f"http://localhost:5173,http://localhost:5173/app/home,https://{prod_domain}/app/home",
+            f"http://localhost:5555,http://localhost:5555/app/home,https://{prod_domain}/app/home",
             "--logout-urls",
-            f"http://localhost:5173,https://{prod_domain}",
+            f"http://localhost:5555,https://{prod_domain}",
             "--web-origins",
-            f"http://localhost:5173,https://{prod_domain}",
+            f"http://localhost:5555,https://{prod_domain}",
             "--no-input",
         )
         spa_client_id = spa_data.get("client_id", "")
@@ -712,7 +712,7 @@ def main() -> None:
             "VITE_AUTH0_DOMAIN": tenant_domain,
             "VITE_AUTH0_CLIENT_ID": spa_client_id,
             "VITE_AUTH0_API_AUDIENCE": api_identifier,
-            "VITE_AUTH0_CALLBACK_URL": "http://localhost:5173/app/home",
+            "VITE_AUTH0_CALLBACK_URL": "http://localhost:5555/app/home",
         },
     )
 

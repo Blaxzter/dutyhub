@@ -30,7 +30,7 @@ export default defineConfig({
   testMatch: 'take-screenshots.ts',
   timeout: 180_000,
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5555',
     headless: !!process.env.CI,
   },
 })
