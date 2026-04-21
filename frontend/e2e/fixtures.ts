@@ -20,6 +20,41 @@ export interface TestUser {
   roles: string[]
 }
 
+export interface WorkerEvent {
+  id: string
+  name: string
+  start_date: string
+  end_date: string
+}
+
+/** ISO date (YYYY-MM-DD) offset from today. */
+function isoDateOffset(daysFromNow: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + daysFromNow)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Node-side fetch helper. Uses X-Test-User-Email bypass (TESTING=true backend). */
+async function serverApi<T>(
+  method: string,
+  path: string,
+  email: string,
+  body?: object,
+): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (email) headers['X-Test-User-Email'] = email
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    throw new Error(`API ${method} ${path} failed: ${res.status} ${await res.text()}`)
+  }
+  if (res.status === 204) return null as T
+  return (await res.json()) as T
+}
+
 /**
  * Pre-seed Auth0 SDK localStorage cache so the SDK (initialised with
  * test-client-id / test-audience in bypass mode) finds a cached token
@@ -98,7 +133,7 @@ export const test = base.extend<
   // Test-scoped fixtures
   { adminPage: Page; memberPage: Page },
   // Worker-scoped fixtures
-  { adminUser: TestUser; memberUser: TestUser }
+  { adminUser: TestUser; memberUser: TestUser; workerEvent: WorkerEvent }
 >({
   // Worker-scoped: each parallel worker seeds its own admin user
   adminUser: [async ({}, use, workerInfo) => {
@@ -124,8 +159,43 @@ export const test = base.extend<
     await use({ email, name, roles: [] })
   }, { scope: 'worker' }],
 
+  // Worker-scoped: each parallel worker seeds its own published event and
+  // points both the admin and member user at it as their selected_event_id,
+  // so the router guard doesn't bounce authenticated pages to /select-event.
+  workerEvent: [async ({ adminUser, memberUser }, use, workerInfo) => {
+    if (!IS_TESTING) {
+      await use({ id: '', name: '', start_date: '', end_date: '' })
+      return
+    }
+    const event = await serverApi<WorkerEvent>('POST', '/events/', adminUser.email, {
+      name: `E2E Worker Event ${workerInfo.workerIndex}`,
+      status: 'published',
+      start_date: isoDateOffset(1),
+      end_date: isoDateOffset(60),
+    })
+    // Occasionally the first read-after-write 404s under parallel worker load;
+    // a single short retry papers over it without masking real failures.
+    const setSelected = async (email: string) => {
+      const body = { selected_event_id: event.id }
+      try {
+        await serverApi('PUT', '/users/me/selected-event', email, body)
+      } catch (err) {
+        if (String(err).includes('404')) {
+          await new Promise((r) => setTimeout(r, 250))
+          await serverApi('PUT', '/users/me/selected-event', email, body)
+        } else {
+          throw err
+        }
+      }
+    }
+    await setSelected(adminUser.email)
+    await setSelected(memberUser.email)
+    await use(event)
+  }, { scope: 'worker' }],
+
   // Test-scoped: a page pre-configured as the admin user
-  adminPage: async ({ browser, adminUser }, use) => {
+  adminPage: async ({ browser, adminUser, workerEvent }, use) => {
+    void workerEvent // ensure event + selected_event_id are set before the page boots
     const context = await browser.newContext()
     if (IS_TESTING) {
       // Set bypass cookie so main.ts and router activate the fake Auth0 plugin
@@ -143,7 +213,8 @@ export const test = base.extend<
   },
 
   // Test-scoped: a page pre-configured as the member user
-  memberPage: async ({ browser, memberUser }, use) => {
+  memberPage: async ({ browser, memberUser, workerEvent }, use) => {
+    void workerEvent
     const context = await browser.newContext()
     if (IS_TESTING) {
       await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])

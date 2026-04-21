@@ -3,13 +3,20 @@
 /**
  * Build Docker services, start the full stack, and run Playwright E2E tests.
  *
- * Usage:
- *   node scripts/run-e2e-docker.mjs                    # full run
- *   node scripts/run-e2e-docker.mjs --grep "login"      # run matching tests
- *   node scripts/run-e2e-docker.mjs --up-only           # start services, skip tests
- *   node scripts/run-e2e-docker.mjs --down              # stop services
- *   node scripts/run-e2e-docker.mjs --no-build          # skip image builds
- *   node scripts/run-e2e-docker.mjs --no-teardown       # keep services running after tests
+ * Script-specific flags (consumed here):
+ *   --up-only, --down, --no-build, --no-teardown
+ *
+ * Everything else is forwarded verbatim to `npx playwright test`. So you can
+ * pass test paths, --grep, --headed, --project=chromium, etc.:
+ *
+ *   node scripts/run-e2e-docker.mjs                                  # full run
+ *   node scripts/run-e2e-docker.mjs tests/authenticated/tasks.spec.ts
+ *   node scripts/run-e2e-docker.mjs --grep "login"
+ *   node scripts/run-e2e-docker.mjs --headed --project=chromium tests/authenticated/events.spec.ts
+ *   node scripts/run-e2e-docker.mjs --up-only
+ *   node scripts/run-e2e-docker.mjs --down
+ *   node scripts/run-e2e-docker.mjs --no-build
+ *   node scripts/run-e2e-docker.mjs --no-teardown
  */
 
 import { execSync } from 'node:child_process';
@@ -28,22 +35,26 @@ const BACKEND_PORT = 8787;
 // ── Parse CLI args ───────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
-let grep = '';
 let noBuild = false;
 let noTeardown = false;
 let upOnly = false;
 let down = false;
+/** Args forwarded verbatim to `npx playwright test`. */
+const playwrightArgs = [];
+
+const SCRIPT_FLAGS = new Set(['--up-only', '--down', '--no-build', '--no-teardown']);
 
 for (let i = 0; i < args.length; i++) {
-    switch (args[i]) {
-        case '--grep':        grep = args[++i] || ''; break;
-        case '--up-only':     upOnly = true; noTeardown = true; break;
-        case '--down':        down = true; break;
-        case '--no-build':    noBuild = true; break;
-        case '--no-teardown': noTeardown = true; break;
-        default:
-            console.error(`Unknown argument: ${args[i]}`);
-            process.exit(1);
+    const arg = args[i];
+    if (SCRIPT_FLAGS.has(arg)) {
+        switch (arg) {
+            case '--up-only':     upOnly = true; noTeardown = true; break;
+            case '--down':        down = true; break;
+            case '--no-build':    noBuild = true; break;
+            case '--no-teardown': noTeardown = true; break;
+        }
+    } else {
+        playwrightArgs.push(arg);
     }
 }
 
@@ -227,21 +238,12 @@ try {
         PLAYWRIGHT_HTML_OPEN: 'never',
     };
 
-    if (grep) {
-        console.log(`\n==> Running tests matching '${grep}' ...`);
-        const code = runForExitCode(`npx playwright test --grep "${grep}"`, {
-            cwd: frontendDir,
-            env: testEnv,
-        });
-        if (code !== 0) failed = true;
-    } else {
-        console.log('\n==> Running Playwright tests ...');
-        const code = runForExitCode('npx playwright test', {
-            cwd: frontendDir,
-            env: testEnv,
-        });
-        if (code !== 0) failed = true;
-    }
+    const quote = (s) => (/[\s"'`$|<>()&;*?!]/.test(s) ? `"${s.replace(/"/g, '\\"')}"` : s);
+    const extraArgs = playwrightArgs.map(quote).join(' ');
+    const cmd = extraArgs ? `npx playwright test ${extraArgs}` : 'npx playwright test';
+    console.log(`\n==> Running Playwright tests ...`);
+    const code = runForExitCode(cmd, { cwd: frontendDir, env: testEnv });
+    if (code !== 0) failed = true;
 
     if (failed) {
         console.log('\n==> Tests FAILED');
