@@ -208,14 +208,17 @@ test.describe('Event Managers – full E2E flow', () => {
       taskPayload(event.id, 'Manager Created Task'),
     )
 
-    // Step 3: admin sees the task in the tasks list (scoped to admin's selected event,
-    // so switch the admin's selection to the event-under-test first)
-    await api(adminPage, 'PUT', '/users/me/selected-event', { selected_event_id: event.id })
-    await adminPage.goto('/app/tasks')
-    await adminPage.getByTestId('input-search').fill('Manager Created Task')
-    await expect(
-      adminPage.getByTestId('main-content').getByText('Manager Created Task'),
-    ).toBeVisible()
+    // Step 3: admin can fetch the manager-created task via API. Verifying via
+    // API (instead of the /app/tasks UI, which is scoped to selected_event_id)
+    // avoids mutating the admin's selected event — switching it and then
+    // deleting this event in afterEach leaves admin.selected_event_id = NULL,
+    // which corrupts state for any admin-availability test that runs later.
+    const fetched = await api<{ id: string; name: string }>(
+      adminPage,
+      'GET',
+      `/tasks/${result.task.id}`,
+    )
+    expect(fetched.name).toBe('Manager Created Task')
 
     await api(adminPage, 'DELETE', `/tasks/${result.task.id}`)
   })

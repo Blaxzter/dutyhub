@@ -239,17 +239,26 @@ try {
     };
 
     // Tee Playwright output to both the terminal and a log file so failures
-    // can be diagnosed after the fact without re-running the suite.
+    // can be diagnosed after the fact without re-running the suite. Each run
+    // gets its own timestamped file under e2e-logs/, and e2e-logs/latest.log
+    // mirrors the most recent run for convenience.
     mkdirSync(LOGS_DIR, { recursive: true });
+    const runTimestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const runLog = resolve(LOGS_DIR, `playwright-${runTimestamp}.log`);
     const latestLog = resolve(LOGS_DIR, 'latest.log');
 
     console.log(`\n==> Running Playwright tests ...`);
-    console.log(`    Logging to: ${latestLog}`);
+    console.log(`    Logging to: ${runLog}`);
     const pwArgs = ['playwright', 'test', ...playwrightArgs];
     console.log(`  $ npx ${pwArgs.join(' ')}`);
 
     const code = await new Promise((resolvePromise) => {
-        const logStream = createWriteStream(latestLog);
+        const runStream = createWriteStream(runLog);
+        const latestStream = createWriteStream(latestLog);
+        const writeBoth = (chunk) => {
+            runStream.write(chunk);
+            latestStream.write(chunk);
+        };
         const child = spawn('npx', pwArgs, {
             cwd: frontendDir,
             env: testEnv,
@@ -258,19 +267,22 @@ try {
         });
         child.stdout.on('data', (chunk) => {
             process.stdout.write(chunk);
-            logStream.write(chunk);
+            writeBoth(chunk);
         });
         child.stderr.on('data', (chunk) => {
             process.stderr.write(chunk);
-            logStream.write(chunk);
+            writeBoth(chunk);
         });
         child.on('close', (exitCode) => {
-            logStream.end();
+            runStream.end();
+            latestStream.end();
             resolvePromise(exitCode ?? 1);
         });
         child.on('error', (err) => {
-            logStream.write(`\n[spawn error] ${err.message}\n`);
-            logStream.end();
+            const msg = `\n[spawn error] ${err.message}\n`;
+            writeBoth(msg);
+            runStream.end();
+            latestStream.end();
             resolvePromise(1);
         });
     });
@@ -278,11 +290,10 @@ try {
 
     if (failed) {
         console.log('\n==> Tests FAILED');
-        console.log(`    Full log: ${latestLog}`);
     } else {
         console.log('\n==> All tests passed');
-        console.log(`    Full log: ${latestLog}`);
     }
+    console.log(`    Full log: ${runLog}`);
 } finally {
     if (!noTeardown && !upOnly) {
         teardown();
