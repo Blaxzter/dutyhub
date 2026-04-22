@@ -9,6 +9,7 @@ from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.event_manager import event_manager as crud_egm
 from app.crud.task import task as crud_task
+from app.logic.event_scope import get_user_event_scope
 from app.logic.permissions import require_event_access
 from app.models.event_manager import EventManager
 from app.models.shift import Shift
@@ -35,10 +36,14 @@ async def list_tasks(
     status: TaskStatus | None = None,
     my_bookings: bool = Query(default=False),
     event_id: uuid.UUID | None = Query(default=None),
+    all_events: bool = Query(default=False),
 ) -> TaskListResponse:
     """List published tasks (all users) or all tasks (admin/manager).
 
     Scoped event managers see published tasks plus tasks in their managed groups.
+
+    Defaults to scoping by the current user's selected event. Pass an explicit
+    ``event_id`` to override, or ``all_events=true`` to disable scoping.
     """
     effective_status = status
     also_include_group_ids = None
@@ -60,6 +65,10 @@ async def list_tasks(
         if managed_ids:
             also_include_group_ids = managed_ids
 
+    effective_event_id = event_id
+    if effective_event_id is None and not all_events:
+        effective_event_id = get_user_event_scope(current_user)
+
     booked_by_user_id = str(current_user.id) if my_bookings else None
 
     items = await crud_task.get_multi_filtered(
@@ -70,7 +79,7 @@ async def list_tasks(
         status=effective_status,
         booked_by_user_id=booked_by_user_id,
         also_include_group_ids=also_include_group_ids,
-        event_id=event_id,
+        event_id=effective_event_id,
     )
     total = await crud_task.get_count_filtered(
         session,
@@ -78,7 +87,7 @@ async def list_tasks(
         status=effective_status,
         booked_by_user_id=booked_by_user_id,
         also_include_group_ids=also_include_group_ids,
-        event_id=event_id,
+        event_id=effective_event_id,
     )
     return TaskListResponse(
         items=[TaskRead.model_validate(i) for i in items],

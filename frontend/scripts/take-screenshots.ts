@@ -10,14 +10,14 @@
  * Screenshots are saved to public/screenshots/<lang>/ (e.g. public/screenshots/en/).
  *
  * Requires:
- *   - Frontend running at http://localhost:5173
- *   - Backend running at http://localhost:8000
+ *   - Frontend running at http://localhost:5555
+ *   - Backend running at http://localhost:8787
  *   - Valid Auth0 credentials in frontend/.env (E2E_AUTH0_USERNAME, E2E_AUTH0_PASSWORD)
  */
 
 import { test } from '@playwright/test'
 
-const BASE_URL = 'http://localhost:5173'
+const BASE_URL = 'http://localhost:5555'
 const LANG = process.env.LANG === 'de' ? 'de' : 'en'
 const SCREENSHOT_DIR = `public/screenshots/${LANG}`
 const VIEWPORT = { width: 1280, height: 720 }
@@ -147,7 +147,7 @@ async function login(page: import('@playwright/test').Page) {
       await consentBtn.click()
     }
 
-    await page.waitForURL(/localhost:5173/, { timeout: 60_000 })
+    await page.waitForURL(/localhost:5555/, { timeout: 60_000 })
     await page.waitForTimeout(2000)
     return
   }
@@ -194,7 +194,7 @@ async function login(page: import('@playwright/test').Page) {
       await page.locator('button[type="submit"], button[name="action"]').first().click()
     }
 
-    await page.waitForURL(/localhost:5173/, { timeout: 60_000 })
+    await page.waitForURL(/localhost:5555/, { timeout: 60_000 })
     await page.waitForTimeout(2000)
   }
 }

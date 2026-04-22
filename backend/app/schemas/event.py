@@ -2,7 +2,7 @@ import datetime as dt
 import uuid
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, computed_field, field_validator
 
 EventStatus = Literal["draft", "published", "archived"]
 
@@ -42,6 +42,11 @@ class EventRead(EventBase):
     created_by_id: uuid.UUID | None = None
     created_at: dt.datetime
     updated_at: dt.datetime
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def is_expired(self) -> bool:
+        return self.end_date < dt.date.today()
 
 
 class EventListResponse(BaseModel):

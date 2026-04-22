@@ -31,12 +31,7 @@ import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
 import type { DateRange } from '@/components/tasks/shift-calendar'
 import { TaskQuickView } from '@/components/tasks/quick-view'
 
-import type {
-  TaskFeedResponse,
-  EventListResponse,
-  EventRead,
-  FeedTaskItem,
-} from '@/client/types.gen'
+import type { TaskFeedResponse, EventRead, FeedTaskItem } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -141,29 +136,9 @@ const loadTasks = async () => {
       query.date_to = calendarRange.value.to
     }
 
-    const requests: Promise<unknown>[] = [
-      get<{ data: TaskFeedResponse }>({ url: '/tasks/feed', query }),
-    ]
-    // Task events are only needed for calendar view
-    if (filters.viewMode === 'calendar') {
-      const groupQuery: Record<string, unknown> = { limit: 100 }
-      if (calendarRange.value) {
-        groupQuery.date_from = calendarRange.value.from
-        groupQuery.date_to = calendarRange.value.to
-      }
-      requests.push(
-        get<{ data: EventListResponse }>({ url: '/events/', query: groupQuery }),
-      )
-    }
-
-    const results = await Promise.all(requests)
-    const feedRes = results[0] as { data: TaskFeedResponse }
+    const feedRes = await get<{ data: TaskFeedResponse }>({ url: '/tasks/feed', query })
     feedItems.value = feedRes.data.items
-
-    if (filters.viewMode === 'calendar' && results[1]) {
-      const groupsRes = results[1] as { data: EventListResponse }
-      events.value = groupsRes.data.items
-    }
+    events.value = authStore.selectedEvent ? [authStore.selectedEvent] : []
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -224,7 +199,9 @@ const navigateToTask = (task: { id: string }) => {
 }
 
 const navigateToEvent = (event: { id: string }) => {
-  router.push({ name: 'event-detail', params: { eventId: event.id } })
+  if (authStore.isAdmin || authStore.isTaskManager || authStore.canManageEvent(event.id)) {
+    router.push({ name: 'event-settings', query: { eventId: event.id } })
+  }
 }
 
 const handleCalendarDateRange = (range: DateRange) => {

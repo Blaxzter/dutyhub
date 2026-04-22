@@ -1,3 +1,5 @@
+import uuid
+
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field
@@ -54,6 +56,17 @@ class User(Base, table=True):
         default="en",
         sa_column=sa.Column(sa.String(5), nullable=False, server_default="en"),
         description="User's preferred language for notifications (e.g., 'en', 'de')",
+    )
+
+    selected_event_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=sa.Column(
+            sa.Uuid,
+            sa.ForeignKey("events.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+        description="Event that scopes this user's dashboard experience",
     )
 
     # Global notification channel kill switches

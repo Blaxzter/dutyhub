@@ -2,7 +2,15 @@
 import { computed } from 'vue'
 
 import { useColorMode } from '@vueuse/core'
-import { BadgeCheck, Bell, Globe, LogOut, Moon, Sun } from 'lucide-vue-next'
+import {
+  BadgeCheck,
+  Bell,
+  CalendarRange,
+  Globe,
+  LogOut,
+  Moon,
+  Sun,
+} from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -101,6 +109,21 @@ const initials = computed(() => {
         >
           <Bell />
           {{ $t('navigation.user.actions.notifications') }}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          data-testid="mobile-user-change-event"
+          @click="$router.push({ name: 'select-event', query: { mode: 'switch' } })"
+        >
+          <CalendarRange />
+          {{ $t('duties.selectEvent.changeEvent') }}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          v-if="authStore.isAdmin || authStore.isTaskManager"
+          data-testid="mobile-user-manage-events"
+          @click="$router.push({ name: 'admin-events' })"
+        >
+          <CalendarRange />
+          {{ $t('admin.events.title') }}
         </DropdownMenuItem>
         <DropdownMenuItem @click="$router.push({ name: 'landing' })">
           <Globe />

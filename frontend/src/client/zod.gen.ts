@@ -271,6 +271,7 @@ export const zEventRead = z.object({
   created_by_id: z.uuid().nullish(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
+  is_expired: z.boolean().readonly(),
 })
 
 /**
@@ -574,6 +575,19 @@ export const zScheduleOverride = z.object({
   start_time: z.iso.time(),
   end_time: z.iso.time(),
 })
+
+/**
+ * SelectedEventUpdate
+ *
+ * Request body for PUT /users/me/selected-event.
+ */
+export const zSelectedEventUpdate = z
+  .object({
+    selected_event_id: z.uuid().nullish(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Request body for PUT /users/me/selected-event.',
+  })
 
 /**
  * SelfApproveRequest
@@ -1301,6 +1315,7 @@ export const zUserProfile = z.object({
       description: 'IDs of events this user manages (via event_managers)',
     })
     .optional(),
+  selected_event_id: z.uuid().nullish(),
 })
 
 /**
@@ -1375,6 +1390,40 @@ export const zProblemDetails = z.object({
 })
 
 /**
+ * EventRead
+ */
+export const zEventReadWritable = z.object({
+  name: z.string(),
+  description: z.string().nullish(),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
+  id: z.uuid(),
+  created_by_id: z.uuid().nullish(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+})
+
+/**
+ * EventListResponse
+ */
+export const zEventListResponseWritable = z.object({
+  items: z.array(zEventReadWritable),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
+ * TaskCreateWithShiftsResponse
+ */
+export const zTaskCreateWithShiftsResponseWritable = z.object({
+  task: zTaskRead,
+  shifts_created: z.int(),
+  event: zEventReadWritable.nullish(),
+})
+
+/**
  * Successful Response
  */
 export const zUsersDeleteCurrentUserResponse = z.void().register(z.globalRegistry, {
@@ -1397,6 +1446,13 @@ export const zUsersGetCurrentUserProfileBody = zProfileInit.nullable()
  * Successful Response
  */
 export const zUsersGetCurrentUserProfileResponse = zUserProfile
+
+export const zUsersUpdateSelectedEventBody = zSelectedEventUpdate
+
+/**
+ * Successful Response
+ */
+export const zUsersUpdateSelectedEventResponse = zUserProfile
 
 /**
  * Response Users-Get Approval Password Status
@@ -1508,6 +1564,8 @@ export const zTasksTaskFeedQuery = z.object({
   date_to: z.iso.date().nullish(),
   my_bookings: z.boolean().optional().default(false),
   days: z.int().gte(1).lte(31).optional().default(5),
+  event_id: z.uuid().nullish(),
+  all_events: z.boolean().optional().default(false),
 })
 
 /**
@@ -1550,6 +1608,7 @@ export const zTasksListTasksQuery = z.object({
   status: z.enum(['draft', 'published', 'archived']).nullish(),
   my_bookings: z.boolean().optional().default(false),
   event_id: z.uuid().nullish(),
+  all_events: z.boolean().optional().default(false),
 })
 
 /**
@@ -1753,6 +1812,8 @@ export const zBookingsListMyBookingsQuery = z.object({
   status: z.string().nullish(),
   date_from: z.iso.date().nullish(),
   date_to: z.iso.date().nullish(),
+  event_id: z.uuid().nullish(),
+  all_events: z.boolean().optional().default(false),
 })
 
 /**

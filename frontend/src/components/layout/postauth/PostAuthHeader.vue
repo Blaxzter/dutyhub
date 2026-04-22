@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ArrowLeft } from 'lucide-vue-next'
+import { ArrowLeft, CalendarRange } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import { useAuthStore } from '@/stores/auth'
 import { useBreadcrumbStore } from '@/stores/breadcrumb'
 
 import {
@@ -23,8 +24,11 @@ import MobileUserMenu from '@/components/navigation/MobileUserMenu.vue'
 import NotificationBell from '@/components/navigation/NotificationBell.vue'
 
 const breadcrumbStore = useBreadcrumbStore()
+const authStore = useAuthStore()
 const router = useRouter()
 const { t } = useI18n()
+
+const selectedEventName = computed(() => authStore.selectedEvent?.name ?? '')
 
 const resolveBreadcrumbTitle = (title: string, titleKey?: string) => {
   if (!titleKey) return title
@@ -85,7 +89,20 @@ const mobileParent = computed(() => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div class="ml-auto hidden md:block">
+      <Button
+        v-if="selectedEventName"
+        variant="outline"
+        size="sm"
+        class="ml-auto hidden sm:inline-flex"
+        data-testid="header-event-pill"
+        :title="t('duties.selectEvent.changeEvent')"
+        @click="router.push({ name: 'select-event', query: { mode: 'switch' } })"
+      >
+        <CalendarRange class="mr-1.5 h-4 w-4" />
+        <span class="max-w-[12rem] truncate">{{ selectedEventName }}</span>
+      </Button>
+
+      <div :class="['hidden md:block', selectedEventName ? 'ml-2' : 'ml-auto']">
         <NotificationBell />
       </div>
       <div class="ml-auto md:hidden">

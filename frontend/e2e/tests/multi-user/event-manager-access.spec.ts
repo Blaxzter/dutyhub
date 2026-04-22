@@ -110,20 +110,22 @@ test.describe('Event Manager – unpublished visibility', () => {
     expect(found!.status).toBe('draft')
   })
 
-  test('scoped manager can view unpublished event detail page', async ({
+  test('scoped manager can open the event settings page for their event', async ({
     memberPage,
   }) => {
-    await memberPage.goto(`/app/events/${event.id}`)
+    await memberPage.goto(`/app/event-settings?eventId=${event.id}`)
     await expect(memberPage.getByTestId('page-heading')).toBeVisible()
   })
 
   test('scoped manager can see unpublished task in list', async ({
     memberPage,
   }) => {
+    // /tasks/ defaults to the user's selected event; pass all_events=true for a
+    // cross-event lookup.
     const tasks = await api<{ items: TaskRead[] }>(
       memberPage,
       'GET',
-      '/tasks/?limit=100',
+      '/tasks/?limit=100&all_events=true',
     )
     const found = tasks.items.find((e) => e.id === task.id)
     expect(found).toBeTruthy()
@@ -519,51 +521,16 @@ test.describe('Event Manager – create event restriction', () => {
     }
   })
 
-  test('scoped manager does not see create event button', async ({
-    memberPage,
-  }) => {
-    await memberPage.goto('/app/events')
-    await expect(memberPage.getByTestId('btn-create-event')).toBeHidden()
+  test('scoped manager does not see Manage Events in the sidebar', async ({ memberPage }) => {
+    // The /app/admin/events route is technically accessible to scoped managers
+    // (the guard allows them through), but the sidebar entry is admin/task_manager
+    // only so regular scoped managers have no surfaced path to create events.
+    await memberPage.goto('/app/home')
+    await expect(memberPage.getByTestId('sidebar-link-admin-events')).toBeHidden()
   })
 })
 
-// ── Sidebar unpublished indicators ──────────────────────────────────────────
-
-test.describe('Event Manager – sidebar visibility', () => {
-  let event: EventRead
-  let task: { id: string }
-
-  test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
-    event = await createEvent(adminPage, uniqueName('E2E Sidebar'), 'draft')
-    await assignManager(adminPage, event.id, memberUser.email, memberPage)
-
-    const result = await api<{ task: { id: string } }>(
-      adminPage,
-      'POST',
-      '/tasks/with-shifts',
-      eventPayload(event.id, 'Sidebar Draft Task', 'draft'),
-    )
-    task = result.task
-  })
-
-  test.afterEach(async ({ adminPage }) => {
-    await deleteTask(adminPage, task?.id).catch(() => {})
-    await deleteEvent(adminPage, event?.id).catch(() => {})
-  })
-
-  test('sidebar API returns unpublished event with status for scoped manager', async ({
-    memberPage,
-  }) => {
-    // Retry because the manager assignment commit may not be visible yet
-    await expect(async () => {
-      const sidebar = await api<{
-        events: { id: string; status: string }[]
-        tasks: { id: string; status: string }[]
-      }>(memberPage, 'GET', '/dashboard/sidebar')
-
-      const sidebarEvent = sidebar.events.find((g) => g.id === event.id)
-      expect(sidebarEvent).toBeTruthy()
-      expect(sidebarEvent!.status).toBe('draft')
-    }).toPass({ timeout: 10_000 })
-  })
-})
+// The old "sidebar visibility" describe block was removed along with the events
+// section of the sidebar. The /dashboard/sidebar endpoint still returns an
+// `events` field but AppSidebar.vue no longer consumes it, so scoped-manager
+// visibility is exercised via GET /events/ in the earlier describe block.

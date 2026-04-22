@@ -129,6 +129,7 @@
         "draftBanner": "Diese Veranstaltungsgruppe ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
         "edit": "Veranstaltungsgruppe bearbeiten",
         "empty": "Keine Veranstaltungsgruppen gefunden.",
+        "expired": "Abgelaufen",
         "fields": {
             "description": "Beschreibung",
             "endDate": "Enddatum",
@@ -144,6 +145,59 @@
         },
         "subtitle": "Anstehende Veranstaltungsprogramme durchsuchen",
         "title": "Veranstaltungsgruppen"
+    },
+    "selectEvent": {
+        "changeEvent": "Veranstaltung wechseln",
+        "empty": "Keine anstehenden Veranstaltungen verfügbar. Bitte schauen Sie später wieder vorbei oder wenden Sie sich an eine organisierende Person.",
+        "expired": {
+            "body": "Die Veranstaltung, mit der Sie zuletzt gearbeitet haben, ist beendet. Wählen Sie eine andere, um fortzufahren.",
+            "title": "Ihre Veranstaltung ist beendet"
+        },
+        "notifications": {
+            "finish": "Einrichtung abschließen",
+            "phoneHint": "Wird von Organisatoren genutzt, um Sie zu Schichten zu erreichen.",
+            "phoneLabel": "Telefonnummer",
+            "phonePlaceholder": "z.B. +49 151 23456789",
+            "phoneTitle": "Telefonnummer",
+            "subtitle": "Wählen Sie, wie Sie von uns hören möchten.",
+            "title": "Benachrichtigungseinstellungen"
+        },
+        "pick": {
+            "continue": "Weiter",
+            "createNew": "Neue Veranstaltung erstellen",
+            "current": "Aktuell",
+            "selectAction": "Diese Veranstaltung auswählen",
+            "stats": "{tasks} Aufgabe und {shifts} Schicht brauchen dich | {tasks} Aufgaben und {shifts} Schichten brauchen dich",
+            "subtitle": "Wählen Sie die Veranstaltung, mit der Sie arbeiten möchten.",
+            "title": "Veranstaltung auswählen",
+            "upcomingTasks": "Anstehende Aufgaben"
+        },
+        "success": "Ausgewählte Veranstaltung aktualisiert.",
+        "visual": {
+            "expiredHeadline": "Lassen Sie uns zur nächsten Veranstaltung übergehen.",
+            "features": {
+                "coordBody": "Verwalter, Helfer und Teilnehmer bleiben auf dem gleichen Stand.",
+                "coordTitle": "Gemeinsam koordinieren",
+                "scopedBody": "Aufgaben, Schichten und Buchungen bleiben in der gewählten Veranstaltung.",
+                "scopedTitle": "Fokus auf eine Veranstaltung"
+            },
+            "footer": "Eine Gemeinschaft, ein Fokus — wählen Sie die Veranstaltung, WirkSam erledigt den Rest.",
+            "onboardingHeadline": "Willkommen. Wählen Sie die Veranstaltung, für die Sie hier sind.",
+            "step2": {
+                "features": {
+                    "controlBody": "Alles, was Sie nicht möchten, lässt sich pro Kanal global stummschalten.",
+                    "controlTitle": "Sie behalten die Kontrolle",
+                    "remindersBody": "Wir erinnern Sie vor jeder Schicht, damit nichts untergeht.",
+                    "remindersTitle": "Schicht-Erinnerungen",
+                    "updatesBody": "Erfahren Sie von neu veröffentlichten Schichten, Planänderungen und Absagen, die Sie betreffen.",
+                    "updatesTitle": "Planungs-Updates"
+                },
+                "headline": "Wählen Sie, wie wir Sie erreichen.",
+                "subhead": "Benachrichtigungen halten Sie über Ihre Schichten auf dem Laufenden und ermöglichen es Organisatoren, Sie im Zweifel zu erreichen. Wählen Sie beliebige Kombinationen — E-Mail, Push, Telegram oder Telefon."
+            },
+            "subhead": "WirkSam richtet Ihre Ansicht auf eine einzelne Veranstaltung aus, damit Sie nicht die richtige Liste suchen müssen.",
+            "switchHeadline": "Zu einer anderen Veranstaltung wechseln."
+        }
     },
     "shifts": {
         "availability": "{current} / {max} gebucht",

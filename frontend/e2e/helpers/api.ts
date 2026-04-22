@@ -14,7 +14,7 @@ import type {
 export type { BookingRead, ShiftRead, EventRead, TaskRead }
 export type TaskWithShifts = TaskCreateWithShiftsResponse
 
-export const API = process.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+export const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
 
 /** Return a unique test name to avoid collisions between parallel workers. */
 export function uniqueName(prefix: string): string {
@@ -96,9 +96,31 @@ export async function clearAvailability(page: Page, eventId: string): Promise<vo
   await api(page, 'DELETE', `/events/${eventId}/availability/me`)
 }
 
+/** Point the current user's `selected_event_id` at a given event. */
+export async function setSelectedEvent(page: Page, eventId: string | null): Promise<void> {
+  await api(page, 'PUT', '/users/me/selected-event', { selected_event_id: eventId })
+}
+
+/** Look up a seeded test user's UUID by email (admin-only endpoint). */
+export async function getUserIdByEmail(adminPage: Page, email: string): Promise<string> {
+  const res = await api<{ items: { id: string; email: string }[] }>(
+    adminPage,
+    'GET',
+    '/users/?limit=200',
+  )
+  const user = res.items.find((u) => u.email === email)
+  if (!user) throw new Error(`User ${email} not found`)
+  return user.id
+}
+
 // ── Task helpers ──────────────────────────────────────────────────────────────
 
-/** Create a task with auto-generated shifts via the /tasks/with-shifts endpoint. */
+/** Create a task with auto-generated shifts via the /tasks/with-shifts endpoint.
+ *
+ * `eventId` defaults to the current user's `selected_event_id` so created tasks
+ * show up under the user's dashboard scope. Pass `eventId: null` to create an
+ * orphan task (rarely what you want under the new scoped-UI model).
+ */
 export async function createTaskWithShifts(
   page: Page,
   opts: {
@@ -109,7 +131,7 @@ export async function createTaskWithShifts(
     status?: 'draft' | 'published' | 'archived'
     location?: string
     category?: string
-    eventId?: string
+    eventId?: string | null
     startTime?: string
     endTime?: string
     slotDuration?: number
@@ -120,6 +142,15 @@ export async function createTaskWithShifts(
   const defaultDate = futureDate(1)
   const startDate = opts.startDate ?? defaultDate
   const endDate = opts.endDate ?? defaultDate
+
+  let eventId: string | null
+  if (opts.eventId !== undefined) {
+    eventId = opts.eventId
+  } else {
+    const profile = await api<{ selected_event_id: string | null }>(page, 'POST', '/users/me')
+    eventId = profile.selected_event_id ?? null
+  }
+
   return api<TaskCreateWithShiftsResponse>(page, 'POST', '/tasks/with-shifts', {
     name: opts.name,
     description: opts.description ?? null,
@@ -128,7 +159,7 @@ export async function createTaskWithShifts(
     status: opts.status ?? 'draft',
     location: opts.location ?? null,
     category: opts.category ?? null,
-    event_id: opts.eventId ?? null,
+    event_id: eventId,
     schedule: {
       default_start_time: (opts.startTime ?? '10:00') + ':00',
       default_end_time: (opts.endTime ?? '12:00') + ':00',

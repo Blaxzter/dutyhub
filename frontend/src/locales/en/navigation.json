@@ -14,9 +14,9 @@
             "openShifts": "{count} open shift | {count} open shifts"
         },
         "items": {
-            "events": {
-                "description": "Browse task programmes",
-                "label": "Events"
+            "availability": {
+                "description": "Your availability for the selected event",
+                "label": "Availability"
             },
             "home": {
                 "label": "Home"

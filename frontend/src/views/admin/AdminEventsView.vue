@@ -2,19 +2,16 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
-import { Plus, Search, Trash2 } from 'lucide-vue-next'
+import { Pencil, Plus, Search, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-
-import { useAuthStore } from '@/stores/auth'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import {
@@ -36,7 +33,6 @@ import { statusVariant } from '@/lib/status'
 
 const { t } = useI18n()
 const router = useRouter()
-const authStore = useAuthStore()
 const { get, post, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 
@@ -45,7 +41,6 @@ const loading = ref(false)
 const searchQuery = ref('')
 const showCreateDialog = ref(false)
 
-// Date filter
 const dateFrom = ref<string | null>(null)
 const dateTo = ref<string | null>(null)
 const markedDays = ref<Set<string>>(new Set())
@@ -54,11 +49,11 @@ async function handleVisibleMonth(range: { from: string; to: string }) {
   try {
     const res = await get<{ data: string[] }>({
       url: '/tasks/active-dates',
-      query: { date_from: range.from, date_to: range.to },
+      query: { date_from: range.from, date_to: range.to, all_events: true },
     })
     markedDays.value = new Set(res.data)
   } catch {
-    // Non-critical
+    // non-critical
   }
 }
 
@@ -77,8 +72,8 @@ const filteredEvents = computed(() => {
 const loadEvents = async () => {
   loading.value = true
   try {
-    const query: Record<string, unknown> = { limit: 100 }
-    query.date_from = dateFrom.value ?? new Date().toISOString().slice(0, 10)
+    const query: Record<string, unknown> = { limit: 200 }
+    if (dateFrom.value) query.date_from = dateFrom.value
     if (dateTo.value) query.date_to = dateTo.value
 
     const response = await get<{ data: EventListResponse }>({
@@ -121,7 +116,6 @@ const handleCreate = async () => {
 const handleDelete = async (event: EventRead) => {
   const confirmed = await confirmDestructive(t('duties.events.deleteConfirm'))
   if (!confirmed) return
-
   try {
     await del({ url: `/events/${event.id}` })
     toast.success(t('duties.events.delete'))
@@ -131,8 +125,8 @@ const handleDelete = async (event: EventRead) => {
   }
 }
 
-const navigateToEvent = (event: EventRead) => {
-  router.push({ name: 'event-detail', params: { eventId: event.id } })
+const handleEdit = (event: EventRead) => {
+  router.push({ name: 'event-settings', query: { eventId: event.id } })
 }
 
 onMounted(loadEvents)
@@ -140,26 +134,19 @@ onMounted(loadEvents)
 
 <template>
   <div class="mx-auto max-w-7xl space-y-6">
-    <!-- Header -->
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
         <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
-          {{ t('duties.events.title') }}
+          {{ t('admin.events.title') }}
         </h1>
-        <p class="text-muted-foreground">{{ t('duties.events.subtitle') }}</p>
+        <p class="text-muted-foreground">{{ t('admin.events.subtitle') }}</p>
       </div>
-      <Button
-        v-if="authStore.isAdmin || authStore.isTaskManager"
-        data-testid="btn-create-event"
-        class="max-xl:hidden"
-        @click="showCreateDialog = true"
-      >
+      <Button data-testid="btn-create-event" class="max-xl:hidden" @click="showCreateDialog = true">
         <Plus class="mr-2 h-4 w-4" />
         {{ t('duties.events.create') }}
       </Button>
     </div>
 
-    <!-- Search & Filter -->
     <div class="flex flex-wrap items-center gap-4">
       <div class="relative flex-1">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -180,7 +167,6 @@ onMounted(loadEvents)
       />
     </div>
 
-    <!-- Loading -->
     <div v-if="loading" class="py-12 text-center text-muted-foreground">
       {{ t('common.states.loading') }}
     </div>
@@ -190,43 +176,66 @@ onMounted(loadEvents)
         {{ t('duties.events.empty') }}
       </div>
 
-      <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card
-          v-for="event in filteredEvents"
-          :key="event.id"
-          class="cursor-pointer transition-colors hover:bg-muted/50"
-          @click="navigateToEvent(event)"
-        >
-          <CardHeader class="pb-3">
-            <div class="flex items-start justify-between">
-              <CardTitle class="text-lg">{{ event.name }}</CardTitle>
-              <Badge data-testid="event-status" :variant="statusVariant(event.status)">
-                {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
-              </Badge>
-            </div>
-            <CardDescription v-if="event.description">
-              {{ event.description }}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div class="flex items-center justify-between text-sm text-muted-foreground">
-              <span>{{ formatDate(event.start_date) }} – {{ formatDate(event.end_date) }}</span>
-              <Button
-                v-if="authStore.canManageEvent(event.id)"
-                variant="ghost"
-                size="icon"
-                class="h-8 w-8"
-                @click.stop="handleDelete(event)"
-              >
-                <Trash2 class="h-4 w-4 text-destructive" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div v-else class="overflow-hidden rounded-lg border">
+        <table class="w-full text-sm">
+          <thead class="bg-muted/50">
+            <tr>
+              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.name') }}</th>
+              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.startDate') }}</th>
+              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.endDate') }}</th>
+              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.status') }}</th>
+              <th class="px-4 py-2 text-right font-medium"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y">
+            <tr
+              v-for="event in filteredEvents"
+              :key="event.id"
+              data-testid="admin-event-row"
+              class="hover:bg-muted/30"
+            >
+              <td class="px-4 py-2">
+                <div class="font-medium">{{ event.name }}</div>
+                <div v-if="event.description" class="truncate text-xs text-muted-foreground">
+                  {{ event.description }}
+                </div>
+              </td>
+              <td class="px-4 py-2">{{ formatDate(event.start_date) }}</td>
+              <td class="px-4 py-2">{{ formatDate(event.end_date) }}</td>
+              <td class="px-4 py-2">
+                <Badge :variant="statusVariant(event.status)">
+                  {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
+                </Badge>
+                <Badge v-if="event.is_expired" variant="outline" class="ml-1">
+                  {{ t('duties.events.expired') }}
+                </Badge>
+              </td>
+              <td class="px-4 py-2 text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8"
+                  data-testid="btn-edit-event"
+                  @click="handleEdit(event)"
+                >
+                  <Pencil class="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8"
+                  data-testid="btn-delete-event"
+                  @click="handleDelete(event)"
+                >
+                  <Trash2 class="h-4 w-4 text-destructive" />
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </template>
 
-    <!-- Create Dialog -->
     <Dialog v-model:open="showCreateDialog">
       <DialogContent>
         <DialogHeader>
@@ -262,9 +271,7 @@ onMounted(loadEvents)
       </DialogContent>
     </Dialog>
 
-    <!-- Mobile FAB: create event -->
     <Button
-      v-if="authStore.isAdmin || authStore.isTaskManager"
       size="icon"
       class="xl:hidden fixed bottom-24 md:bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
       data-testid="fab-create-event"

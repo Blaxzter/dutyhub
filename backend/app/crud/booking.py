@@ -9,6 +9,7 @@ from sqlmodel import col
 from app.crud.base import CRUDBase
 from app.models.booking import Booking
 from app.models.shift import Shift
+from app.models.task import Task
 from app.schemas.booking import BookingCreate, BookingUpdate
 
 
@@ -55,6 +56,7 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         with_shift: bool = False,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
+        event_id: uuid.UUID | None = None,
     ) -> list[Booking]:
         query = select(Booking).where(col(Booking.user_id) == user_id)
         if status:
@@ -75,6 +77,14 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
                         col(Booking.cancelled_shift_date) <= date_to,
                     )
                 )
+        if event_id is not None:
+            query = query.where(
+                col(Booking.shift_id).in_(
+                    select(col(Shift.id))
+                    .join(Task, col(Shift.task_id) == col(Task.id))
+                    .where(col(Task.event_id) == event_id)
+                )
+            )
         if with_shift:
             query = query.options(
                 selectinload(Booking.shift).selectinload(Shift.task)  # type: ignore[arg-type]
@@ -91,6 +101,7 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
         status: str | None = None,
         date_from: dt.date | None = None,
         date_to: dt.date | None = None,
+        event_id: uuid.UUID | None = None,
     ) -> int:
         query = (
             select(func.count())
@@ -115,6 +126,14 @@ class CRUDBooking(CRUDBase[Booking, BookingCreate, BookingUpdate]):
                         col(Booking.cancelled_shift_date) <= date_to,
                     )
                 )
+        if event_id is not None:
+            query = query.where(
+                col(Booking.shift_id).in_(
+                    select(col(Shift.id))
+                    .join(Task, col(Shift.task_id) == col(Task.id))
+                    .where(col(Task.event_id) == event_id)
+                )
+            )
         result = await db.execute(query)
         return result.scalar_one()
 

@@ -17,7 +17,7 @@ dev mode=dev_mode:
 
 # Start backend dev server directly (no Docker)
 dev-backend:
-    cd backend && uv run fastapi dev app/main.py --reload-exclude .venv
+    cd backend && uv run fastapi dev app/main.py --port 8787 --reload-exclude .venv
 
 # Start frontend dev server directly (no Docker)
 dev-frontend:
@@ -64,7 +64,10 @@ test-e2e *args:
 
 # ── Docker E2E (full stack) ──────────────────────────────────────
 
-# Run E2E tests against full Docker stack
+# Run E2E tests against full Docker stack. Any extra args (test paths, --grep,
+# --headed, --project=...) are forwarded to Playwright.
+#   just e2e tests/authenticated/tasks.spec.ts
+#   just e2e --grep "tasks" --headed
 e2e *args:
     node scripts/run-e2e-docker.mjs {{args}}
 
@@ -76,7 +79,10 @@ e2e-up:
 e2e-down:
     node scripts/run-e2e-docker.mjs --down
 
-# Re-run E2E tests without rebuilding or tearing down (stack must be running)
+# Re-run E2E tests against an already-running stack (started via `just e2e-up`).
+# Extra args are forwarded to Playwright — pass a spec path to run one test:
+#   just e2e-rerun tests/authenticated/tasks.spec.ts
+#   just e2e-rerun --grep "bookings"
 e2e-rerun *args:
     node scripts/run-e2e-docker.mjs --no-build --no-teardown {{args}}
 

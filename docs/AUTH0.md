@@ -57,9 +57,9 @@ auth0 apis create \
 auth0 apps create \
   --name "Your Project Web" \
   --type "spa" \
-  --callbacks "http://localhost:5173,http://localhost:5173/app/home" \
-  --logout-urls "http://localhost:5173" \
-  --web-origins "http://localhost:5173" \
+  --callbacks "http://localhost:5555,http://localhost:5555/app/home" \
+  --logout-urls "http://localhost:5555" \
+  --web-origins "http://localhost:5555" \
   --no-input \
   --json
 
@@ -164,9 +164,9 @@ If you need to update the URLs later:
 # Update SPA application URLs
 # IMPORTANT: Include /app/home callback - the frontend redirects users there after login
 auth0 apps update <YOUR_SPA_CLIENT_ID> \
-  --callbacks "http://localhost:5173,http://localhost:5173/app/home,https://your-production-domain.com,https://your-production-domain.com/app/home" \
-  --logout-urls "http://localhost:5173,https://your-production-domain.com" \
-  --web-origins "http://localhost:5173,https://your-production-domain.com"
+  --callbacks "http://localhost:5555,http://localhost:5555/app/home,https://your-production-domain.com,https://your-production-domain.com/app/home" \
+  --logout-urls "http://localhost:5555,https://your-production-domain.com" \
+  --web-origins "http://localhost:5555,https://your-production-domain.com"
 ```
 
 ### Using Dashboard
@@ -175,13 +175,13 @@ In Auth0 Application settings (SPA):
 
 Allowed Callback URLs:
 
-- `http://localhost:5173`
-- `http://localhost:5173/app/home`
+- `http://localhost:5555`
+- `http://localhost:5555/app/home`
 - `https://your-production-domain.com/app/home`
 
 Allowed Logout URLs:
 
-- `http://localhost:5173`
+- `http://localhost:5555`
 
 ### Using CLI
 
@@ -215,7 +215,7 @@ auth0 actions deploy <ACTION_ID>
 
 Allowed Web Origins:
 
-- `http://localhost:5173`
+- `http://localhost:5555`
 
 If you run on different hosts, add those too.
 
@@ -263,8 +263,8 @@ Frontend `frontend/.env`:
 VITE_AUTH0_DOMAIN=YOUR_TENANT.eu.auth0.com
 VITE_AUTH0_CLIENT_ID=YOUR_SPA_CLIENT_ID
 VITE_AUTH0_API_AUDIENCE=https://api.yourdomain.com
-VITE_AUTH0_CALLBACK_URL=http://localhost:5173
-VITE_API_URL=http://localhost:8000
+VITE_AUTH0_CALLBACK_URL=http://localhost:5555
+VITE_API_URL=http://localhost:8787
 ```
 
 ## 5. Verify

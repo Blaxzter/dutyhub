@@ -61,8 +61,8 @@ function handleNotificationClick(notification: (typeof notifications.value)[0]) 
     } else if (data.event_id) {
       emit('navigate')
       router.push({
-        name: 'event-detail',
-        params: { eventId: data.event_id as string },
+        name: 'event-settings',
+        query: { eventId: data.event_id as string },
       })
     } else if (data.booking_id) {
       emit('navigate')

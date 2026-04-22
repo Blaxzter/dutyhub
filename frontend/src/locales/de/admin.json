@@ -23,6 +23,10 @@
         "subtitle": "Demodaten zu Testzwecken generieren oder entfernen.",
         "title": "Demodaten"
     },
+    "events": {
+        "subtitle": "Veranstaltungen systemweit erstellen, bearbeiten und verwalten.",
+        "title": "Veranstaltungen verwalten"
+    },
     "reporting": {
         "apply": "Anwenden",
         "bookingsByMonth": {

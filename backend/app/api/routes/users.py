@@ -16,6 +16,8 @@ from app.api.deps import (
 )
 from app.core.config import settings
 from app.core.security import verify_password
+from app.crud.event import event as crud_event
+from app.crud.event_manager import event_manager as crud_egm
 from app.crud.site_settings import site_settings as crud_site_settings
 from app.crud.user import user as crud_user
 from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
@@ -32,7 +34,12 @@ from app.schemas.user import (
     UserRead,
     UserUpdate,
 )
-from app.schemas.users import ProfileInit, UserProfile, UserProfileUpdate
+from app.schemas.users import (
+    ProfileInit,
+    SelectedEventUpdate,
+    UserProfile,
+    UserProfileUpdate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -141,6 +148,35 @@ async def update_user_profile(
             if v is not None
         }
     )
+
+
+@router.put("/me/selected-event", response_model=UserProfile)
+async def update_selected_event(
+    body: SelectedEventUpdate,
+    current_user: CurrentUser,
+    *,
+    session: DBDep,
+) -> UserProfile:
+    """Set or clear the event that scopes this user's dashboard."""
+    if body.selected_event_id is not None:
+        event = await crud_event.get(
+            session, body.selected_event_id, raise_404_error=True
+        )
+        if event.status != "published" and not current_user.is_manager:
+            is_scoped = await crud_egm.is_manager(
+                session, user_id=current_user.id, event_id=event.id
+            )
+            if not is_scoped:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Event is not accessible",
+                )
+
+    current_user.selected_event_id = body.selected_event_id
+    session.add(current_user)
+    await session.flush()
+    await session.refresh(current_user)
+    return await _build_user_profile(current_user, session)
 
 
 @router.get("/approval-password-status")

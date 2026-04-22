@@ -82,27 +82,41 @@ const router = createRouter({
           },
         },
         {
-          path: 'events',
-          name: 'events',
-          component: () => import('@/views/events/EventsView.vue'),
+          path: 'availability',
+          name: 'availability',
+          component: () => import('@/views/events/AvailabilityView.vue'),
           meta: {
-            breadcrumbs: [{ title: 'Events', titleKey: 'duties.events.title' }],
+            breadcrumbs: [{ title: 'Availability', titleKey: 'duties.availability.title' }],
           },
         },
         {
-          path: 'events/:eventId/:section?',
-          name: 'event-detail',
-          component: () => import('@/views/events/EventDetailView.vue'),
+          path: 'print',
+          name: 'event-print',
+          component: () => import('@/views/events/PrintView.vue'),
           meta: {
-            routerViewKey: (route: { params: { eventId?: string } }) =>
-              `event-${route.params.eventId}`,
+            breadcrumbs: [{ title: 'Print', titleKey: 'duties.events.detail.nav.print' }],
+          },
+        },
+        {
+          path: 'event-settings',
+          name: 'event-settings',
+          component: () => import('@/views/events/EventSettingsView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
             breadcrumbs: [
-              {
-                title: 'Events',
-                titleKey: 'duties.events.title',
-                to: { name: 'events' },
-              },
               { title: 'Event Details', titleKey: 'duties.events.detail.title' },
+            ],
+          },
+        },
+        {
+          path: 'admin/events',
+          name: 'admin-events',
+          component: () => import('@/views/admin/AdminEventsView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
+            breadcrumbs: [
+              { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
+              { title: 'Manage Events', titleKey: 'admin.events.title' },
             ],
           },
         },
@@ -309,6 +323,12 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/app/select-event',
+      name: 'select-event',
+      component: () => import('@/views/events/SelectEventView.vue'),
+      beforeEnter: authGuard,
+    },
 
     // Catch-all route - redirect to 404 in no layout
     {
@@ -320,20 +340,27 @@ const router = createRouter({
 
 const normalizeRoles = (roles: string | string[]) => (Array.isArray(roles) ? roles : [roles])
 
+// Routes that bypass the "must have a selected event" guard
+const SELECTED_EVENT_EXEMPT_ROUTES = new Set<string>([
+  'select-event',
+  'admin-events',
+  'event-settings',
+  'admin-users',
+  'admin-demo-data',
+  'settings',
+  'notification-preferences',
+  'pending-approval',
+  'changelog',
+  'preauth-changelog',
+])
+
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
-
-  console.log('Auth0 isLoading:', authStore.auth0.isLoading)
 
   // Wait for Auth0 to finish loading before checking authentication
   while (authStore.auth0.isLoading) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
-
-  console.log('Checking access for route:', to.name)
-  // print auth store authenticated status and roles
-  console.log('User is authenticated:', authStore.isAuthenticated)
-  console.log('User roles:', authStore.roles)
 
   if (authStore.isAuthenticated) {
     try {
@@ -352,6 +379,18 @@ router.beforeEach(async (to) => {
     // Don't let active users visit the pending page
     if (authStore.isActive && to.name === 'pending-approval') {
       return { name: 'home' }
+    }
+
+    // Selected-event gate: force users without a valid selection into the picker
+    const routeName = typeof to.name === 'string' ? to.name : ''
+    const isExempt = SELECTED_EVENT_EXEMPT_ROUTES.has(routeName)
+    if (authStore.isActive && !isExempt) {
+      if (!authStore.selectedEventId) {
+        return { name: 'select-event', query: { mode: 'onboarding' } }
+      }
+      if (authStore.selectedEvent?.is_expired) {
+        return { name: 'select-event', query: { mode: 'expired' } }
+      }
     }
   }
 

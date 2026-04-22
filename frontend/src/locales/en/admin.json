@@ -23,6 +23,10 @@
         "subtitle": "Generate or remove demo data for testing purposes.",
         "title": "Demo Data"
     },
+    "events": {
+        "subtitle": "Create, edit, and manage all events across the system.",
+        "title": "Manage Events"
+    },
     "reporting": {
         "apply": "Apply",
         "bookingsByMonth": {

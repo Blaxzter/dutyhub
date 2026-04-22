@@ -129,6 +129,7 @@
         "draftBanner": "This event is a draft and is not visible to regular users. Change the status to \"Published\" to make it available.",
         "edit": "Edit Event",
         "empty": "No events found.",
+        "expired": "Expired",
         "fields": {
             "description": "Description",
             "endDate": "End Date",
@@ -144,6 +145,59 @@
         },
         "subtitle": "Browse upcoming task programmes",
         "title": "Events"
+    },
+    "selectEvent": {
+        "changeEvent": "Change event",
+        "empty": "No upcoming events are available. Please check back later or contact an organizer.",
+        "expired": {
+            "body": "The event you were working with has ended. Pick another to continue.",
+            "title": "Your event has ended"
+        },
+        "notifications": {
+            "finish": "Finish setup",
+            "phoneHint": "Used by organizers to reach you about your shifts.",
+            "phoneLabel": "Phone number",
+            "phonePlaceholder": "e.g. +49 151 23456789",
+            "phoneTitle": "Phone number",
+            "subtitle": "Choose how you'd like to hear from us.",
+            "title": "Notification preferences"
+        },
+        "pick": {
+            "continue": "Continue",
+            "createNew": "Create new event",
+            "current": "Current",
+            "selectAction": "Select this event",
+            "stats": "{tasks} task and {shifts} shift need you | {tasks} tasks and {shifts} shifts need you",
+            "subtitle": "Pick the event you want to work with.",
+            "title": "Select an event",
+            "upcomingTasks": "Upcoming tasks"
+        },
+        "success": "Selected event updated.",
+        "visual": {
+            "expiredHeadline": "Let's get you into the next event.",
+            "features": {
+                "coordBody": "Managers, helpers, and attendees stay on the same page.",
+                "coordTitle": "Coordinate together",
+                "scopedBody": "Tasks, shifts, and bookings all stay in the event you pick.",
+                "scopedTitle": "Focused on one event"
+            },
+            "footer": "One community, one focus — pick the event and WirkSam handles the rest.",
+            "onboardingHeadline": "Welcome. Pick the event you're here for.",
+            "step2": {
+                "features": {
+                    "controlBody": "Mute anything you don't want — global kill-switches per channel are always available.",
+                    "controlTitle": "You stay in control",
+                    "remindersBody": "We'll ping you before each shift starts so nothing slips past.",
+                    "remindersTitle": "Shift reminders",
+                    "updatesBody": "Hear about newly published shifts, schedule shifts, and cancellations that affect you.",
+                    "updatesTitle": "Schedule updates"
+                },
+                "headline": "Choose how you want to hear from us.",
+                "subhead": "Notifications keep you on top of your shifts and let organizers reach you when it matters. Pick any combination — email, push, Telegram, or phone."
+            },
+            "subhead": "WirkSam centers your experience around a single event so you don't have to hunt for the right list.",
+            "switchHeadline": "Switch to a different event."
+        }
     },
     "shifts": {
         "availability": "{current} / {max} booked",
