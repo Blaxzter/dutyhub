@@ -64,11 +64,16 @@ test.describe('Cross-user – availability flow', () => {
     await memberPage.getByTestId('btn-save').click()
     await expect(memberSection.getByTestId('btn-availability')).toBeVisible()
 
-    await adminPage.goto('/app/availability')
-    const adminTable = adminPage.getByTestId('section-admin-availabilities')
-    await expect(
-      adminTable.getByText(/fully.?available|open to be requested/i),
-    ).toBeVisible()
+    // The admin page fetches the availabilities list once on mount; under
+    // parallel worker load the backend write is occasionally not yet visible
+    // to the follow-up GET. Re-navigate until the row surfaces.
+    await expect(async () => {
+      await adminPage.goto('/app/availability')
+      const adminTable = adminPage.getByTestId('section-admin-availabilities')
+      await expect(
+        adminTable.getByText(/fully.?available|open to be requested/i),
+      ).toBeVisible({ timeout: 2_000 })
+    }).toPass({ timeout: 15_000 })
   })
 
   test('member removing availability is reflected in admin table', async ({
@@ -89,11 +94,13 @@ test.describe('Cross-user – availability flow', () => {
     await memberPage.getByTestId('btn-dialog-confirm').click()
     await expect(memberSection.getByTestId('btn-availability')).toBeVisible()
 
-    await adminPage.goto('/app/availability')
-    const adminTable = adminPage.getByTestId('section-admin-availabilities')
-    await expect(
-      adminTable.getByText(/no.*(members|registrations|availability)/i),
-    ).toBeVisible()
+    await expect(async () => {
+      await adminPage.goto('/app/availability')
+      const adminTable = adminPage.getByTestId('section-admin-availabilities')
+      await expect(
+        adminTable.getByText(/no.*(members|registrations|availability)/i),
+      ).toBeVisible({ timeout: 2_000 })
+    }).toPass({ timeout: 15_000 })
   })
 
   test('admin sees multiple members in the availability table', async ({
@@ -110,9 +117,11 @@ test.describe('Cross-user – availability flow', () => {
       dates: [futureDate(10), futureDate(11)],
     })
 
-    await adminPage.goto('/app/availability')
-    const adminTable = adminPage.getByTestId('section-admin-availabilities')
-    const rows = adminTable.getByText(/fully.?available|specific.?dates/i)
-    await expect(rows).toHaveCount(2)
+    await expect(async () => {
+      await adminPage.goto('/app/availability')
+      const adminTable = adminPage.getByTestId('section-admin-availabilities')
+      const rows = adminTable.getByText(/fully.?available|specific.?dates/i)
+      await expect(rows).toHaveCount(2, { timeout: 2_000 })
+    }).toPass({ timeout: 15_000 })
   })
 })

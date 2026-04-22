@@ -19,8 +19,8 @@
  *   node scripts/run-e2e-docker.mjs --no-teardown
  */
 
-import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { execSync, spawn } from 'node:child_process';
+import { createWriteStream, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import http from 'node:http';
@@ -238,17 +238,50 @@ try {
         PLAYWRIGHT_HTML_OPEN: 'never',
     };
 
-    const quote = (s) => (/[\s"'`$|<>()&;*?!]/.test(s) ? `"${s.replace(/"/g, '\\"')}"` : s);
-    const extraArgs = playwrightArgs.map(quote).join(' ');
-    const cmd = extraArgs ? `npx playwright test ${extraArgs}` : 'npx playwright test';
+    // Tee Playwright output to both the terminal and a log file so failures
+    // can be diagnosed after the fact without re-running the suite.
+    mkdirSync(LOGS_DIR, { recursive: true });
+    const latestLog = resolve(LOGS_DIR, 'latest.log');
+
     console.log(`\n==> Running Playwright tests ...`);
-    const code = runForExitCode(cmd, { cwd: frontendDir, env: testEnv });
+    console.log(`    Logging to: ${latestLog}`);
+    const pwArgs = ['playwright', 'test', ...playwrightArgs];
+    console.log(`  $ npx ${pwArgs.join(' ')}`);
+
+    const code = await new Promise((resolvePromise) => {
+        const logStream = createWriteStream(latestLog);
+        const child = spawn('npx', pwArgs, {
+            cwd: frontendDir,
+            env: testEnv,
+            shell: true,
+            stdio: ['ignore', 'pipe', 'pipe'],
+        });
+        child.stdout.on('data', (chunk) => {
+            process.stdout.write(chunk);
+            logStream.write(chunk);
+        });
+        child.stderr.on('data', (chunk) => {
+            process.stderr.write(chunk);
+            logStream.write(chunk);
+        });
+        child.on('close', (exitCode) => {
+            logStream.end();
+            resolvePromise(exitCode ?? 1);
+        });
+        child.on('error', (err) => {
+            logStream.write(`\n[spawn error] ${err.message}\n`);
+            logStream.end();
+            resolvePromise(1);
+        });
+    });
     if (code !== 0) failed = true;
 
     if (failed) {
         console.log('\n==> Tests FAILED');
+        console.log(`    Full log: ${latestLog}`);
     } else {
         console.log('\n==> All tests passed');
+        console.log(`    Full log: ${latestLog}`);
     }
 } finally {
     if (!noTeardown && !upOnly) {
