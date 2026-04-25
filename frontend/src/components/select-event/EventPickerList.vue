@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, Plus } from 'lucide-vue-next'
+import { ArrowRight, Plus } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -60,10 +60,8 @@ const { t } = useI18n()
         class="cursor-pointer border-dashed transition-colors hover:border-primary"
         @click="$emit('openCreate')"
       >
-        <CardContent
-          class="flex items-center justify-center gap-2 p-5 text-muted-foreground"
-        >
-          <Plus class="h-5 w-5" />
+        <CardContent class="flex items-center justify-center gap-2 p-5 text-muted-foreground">
+          <Plus class="h-5 w-5" animateOnHover triggerTarget="parent" />
           <span class="text-sm font-medium">
             {{ t('duties.selectEvent.pick.createNew') }}
           </span>
@@ -77,7 +75,7 @@ const { t } = useI18n()
           @click="$emit('commit')"
         >
           {{ t('duties.selectEvent.pick.continue') }}
-          <ArrowRight class="ml-2 h-4 w-4" />
+          <ArrowRight class="ml-2 h-4 w-4" animateOnHover triggerTarget="parent" />
         </Button>
       </div>
     </div>

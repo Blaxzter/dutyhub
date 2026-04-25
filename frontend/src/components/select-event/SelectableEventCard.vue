@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDays, Check } from 'lucide-vue-next'
+import { CalendarDays, Check } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'
@@ -44,7 +44,7 @@ const { t } = useI18n()
           </Badge>
         </div>
         <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <CalendarDays class="h-4 w-4 shrink-0" />
+          <CalendarDays class="h-4 w-4 shrink-0" animateOnHover triggerTarget="parent" />
           <span>
             {{ formatDate(props.event.start_date) }} – {{ formatDate(props.event.end_date) }}
           </span>
@@ -73,7 +73,13 @@ const { t } = useI18n()
         ]"
         aria-hidden="true"
       >
-        <Check v-if="props.isPending" class="h-5 w-5" :stroke-width="2.5" />
+        <Check
+          v-if="props.isPending"
+          class="h-5 w-5"
+          :stroke-width="2.5"
+          animateOnHover
+          triggerTarget="parent"
+        />
       </div>
     </CardContent>
   </Card>

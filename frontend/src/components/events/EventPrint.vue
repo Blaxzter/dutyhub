@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { List, Printer } from 'lucide-vue-next'
+import { List } from '@respeak/lucide-motion-vue'
+import { Printer } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import Button from '@/components/ui/button/Button.vue'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 const props = defineProps<{
   eventId: string
@@ -44,7 +39,7 @@ const router = useRouter()
             })
           "
         >
-          <List class="mr-2 h-4 w-4" />
+          <List class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
           {{ t('print.overview') }}
         </Button>
         <Button

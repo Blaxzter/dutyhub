@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut, Moon, Sun } from '@respeak/lucide-motion-vue'
 import { useColorMode } from '@vueuse/core'
-import { BadgeCheck, Bell, ChevronsUpDown, Globe, LogOut, Moon, Sun } from 'lucide-vue-next'
+import { Globe } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -81,7 +82,7 @@ const initials = computed(() => {
               <span class="truncate font-medium">{{ displayName }}</span>
               <span v-if="displayEmail" class="truncate text-xs">{{ displayEmail }}</span>
             </div>
-            <ChevronsUpDown class="ml-auto size-4" />
+            <ChevronsUpDown class="ml-auto size-4" animateOnHover triggerTarget="parent" />
           </SidebarMenuButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -108,8 +109,8 @@ const initials = computed(() => {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem @click="mode = mode === 'dark' ? 'light' : 'dark'">
-              <Sun v-if="mode === 'dark'" />
-              <Moon v-else />
+              <Sun v-if="mode === 'dark'" animateOnHover triggerTarget="parent" />
+              <Moon v-else animateOnHover triggerTarget="parent" />
               {{
                 mode === 'dark'
                   ? $t('navigation.user.actions.switchToLight')
@@ -123,14 +124,14 @@ const initials = computed(() => {
               data-testid="nav-user-settings"
               @click="$router.push({ name: 'settings' })"
             >
-              <BadgeCheck />
+              <BadgeCheck animateOnHover triggerTarget="parent" />
               {{ $t('navigation.user.actions.account') }}
             </DropdownMenuItem>
             <DropdownMenuItem
               data-testid="nav-user-notifications"
               @click="$router.push({ name: 'notification-preferences' })"
             >
-              <Bell />
+              <Bell animateOnHover triggerTarget="parent" />
               {{ $t('navigation.user.actions.notifications') }}
             </DropdownMenuItem>
             <DropdownMenuItem @click="$router.push({ name: 'landing' })">
@@ -140,7 +141,7 @@ const initials = computed(() => {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem data-testid="nav-user-logout" @click="authStore.logout">
-            <LogOut />
+            <LogOut animateOnHover triggerTarget="parent" />
             {{ $t('navigation.user.actions.logout') }}
           </DropdownMenuItem>
         </DropdownMenuContent>

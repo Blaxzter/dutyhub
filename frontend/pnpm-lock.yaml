@@ -17,6 +17,9 @@ importers:
       '@internationalized/date':
         specifier: ^3.12.1
         version: 3.12.1
+      '@respeak/lucide-motion-vue':
+        specifier: ^0.4.1
+        version: 0.4.1(motion-v@2.2.1(@vueuse/core@14.2.1(vue@3.5.33(typescript@6.0.3)))(react@19.1.0)(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3))
       '@tailwindcss/vite':
         specifier: ^4.2.4
         version: 4.2.4(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -722,6 +725,16 @@ packages:
 
   '@polka/url@1.0.0-next.29':
     resolution: {integrity: sha512-wwQAWhWSuHaag8c4q/KN/vCoeOJYshAIvMQwD4GpSb3OiZklFfvAgmj0VCBBImRpuF/aFgIRzllXlVX93Jevww==}
+
+  '@respeak/lucide-motion-vue@0.4.1':
+    resolution: {integrity: sha512-ggCtb6iNgxkabmMBoqTcPjITMI/UK+weFZeTV4gsjC+sFGFgwEkU6tJVZUwF1dDT/coZ00VRvlxE0RFHD+hueg==}
+    peerDependencies:
+      '@nuxt/kit': ^3.0.0
+      motion-v: ^2
+      vue: ^3.3
+    peerDependenciesMeta:
+      '@nuxt/kit':
+        optional: true
 
   '@rolldown/binding-android-arm64@1.0.0-rc.16':
     resolution: {integrity: sha512-rhY3k7Bsae9qQfOtph2Pm2jZEA+s8Gmjoz4hhmx70K9iMQ/ddeae+xhRQcM5IuVx5ry1+bGfkvMn7D6MJggVSA==}
@@ -3768,6 +3781,11 @@ snapshots:
       playwright: 1.59.1
 
   '@polka/url@1.0.0-next.29': {}
+
+  '@respeak/lucide-motion-vue@0.4.1(motion-v@2.2.1(@vueuse/core@14.2.1(vue@3.5.33(typescript@6.0.3)))(react@19.1.0)(vue@3.5.33(typescript@6.0.3)))(vue@3.5.33(typescript@6.0.3))':
+    dependencies:
+      motion-v: 2.2.1(@vueuse/core@14.2.1(vue@3.5.33(typescript@6.0.3)))(react@19.1.0)(vue@3.5.33(typescript@6.0.3))
+      vue: 3.5.33(typescript@6.0.3)
 
   '@rolldown/binding-android-arm64@1.0.0-rc.16':
     optional: true

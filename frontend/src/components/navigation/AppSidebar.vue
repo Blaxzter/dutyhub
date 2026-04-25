@@ -1,18 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { type Component, computed, onMounted } from 'vue'
 
+import { Bell, CalendarCheck, CalendarDays, ChartColumn, Users } from '@respeak/lucide-motion-vue'
 import { useColorMode } from '@vueuse/core'
-import {
-  BarChart3,
-  Bell,
-  BookCheck,
-  CalendarCheck,
-  CalendarDays,
-  CalendarRange,
-  Database,
-  House,
-  Users,
-} from 'lucide-vue-next'
+import { BookCheck, CalendarRange, Database, House } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
@@ -175,7 +166,8 @@ const navManager = computed(() => {
     items.push({
       title: 'Reports',
       titleKey: 'admin.reporting.title',
-      icon: BarChart3,
+      icon: ChartColumn,
+      animation: 'default-loop',
       routeName: 'reporting',
     })
   }
@@ -186,7 +178,7 @@ const navAdmin = computed(() => {
   const items: {
     title: string
     titleKey: string
-    icon: typeof Users
+    icon: Component
     routeName: string
   }[] = []
   if (authStore.isAdmin || authStore.isTaskManager) {
@@ -260,7 +252,7 @@ const navAdmin = computed(() => {
             as-child
           >
             <RouterLink :to="{ name: 'notifications' }" data-testid="sidebar-link-notifications">
-              <Bell />
+              <Bell animateOnHover triggerTarget="parent" />
               <span>{{ t('notifications.title') }}</span>
               <span
                 v-if="notificationStore.hasUnread"

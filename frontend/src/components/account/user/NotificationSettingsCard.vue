@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bell, ChevronRight } from 'lucide-vue-next'
+import { Bell, ChevronRight } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -18,7 +18,7 @@ function goToPreferences() {
   <Card>
     <CardHeader>
       <CardTitle class="flex items-center gap-2">
-        <Bell class="h-5 w-5" />
+        <Bell class="h-5 w-5" animateOnHover triggerTarget="parent" />
         {{ t('notifications.settings.title') }}
       </CardTitle>
       <CardDescription>
@@ -28,7 +28,7 @@ function goToPreferences() {
     <CardContent>
       <Button variant="outline" class="w-full justify-between" @click="goToPreferences">
         {{ t('notifications.settings.manage') }}
-        <ChevronRight class="h-4 w-4" />
+        <ChevronRight class="h-4 w-4" animateOnHover triggerTarget="parent" animation="default-loop" />
       </Button>
     </CardContent>
   </Card>

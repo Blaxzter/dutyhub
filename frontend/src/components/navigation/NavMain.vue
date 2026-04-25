@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ChevronRight, type LucideIcon } from 'lucide-vue-next'
+import { type Component } from 'vue'
+
+import { ChevronRight } from '@respeak/lucide-motion-vue'
+import { type LucideIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
 
@@ -42,7 +45,9 @@ export interface NavItem {
   titleKey?: string
   url?: string
   routeName?: string
-  icon?: LucideIcon
+  icon?: LucideIcon | Component
+  /** Named variant for motion-icon items whose `default` animation doesn't reset cleanly on mouseleave (e.g. `chart-column`). */
+  animation?: string
   isActive?: boolean
   items?: NavSubItem[]
 }
@@ -100,7 +105,13 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
               :to="{ name: item.routeName }"
               :data-testid="'sidebar-link-' + item.routeName"
             >
-              <component :is="item.icon" v-if="item.icon" />
+              <component
+                :is="item.icon"
+                v-if="item.icon"
+                animateOnHover
+                triggerTarget="parent"
+                :animation="item.animation"
+              />
               <span>{{ resolveTitle(item) }}</span>
               <span
                 v-if="isRouteActive(item.routeName)"
@@ -108,7 +119,13 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
               />
             </RouterLink>
             <a v-else :href="item.url">
-              <component :is="item.icon" v-if="item.icon" />
+              <component
+                :is="item.icon"
+                v-if="item.icon"
+                animateOnHover
+                triggerTarget="parent"
+                :animation="item.animation"
+              />
               <span>{{ resolveTitle(item) }}</span>
             </a>
           </SidebarMenuButton>
@@ -125,7 +142,14 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
                   :data-testid="'sidebar-link-' + item.routeName"
                   class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-l-md p-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
                 >
-                  <component :is="item.icon" v-if="item.icon" class="size-4 shrink-0" />
+                  <component
+                    :is="item.icon"
+                    v-if="item.icon"
+                    class="size-4 shrink-0"
+                    animateOnHover
+                    triggerTarget="closest:a, button"
+                    :animation="item.animation"
+                  />
                   <span class="truncate">{{ resolveTitle(item) }}</span>
                 </RouterLink>
               </template>
@@ -137,6 +161,9 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
                   >
                     <ChevronRight
                       class="size-4 transition-transform duration-200 event-data-[state=open]/collapsible:rotate-90"
+                      animateOnHover
+                      triggerTarget="parent"
+                      animation="default-loop"
                     />
                   </button>
                 </CollapsibleTrigger>

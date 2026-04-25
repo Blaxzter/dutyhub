@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { Check } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { Check } from 'lucide-vue-next'
 import type { CheckboxRootEmits, CheckboxRootProps } from 'reka-ui'
 import { CheckboxIndicator, CheckboxRoot, useForwardPropsEmits } from 'reka-ui'
 
@@ -32,7 +32,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       class="flex items-center justify-center text-current transition-none"
     >
       <slot>
-        <Check class="size-3.5" />
+        <Check class="size-3.5" animateOnHover triggerTarget="parent" />
       </slot>
     </CheckboxIndicator>
   </CheckboxRoot>

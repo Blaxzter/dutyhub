@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2 } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -58,7 +58,7 @@ const authStore = useAuthStore()
             class="h-8 w-8"
             @click.stop="emit('delete', task)"
           >
-            <Trash2 class="h-4 w-4 text-destructive" />
+            <Trash2 class="h-4 w-4 text-destructive" animateOnHover triggerTarget="parent" />
           </Button>
         </div>
       </CardContent>

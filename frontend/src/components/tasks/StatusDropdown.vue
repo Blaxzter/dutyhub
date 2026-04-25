@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, ChevronDown } from 'lucide-vue-next'
+import { Check, ChevronDown } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'
@@ -34,7 +34,7 @@ const statuses = ['draft', 'published', 'archived'] as const
         <button class="inline-flex cursor-pointer items-center gap-1">
           <Badge :variant="statusVariant(status)">
             {{ t(`${i18nPrefix}.${status ?? 'draft'}`) }}
-            <ChevronDown class="ml-1 h-3 w-3" />
+            <ChevronDown class="ml-1 h-3 w-3" animateOnHover triggerTarget="parent" animation="default-loop" />
           </Badge>
         </button>
       </DropdownMenuTrigger>
@@ -45,7 +45,7 @@ const statuses = ['draft', 'published', 'archived'] as const
           :disabled="status === s"
           @click="emit('change', s)"
         >
-          <Check v-if="status === s" class="mr-2 h-4 w-4" />
+          <Check v-if="status === s" class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
           <span v-else class="mr-2 h-4 w-4" />
           {{ t(`${i18nPrefix}.${s}`) }}
         </DropdownMenuItem>

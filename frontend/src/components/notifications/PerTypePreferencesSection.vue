@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Mail, MessageCircle, Smartphone } from 'lucide-vue-next'
+import { MessageCircle } from '@respeak/lucide-motion-vue'
+import { Mail, Smartphone } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import type { NotificationType } from '@/stores/notification'
@@ -61,7 +62,7 @@ function getPreference(typeId: string) {
             <span class="hidden sm:inline">{{ t('notifications.channels.push') }}</span>
           </div>
           <div class="flex w-10 sm:w-24 items-center justify-center gap-1">
-            <MessageCircle class="h-3.5 w-3.5 shrink-0" />
+            <MessageCircle class="h-3.5 w-3.5 shrink-0" animateOnHover triggerTarget="parent" />
             <span class="hidden sm:inline">{{ t('notifications.channels.telegram') }}</span>
           </div>
         </div>

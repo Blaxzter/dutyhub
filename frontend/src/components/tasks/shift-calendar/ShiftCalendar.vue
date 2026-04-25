@@ -8,7 +8,7 @@ import {
   ChevronRight,
   Clock,
   List,
-} from 'lucide-vue-next'
+} from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -19,13 +19,13 @@ import ShiftCalendarWeek from './ShiftCalendarWeek.vue'
 import type {
   BookingCalendarItem,
   CalendarDay as CalendarDayType,
-  CalendarTask,
   CalendarEvent,
+  CalendarTask,
   CalendarWeek,
   DateRange,
   ViewMode,
 } from './types'
-import { EMPTY_DAY, computeTaskBars, computeEventBars, dateToStr } from './types'
+import { EMPTY_DAY, computeEventBars, computeTaskBars, dateToStr } from './types'
 
 const props = withDefaults(
   defineProps<{
@@ -306,7 +306,7 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
         class="flex-1 rounded-none border-0 sm:flex-none"
         @click="viewMode = 'month'"
       >
-        <CalendarDays class="mr-1.5 h-4 w-4" />
+        <CalendarDays class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ t('duties.tasks.calendar.views.month') }}
       </Button>
       <Button
@@ -315,7 +315,7 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
         class="flex-1 rounded-none border-0 border-l sm:flex-none"
         @click="viewMode = 'week'"
       >
-        <List class="mr-1.5 h-4 w-4" />
+        <List class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ t('duties.tasks.calendar.views.week') }}
       </Button>
       <Button
@@ -324,7 +324,7 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
         class="flex-1 rounded-none border-0 border-l sm:flex-none"
         @click="viewMode = 'day'"
       >
-        <Clock class="mr-1.5 h-4 w-4" />
+        <Clock class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ t('duties.tasks.calendar.views.day') }}
       </Button>
     </div>
@@ -340,7 +340,7 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
         class="hidden h-8 w-8 sm:inline-flex"
         @click="navigatePrev"
       >
-        <ChevronLeft class="h-4 w-4" />
+        <ChevronLeft class="h-4 w-4" animateOnHover triggerTarget="parent" animation="default-loop" />
       </Button>
       <Button
         variant="outline"
@@ -353,6 +353,9 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
         <ChevronDown
           class="h-4 w-4 shrink-0 transition-transform duration-200"
           :class="pickerOpen ? 'rotate-180' : ''"
+          animateOnHover
+          triggerTarget="parent"
+          animation="default-loop"
         />
       </Button>
       <Button
@@ -361,7 +364,7 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
         class="hidden h-8 w-8 sm:inline-flex"
         @click="navigateNext"
       >
-        <ChevronRight class="h-4 w-4" />
+        <ChevronRight class="h-4 w-4" animateOnHover triggerTarget="parent" animation="default-loop" />
       </Button>
     </div>
   </div>
@@ -381,7 +384,11 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
       </div>
       <button
         v-else
-        :ref="(el) => { if (entry.isActive) activeMonthBtn = el as HTMLElement }"
+        :ref="
+          (el) => {
+            if (entry.isActive) activeMonthBtn = el as HTMLElement
+          }
+        "
         type="button"
         class="shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-all"
         :class="

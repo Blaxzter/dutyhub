@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 
-import { ArrowRight } from 'lucide-vue-next'
+import { ArrowRight } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -117,7 +117,7 @@ onMounted(() => {
       @click="$emit('finish')"
     >
       {{ t('duties.selectEvent.notifications.finish') }}
-      <ArrowRight class="ml-2 h-4 w-4" />
+      <ArrowRight class="ml-2 h-4 w-4" animateOnHover triggerTarget="parent" />
     </Button>
   </div>
 </template>

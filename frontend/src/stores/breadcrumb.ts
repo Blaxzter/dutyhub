@@ -55,9 +55,7 @@ export const useBreadcrumbStore = defineStore('breadcrumb', () => {
     }
   }
 
-  const generateBreadcrumbsFromRoute = (
-    route: RouteLocationNormalizedLoaded,
-  ): BreadcrumbItem[] => {
+  const generateBreadcrumbsFromRoute = (route: RouteLocationNormalizedLoaded): BreadcrumbItem[] => {
     const items: BreadcrumbItem[] = []
     const pathSegments = route.path.split('/').filter((segment) => segment !== '')
 

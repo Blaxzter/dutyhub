@@ -73,6 +73,9 @@
               <ChevronRightIcon
                 class="h-4 w-4 transition-transform"
                 :class="{ 'rotate-90': showManualUrl }"
+                animateOnHover
+                triggerTarget="parent"
+                animation="default-loop"
               />
               {{ t('user.settings.calendarSync.manual.title') }}
             </Button>
@@ -87,8 +90,13 @@
                 <div class="flex gap-2">
                   <Input :model-value="feedSettings.feed_url" readonly class="font-mono text-xs" />
                   <Button variant="outline" size="icon" class="shrink-0" @click="copyUrl">
-                    <CheckIcon v-if="copied" class="h-4 w-4 text-green-600" />
-                    <CopyIcon v-else class="h-4 w-4" />
+                    <CheckIcon
+                      v-if="copied"
+                      class="h-4 w-4 text-green-600"
+                      animateOnHover
+                      triggerTarget="parent"
+                    />
+                    <CopyIcon v-else class="h-4 w-4" animateOnHover triggerTarget="parent" />
                   </Button>
                 </div>
               </div>
@@ -126,7 +134,7 @@
                 <Dialog v-model:open="showRegenerateDialog">
                   <DialogTrigger as-child>
                     <Button variant="outline" size="sm">
-                      <RefreshCwIcon class="h-4 w-4 mr-2" />
+                      <RefreshCwIcon class="h-4 w-4 mr-2" animateOnHover triggerTarget="parent" />
                       {{ t('user.settings.calendarSync.regenerate') }}
                     </Button>
                   </DialogTrigger>
@@ -172,13 +180,13 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
-  CalendarIcon,
-  CheckIcon,
-  ChevronRightIcon,
-  CopyIcon,
-  LoaderIcon,
-  RefreshCwIcon,
-} from 'lucide-vue-next'
+  Check as CheckIcon,
+  ChevronRight as ChevronRightIcon,
+  Copy as CopyIcon,
+  Loader as LoaderIcon,
+  RefreshCw as RefreshCwIcon,
+} from '@respeak/lucide-motion-vue'
+import { CalendarIcon } from 'lucide-vue-next'
 import { storeToRefs } from 'pinia'
 import { siApple, siGoogle } from 'simple-icons'
 import { useI18n } from 'vue-i18n'

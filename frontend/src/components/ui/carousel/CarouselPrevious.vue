@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft } from 'lucide-vue-next'
+import { ArrowLeft } from '@respeak/lucide-motion-vue'
 
 import type { ButtonVariants } from '@/components/ui/button'
 import { Button } from '@/components/ui/button'
@@ -43,7 +43,7 @@ const { orientation, canScrollPrev, scrollPrev } = useCarousel()
     @click="scrollPrev"
   >
     <slot>
-      <ArrowLeft />
+      <ArrowLeft animateOnHover triggerTarget="parent" />
       <span class="sr-only">Previous Slide</span>
     </slot>
   </Button>

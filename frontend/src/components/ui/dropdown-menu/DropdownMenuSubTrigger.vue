@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { ChevronRight } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { ChevronRight } from 'lucide-vue-next'
 import { DropdownMenuSubTrigger, type DropdownMenuSubTriggerProps, useForwardProps } from 'reka-ui'
 
 import { cn } from '@/lib/utils'
@@ -27,6 +27,6 @@ const forwardedProps = useForwardProps(delegatedProps)
     "
   >
     <slot />
-    <ChevronRight class="ml-auto size-4" />
+    <ChevronRight class="ml-auto size-4" animateOnHover triggerTarget="parent" animation="default-loop" />
   </DropdownMenuSubTrigger>
 </template>

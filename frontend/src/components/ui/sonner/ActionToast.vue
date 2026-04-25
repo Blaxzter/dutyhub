@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { TriangleAlert, X } from 'lucide-vue-next'
+import { X } from '@respeak/lucide-motion-vue'
+import { TriangleAlert } from 'lucide-vue-next'
 
 import { Button } from '@/components/ui/button'
 
@@ -31,7 +32,7 @@ function handleAction(onAction: () => void) {
         class="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
         @click="emit('closeToast')"
       >
-        <X class="h-4 w-4" />
+        <X class="h-4 w-4" animateOnHover triggerTarget="parent" />
       </button>
     </div>
     <div class="flex gap-2 pl-6.5">

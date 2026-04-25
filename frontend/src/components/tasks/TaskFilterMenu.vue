@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { Filter, RotateCcw } from 'lucide-vue-next'
+import { RotateCcw } from '@respeak/lucide-motion-vue'
+import { Filter } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useTaskFiltersStore } from '@/stores/eventFilters'
@@ -76,7 +77,7 @@ async function handleVisibleMonth(range: { from: string; to: string }) {
               class="h-auto px-2 py-1 text-xs"
               @click="filters.resetFilters()"
             >
-              <RotateCcw class="mr-1 h-3 w-3" />
+              <RotateCcw class="mr-1 h-3 w-3" animateOnHover triggerTarget="parent" />
               {{ t('duties.tasks.filters.reset') }}
             </Button>
           </div>

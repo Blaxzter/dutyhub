@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Bell, BookCheck, CalendarDays } from 'lucide-vue-next'
+import { Bell, CalendarDays } from '@respeak/lucide-motion-vue'
+import { BookCheck } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 
@@ -11,13 +12,7 @@ const { t } = useI18n()
 const route = useRoute()
 const notificationStore = useNotificationStore()
 
-const TASK_ROUTES = new Set([
-  'tasks',
-  'task-create',
-  'task-edit',
-  'task-detail',
-  'task-add-shifts',
-])
+const TASK_ROUTES = new Set(['tasks', 'task-create', 'task-edit', 'task-detail', 'task-add-shifts'])
 const BOOKING_ROUTES = new Set(['my-bookings', 'booking-detail'])
 const INBOX_ROUTES = new Set(['notifications'])
 
@@ -48,7 +43,7 @@ const notificationDisplayCount = computed(() => {
         activeTab === 'tasks' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
       "
     >
-      <CalendarDays class="size-5" />
+      <CalendarDays class="size-5" animateOnHover triggerTarget="parent" />
       <span>{{ t('navigation.mobileBottomNav.tasks') }}</span>
     </RouterLink>
 
@@ -73,7 +68,7 @@ const notificationDisplayCount = computed(() => {
       "
     >
       <div class="relative">
-        <Bell class="size-5" />
+        <Bell class="size-5" animateOnHover triggerTarget="parent" />
         <span
           v-if="notificationStore.hasUnread"
           class="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-700 px-1 text-[10px] font-bold text-white"

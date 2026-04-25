@@ -3,7 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { ArrowLeft, Clock, Info, RefreshCw } from 'lucide-vue-next'
+import { ArrowLeft, Clock, RefreshCw } from '@respeak/lucide-motion-vue'
+import { Info } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -39,7 +40,7 @@ import Textarea from '@/components/ui/textarea/Textarea.vue'
 import ScheduleConfigForm from '@/components/tasks/ScheduleConfigForm.vue'
 import ShiftPreviewGrid from '@/components/tasks/ShiftPreviewGrid.vue'
 
-import type { ShiftRead, TaskRead, ShiftBatchRead } from '@/client/types.gen'
+import type { ShiftBatchRead, ShiftRead, TaskRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -487,7 +488,7 @@ onMounted(loadTask)
           class="-ml-2 max-xl:hidden"
           @click="router.push({ name: 'task-detail', params: { eventId: eventId } })"
         >
-          <ArrowLeft class="mr-1.5 h-4 w-4" />
+          <ArrowLeft class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
           {{ t('common.actions.back') }}
         </Button>
         <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
@@ -508,9 +509,7 @@ onMounted(loadTask)
       <Card v-if="!isBatchMode">
         <CardHeader>
           <CardTitle>{{ t('duties.tasks.createView.sections.details') }}</CardTitle>
-          <CardDescription>{{
-            t('duties.tasks.createView.sections.detailsDesc')
-          }}</CardDescription>
+          <CardDescription>{{ t('duties.tasks.createView.sections.detailsDesc') }}</CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="space-y-2">
@@ -580,7 +579,7 @@ onMounted(loadTask)
       <Card data-testid="section-schedule">
         <CardHeader>
           <div class="flex items-center gap-3">
-            <Clock class="h-5 w-5 text-primary" />
+            <Clock class="h-5 w-5 text-primary" animateOnHover triggerTarget="parent" />
             <div>
               <CardTitle>{{ t('duties.tasks.createView.sections.schedule') }}</CardTitle>
               <CardDescription>{{
@@ -649,7 +648,12 @@ onMounted(loadTask)
           {{ t('common.actions.cancel') }}
         </Button>
         <Button data-testid="btn-submit" :disabled="!isValid || submitting" @click="handleSubmit">
-          <RefreshCw v-if="scheduleChanged" class="mr-2 h-4 w-4" />
+          <RefreshCw
+            v-if="scheduleChanged"
+            class="mr-2 h-4 w-4"
+            animateOnHover
+            triggerTarget="parent"
+          />
           {{
             submitting
               ? t('duties.tasks.editView.saving')

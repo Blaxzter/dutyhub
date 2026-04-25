@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 
-import { CalendarDays, MapPin, Tag } from 'lucide-vue-next'
+import { CalendarDays, MapPin } from '@respeak/lucide-motion-vue'
+import { Tag } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
@@ -14,11 +15,11 @@ import PrintToolbar from '@/components/print/PrintToolbar.vue'
 import QrCode from '@/components/print/QrCode.vue'
 
 import type {
+  ShiftBatchRead,
   ShiftListResponse,
   ShiftRead,
   TaskBookingEntry,
   TaskRead,
-  ShiftBatchRead,
 } from '@/client/types.gen'
 import { formatDate } from '@/lib/format'
 
@@ -305,11 +306,11 @@ onMounted(async () => {
                     class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground"
                   >
                     <span class="flex items-center gap-1">
-                      <CalendarDays class="h-4 w-4" />
+                      <CalendarDays class="h-4 w-4" animateOnHover triggerTarget="parent" />
                       {{ formatDate(task.start_date) }} – {{ formatDate(task.end_date) }}
                     </span>
                     <span v-if="task.location" class="flex items-center gap-1">
-                      <MapPin class="h-4 w-4" />
+                      <MapPin class="h-4 w-4" animateOnHover triggerTarget="parent" />
                       {{ task.location }}
                     </span>
                     <span v-if="task.category" class="flex items-center gap-1">

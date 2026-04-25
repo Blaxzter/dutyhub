@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { ChevronRight as ChevronRightIcon } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { ChevronRightIcon } from 'lucide-vue-next'
 import type { PaginationNextProps } from 'reka-ui'
 import { PaginationNext, useForwardProps } from 'reka-ui'
 
@@ -35,7 +35,7 @@ const forwarded = useForwardProps(delegatedProps)
   >
     <slot>
       <span class="hidden sm:block">Next</span>
-      <ChevronRightIcon />
+      <ChevronRightIcon animateOnHover triggerTarget="parent" animation="default-loop" />
     </slot>
   </PaginationNext>
 </template>

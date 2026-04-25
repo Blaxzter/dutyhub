@@ -51,11 +51,7 @@ watch(
           }}
         </DialogDescription>
       </DialogHeader>
-      <Textarea
-        v-model="reason"
-        :placeholder="t('admin.users.rejectReasonPlaceholder')"
-        rows="3"
-      />
+      <Textarea v-model="reason" :placeholder="t('admin.users.rejectReasonPlaceholder')" rows="3" />
       <DialogFooter>
         <Button variant="outline" @click="emit('update:open', false)">
           {{ t('common.actions.cancel') }}

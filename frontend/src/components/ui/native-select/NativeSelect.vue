@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { ChevronDown as ChevronDownIcon } from '@respeak/lucide-motion-vue'
 import { reactiveOmit, useVModel } from '@vueuse/core'
-import { ChevronDownIcon } from 'lucide-vue-next'
 import type { AcceptableValue } from 'reka-ui'
 
 import { cn } from '@/lib/utils'
@@ -52,6 +52,9 @@ const delegatedProps = reactiveOmit(props, 'class')
       class="text-muted-foreground pointer-tasks-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 opacity-50 select-none"
       aria-hidden="true"
       data-slot="native-select-icon"
+      animateOnHover
+      triggerTarget="parent"
+      animation="default-loop"
     />
   </div>
 </template>

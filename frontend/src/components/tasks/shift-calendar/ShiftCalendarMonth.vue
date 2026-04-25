@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
-import TaskBars from './TaskBars.vue'
 import EventBars from './EventBars.vue'
+import TaskBars from './TaskBars.vue'
 import type {
   BookingCalendarItem,
   CalendarDay,
-  CalendarTask,
   CalendarEvent,
+  CalendarTask,
   CalendarWeek,
 } from './types'
 import { isMultiDayTask, isToday } from './types'
@@ -161,14 +161,10 @@ const { t } = useI18n()
               </template>
 
               <div
-                v-if="
-                  day.tasks.filter((e) => !isMultiDayTask(e)).length + day.bookings.length > 3
-                "
+                v-if="day.tasks.filter((e) => !isMultiDayTask(e)).length + day.bookings.length > 3"
                 class="px-1 text-xs text-muted-foreground cursor-pointer"
               >
-                +{{
-                  day.tasks.filter((e) => !isMultiDayTask(e)).length + day.bookings.length - 3
-                }}
+                +{{ day.tasks.filter((e) => !isMultiDayTask(e)).length + day.bookings.length - 3 }}
                 {{ t('duties.tasks.calendar.more') }}
               </div>
             </div>

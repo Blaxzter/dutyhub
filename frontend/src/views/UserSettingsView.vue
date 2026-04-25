@@ -97,8 +97,9 @@
 <script setup lang="ts">
 import { type Component, computed, ref, watch } from 'vue'
 
-import { Bell, CalendarDays, GlobeIcon, KeyRound, ShieldIcon, UserIcon } from 'lucide-vue-next'
+import { Bell, CalendarDays, User as UserIcon } from '@respeak/lucide-motion-vue'
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
+import { GlobeIcon, KeyRound, ShieldIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 

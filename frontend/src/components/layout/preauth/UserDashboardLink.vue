@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UserIcon } from 'lucide-vue-next'
+import { User as UserIcon } from '@respeak/lucide-motion-vue'
 
 import { useAuthStore } from '@/stores/auth'
 
@@ -37,7 +37,7 @@ const authStore = useAuthStore()
         :alt="authStore.user?.name || authStore.user?.email || 'User'"
       />
       <AvatarFallback>
-        <UserIcon class="h-4 w-4" />
+        <UserIcon class="h-4 w-4" animateOnHover triggerTarget="parent" />
       </AvatarFallback>
     </Avatar>
     <div :class="direction === 'vertical' ? 'flex flex-col items-center' : 'flex flex-col'">

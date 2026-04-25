@@ -3,15 +3,16 @@ import { computed, onMounted, ref } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { CalendarClock, Check, MoveRight, X } from 'lucide-vue-next'
+import { Check, MoveRight, X } from '@respeak/lucide-motion-vue'
+import { CalendarClock } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import Button from '@/components/ui/button/Button.vue'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { MarkerVariant } from '@/components/ui/calendar'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
@@ -170,7 +171,11 @@ onMounted(() => {
               :placeholder="t('duties.events.pickDate')"
             />
             <p v-if="earliestTaskDate" class="text-xs text-muted-foreground">
-              {{ t('duties.events.detail.earliestTask', { date: formatDate(earliestTaskDate.toString()) }) }}
+              {{
+                t('duties.events.detail.earliestTask', {
+                  date: formatDate(earliestTaskDate.toString()),
+                })
+              }}
             </p>
           </div>
           <div class="space-y-1.5">
@@ -182,7 +187,11 @@ onMounted(() => {
               :placeholder="t('duties.events.pickDate')"
             />
             <p v-if="latestTaskDate" class="text-xs text-muted-foreground">
-              {{ t('duties.events.detail.latestTask', { date: formatDate(latestTaskDate.toString()) }) }}
+              {{
+                t('duties.events.detail.latestTask', {
+                  date: formatDate(latestTaskDate.toString()),
+                })
+              }}
             </p>
           </div>
         </div>
@@ -211,11 +220,17 @@ onMounted(() => {
         </div>
         <div class="flex items-center gap-2 pt-2">
           <Button type="submit" size="sm" :disabled="saving">
-            <Check class="mr-2 h-4 w-4" />
+            <Check class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
             {{ t('common.actions.save') }}
           </Button>
-          <Button type="button" variant="outline" size="sm" :disabled="saving" @click="emit('cancel')">
-            <X class="mr-2 h-4 w-4" />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            :disabled="saving"
+            @click="emit('cancel')"
+          >
+            <X class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
             {{ t('common.actions.cancel') }}
           </Button>
         </div>
@@ -244,19 +259,22 @@ onMounted(() => {
           />
         </div>
         <p v-if="shiftDays !== 0" class="text-sm text-muted-foreground">
-          {{ t('duties.events.detail.shiftPreview', { days: Math.abs(shiftDays), direction: shiftDays > 0 ? t('duties.events.detail.shiftForward') : t('duties.events.detail.shiftBackward') }) }}
+          {{
+            t('duties.events.detail.shiftPreview', {
+              days: Math.abs(shiftDays),
+              direction:
+                shiftDays > 0
+                  ? t('duties.events.detail.shiftForward')
+                  : t('duties.events.detail.shiftBackward'),
+            })
+          }}
         </p>
         <Separator />
-        <Button
-          size="sm"
-          :disabled="shifting || shiftDays === 0"
-          @click="handleShiftDates"
-        >
-          <MoveRight class="mr-2 h-4 w-4" />
+        <Button size="sm" :disabled="shifting || shiftDays === 0" @click="handleShiftDates">
+          <MoveRight class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
           {{ t('duties.events.detail.shiftApply') }}
         </Button>
       </div>
     </CardContent>
   </Card>
-
 </template>

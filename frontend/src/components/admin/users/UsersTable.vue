@@ -12,9 +12,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-import UserRowActions from './UserRowActions.vue'
-
 import type { UserRead } from '@/client/types.gen'
+
+import UserRowActions from './UserRowActions.vue'
 
 type UserStatus = 'active' | 'rejected' | 'pending'
 
@@ -85,9 +85,7 @@ const formatDate = (iso: string) =>
             <div class="flex items-center gap-3">
               <Avatar class="h-8 w-8 rounded-sm">
                 <AvatarImage v-if="user.picture" :src="user.picture" :alt="user.name ?? ''" />
-                <AvatarFallback class="rounded-sm text-xs">{{
-                  getInitials(user)
-                }}</AvatarFallback>
+                <AvatarFallback class="rounded-sm text-xs">{{ getInitials(user) }}</AvatarFallback>
               </Avatar>
               <span class="font-medium">{{ user.name ?? '—' }}</span>
             </div>

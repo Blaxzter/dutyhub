@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { Bell, Check, Loader2, Trash2 } from 'lucide-vue-next'
+import { Bell, Check, Trash2 } from '@respeak/lucide-motion-vue'
+import { Loader2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -106,7 +107,11 @@ function getNotificationIcon(typeCode: string): string {
 <template>
   <div>
     <div v-if="notifications.length === 0 && !loading" class="px-4 py-8 text-center">
-      <Bell class="text-muted-foreground mx-auto mb-2 h-8 w-8" />
+      <Bell
+        class="text-muted-foreground mx-auto mb-2 h-8 w-8"
+        animateOnHover
+        triggerTarget="parent"
+      />
       <p class="text-muted-foreground text-sm">
         {{ t('notifications.empty') }}
       </p>
@@ -149,7 +154,7 @@ function getNotificationIcon(typeCode: string): string {
           :title="t('notifications.markRead')"
           @click.stop="handleMarkAsRead(notification.id)"
         >
-          <Check class="h-3 w-3" />
+          <Check class="h-3 w-3" animateOnHover triggerTarget="parent" />
         </Button>
         <Button
           variant="ghost"
@@ -158,7 +163,7 @@ function getNotificationIcon(typeCode: string): string {
           :title="t('notifications.dismiss')"
           @click.stop="handleDismiss(notification.id)"
         >
-          <Trash2 class="h-3 w-3" />
+          <Trash2 class="h-3 w-3" animateOnHover triggerTarget="parent" />
         </Button>
       </div>
     </div>

@@ -5,19 +5,15 @@ import type { DateValue } from '@internationalized/date'
 import {
   ArrowLeft,
   CalendarCheck,
-  CalendarPlus,
   Check,
   ChevronDown,
   EllipsisVertical,
   Expand,
-  Info,
   MapPin,
-  Pencil,
   Plus,
-  Printer,
-  Tag,
   Trash2,
-} from 'lucide-vue-next'
+} from '@respeak/lucide-motion-vue'
+import { CalendarPlus, Info, Pencil, Printer, Tag } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -59,11 +55,11 @@ import StatusDropdown from '@/components/tasks/StatusDropdown.vue'
 
 import type {
   BookingRead,
+  MyBookingsListResponse,
+  ShiftBatchRead,
   ShiftListResponse,
   ShiftRead,
   TaskRead,
-  MyBookingsListResponse,
-  ShiftBatchRead,
 } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 import { formatDate } from '@/lib/format'
@@ -228,9 +224,7 @@ const groupByDate = (shifts: ShiftRead[]) => {
 }
 
 const myBookedShiftIds = computed(() => {
-  return new Set(
-    myBookings.value.filter((b) => b.status === 'confirmed').map((b) => b.shift_id),
-  )
+  return new Set(myBookings.value.filter((b) => b.status === 'confirmed').map((b) => b.shift_id))
 })
 
 const getBookingForShift = (slotId: string) => {
@@ -544,7 +538,10 @@ onMounted(async () => {
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0 flex-1 space-y-2">
             <div class="flex items-center gap-3 flex-wrap">
-              <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold line-clamp-2 break-words">
+              <h1
+                data-testid="page-heading"
+                class="text-2xl sm:text-3xl font-bold line-clamp-2 break-words"
+              >
                 {{ task.name }}
               </h1>
               <StatusDropdown
@@ -597,7 +594,7 @@ onMounted(async () => {
                   <Button data-testid="btn-add-shifts">
                     <CalendarPlus class="mr-2 h-4 w-4" />
                     {{ t('duties.tasks.detail.addShifts') }}
-                    <ChevronDown class="ml-1 h-3 w-3" />
+                    <ChevronDown class="ml-1 h-3 w-3" animation="default-loop" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

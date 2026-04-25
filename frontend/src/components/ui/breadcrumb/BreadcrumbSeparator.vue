@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { HTMLAttributes } from 'vue'
 
-import { ChevronRight } from 'lucide-vue-next'
+import { ChevronRight } from '@respeak/lucide-motion-vue'
 
 import { cn } from '@/lib/utils'
 
@@ -18,7 +18,7 @@ const props = defineProps<{
     :class="cn('[&>svg]:size-3.5', props.class)"
   >
     <slot>
-      <ChevronRight />
+      <ChevronRight animateOnHover triggerTarget="parent" animation="default-loop" />
     </slot>
   </li>
 </template>

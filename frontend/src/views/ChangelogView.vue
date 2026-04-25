@@ -175,11 +175,7 @@ watch(activeIndex, (index) => {
       <div class="space-y-1 mb-4">
         <div class="flex flex-wrap items-center gap-2">
           <h2 class="text-xl font-semibold">{{ entry.title }}</h2>
-          <Badge
-            v-if="entry.version === entries[0]?.version"
-            variant="default"
-            class="text-[10px]"
-          >
+          <Badge v-if="entry.version === entries[0]?.version" variant="default" class="text-[10px]">
             {{ t('changelog.latest') }}
           </Badge>
         </div>
@@ -196,7 +192,9 @@ watch(activeIndex, (index) => {
   <div :class="{ 'grid grid-cols-[1fr_48rem_1fr] gap-y-8': isDesktop }">
     <!-- Header -->
     <div :class="isDesktop ? 'col-start-2 pb-2' : 'mx-auto max-w-3xl pb-2'">
-      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">{{ t('changelog.title') }}</h1>
+      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
+        {{ t('changelog.title') }}
+      </h1>
       <p class="text-muted-foreground mt-2">{{ t('changelog.subtitle') }}</p>
     </div>
 

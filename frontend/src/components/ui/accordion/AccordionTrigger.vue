@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { ChevronDown } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { ChevronDown } from 'lucide-vue-next'
 import type { AccordionTriggerProps } from 'reka-ui'
 import { AccordionHeader, AccordionTrigger } from 'reka-ui'
 
@@ -29,6 +29,9 @@ const delegatedProps = reactiveOmit(props, 'class')
       <slot name="icon">
         <ChevronDown
           class="text-muted-foreground pointer-tasks-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200"
+          animateOnHover
+          triggerTarget="parent"
+          animation="default-loop"
         />
       </slot>
     </AccordionTrigger>

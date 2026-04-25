@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { Ban, Clock, Eye, EyeOff, KeyRound, LogOut } from 'lucide-vue-next'
+import { Clock, Eye, EyeOff, LogOut } from '@respeak/lucide-motion-vue'
+import { Ban, KeyRound } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -95,7 +96,12 @@ onMounted(loadApprovalPasswordStatus)
       <div class="mb-6 flex justify-center">
         <div class="rounded-full p-4" :class="isRejected ? 'bg-destructive/10' : 'bg-muted'">
           <Ban v-if="isRejected" class="h-12 w-12 text-destructive" />
-          <Clock v-else class="h-12 w-12 text-muted-foreground" />
+          <Clock
+            v-else
+            class="h-12 w-12 text-muted-foreground"
+            animateOnHover
+            triggerTarget="parent"
+          />
         </div>
       </div>
       <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
@@ -142,8 +148,8 @@ onMounted(loadApprovalPasswordStatus)
               class="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground"
               @click="showPassword = !showPassword"
             >
-              <EyeOff v-if="showPassword" class="h-4 w-4" />
-              <Eye v-else class="h-4 w-4" />
+              <EyeOff v-if="showPassword" class="h-4 w-4" animateOnHover triggerTarget="parent" />
+              <Eye v-else class="h-4 w-4" animateOnHover triggerTarget="parent" />
             </button>
           </div>
           <Button
@@ -164,7 +170,7 @@ onMounted(loadApprovalPasswordStatus)
       <div class="mt-8 flex items-center justify-center gap-3">
         <Button data-testid="btn-logout" variant="outline" @click="authStore.logout()">
           {{ t('common.pendingApproval.logout') }}
-          <LogOut class="h-4 w-4 ml-2" />
+          <LogOut class="h-4 w-4 ml-2" animateOnHover triggerTarget="parent" />
         </Button>
 
         <LanguageSwitch variant="outline" size="default" :show-text="false" />

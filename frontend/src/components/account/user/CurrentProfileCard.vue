@@ -2,7 +2,7 @@
   <Card>
     <CardHeader>
       <CardTitle class="flex items-center gap-2">
-        <UserIcon class="h-5 w-5" />
+        <UserIcon class="h-5 w-5" animateOnHover triggerTarget="parent" />
         {{ $t('user.settings.profile.current.title') }}
       </CardTitle>
       <CardDescription>{{ $t('user.settings.profile.current.subtitle') }}</CardDescription>
@@ -78,7 +78,7 @@
 import { computed } from 'vue'
 
 import type { User } from '@auth0/auth0-vue'
-import { UserIcon } from 'lucide-vue-next'
+import { User as UserIcon } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'

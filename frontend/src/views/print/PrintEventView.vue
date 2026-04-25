@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 
-import { CalendarDays, MapPin, Tag } from 'lucide-vue-next'
+import { CalendarDays, MapPin } from '@respeak/lucide-motion-vue'
+import { Tag } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 
@@ -14,13 +15,13 @@ import PrintToolbar from '@/components/print/PrintToolbar.vue'
 import QrCode from '@/components/print/QrCode.vue'
 
 import type {
+  EventRead,
+  ShiftBatchRead,
   ShiftListResponse,
   ShiftRead,
   TaskBookingEntry,
-  EventRead,
   TaskListResponse,
   TaskRead,
-  ShiftBatchRead,
 } from '@/client/types.gen'
 import { formatDate } from '@/lib/format'
 
@@ -354,7 +355,7 @@ onMounted(async () => {
               {{ event.description }}
             </p>
             <p class="text-sm text-muted-foreground flex items-center gap-1">
-              <CalendarDays class="h-4 w-4" />
+              <CalendarDays class="h-4 w-4" animateOnHover triggerTarget="parent" />
               {{ formatDate(event.start_date) }} – {{ formatDate(event.end_date) }}
             </p>
           </div>
@@ -387,11 +388,11 @@ onMounted(async () => {
                 class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground"
               >
                 <span class="flex items-center gap-1">
-                  <CalendarDays class="h-3.5 w-3.5" />
+                  <CalendarDays class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
                   {{ formatDate(ev.start_date) }} – {{ formatDate(ev.end_date) }}
                 </span>
                 <span v-if="ev.location" class="flex items-center gap-1">
-                  <MapPin class="h-3.5 w-3.5" />
+                  <MapPin class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
                   {{ ev.location }}
                 </span>
                 <span v-if="ev.category" class="flex items-center gap-1">
@@ -426,11 +427,11 @@ onMounted(async () => {
                       class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground"
                     >
                       <span class="flex items-center gap-1">
-                        <CalendarDays class="h-4 w-4" />
+                        <CalendarDays class="h-4 w-4" animateOnHover triggerTarget="parent" />
                         {{ formatDate(ev.start_date) }} – {{ formatDate(ev.end_date) }}
                       </span>
                       <span v-if="ev.location" class="flex items-center gap-1">
-                        <MapPin class="h-4 w-4" />
+                        <MapPin class="h-4 w-4" animateOnHover triggerTarget="parent" />
                         {{ ev.location }}
                       </span>
                       <span v-if="ev.category" class="flex items-center gap-1">

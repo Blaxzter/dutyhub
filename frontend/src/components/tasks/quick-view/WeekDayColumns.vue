@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'
@@ -118,7 +118,7 @@ defineExpose({ totalHidden, maxShiftCount })
         class="flex w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
         @click="emit('previous')"
       >
-        <ChevronLeft class="h-4 w-4" />
+        <ChevronLeft class="h-4 w-4" animateOnHover triggerTarget="parent" animation="default-loop" />
       </button>
 
       <div class="grid flex-1" :style="{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }">
@@ -147,7 +147,7 @@ defineExpose({ totalHidden, maxShiftCount })
         class="flex w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
         @click="emit('next')"
       >
-        <ChevronRight class="h-4 w-4" />
+        <ChevronRight class="h-4 w-4" animateOnHover triggerTarget="parent" animation="default-loop" />
       </button>
     </div>
 

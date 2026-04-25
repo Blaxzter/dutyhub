@@ -2,7 +2,8 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
-import { Pencil, Plus, Search, Trash2 } from 'lucide-vue-next'
+import { Plus, Search, Trash2 } from '@respeak/lucide-motion-vue'
+import { Pencil } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -142,14 +143,16 @@ onMounted(loadEvents)
         <p class="text-muted-foreground">{{ t('admin.events.subtitle') }}</p>
       </div>
       <Button data-testid="btn-create-event" class="max-xl:hidden" @click="showCreateDialog = true">
-        <Plus class="mr-2 h-4 w-4" />
+        <Plus class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ t('duties.events.create') }}
       </Button>
     </div>
 
     <div class="flex flex-wrap items-center gap-4">
       <div class="relative flex-1">
-        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search
+          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+        />
         <Input
           v-model="searchQuery"
           data-testid="input-search"
@@ -181,9 +184,15 @@ onMounted(loadEvents)
           <thead class="bg-muted/50">
             <tr>
               <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.name') }}</th>
-              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.startDate') }}</th>
-              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.endDate') }}</th>
-              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.status') }}</th>
+              <th class="px-4 py-2 text-left font-medium">
+                {{ t('duties.events.fields.startDate') }}
+              </th>
+              <th class="px-4 py-2 text-left font-medium">
+                {{ t('duties.events.fields.endDate') }}
+              </th>
+              <th class="px-4 py-2 text-left font-medium">
+                {{ t('duties.events.fields.status') }}
+              </th>
               <th class="px-4 py-2 text-right font-medium"></th>
             </tr>
           </thead>
@@ -227,7 +236,7 @@ onMounted(loadEvents)
                   data-testid="btn-delete-event"
                   @click="handleDelete(event)"
                 >
-                  <Trash2 class="h-4 w-4 text-destructive" />
+                  <Trash2 class="h-4 w-4 text-destructive" animateOnHover triggerTarget="parent" />
                 </Button>
               </td>
             </tr>
@@ -278,7 +287,7 @@ onMounted(loadEvents)
       :aria-label="t('duties.events.create')"
       @click="showCreateDialog = true"
     >
-      <Plus class="size-7" :stroke-width="2.5" />
+      <Plus class="size-7" :stroke-width="2.5" animateOnHover triggerTarget="parent" />
     </Button>
   </div>
 </template>

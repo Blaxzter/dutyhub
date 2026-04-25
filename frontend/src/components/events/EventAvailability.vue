@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Check, Pencil, Trash2, UserCheck, Users } from 'lucide-vue-next'
+import { Check, Trash2, UserCheck, Users } from '@respeak/lucide-motion-vue'
+import { Pencil } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'
@@ -32,7 +33,7 @@ const { t } = useI18n()
       <div class="flex items-center justify-between gap-2">
         <div class="min-w-0 space-y-1">
           <CardTitle class="flex items-center gap-2">
-            <UserCheck class="h-5 w-5 shrink-0" />
+            <UserCheck class="h-5 w-5 shrink-0" animateOnHover triggerTarget="parent" />
             {{ t('duties.availability.title') }}
           </CardTitle>
           <CardDescription>{{ t('duties.availability.subtitle') }}</CardDescription>
@@ -56,7 +57,7 @@ const { t } = useI18n()
             class="text-destructive"
             @click="emit('remove')"
           >
-            <Trash2 class="sm:mr-1.5 h-4 w-4" />
+            <Trash2 class="sm:mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
             <span class="hidden sm:inline">{{ t('duties.availability.remove') }}</span>
           </Button>
           <Button
@@ -65,7 +66,7 @@ const { t } = useI18n()
             size="sm"
             @click="emit('edit')"
           >
-            <Check class="sm:mr-2 h-4 w-4" />
+            <Check class="sm:mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
             <span class="hidden sm:inline">{{ t('duties.availability.register') }}</span>
           </Button>
         </div>
@@ -82,7 +83,7 @@ const { t } = useI18n()
   <!-- Member Availabilities (manager view) -->
   <div v-if="canManage" data-testid="section-admin-availabilities" class="space-y-3">
     <h2 class="flex items-center gap-2 text-xl font-semibold">
-      <Users class="h-5 w-5" />
+      <Users class="h-5 w-5" animateOnHover triggerTarget="parent" />
       {{ t('duties.availability.adminTitle') }}
     </h2>
     <p v-if="allAvailabilities.length === 0" class="text-sm text-muted-foreground">

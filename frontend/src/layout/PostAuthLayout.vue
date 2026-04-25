@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import { Sparkles } from 'lucide-vue-next'
+import { Sparkles } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 import {
   type RouteLocationNormalizedLoadedGeneric,
@@ -109,7 +109,7 @@ function goToChangelog() {
       <DialogContent class="sm:max-w-md" data-testid="dialog-whats-new">
         <DialogHeader>
           <DialogTitle class="flex items-center gap-2">
-            <Sparkles class="size-5" />
+            <Sparkles class="size-5" animateOnHover triggerTarget="parent" />
             <template v-if="newVersionCount === 1">
               {{ t('changelog.whatsNew.titleSingle', { version: `v${latestVersion}` }) }}
             </template>

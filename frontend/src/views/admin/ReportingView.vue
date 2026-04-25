@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { BarChart3, Download, EllipsisVertical } from 'lucide-vue-next'
+import { Download, EllipsisVertical } from '@respeak/lucide-motion-vue'
+import { BarChart3 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -20,8 +21,8 @@ import {
 import ReportingBookingsChart from '@/components/admin/reporting/ReportingBookingsChart.vue'
 import ReportingBusiestTimes from '@/components/admin/reporting/ReportingBusiestTimes.vue'
 import ReportingCategoryBreakdown from '@/components/admin/reporting/ReportingCategoryBreakdown.vue'
-import ReportingTaskFillRates from '@/components/admin/reporting/ReportingTaskFillRates.vue'
 import ReportingOverviewCards from '@/components/admin/reporting/ReportingOverviewCards.vue'
+import ReportingTaskFillRates from '@/components/admin/reporting/ReportingTaskFillRates.vue'
 import ReportingTopVolunteers from '@/components/admin/reporting/ReportingTopVolunteers.vue'
 
 import type { ReportingResponse } from '@/client/types.gen'
@@ -183,18 +184,18 @@ onMounted(() => {
           :disabled="exporting"
           @click="exportCsv()"
         >
-          <Download class="mr-2 size-4" />
+          <Download class="mr-2 size-4" animateOnHover triggerTarget="parent" />
           {{ t('admin.reporting.export') }}
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button variant="outline" size="sm" class="sm:hidden">
-              <EllipsisVertical class="size-4" />
+              <EllipsisVertical class="size-4" animateOnHover triggerTarget="parent" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem :disabled="exporting" @click="exportCsv()">
-              <Download class="mr-2 size-4" />
+              <Download class="mr-2 size-4" animateOnHover triggerTarget="parent" />
               {{ t('admin.reporting.export') }}
             </DropdownMenuItem>
           </DropdownMenuContent>

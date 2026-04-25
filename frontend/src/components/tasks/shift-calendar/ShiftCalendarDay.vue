@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Clock } from 'lucide-vue-next'
+import { Clock } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 
-import type { BookingCalendarItem, CalendarDay, CalendarTask, CalendarEvent } from './types'
+import type { BookingCalendarItem, CalendarDay, CalendarEvent, CalendarTask } from './types'
 import { formatTimeRange, statusVariant } from './types'
 
 defineProps<{
@@ -71,7 +71,7 @@ const { t } = useI18n()
         <div
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
         >
-          <Clock class="h-4 w-4" />
+          <Clock class="h-4 w-4" animateOnHover triggerTarget="parent" />
         </div>
         <div class="flex-1 min-w-0">
           <div class="font-medium truncate">{{ booking.title }}</div>

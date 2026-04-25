@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { ChevronLeft as ChevronLeftIcon } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { ChevronLeftIcon } from 'lucide-vue-next'
 import type { PaginationFirstProps } from 'reka-ui'
 import { PaginationFirst, useForwardProps } from 'reka-ui'
 
@@ -34,7 +34,7 @@ const forwarded = useForwardProps(delegatedProps)
     v-bind="forwarded"
   >
     <slot>
-      <ChevronLeftIcon />
+      <ChevronLeftIcon animateOnHover triggerTarget="parent" animation="default-loop" />
       <span class="hidden sm:block">First</span>
     </slot>
   </PaginationFirst>

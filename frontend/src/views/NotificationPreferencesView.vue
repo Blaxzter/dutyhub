@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import { Check, LoaderCircle } from '@respeak/lucide-motion-vue'
 import { useDebounceFn } from '@vueuse/core'
-import { Check, LoaderCircle } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -161,7 +161,10 @@ onMounted(async () => {
   <div class="mx-auto max-w-5xl space-y-6">
     <!-- Header -->
     <div class="pb-3">
-      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold tracking-tight break-words">
+      <h1
+        data-testid="page-heading"
+        class="text-2xl sm:text-3xl font-bold tracking-tight break-words"
+      >
         {{ t('notifications.preferences.title') }}
       </h1>
       <p class="text-muted-foreground mt-2">
@@ -274,7 +277,7 @@ onMounted(async () => {
           ]"
         >
           <LoaderCircle v-if="autoSaveStatus === 'saving'" class="h-4 w-4 animate-spin" />
-          <Check v-else class="h-4 w-4" />
+          <Check v-else class="h-4 w-4" animateOnHover triggerTarget="parent" />
           {{
             autoSaveStatus === 'saving'
               ? t('notifications.preferences.autoSaving')

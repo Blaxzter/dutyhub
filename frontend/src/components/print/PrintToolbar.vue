@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { Printer, Settings, X } from 'lucide-vue-next'
+import { Settings, X } from '@respeak/lucide-motion-vue'
+import { Printer } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -33,7 +34,7 @@ const expanded = ref(true)
       class="shadow-lg"
       @click="expanded = true"
     >
-      <Settings class="h-4 w-4" />
+      <Settings class="h-4 w-4" animateOnHover triggerTarget="parent" />
     </Button>
 
     <!-- Expanded: options panel -->
@@ -47,7 +48,7 @@ const expanded = ref(true)
           class="h-5 w-5 flex items-center justify-center rounded hover:bg-muted"
           @click="expanded = false"
         >
-          <X class="h-3.5 w-3.5" />
+          <X class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
         </button>
       </div>
 

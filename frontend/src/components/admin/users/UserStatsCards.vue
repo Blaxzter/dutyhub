@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { UserCheck, UserRoundX, UserX, Users } from 'lucide-vue-next'
+import { UserCheck, Users } from '@respeak/lucide-motion-vue'
+import { UserRoundX, UserX } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -19,7 +20,7 @@ const { t } = useI18n()
     <Card data-testid="stat-total">
       <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle class="text-sm font-medium">{{ t('admin.users.statsTotal') }}</CardTitle>
-        <Users class="h-4 w-4 text-muted-foreground" />
+        <Users class="h-4 w-4 text-muted-foreground" animateOnHover triggerTarget="parent" />
       </CardHeader>
       <CardContent>
         <div class="text-2xl font-bold">{{ total }}</div>
@@ -28,7 +29,7 @@ const { t } = useI18n()
     <Card data-testid="stat-active">
       <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle class="text-sm font-medium">{{ t('admin.users.active') }}</CardTitle>
-        <UserCheck class="h-4 w-4 text-muted-foreground" />
+        <UserCheck class="h-4 w-4 text-muted-foreground" animateOnHover triggerTarget="parent" />
       </CardHeader>
       <CardContent>
         <div class="text-2xl font-bold">{{ active }}</div>

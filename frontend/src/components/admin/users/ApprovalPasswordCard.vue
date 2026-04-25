@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { Check, Eye, EyeOff, KeyRound, Trash2 } from 'lucide-vue-next'
+import { Check, Eye, EyeOff, Trash2 } from '@respeak/lucide-motion-vue'
+import { KeyRound } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -126,8 +127,8 @@ onMounted(loadApprovalPassword)
             :aria-label="showPassword ? t('common.actions.hide') : t('common.actions.show')"
             @click="showPassword = !showPassword"
           >
-            <EyeOff v-if="showPassword" class="h-4 w-4" />
-            <Eye v-else class="h-4 w-4" />
+            <EyeOff v-if="showPassword" class="h-4 w-4" animateOnHover triggerTarget="parent" />
+            <Eye v-else class="h-4 w-4" animateOnHover triggerTarget="parent" />
           </Button>
           <Button
             size="icon"
@@ -135,7 +136,7 @@ onMounted(loadApprovalPassword)
             :disabled="approvalPasswordLoading || !approvalPasswordDirty"
             @click="saveApprovalPassword"
           >
-            <Check class="h-4 w-4" />
+            <Check class="h-4 w-4" animateOnHover triggerTarget="parent" />
           </Button>
           <TooltipProvider v-if="hasApprovalPassword">
             <Tooltip>
@@ -146,7 +147,7 @@ onMounted(loadApprovalPassword)
                   :disabled="approvalPasswordLoading"
                   @click="showClearPasswordDialog = true"
                 >
-                  <Trash2 class="h-4 w-4" />
+                  <Trash2 class="h-4 w-4" animateOnHover triggerTarget="parent" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

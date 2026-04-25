@@ -59,7 +59,15 @@ const props = withDefaults(
 )
 const emits = defineEmits<CalendarRootEmits>()
 
-const delegatedProps = reactiveOmit(props, 'class', 'layout', 'placeholder', 'highlight', 'markedDays', 'markers')
+const delegatedProps = reactiveOmit(
+  props,
+  'class',
+  'layout',
+  'placeholder',
+  'highlight',
+  'markedDays',
+  'markers',
+)
 
 function isHighlighted(date: DateValue): boolean {
   return !!props.highlight && date.compare(props.highlight) === 0

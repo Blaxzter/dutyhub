@@ -3,7 +3,8 @@ import { computed, onMounted, ref, toRaw, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { ArrowLeft, CalendarDays, CalendarPlus, Clock, Plus, X } from 'lucide-vue-next'
+import { ArrowLeft, CalendarDays, Clock, Plus, X } from '@respeak/lucide-motion-vue'
+import { CalendarPlus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -49,12 +50,8 @@ const task = ref<TaskRead | null>(null)
 const event = ref<EventRead | null>(null)
 
 // --- Task event date constraints ---
-const eventMinDate = computed(() =>
-  event.value ? parseDate(event.value.start_date) : undefined,
-)
-const eventMaxDate = computed(() =>
-  event.value ? parseDate(event.value.end_date) : undefined,
-)
+const eventMinDate = computed(() => (event.value ? parseDate(event.value.start_date) : undefined))
+const eventMaxDate = computed(() => (event.value ? parseDate(event.value.end_date) : undefined))
 
 // --- Batch-specific fields ---
 const location = ref('')
@@ -313,7 +310,7 @@ onMounted(loadTask)
           class="-ml-2 max-xl:hidden"
           @click="router.push({ name: 'task-detail', params: { eventId: eventId } })"
         >
-          <ArrowLeft class="mr-1.5 h-4 w-4" />
+          <ArrowLeft class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
           {{ t('common.actions.back') }}
         </Button>
         <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
@@ -351,7 +348,7 @@ onMounted(loadTask)
       <Card>
         <CardHeader>
           <div class="flex items-center gap-3">
-            <CalendarDays class="h-5 w-5 text-primary" />
+            <CalendarDays class="h-5 w-5 text-primary" animateOnHover triggerTarget="parent" />
             <div>
               <CardTitle>{{ t('duties.tasks.createView.sections.dates') }}</CardTitle>
               <CardDescription>{{
@@ -415,7 +412,7 @@ onMounted(loadTask)
                 />
               </div>
               <Button :disabled="!specificDatePicker" @click="addSpecificDate">
-                <Plus class="mr-1.5 h-4 w-4" />
+                <Plus class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
                 {{ t('duties.tasks.createView.addDate') }}
               </Button>
             </div>
@@ -437,7 +434,7 @@ onMounted(loadTask)
                   class="ml-1 rounded-full p-0.5 hover:bg-muted"
                   @click="removeSpecificDate(index)"
                 >
-                  <X class="h-3 w-3" />
+                  <X class="h-3 w-3" animateOnHover triggerTarget="parent" />
                 </button>
               </Badge>
             </div>
@@ -449,7 +446,7 @@ onMounted(loadTask)
       <Card>
         <CardHeader>
           <div class="flex items-center gap-3">
-            <Clock class="h-5 w-5 text-primary" />
+            <Clock class="h-5 w-5 text-primary" animateOnHover triggerTarget="parent" />
             <div>
               <CardTitle>{{ t('duties.tasks.createView.sections.schedule') }}</CardTitle>
               <CardDescription>{{

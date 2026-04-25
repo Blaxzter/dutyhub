@@ -54,7 +54,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { AlertCircleIcon, AlertTriangleIcon, CheckIcon, InfoIcon, XIcon } from 'lucide-vue-next'
+import { Check as CheckIcon, X as XIcon } from '@respeak/lucide-motion-vue'
+import { AlertCircleIcon, AlertTriangleIcon, InfoIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useDialogStore } from '@/stores/dialog'

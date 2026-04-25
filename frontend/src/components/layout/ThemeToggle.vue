@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Moon as MoonIcon, Sun as SunIcon } from '@respeak/lucide-motion-vue'
 import { useColorMode } from '@vueuse/core'
-import { MoonIcon, SunIcon } from 'lucide-vue-next'
 
 import { Button } from '@/components/ui/button'
 
@@ -29,7 +29,7 @@ function toggle() {
     @click="toggle"
     :aria-label="mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
   >
-    <SunIcon v-if="mode === 'dark'" class="h-4 w-4" />
-    <MoonIcon v-else class="h-4 w-4" />
+    <SunIcon v-if="mode === 'dark'" class="h-4 w-4" animateOnHover triggerTarget="parent" />
+    <MoonIcon v-else class="h-4 w-4" animateOnHover triggerTarget="parent" />
   </Button>
 </template>

@@ -2,7 +2,7 @@
   <Card>
     <CardHeader>
       <CardTitle class="flex items-center gap-2">
-        <KeyIcon class="h-5 w-5" />
+        <KeyIcon class="h-5 w-5" animateOnHover triggerTarget="parent" />
         {{ $t('user.settings.password.title') }}
       </CardTitle>
       <CardDescription>{{ $t('user.settings.password.subtitle') }}</CardDescription>
@@ -43,8 +43,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
+import { Key as KeyIcon } from '@respeak/lucide-motion-vue'
 import axios from 'axios'
-import { KeyIcon, MailIcon } from 'lucide-vue-next'
+import { MailIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'

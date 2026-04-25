@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { ChevronDown } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { ChevronDown } from 'lucide-vue-next'
 import type { SelectTriggerProps } from 'reka-ui'
 import { SelectIcon, SelectTrigger, useForwardProps } from 'reka-ui'
 
@@ -31,7 +31,7 @@ const forwardedProps = useForwardProps(delegatedProps)
   >
     <slot />
     <SelectIcon as-child>
-      <ChevronDown class="size-4 opacity-50" />
+      <ChevronDown class="size-4 opacity-50" animateOnHover triggerTarget="parent" animation="default-loop" />
     </SelectIcon>
   </SelectTrigger>
 </template>

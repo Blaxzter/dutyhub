@@ -1,19 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
+import { Search, X } from '@respeak/lucide-motion-vue'
 import { useMediaQuery } from '@vueuse/core'
-import { Search, X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
-import ApprovalPasswordCard from '@/components/admin/users/ApprovalPasswordCard.vue'
-import DeleteUserDialog from '@/components/admin/users/DeleteUserDialog.vue'
-import RejectUserDialog from '@/components/admin/users/RejectUserDialog.vue'
-import UsersGroupedList from '@/components/admin/users/UsersGroupedList.vue'
-import UserStatsCards from '@/components/admin/users/UserStatsCards.vue'
-import UsersTable from '@/components/admin/users/UsersTable.vue'
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
 import {
@@ -26,6 +20,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
+
+import ApprovalPasswordCard from '@/components/admin/users/ApprovalPasswordCard.vue'
+import DeleteUserDialog from '@/components/admin/users/DeleteUserDialog.vue'
+import RejectUserDialog from '@/components/admin/users/RejectUserDialog.vue'
+import UserStatsCards from '@/components/admin/users/UserStatsCards.vue'
+import UsersGroupedList from '@/components/admin/users/UsersGroupedList.vue'
+import UsersTable from '@/components/admin/users/UsersTable.vue'
 
 import type { UserCounts, UserListResponse, UserRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
@@ -72,26 +73,24 @@ const currentSectionLabel = computed(() => {
   return t(keys[statusFilter.value])
 })
 
-const statusOptions = computed<Array<{ value: StatusFilter; label: string; count: number }>>(
-  () => [
-    { value: 'all', label: t('admin.users.filters.all'), count: counts.value.all },
-    {
-      value: 'pending',
-      label: t('admin.users.filters.pending'),
-      count: counts.value.pending,
-    },
-    {
-      value: 'active',
-      label: t('admin.users.filters.active'),
-      count: counts.value.active,
-    },
-    {
-      value: 'rejected',
-      label: t('admin.users.filters.rejected'),
-      count: counts.value.rejected,
-    },
-  ],
-)
+const statusOptions = computed<Array<{ value: StatusFilter; label: string; count: number }>>(() => [
+  { value: 'all', label: t('admin.users.filters.all'), count: counts.value.all },
+  {
+    value: 'pending',
+    label: t('admin.users.filters.pending'),
+    count: counts.value.pending,
+  },
+  {
+    value: 'active',
+    label: t('admin.users.filters.active'),
+    count: counts.value.active,
+  },
+  {
+    value: 'rejected',
+    label: t('admin.users.filters.rejected'),
+    count: counts.value.rejected,
+  },
+])
 
 const replaceUser = (updated: UserRead) => {
   const idx = users.value.findIndex((u) => u.id === updated.id)
@@ -158,9 +157,7 @@ const patchUserRoles = async (user: UserRead, role: 'admin' | 'task_manager') =>
     const name = user.name ?? user.email
     const messages = {
       admin: hasRole ? 'admin.users.removedAdmin' : 'admin.users.grantedAdmin',
-      task_manager: hasRole
-        ? 'admin.users.removedTaskManager'
-        : 'admin.users.grantedTaskManager',
+      task_manager: hasRole ? 'admin.users.removedTaskManager' : 'admin.users.grantedTaskManager',
     } as const
     toast.success(t(messages[role], { name }))
   } catch (error) {
@@ -292,7 +289,7 @@ onMounted(loadUsers)
           :aria-label="t('common.actions.reset')"
           @click="clearSearch"
         >
-          <X class="h-4 w-4" />
+          <X class="h-4 w-4" animateOnHover triggerTarget="parent" />
         </button>
       </div>
 
@@ -359,9 +356,7 @@ onMounted(loadUsers)
                 size="icon"
                 class="h-9 w-9"
                 :class="
-                  currentPage === item
-                    ? '!bg-primary !text-primary-foreground !border-primary'
-                    : ''
+                  currentPage === item ? '!bg-primary !text-primary-foreground !border-primary' : ''
                 "
               >
                 {{ item }}

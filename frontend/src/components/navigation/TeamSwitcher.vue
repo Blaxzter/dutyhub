@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type Component, ref } from 'vue'
 
-import { ChevronsUpDown, Plus } from 'lucide-vue-next'
+import { ChevronsUpDown, Plus } from '@respeak/lucide-motion-vue'
 
 import {
   DropdownMenu,
@@ -51,7 +51,7 @@ const activeTeam = ref(props.teams[0])
               </span>
               <span class="truncate text-xs">{{ activeTeam.plan }}</span>
             </div>
-            <ChevronsUpDown class="ml-auto" />
+            <ChevronsUpDown class="ml-auto" animateOnHover triggerTarget="parent" />
           </SidebarMenuButton>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -76,7 +76,7 @@ const activeTeam = ref(props.teams[0])
           <DropdownMenuSeparator />
           <DropdownMenuItem class="gap-2 p-2">
             <div class="flex size-6 items-center justify-center rounded-md border bg-transparent">
-              <Plus class="size-4" />
+              <Plus class="size-4" animateOnHover triggerTarget="parent" />
             </div>
             <div class="font-medium text-muted-foreground">Add team</div>
           </DropdownMenuItem>

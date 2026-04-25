@@ -1,14 +1,6 @@
 <script setup lang="ts">
-import {
-  Ban,
-  EllipsisVertical,
-  Shield,
-  ShieldCheck,
-  ShieldOff,
-  Trash2,
-  UserCheck,
-  UserX,
-} from 'lucide-vue-next'
+import { EllipsisVertical, ShieldCheck, Trash2, UserCheck } from '@respeak/lucide-motion-vue'
+import { Ban, Shield, ShieldOff, UserX } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -42,13 +34,13 @@ const { t } = useI18n()
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button variant="ghost" size="icon" class="h-8 w-8" :disabled="disabled">
-        <EllipsisVertical class="h-4 w-4" />
+        <EllipsisVertical class="h-4 w-4" animateOnHover triggerTarget="parent" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end">
       <DropdownMenuItem @click="emit('toggleActive', props.user)">
         <UserX v-if="props.user.is_active" class="mr-2 h-4 w-4 text-destructive" />
-        <UserCheck v-else class="mr-2 h-4 w-4" />
+        <UserCheck v-else class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ props.user.is_active ? t('admin.users.deactivate') : t('admin.users.activate') }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="!props.user.is_active" @click="emit('reject', props.user)">
@@ -73,7 +65,12 @@ const { t } = useI18n()
           v-if="props.user.roles.includes('task_manager')"
           class="mr-2 h-4 w-4 text-amber-500"
         />
-        <ShieldCheck v-else class="mr-2 h-4 w-4 text-amber-500" />
+        <ShieldCheck
+          v-else
+          class="mr-2 h-4 w-4 text-amber-500"
+          animateOnHover
+          triggerTarget="parent"
+        />
         {{
           props.user.roles.includes('task_manager')
             ? t('admin.users.removeTaskManager')
@@ -85,7 +82,7 @@ const { t } = useI18n()
         class="text-destructive focus:bg-destructive/10 focus:text-destructive dark:focus:bg-destructive/30"
         @click="emit('delete', props.user)"
       >
-        <Trash2 class="mr-2 h-4 w-4 text-destructive" />
+        <Trash2 class="mr-2 h-4 w-4 text-destructive" animateOnHover triggerTarget="parent" />
         {{ t('admin.users.delete') }}
       </DropdownMenuItem>
     </DropdownMenuContent>

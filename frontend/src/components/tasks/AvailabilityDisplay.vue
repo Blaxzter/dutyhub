@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Clock } from 'lucide-vue-next'
+import { Clock } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'
@@ -35,7 +35,7 @@ const defaultTimeLabel = computed(() => {
         v-if="defaultTimeLabel"
         class="inline-flex items-center gap-1 text-xs text-muted-foreground"
       >
-        <Clock class="h-3 w-3" />
+        <Clock class="h-3 w-3" animateOnHover triggerTarget="parent" />
         {{ defaultTimeLabel }}
       </span>
     </div>

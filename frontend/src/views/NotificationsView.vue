@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 
-import { CheckCheck, Settings, Trash2 } from 'lucide-vue-next'
+import { CheckCheck, Settings, Trash2 } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -65,7 +65,7 @@ onMounted(() => {
           :aria-label="t('notifications.markAllRead')"
           @click="handleMarkAllAsRead"
         >
-          <CheckCheck class="h-4 w-4 sm:mr-2" />
+          <CheckCheck class="h-4 w-4 sm:mr-2" animateOnHover triggerTarget="parent" />
           <span class="hidden sm:inline">{{ t('notifications.markAllRead') }}</span>
         </Button>
         <Button
@@ -76,7 +76,7 @@ onMounted(() => {
           :aria-label="t('notifications.deleteAll')"
           @click="handleDismissAll"
         >
-          <Trash2 class="h-4 w-4 sm:mr-2" />
+          <Trash2 class="h-4 w-4 sm:mr-2" animateOnHover triggerTarget="parent" />
           <span class="hidden sm:inline">{{ t('notifications.deleteAll') }}</span>
         </Button>
         <Button
@@ -86,7 +86,7 @@ onMounted(() => {
           :aria-label="t('notifications.managePreferences')"
           @click="goToPreferences"
         >
-          <Settings class="h-4 w-4 sm:mr-2" />
+          <Settings class="h-4 w-4 sm:mr-2" animateOnHover triggerTarget="parent" />
           <span class="hidden sm:inline">{{ t('notifications.managePreferences') }}</span>
         </Button>
       </div>

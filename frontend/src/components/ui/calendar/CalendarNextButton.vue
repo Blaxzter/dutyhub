@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import type { HTMLAttributes } from 'vue'
 
+import { ChevronRight } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { ChevronRight } from 'lucide-vue-next'
 import type { CalendarNextProps } from 'reka-ui'
 import { CalendarNext, useForwardProps } from 'reka-ui'
 
@@ -30,7 +30,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     v-bind="forwardedProps"
   >
     <slot>
-      <ChevronRight class="size-4" />
+      <ChevronRight class="size-4" animateOnHover triggerTarget="parent" animation="default-loop" />
     </slot>
   </CalendarNext>
 </template>

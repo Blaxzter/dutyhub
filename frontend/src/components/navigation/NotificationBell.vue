@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-import { Bell, CheckCheck, Settings, Trash2 } from 'lucide-vue-next'
+import { Bell, CheckCheck, Settings, Trash2 } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -80,7 +80,7 @@ onUnmounted(() => {
   <Popover v-model:open="popoverOpen" @update:open="onOpen">
     <PopoverTrigger as-child>
       <Button variant="ghost" size="icon" class="relative" data-testid="notification-bell">
-        <Bell class="h-5 w-5" />
+        <Bell class="h-5 w-5" animateOnHover triggerTarget="parent" />
         <span
           v-if="hasUnread"
           class="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-700 px-0.5 text-[10px] font-bold text-white"
@@ -104,7 +104,7 @@ onUnmounted(() => {
             class="h-7 text-xs"
             @click="handleMarkAllAsRead"
           >
-            <CheckCheck class="mr-1 h-3 w-3" />
+            <CheckCheck class="mr-1 h-3 w-3" animateOnHover triggerTarget="parent" />
             {{ t('notifications.markAllRead') }}
           </Button>
           <Button
@@ -115,10 +115,10 @@ onUnmounted(() => {
             :title="t('notifications.deleteAll')"
             @click="handleDismissAll"
           >
-            <Trash2 class="h-3.5 w-3.5" />
+            <Trash2 class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
           </Button>
           <Button variant="ghost" size="icon" class="h-7 w-7" @click="goToPreferences">
-            <Settings class="h-3.5 w-3.5" />
+            <Settings class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
           </Button>
         </div>
       </div>

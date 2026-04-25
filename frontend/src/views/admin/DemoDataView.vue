@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { Loader2, PackagePlus, Trash2 } from 'lucide-vue-next'
+import { Trash2 } from '@respeak/lucide-motion-vue'
+import { Loader2, PackagePlus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -131,13 +132,7 @@ async function handleDelete() {
           </div>
           <div class="grid gap-2">
             <Label for="numEvents">{{ t('admin.demoData.fields.numEvents') }}</Label>
-            <Input
-              id="numEvents"
-              v-model.number="numEvents"
-              type="number"
-              :min="0"
-              :max="10"
-            />
+            <Input id="numEvents" v-model.number="numEvents" type="number" :min="0" :max="10" />
           </div>
           <div class="grid gap-2">
             <Label for="numUsers">{{ t('admin.demoData.fields.numUsers') }}</Label>
@@ -186,7 +181,7 @@ async function handleDelete() {
             @click="handleDelete"
           >
             <Loader2 v-if="deleting" class="animate-spin" />
-            <Trash2 v-else />
+            <Trash2 v-else animateOnHover triggerTarget="parent" />
             {{ t('admin.demoData.delete.button') }}
           </Button>
         </CardFooter>

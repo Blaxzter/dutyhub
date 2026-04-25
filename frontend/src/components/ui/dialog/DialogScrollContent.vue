@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { X } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { X } from 'lucide-vue-next'
 import type { DialogContentEmits, DialogContentProps } from 'reka-ui'
 import {
   DialogClose,
@@ -53,7 +53,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
         <DialogClose
           class="absolute top-4 right-4 p-0.5 transition-colors rounded-md hover:bg-secondary"
         >
-          <X class="w-4 h-4" />
+          <X class="w-4 h-4" animateOnHover triggerTarget="parent" />
           <span class="sr-only">Close</span>
         </DialogClose>
       </DialogContent>

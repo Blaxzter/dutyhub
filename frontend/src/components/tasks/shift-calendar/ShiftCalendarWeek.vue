@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import TaskBars from './TaskBars.vue'
 import EventBars from './EventBars.vue'
+import TaskBars from './TaskBars.vue'
 import type {
   BookingCalendarItem,
   CalendarDay,
-  CalendarTask,
   CalendarEvent,
+  CalendarTask,
   CalendarWeek,
 } from './types'
 import { formatTimeRange, isMultiDayTask, isToday } from './types'

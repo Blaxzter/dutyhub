@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { Clock, Trash2 } from 'lucide-vue-next'
+import { Clock, Trash2 } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -250,7 +250,7 @@ defineExpose({ resetForm })
                   class="shrink-0"
                   @click="removeDateEntry(idx)"
                 >
-                  <Trash2 class="h-4 w-4 text-destructive" />
+                  <Trash2 class="h-4 w-4 text-destructive" animateOnHover triggerTarget="parent" />
                 </Button>
               </div>
 
@@ -260,7 +260,7 @@ defineExpose({ resetForm })
                   :for="`fullday-toggle-${idx}`"
                   class="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none"
                 >
-                  <Clock class="h-3.5 w-3.5" />
+                  <Clock class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
                   {{
                     entry.fullDay
                       ? t('duties.availability.fields.fullDay')

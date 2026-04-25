@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue'
 
-import { Clock } from 'lucide-vue-next'
+import { Clock } from '@respeak/lucide-motion-vue'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
@@ -84,7 +84,11 @@ function onInteractOutside(e: Event) {
         "
         @click.prevent
       >
-        <Clock class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <Clock
+          class="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+          animateOnHover
+          triggerTarget="parent"
+        />
         <input
           type="text"
           :value="localValue"

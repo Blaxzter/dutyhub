@@ -2,7 +2,8 @@
 import { ref } from 'vue'
 import { watch } from 'vue'
 
-import { ShieldCheck, UserPlus, X } from 'lucide-vue-next'
+import { ShieldCheck, X } from '@respeak/lucide-motion-vue'
+import { UserPlus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -58,7 +59,10 @@ const openAddManager = async () => {
   userSearchQuery.value = ''
   if (allUsers.value.length === 0) {
     try {
-      const res = await get<{ data: { items: UserRead[] } }>({ url: '/users/', query: { limit: 200 } })
+      const res = await get<{ data: { items: UserRead[] } }>({
+        url: '/users/',
+        query: { limit: 200 },
+      })
       allUsers.value = res.data.items
       updateFilteredUsers()
     } catch {
@@ -107,12 +111,17 @@ const removeManager = async (userId: string) => {
       <div class="flex items-center justify-between gap-2">
         <div class="space-y-1">
           <CardTitle class="flex items-center gap-2">
-            <ShieldCheck class="h-5 w-5 shrink-0" />
+            <ShieldCheck class="h-5 w-5 shrink-0" animateOnHover triggerTarget="parent" />
             {{ t('duties.events.detail.managers') }}
           </CardTitle>
           <CardDescription>{{ t('duties.events.detail.managersSubtitle') }}</CardDescription>
         </div>
-        <Button v-if="canEdit && !showAddManager" size="sm" variant="outline" @click="openAddManager">
+        <Button
+          v-if="canEdit && !showAddManager"
+          size="sm"
+          variant="outline"
+          @click="openAddManager"
+        >
           <UserPlus class="mr-1.5 h-4 w-4" />
           {{ t('duties.events.detail.addManager') }}
         </Button>
@@ -161,7 +170,7 @@ const removeManager = async (userId: string) => {
               :disabled="removingManagerId === manager.id"
               @click="removeManager(manager.id)"
             >
-              <X class="h-3.5 w-3.5" />
+              <X class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
             </Button>
           </div>
         </div>

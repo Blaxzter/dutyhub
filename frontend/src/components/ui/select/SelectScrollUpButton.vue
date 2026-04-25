@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
+import { ChevronUp } from '@respeak/lucide-motion-vue'
 import { reactiveOmit } from '@vueuse/core'
-import { ChevronUp } from 'lucide-vue-next'
 import type { SelectScrollUpButtonProps } from 'reka-ui'
 import { SelectScrollUpButton, useForwardProps } from 'reka-ui'
 
@@ -22,7 +22,7 @@ const forwardedProps = useForwardProps(delegatedProps)
     :class="cn('flex cursor-default items-center justify-center py-1', props.class)"
   >
     <slot>
-      <ChevronUp class="size-4" />
+      <ChevronUp class="size-4" animateOnHover triggerTarget="parent" animation="default-loop" />
     </slot>
   </SelectScrollUpButton>
 </template>

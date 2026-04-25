@@ -20,6 +20,7 @@
     "@auth0/auth0-vue": "^2.5.0",
     "@hookform/resolvers": "^5.2.2",
     "@internationalized/date": "^3.12.1",
+    "@respeak/lucide-motion-vue": "^0.4.1",
     "@tailwindcss/vite": "^4.2.4",
     "@tanstack/vue-table": "^8.21.3",
     "@unovis/ts": "^1.6.4",

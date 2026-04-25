@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { Pencil, ShieldCheck } from 'lucide-vue-next'
+import { ShieldCheck } from '@respeak/lucide-motion-vue'
+import { Pencil } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -138,7 +139,7 @@ onMounted(loadEvent)
         data-testid="tab-managers"
         @click="setTab('managers')"
       >
-        <ShieldCheck class="mr-2 h-4 w-4" />
+        <ShieldCheck class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ t('duties.events.detail.nav.management') }}
       </Button>
     </div>

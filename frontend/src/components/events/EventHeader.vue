@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { CalendarDays, ChevronDown, Info, List, Printer } from 'lucide-vue-next'
+import { CalendarDays, ChevronDown, List } from '@respeak/lucide-motion-vue'
+import { Info, Printer } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -61,7 +62,7 @@ const router = useRouter()
         </Popover>
       </div>
       <p class="text-sm text-muted-foreground">
-        <CalendarDays class="mr-1 inline h-3.5 w-3.5" />
+        <CalendarDays class="mr-1 inline h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
         {{ formatDate(props.event.start_date) }} – {{ formatDate(props.event.end_date) }}
       </p>
     </div>
@@ -103,7 +104,7 @@ const router = useRouter()
         {{ props.event.description }}
       </p>
       <p class="text-sm text-muted-foreground">
-        <CalendarDays class="mr-1 inline h-3.5 w-3.5" />
+        <CalendarDays class="mr-1 inline h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
         {{ formatDate(props.event.start_date) }} – {{ formatDate(props.event.end_date) }}
       </p>
     </div>
@@ -112,7 +113,7 @@ const router = useRouter()
         <Button variant="outline" size="sm">
           <Printer class="mr-2 h-4 w-4" />
           {{ t('print.printButton') }}
-          <ChevronDown class="ml-1 h-3 w-3" />
+          <ChevronDown class="ml-1 h-3 w-3" animateOnHover triggerTarget="parent" animation="default-loop" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -125,7 +126,7 @@ const router = useRouter()
             })
           "
         >
-          <List class="mr-2 h-4 w-4" />
+          <List class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
           {{ t('print.overview') }}
         </DropdownMenuItem>
         <DropdownMenuItem

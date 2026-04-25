@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { InfoIcon, MenuIcon, WorkflowIcon } from 'lucide-vue-next'
+import { Menu as MenuIcon, Workflow as WorkflowIcon } from '@respeak/lucide-motion-vue'
+import { InfoIcon } from 'lucide-vue-next'
 import { useRoute, useRouter } from 'vue-router'
 
 import logo from '@/assets/logo/logo.svg'
@@ -98,7 +99,7 @@ function mobileNavigate(name: string) {
         <Sheet v-model:open="mobileMenuOpen">
           <SheetTrigger as-child>
             <Button variant="ghost" size="icon">
-              <MenuIcon class="h-5 w-5" />
+              <MenuIcon class="h-5 w-5" animateOnHover triggerTarget="parent" />
             </Button>
           </SheetTrigger>
           <SheetContent side="right" class="w-72 flex flex-col">

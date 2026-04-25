@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { Bell, Plus } from 'lucide-vue-next'
+import { Bell, Plus } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -90,7 +90,12 @@ function toggleChannel(offset: number, channel: string) {
   <Card>
     <CardHeader>
       <div class="flex items-center gap-2">
-        <Bell :size="20" class="text-amber-600 dark:text-amber-400" />
+        <Bell
+          :size="20"
+          class="text-amber-600 dark:text-amber-400"
+          animateOnHover
+          triggerTarget="parent"
+        />
         <CardTitle>{{ t('notifications.reminders.title') }}</CardTitle>
       </div>
       <CardDescription>
@@ -112,7 +117,7 @@ function toggleChannel(offset: number, channel: string) {
       <DropdownMenu v-if="availableOffsets.length > 0">
         <DropdownMenuTrigger as-child>
           <Button variant="outline" size="sm" class="h-8 gap-1">
-            <Plus :size="14" />
+            <Plus :size="14" animateOnHover triggerTarget="parent" />
             {{ t('notifications.reminders.addReminder') }}
           </Button>
         </DropdownMenuTrigger>

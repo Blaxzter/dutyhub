@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2 } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -34,7 +34,7 @@ const { t } = useI18n()
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
-          <Trash2 class="h-5 w-5 text-destructive" />
+          <Trash2 class="h-5 w-5 text-destructive" animateOnHover triggerTarget="parent" />
           {{ t('common.dialog.confirm.title') }}
         </DialogTitle>
         <DialogDescription class="text-left">

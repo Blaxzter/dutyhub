@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus } from 'lucide-vue-next'
+import { Plus } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -35,7 +35,7 @@ const navigateToTask = (task: TaskRead) => {
         class="max-xl:hidden"
         @click="router.push({ name: 'task-create', query: { eventId } })"
       >
-        <Plus class="mr-1.5 h-4 w-4" />
+        <Plus class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ t('duties.tasks.create') }}
       </Button>
     </div>

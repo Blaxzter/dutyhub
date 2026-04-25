@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
 
-import { ExternalLink, TriangleAlert } from 'lucide-vue-next'
+import { ExternalLink } from '@respeak/lucide-motion-vue'
+import { TriangleAlert } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -212,7 +213,7 @@ onUnmounted(() => stopTelegramPolling())
                 rel="noopener noreferrer"
                 class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium"
               >
-                <ExternalLink class="mr-2 h-4 w-4" />
+                <ExternalLink class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
                 {{ t('notifications.telegram.openInTelegram') }}
               </a>
               <p class="text-muted-foreground text-sm">

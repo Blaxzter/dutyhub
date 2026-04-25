@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { MapPin, ShieldCheck, Tag, Trash2 } from 'lucide-vue-next'
+import { MapPin, ShieldCheck, Trash2 } from '@respeak/lucide-motion-vue'
+import { Tag } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -11,7 +12,7 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 
-import type { FeedTaskItem, FeedShiftEntry, ShiftWindowResponse } from '@/client/types.gen'
+import type { FeedShiftEntry, FeedTaskItem, ShiftWindowResponse } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 import { statusVariant } from '@/lib/status'
 
@@ -174,32 +175,23 @@ watch(
               {{ task.name }}
             </h3>
             <div v-if="canManage" class="flex shrink-0 items-center gap-1">
-              <ShieldCheck class="h-3.5 w-3.5 text-primary" />
+              <ShieldCheck class="h-3.5 w-3.5 text-primary" animateOnHover triggerTarget="parent" />
               <Badge :variant="statusVariant(task.status)" class="text-[10px]">
                 {{ t(`duties.tasks.statuses.${task.status ?? 'draft'}`) }}
               </Badge>
             </div>
           </div>
 
-          <p
-            v-if="task.description"
-            class="text-xs text-muted-foreground line-clamp-2 break-words"
-          >
+          <p v-if="task.description" class="text-xs text-muted-foreground line-clamp-2 break-words">
             {{ task.description }}
           </p>
 
           <div class="space-y-1">
-            <div
-              v-if="task.location"
-              class="flex items-center gap-1 text-xs text-muted-foreground"
-            >
-              <MapPin class="h-3 w-3 shrink-0" />
+            <div v-if="task.location" class="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin class="h-3 w-3 shrink-0" animateOnHover triggerTarget="parent" />
               <span class="truncate">{{ task.location }}</span>
             </div>
-            <div
-              v-if="task.category"
-              class="flex items-center gap-1 text-xs text-muted-foreground"
-            >
+            <div v-if="task.category" class="flex items-center gap-1 text-xs text-muted-foreground">
               <Tag class="h-3 w-3 shrink-0" />
               <span class="truncate">{{ task.category }}</span>
             </div>
@@ -217,7 +209,7 @@ watch(
             class="h-6 w-6"
             @click.stop="emit('delete', task)"
           >
-            <Trash2 class="h-3.5 w-3.5 text-destructive" />
+            <Trash2 class="h-3.5 w-3.5 text-destructive" animateOnHover triggerTarget="parent" />
           </Button>
         </div>
       </div>

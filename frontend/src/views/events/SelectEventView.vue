@@ -17,11 +17,11 @@ import CreateEventDialog, {
 } from '@/components/select-event/CreateEventDialog.vue'
 import EventPickerList from '@/components/select-event/EventPickerList.vue'
 import NotificationSetupStep from '@/components/select-event/NotificationSetupStep.vue'
-import type { EventStats } from '@/components/select-event/SelectableEventCard.vue'
 import SelectEventHeroPane, {
   type SelectEventMode,
 } from '@/components/select-event/SelectEventHeroPane.vue'
 import SelectEventTopBar from '@/components/select-event/SelectEventTopBar.vue'
+import type { EventStats } from '@/components/select-event/SelectableEventCard.vue'
 
 import type { EventListResponse, EventRead, TaskFeedResponse } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'

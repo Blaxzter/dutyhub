@@ -2,7 +2,7 @@
   <Card>
     <CardHeader>
       <CardTitle class="flex items-center gap-2">
-        <DownloadIcon class="h-5 w-5" />
+        <DownloadIcon class="h-5 w-5" animateOnHover triggerTarget="parent" />
         {{ $t('user.settings.dataExport.title') }}
       </CardTitle>
       <CardDescription>{{ $t('user.settings.dataExport.subtitle') }}</CardDescription>
@@ -19,7 +19,7 @@
           :disabled="isExporting"
           @click="handleExport"
         >
-          <DownloadIcon class="h-4 w-4 mr-2" />
+          <DownloadIcon class="h-4 w-4 mr-2" animateOnHover triggerTarget="parent" />
           {{
             isExporting
               ? $t('user.settings.dataExport.exporting')
@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { DownloadIcon } from 'lucide-vue-next'
+import { Download as DownloadIcon } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'

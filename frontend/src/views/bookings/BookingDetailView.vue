@@ -4,17 +4,15 @@ import { computed, onMounted, ref } from 'vue'
 import {
   ArrowLeft,
   Bell,
-  Calendar,
   Clock,
   ExternalLink,
   History,
   MapPin,
-  Pencil,
   Plus,
-  Tag,
   Trash2,
   Users,
-} from 'lucide-vue-next'
+} from '@respeak/lucide-motion-vue'
+import { Calendar, Pencil, Tag } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -38,10 +36,10 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Textarea } from '@/components/ui/textarea'
 
-import ShiftBookingsTable from '@/components/tasks/ShiftBookingsTable.vue'
 import ReminderEntryRow from '@/components/notifications/ReminderEntryRow.vue'
+import ShiftBookingsTable from '@/components/tasks/ShiftBookingsTable.vue'
 
-import type { BookingRead, ShiftRead, ShiftBookingEntry } from '@/client/types.gen'
+import type { BookingRead, ShiftBookingEntry, ShiftRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -281,7 +279,7 @@ onMounted(loadData)
         class="mb-2 -ml-2 text-muted-foreground max-xl:hidden"
         @click="router.push({ name: 'my-bookings' })"
       >
-        <ArrowLeft class="mr-1.5 h-4 w-4" />
+        <ArrowLeft class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ t('duties.bookings.title') }}
       </Button>
 
@@ -316,7 +314,11 @@ onMounted(loadData)
         v-if="isInPast"
         class="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-950/20"
       >
-        <History class="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <History
+          class="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
+          animateOnHover
+          triggerTarget="parent"
+        />
         <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
           {{ t('duties.bookings.detail.pastTask') }}
         </p>
@@ -343,14 +345,22 @@ onMounted(loadData)
               </div>
             </div>
             <div v-if="timeDisplay" class="flex items-start gap-2.5">
-              <Clock class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <Clock
+                class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                animateOnHover
+                triggerTarget="parent"
+              />
               <div>
                 <p class="text-xs text-muted-foreground">{{ t('duties.shifts.detail.time') }}</p>
                 <p class="text-sm font-medium font-mono">{{ timeDisplay }}</p>
               </div>
             </div>
             <div v-if="shift.location" class="flex items-start gap-2.5">
-              <MapPin class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <MapPin
+                class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                animateOnHover
+                triggerTarget="parent"
+              />
               <div>
                 <p class="text-xs text-muted-foreground">
                   {{ t('duties.shifts.detail.location') }}
@@ -368,7 +378,11 @@ onMounted(loadData)
               </div>
             </div>
             <div class="flex items-start gap-2.5">
-              <Users class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <Users
+                class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                animateOnHover
+                triggerTarget="parent"
+              />
               <div>
                 <p class="text-xs text-muted-foreground">
                   {{ t('duties.shifts.detail.capacity') }}
@@ -385,13 +399,16 @@ onMounted(loadData)
             </div>
           </div>
 
-          <p v-if="shift.description" class="text-sm text-muted-foreground mt-4 whitespace-pre-line">
+          <p
+            v-if="shift.description"
+            class="text-sm text-muted-foreground mt-4 whitespace-pre-line"
+          >
             {{ shift.description }}
           </p>
 
           <div class="flex items-center gap-2 mt-4 pt-4 border-t">
             <Button v-if="eventName" variant="outline" size="sm" @click="navigateToTask">
-              <ExternalLink class="mr-1.5 h-3.5 w-3.5" />
+              <ExternalLink class="mr-1.5 h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
               {{ t('duties.shifts.detail.viewTask') }}
             </Button>
           </div>
@@ -450,7 +467,11 @@ onMounted(loadData)
       <Card v-if="isConfirmed || hasAnyReminders" data-testid="section-reminders">
         <CardHeader>
           <div class="flex items-center gap-2">
-            <Bell class="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <Bell
+              class="h-4 w-4 text-amber-600 dark:text-amber-400"
+              animateOnHover
+              triggerTarget="parent"
+            />
             <CardTitle class="text-base">{{
               t('notifications.reminders.perBooking.title')
             }}</CardTitle>
@@ -485,7 +506,7 @@ onMounted(loadData)
           <DropdownMenu v-if="availableReminderOffsets.length > 0">
             <DropdownMenuTrigger as-child>
               <Button variant="outline" size="sm" class="h-8 gap-1">
-                <Plus :size="14" />
+                <Plus :size="14" animateOnHover triggerTarget="parent" />
                 {{ t('notifications.reminders.perBooking.add') }}
               </Button>
             </DropdownMenuTrigger>
@@ -527,7 +548,7 @@ onMounted(loadData)
           size="sm"
           @click="cancelBooking"
         >
-          <Trash2 class="mr-1.5 h-4 w-4" />
+          <Trash2 class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
           {{ t('duties.bookings.cancel') }}
         </Button>
       </div>

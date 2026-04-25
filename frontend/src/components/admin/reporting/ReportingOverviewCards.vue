@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { BarChart3, Calendar, TrendingUp, Users } from 'lucide-vue-next'
+import { TrendingUp, Users } from '@respeak/lucide-motion-vue'
+import { BarChart3, Calendar } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -41,7 +42,7 @@ const { t } = useI18n()
           <CardTitle class="text-sm font-medium">
             {{ t('admin.reporting.overview.fillRate') }}
           </CardTitle>
-          <TrendingUp class="size-4 text-muted-foreground" />
+          <TrendingUp class="size-4 text-muted-foreground" animateOnHover triggerTarget="parent" />
         </div>
       </CardHeader>
       <CardContent>
@@ -77,7 +78,7 @@ const { t } = useI18n()
           <CardTitle class="text-sm font-medium">
             {{ t('admin.reporting.overview.activeVolunteers') }}
           </CardTitle>
-          <Users class="size-4 text-muted-foreground" />
+          <Users class="size-4 text-muted-foreground" animateOnHover triggerTarget="parent" />
         </div>
       </CardHeader>
       <CardContent>

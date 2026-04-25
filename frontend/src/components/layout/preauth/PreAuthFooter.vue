@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SparklesIcon } from 'lucide-vue-next'
+import { Sparkles as SparklesIcon } from '@respeak/lucide-motion-vue'
 
 import { formatDate } from '@/lib/format'
 
@@ -18,7 +18,7 @@ const appVersionDate = __APP_VERSION_DATE__
           :to="{ name: 'preauth-changelog' }"
           class="text-xs hover:text-foreground transition-colors inline-flex items-center gap-1"
         >
-          <SparklesIcon class="size-3" />
+          <SparklesIcon class="size-3" animateOnHover triggerTarget="parent" />
           <span>
             {{
               $t('preauth.layout.footer.version', {

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import { CalendarDays, SlidersHorizontal, Users } from '@respeak/lucide-motion-vue'
 import { useLocalStorage } from '@vueuse/core'
-import { BookCheck, CalendarDays, HelpCircle, SlidersHorizontal, Users } from 'lucide-vue-next'
+import { BookCheck, HelpCircle } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -21,7 +22,7 @@ import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
 import { ShiftCalendar } from '@/components/tasks/shift-calendar'
 import type { BookingCalendarItem } from '@/components/tasks/shift-calendar'
 
-import type { DashboardTask, DashboardEvent, DashboardFeedResponse } from '@/client'
+import type { DashboardEvent, DashboardFeedResponse, DashboardTask } from '@/client'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -113,7 +114,9 @@ onMounted(loadStats)
 <template>
   <div class="mx-auto max-w-7xl space-y-6">
     <div class="space-y-2">
-      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">{{ t('dashboard.home.title') }}</h1>
+      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
+        {{ t('dashboard.home.title') }}
+      </h1>
       <p class="text-muted-foreground">
         {{ t('dashboard.home.subtitle') }}
       </p>
@@ -130,7 +133,11 @@ onMounted(loadStats)
           <CardTitle class="text-sm font-medium">{{
             t('dashboard.home.stats.tasks.title')
           }}</CardTitle>
-          <CalendarDays class="h-4 w-4 text-muted-foreground" />
+          <CalendarDays
+            class="h-4 w-4 text-muted-foreground"
+            animateOnHover
+            triggerTarget="parent"
+          />
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-bold">{{ eventCount }}</div>
@@ -169,7 +176,7 @@ onMounted(loadStats)
           <CardTitle class="text-sm font-medium">{{
             t('dashboard.home.stats.users.title')
           }}</CardTitle>
-          <Users class="h-4 w-4 text-muted-foreground" />
+          <Users class="h-4 w-4 text-muted-foreground" animateOnHover triggerTarget="parent" />
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-bold">{{ authStore.pendingUserCount }}</div>
@@ -195,7 +202,7 @@ onMounted(loadStats)
                     size="sm"
                     class="relative"
                   >
-                    <SlidersHorizontal class="mr-2 h-4 w-4" />
+                    <SlidersHorizontal class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
                     {{ t('dashboard.home.calendar.filter') }}
                     <span
                       v-if="hiddenFilterCount > 0"
@@ -285,7 +292,7 @@ onMounted(loadStats)
           variant="outline"
           @click="router.push({ name: 'tasks' })"
         >
-          <CalendarDays class="mr-2 h-4 w-4" />
+          <CalendarDays class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
           {{ t('dashboard.home.quickActions.browseTasks') }}
         </Button>
         <Button

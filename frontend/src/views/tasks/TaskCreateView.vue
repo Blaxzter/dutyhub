@@ -3,7 +3,8 @@ import { computed, onMounted, ref, toRaw, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { ArrowLeft, CalendarDays, CalendarPlus, Clock, Plus, Users, X } from 'lucide-vue-next'
+import { ArrowLeft, CalendarDays, Clock, Plus, Users, X } from '@respeak/lucide-motion-vue'
+import { CalendarPlus } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -65,9 +66,7 @@ const category = ref('')
 const isScopedManagerOnly = computed(
   () => !authStore.isAdmin && !authStore.isTaskManager && authStore.isEventManager,
 )
-const eventMode = ref<'none' | 'existing' | 'new'>(
-  isScopedManagerOnly.value ? 'existing' : 'none',
-)
+const eventMode = ref<'none' | 'existing' | 'new'>(isScopedManagerOnly.value ? 'existing' : 'none')
 const selectedEventId = ref<string>('')
 const events = ref<EventRead[]>([])
 const newEventName = ref('')
@@ -369,9 +368,7 @@ const handleSubmit = async () => {
       body,
     })
 
-    toast.success(
-      t('duties.tasks.createView.success', { count: response.data.shifts_created }),
-    )
+    toast.success(t('duties.tasks.createView.success', { count: response.data.shifts_created }))
     router.push({ name: 'task-detail', params: { eventId: response.data.task.id } })
   } catch (error) {
     toastApiError(error)
@@ -392,7 +389,7 @@ const handleSubmit = async () => {
         class="-ml-2 max-xl:hidden"
         @click="router.push({ name: 'tasks' })"
       >
-        <ArrowLeft class="mr-1.5 h-4 w-4" />
+        <ArrowLeft class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ t('common.actions.back') }}
       </Button>
       <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
@@ -448,7 +445,7 @@ const handleSubmit = async () => {
       <AccordionItem value="event" data-testid="section-event" class="rounded-lg border">
         <AccordionTrigger class="px-6 hover:no-underline">
           <div class="flex items-center gap-3">
-            <Users class="h-5 w-5 text-primary" />
+            <Users class="h-5 w-5 text-primary" animateOnHover triggerTarget="parent" />
             <div class="text-left">
               <p class="font-semibold">{{ t('duties.tasks.createView.sections.event') }}</p>
               <p class="text-sm text-muted-foreground">
@@ -479,9 +476,7 @@ const handleSubmit = async () => {
           <div v-if="eventMode === 'existing'" class="mt-4">
             <Select v-model="selectedEventId">
               <SelectTrigger>
-                <SelectValue
-                  :placeholder="t('duties.tasks.createView.eventOption.existing')"
-                />
+                <SelectValue :placeholder="t('duties.tasks.createView.eventOption.existing')" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem v-for="event in events" :key="event.id" :value="event.id">
@@ -528,7 +523,7 @@ const handleSubmit = async () => {
       <AccordionItem value="dates" data-testid="section-task-dates" class="rounded-lg border">
         <AccordionTrigger class="px-6 hover:no-underline">
           <div class="flex items-center gap-3">
-            <CalendarDays class="h-5 w-5 text-primary" />
+            <CalendarDays class="h-5 w-5 text-primary" animateOnHover triggerTarget="parent" />
             <div class="text-left">
               <p class="font-semibold">{{ t('duties.tasks.createView.sections.dates') }}</p>
               <p class="text-sm text-muted-foreground">
@@ -610,7 +605,7 @@ const handleSubmit = async () => {
                   />
                 </div>
                 <Button :disabled="!specificDatePicker" @click="addSpecificDate">
-                  <Plus class="mr-1.5 h-4 w-4" />
+                  <Plus class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
                   {{ t('duties.tasks.createView.addDate') }}
                 </Button>
               </div>
@@ -632,7 +627,7 @@ const handleSubmit = async () => {
                     class="ml-1 rounded-full p-0.5 hover:bg-muted"
                     @click="removeSpecificDate(index)"
                   >
-                    <X class="h-3 w-3" />
+                    <X class="h-3 w-3" animateOnHover triggerTarget="parent" />
                   </button>
                 </Badge>
               </div>
@@ -651,7 +646,7 @@ const handleSubmit = async () => {
       <AccordionItem value="schedule" data-testid="section-schedule" class="rounded-lg border">
         <AccordionTrigger class="px-6 hover:no-underline">
           <div class="flex items-center gap-3">
-            <Clock class="h-5 w-5 text-primary" />
+            <Clock class="h-5 w-5 text-primary" animateOnHover triggerTarget="parent" />
             <div class="text-left">
               <p class="font-semibold">{{ t('duties.tasks.createView.sections.schedule') }}</p>
               <p class="text-sm text-muted-foreground">

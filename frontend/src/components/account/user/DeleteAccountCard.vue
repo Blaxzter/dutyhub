@@ -2,7 +2,7 @@
   <Card class="border-destructive/50">
     <CardHeader>
       <CardTitle class="flex items-center gap-2 text-destructive">
-        <Trash2Icon class="h-5 w-5" />
+        <Trash2Icon class="h-5 w-5" animateOnHover triggerTarget="parent" />
         {{ $t('user.settings.deleteAccount.title') }}
       </CardTitle>
       <CardDescription>{{ $t('user.settings.deleteAccount.subtitle') }}</CardDescription>
@@ -18,7 +18,7 @@
         <Dialog v-model:open="showConfirmDialog">
           <DialogTrigger as-child>
             <Button variant="destructive" size="sm" class="w-full sm:w-auto">
-              <Trash2Icon class="h-4 w-4 mr-2" />
+              <Trash2Icon class="h-4 w-4 mr-2" animateOnHover triggerTarget="parent" />
               {{ $t('user.settings.deleteAccount.button') }}
             </Button>
           </DialogTrigger>
@@ -73,7 +73,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { Trash2Icon } from 'lucide-vue-next'
+import { Trash2 as Trash2Icon } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'

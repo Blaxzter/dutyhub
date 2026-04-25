@@ -135,8 +135,9 @@
 import { onMounted, ref } from 'vue'
 
 import type { User } from '@auth0/auth0-vue'
+import { Loader as LoaderIcon } from '@respeak/lucide-motion-vue'
 import { toTypedSchema } from '@vee-validate/zod'
-import { EditIcon, InfoIcon, LoaderIcon, SaveIcon } from 'lucide-vue-next'
+import { EditIcon, InfoIcon, SaveIcon } from 'lucide-vue-next'
 import { useForm } from 'vee-validate'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'

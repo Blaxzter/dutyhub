@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Users } from 'lucide-vue-next'
+import { Users } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'
@@ -60,7 +60,7 @@ const { formatDateLabel } = useFormatters()
               class="mt-0.5 flex items-center justify-center gap-1 text-xs"
               :class="isShiftExcluded(shift) ? 'text-destructive line-through' : 'text-primary'"
             >
-              <Users class="h-3 w-3" />
+              <Users class="h-3 w-3" animateOnHover triggerTarget="parent" />
               {{ t('duties.tasks.editView.preview.booked', { count: getBookingCount(shift) }) }}
             </p>
           </CardContent>

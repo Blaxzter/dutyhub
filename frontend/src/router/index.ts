@@ -103,9 +103,7 @@ const router = createRouter({
           component: () => import('@/views/events/EventSettingsView.vue'),
           meta: {
             requiresRole: ['admin', 'task_manager'],
-            breadcrumbs: [
-              { title: 'Event Details', titleKey: 'duties.events.detail.title' },
-            ],
+            breadcrumbs: [{ title: 'Event Details', titleKey: 'duties.events.detail.title' }],
           },
         },
         {

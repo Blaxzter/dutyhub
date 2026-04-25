@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import {
-  Calendar,
-  CalendarClock,
-  CalendarSearch,
-  Grid2x2,
-  List,
-  Plus,
-  Search,
-} from 'lucide-vue-next'
+import { List, Plus, Search } from '@respeak/lucide-motion-vue'
+import { Calendar, CalendarClock, CalendarSearch, Grid2x2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -24,14 +17,14 @@ import Input from '@/components/ui/input/Input.vue'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import DeleteConfirmationDialog from '@/components/tasks/DeleteConfirmationDialog.vue'
+import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
 import TaskCalendarView from '@/components/tasks/TaskCalendarView.vue'
 import TaskFilterMenu from '@/components/tasks/TaskFilterMenu.vue'
 import TaskListView from '@/components/tasks/TaskListView.vue'
-import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
-import type { DateRange } from '@/components/tasks/shift-calendar'
 import { TaskQuickView } from '@/components/tasks/quick-view'
+import type { DateRange } from '@/components/tasks/shift-calendar'
 
-import type { TaskFeedResponse, EventRead, FeedTaskItem } from '@/client/types.gen'
+import type { EventRead, FeedTaskItem, TaskFeedResponse } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -271,7 +264,7 @@ onMounted(loadTasks)
             class="rounded-none border-0"
             @click="filters.viewMode = 'list'"
           >
-            <List class="mr-1.5 h-4 w-4" />
+            <List class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
             <span class="hidden sm:inline">{{ t('duties.tasks.views.list') }}</span>
           </Button>
           <Button
@@ -302,7 +295,7 @@ onMounted(loadTasks)
           class="max-xl:hidden"
           @click="router.push({ name: 'task-create' })"
         >
-          <Plus class="mr-2 h-4 w-4" />
+          <Plus class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
           {{ t('duties.tasks.create') }}
         </Button>
       </div>
@@ -311,7 +304,9 @@ onMounted(loadTasks)
     <!-- Search & Filter (hidden for calendar — it has its own navigation) -->
     <div v-if="filters.viewMode !== 'calendar'" class="flex flex-wrap items-center gap-4">
       <div class="relative flex-1">
-        <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search
+          class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+        />
         <Input
           v-model="filters.searchQuery"
           data-testid="input-search"
@@ -383,7 +378,7 @@ onMounted(loadTasks)
       :aria-label="t('duties.tasks.create')"
       @click="router.push({ name: 'task-create' })"
     >
-      <Plus class="size-7" :stroke-width="2.5" />
+      <Plus class="size-7" :stroke-width="2.5" animateOnHover triggerTarget="parent" />
     </Button>
   </div>
 </template>

@@ -7,7 +7,8 @@ import {
   getLocalTimeZone,
   today as todayDate,
 } from '@internationalized/date'
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
+import { CalendarDays, ChevronLeft, ChevronRight, X } from '@respeak/lucide-motion-vue'
+import { CalendarX2 } from 'lucide-vue-next'
 import {
   type DateRange,
   RangeCalendarCell,
@@ -159,14 +160,14 @@ const hasValue = computed(() => props.dateFrom !== null)
   <Popover>
     <PopoverTrigger as-child>
       <Button variant="outline" size="sm" class="justify-start text-left font-normal">
-        <CalendarDays class="h-4 w-4 shrink-0" />
+        <CalendarDays class="h-4 w-4 shrink-0" animateOnHover triggerTarget="parent" />
         <span class="truncate">{{ displayLabel }}</span>
         <button
           v-if="hasValue"
           class="ml-auto rounded-sm p-0.5 hover:bg-accent"
           @click.stop="clearSelection"
         >
-          <X class="h-3 w-3" />
+          <X class="h-3 w-3" animateOnHover triggerTarget="parent" />
         </button>
       </Button>
     </PopoverTrigger>
@@ -190,7 +191,7 @@ const hasValue = computed(() => props.dateFrom !== null)
               )
             "
           >
-            <ChevronLeft class="size-4" />
+            <ChevronLeft class="size-4" animateOnHover triggerTarget="parent" animation="default-loop" />
           </RangeCalendarPrev>
           <!-- Month + year selectors -->
           <div class="flex items-center gap-1">
@@ -232,7 +233,7 @@ const hasValue = computed(() => props.dateFrom !== null)
               )
             "
           >
-            <ChevronRight class="size-4" />
+            <ChevronRight class="size-4" animateOnHover triggerTarget="parent" animation="default-loop" />
           </RangeCalendarNext>
         </RangeCalendarHeader>
 

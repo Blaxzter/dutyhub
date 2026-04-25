@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import { XIcon } from 'lucide-vue-next'
+import { X as XIcon } from '@respeak/lucide-motion-vue'
 
 import { Button } from '@/components/ui/button'
 
@@ -44,7 +44,7 @@ const dismiss = () => {
           {{ $t('preauth.cookieNotice.dismiss') }}
         </Button>
         <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" @click="dismiss">
-          <XIcon class="h-4 w-4" />
+          <XIcon class="h-4 w-4" animateOnHover triggerTarget="parent" />
         </Button>
       </div>
     </div>

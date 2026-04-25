@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ArrowLeft, CalendarRange } from 'lucide-vue-next'
+import { ArrowLeft } from '@respeak/lucide-motion-vue'
+import { CalendarRange } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -65,7 +66,7 @@ const mobileParent = computed(() => {
         class="xl:hidden -ml-1"
         @click="mobileParent.to && router.push(mobileParent.to)"
       >
-        <ArrowLeft class="mr-1.5 h-4 w-4" />
+        <ArrowLeft class="mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ resolveBreadcrumbTitle(mobileParent.title, mobileParent.titleKey) }}
       </Button>
 

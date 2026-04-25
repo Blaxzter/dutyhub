@@ -1,15 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import {
-  Calendar,
-  Clock,
-  EllipsisVertical,
-  ExternalLink,
-  MapPin,
-  Tag,
-  Users,
-} from 'lucide-vue-next'
+import { Clock, EllipsisVertical, ExternalLink, MapPin, Users } from '@respeak/lucide-motion-vue'
+import { Calendar, Tag } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -39,7 +32,7 @@ import Separator from '@/components/ui/separator/Separator.vue'
 
 import ShiftBookingsTable from '@/components/tasks/ShiftBookingsTable.vue'
 
-import type { BookingRead, ShiftRead, ShiftBookingEntry } from '@/client/types.gen'
+import type { BookingRead, ShiftBookingEntry, ShiftRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const props = withDefaults(
@@ -255,7 +248,11 @@ const navigateToBooking = () => {
               </div>
             </div>
             <div v-if="timeDisplay" class="flex items-start gap-2.5">
-              <Clock class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <Clock
+                class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                animateOnHover
+                triggerTarget="parent"
+              />
               <div>
                 <p class="text-xs text-muted-foreground">
                   {{ t('duties.shifts.detail.time') }}
@@ -271,7 +268,11 @@ const navigateToBooking = () => {
             class="grid gap-3 sm:grid-cols-2"
           >
             <div v-if="resolvedShift.location" class="flex items-start gap-2.5">
-              <MapPin class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <MapPin
+                class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+                animateOnHover
+                triggerTarget="parent"
+              />
               <div>
                 <p class="text-xs text-muted-foreground">
                   {{ t('duties.shifts.detail.location') }}
@@ -292,7 +293,11 @@ const navigateToBooking = () => {
 
           <!-- Capacity -->
           <div class="flex items-start gap-2.5">
-            <Users class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <Users
+              class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+              animateOnHover
+              triggerTarget="parent"
+            />
             <div>
               <p class="text-xs text-muted-foreground">
                 {{ t('duties.shifts.detail.capacity') }}
@@ -338,7 +343,7 @@ const navigateToBooking = () => {
           <DropdownMenu v-if="hasMenuItems">
             <DropdownMenuTrigger as-child>
               <Button variant="outline" size="sm" class="h-8 w-8 p-0">
-                <EllipsisVertical class="h-4 w-4" />
+                <EllipsisVertical class="h-4 w-4" animateOnHover triggerTarget="parent" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
@@ -346,11 +351,11 @@ const navigateToBooking = () => {
                 v-if="showTaskLink && resolvedShift?.task_id"
                 @click="navigateToTask"
               >
-                <ExternalLink class="mr-2 h-4 w-4" />
+                <ExternalLink class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
                 {{ t('duties.shifts.detail.viewTask') }}
               </DropdownMenuItem>
               <DropdownMenuItem v-if="resolvedMyBooking" @click="navigateToBooking">
-                <ExternalLink class="mr-2 h-4 w-4" />
+                <ExternalLink class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
                 {{ t('duties.shifts.detail.openBookingDetails') }}
               </DropdownMenuItem>
             </DropdownMenuContent>

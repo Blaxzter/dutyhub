@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 
-import { Plus, Trash2 } from 'lucide-vue-next'
+import { Plus, Trash2 } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'
@@ -152,7 +152,7 @@ watch(
           :disabled="availableDates.length === 0"
           @click="addOverride"
         >
-          <Plus class="sm:mr-1.5 h-4 w-4" />
+          <Plus class="sm:mr-1.5 h-4 w-4" animateOnHover triggerTarget="parent" />
           <span class="hidden sm:inline">{{
             t('duties.tasks.createView.schedule.addException')
           }}</span>
@@ -193,7 +193,7 @@ watch(
           <TimePicker v-model="override.endTime" />
         </div>
         <Button variant="ghost" size="icon" @click="removeOverride(index)">
-          <Trash2 class="h-4 w-4 text-destructive" />
+          <Trash2 class="h-4 w-4 text-destructive" animateOnHover triggerTarget="parent" />
         </Button>
       </div>
     </div>

@@ -36,8 +36,14 @@ export function slotKey(shift: PreviewShift): string {
  */
 export function useShiftPreview(config: Ref<ScheduleConfig>) {
   const previewShifts = computed<PreviewShift[]>(() => {
-    const { eventName, startDate, endDate, defaultStartTime, defaultEndTime, shiftDurationMinutes } =
-      config.value
+    const {
+      eventName,
+      startDate,
+      endDate,
+      defaultStartTime,
+      defaultEndTime,
+      shiftDurationMinutes,
+    } = config.value
 
     if (!startDate || !endDate || !defaultStartTime || !defaultEndTime || !shiftDurationMinutes) {
       return []

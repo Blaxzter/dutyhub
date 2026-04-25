@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight } from 'lucide-vue-next'
+import { ArrowRight } from '@respeak/lucide-motion-vue'
 
 import type { ButtonVariants } from '@/components/ui/button'
 import { Button } from '@/components/ui/button'
@@ -43,7 +43,7 @@ const { orientation, canScrollNext, scrollNext } = useCarousel()
     @click="scrollNext"
   >
     <slot>
-      <ArrowRight />
+      <ArrowRight animateOnHover triggerTarget="parent" />
       <span class="sr-only">Next Slide</span>
     </slot>
   </Button>

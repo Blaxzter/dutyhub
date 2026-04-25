@@ -1,17 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import {
-  AlertCircle,
-  Calendar,
-  CalendarDays,
-  Clock,
-  Layers,
-  MapPin,
-  Search,
-  Trash2,
-  XCircle,
-} from 'lucide-vue-next'
+import { CalendarDays, Clock, Layers, MapPin, Search, Trash2 } from '@respeak/lucide-motion-vue'
+import { AlertCircle, Calendar, XCircle } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -407,7 +398,7 @@ onMounted(loadBookings)
                   v-if="slotStartTime(booking) || slotEndTime(booking)"
                   class="flex items-center gap-1.5"
                 >
-                  <Clock class="h-3.5 w-3.5" />
+                  <Clock class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
                   {{ formatTime(slotStartTime(booking)) }}
                   <template v-if="slotStartTime(booking) && slotEndTime(booking)"> - </template>
                   {{ formatTime(slotEndTime(booking)) }}
@@ -415,7 +406,7 @@ onMounted(loadBookings)
 
                 <!-- Location -->
                 <div v-if="slotLocation(booking)" class="flex items-center gap-1.5">
-                  <MapPin class="h-3.5 w-3.5" />
+                  <MapPin class="h-3.5 w-3.5" animateOnHover triggerTarget="parent" />
                   {{ slotLocation(booking) }}
                 </div>
               </div>
@@ -474,7 +465,7 @@ onMounted(loadBookings)
                         class="h-8 w-8 text-destructive hover:text-destructive"
                         @click="handleCancel(booking)"
                       >
-                        <Trash2 class="h-4 w-4" />
+                        <Trash2 class="h-4 w-4" animateOnHover triggerTarget="parent" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>

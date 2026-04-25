@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Ban, UserCheck } from 'lucide-vue-next'
+import { UserCheck } from '@respeak/lucide-motion-vue'
+import { Ban } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
-
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent } from '@/components/ui/card'
 
-import UserRowActions from './UserRowActions.vue'
-
 import type { UserRead } from '@/client/types.gen'
+
+import UserRowActions from './UserRowActions.vue'
 
 const props = defineProps<{
   users: UserRead[]
@@ -29,13 +29,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-const pendingUsers = computed(() =>
-  props.users.filter((u) => !u.is_active && !u.rejection_reason),
-)
+const pendingUsers = computed(() => props.users.filter((u) => !u.is_active && !u.rejection_reason))
 const activeUsers = computed(() => props.users.filter((u) => u.is_active))
-const rejectedUsers = computed(() =>
-  props.users.filter((u) => !u.is_active && u.rejection_reason),
-)
+const rejectedUsers = computed(() => props.users.filter((u) => !u.is_active && u.rejection_reason))
 
 const getInitials = (user: UserRead) => {
   if (user.name) {
@@ -82,7 +78,7 @@ const formatDate = (iso: string) =>
               :disabled="updatingId === user.id"
               @click="emit('toggleActive', user)"
             >
-              <UserCheck class="mr-2 h-4 w-4" />
+              <UserCheck class="mr-2 h-4 w-4" animateOnHover triggerTarget="parent" />
               {{ t('admin.users.approve') }}
             </Button>
             <Button
@@ -101,11 +97,7 @@ const formatDate = (iso: string) =>
 
     <section v-if="activeUsers.length > 0" class="space-y-2">
       <div class="divide-y rounded-lg border">
-        <div
-          v-for="user in activeUsers"
-          :key="user.id"
-          class="flex items-center gap-3 p-3"
-        >
+        <div v-for="user in activeUsers" :key="user.id" class="flex items-center gap-3 p-3">
           <Avatar class="h-9 w-9 shrink-0 rounded-sm">
             <AvatarImage v-if="user.picture" :src="user.picture" :alt="user.name ?? ''" />
             <AvatarFallback class="rounded-sm text-xs">{{ getInitials(user) }}</AvatarFallback>
@@ -134,11 +126,7 @@ const formatDate = (iso: string) =>
 
     <section v-if="rejectedUsers.length > 0" class="space-y-2">
       <div class="divide-y rounded-lg border">
-        <div
-          v-for="user in rejectedUsers"
-          :key="user.id"
-          class="flex items-start gap-3 p-3"
-        >
+        <div v-for="user in rejectedUsers" :key="user.id" class="flex items-start gap-3 p-3">
           <Avatar class="h-9 w-9 shrink-0 rounded-sm opacity-60">
             <AvatarImage v-if="user.picture" :src="user.picture" :alt="user.name ?? ''" />
             <AvatarFallback class="rounded-sm text-xs">{{ getInitials(user) }}</AvatarFallback>
@@ -146,10 +134,7 @@ const formatDate = (iso: string) =>
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium">{{ user.name ?? '—' }}</p>
             <p class="truncate text-xs text-muted-foreground">{{ user.email ?? '—' }}</p>
-            <p
-              v-if="user.rejection_reason"
-              class="mt-1 text-xs italic text-muted-foreground"
-            >
+            <p v-if="user.rejection_reason" class="mt-1 text-xs italic text-muted-foreground">
               "{{ user.rejection_reason }}"
             </p>
           </div>

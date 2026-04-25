@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { LogOut, Moon, Sun } from '@respeak/lucide-motion-vue'
 import { useColorMode } from '@vueuse/core'
-import { LogOut, Moon, Sun } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import wirksamDarkLogo from '@/assets/logo/wirksam-dark.svg'
@@ -35,8 +35,8 @@ const topBarLogo = computed(() => (mode.value === 'light' ? wirksamDarkLogo : wi
         "
         @click="mode = mode === 'dark' ? 'light' : 'dark'"
       >
-        <Sun v-if="mode === 'dark'" class="h-4 w-4" />
-        <Moon v-else class="h-4 w-4" />
+        <Sun v-if="mode === 'dark'" class="h-4 w-4" animateOnHover triggerTarget="parent" />
+        <Moon v-else class="h-4 w-4" animateOnHover triggerTarget="parent" />
       </Button>
       <LanguageSwitch variant="ghost" size="sm" :show-text="false" />
       <Button
@@ -46,7 +46,7 @@ const topBarLogo = computed(() => (mode.value === 'light' ? wirksamDarkLogo : wi
         :title="t('navigation.user.actions.logout')"
         @click="authStore.logout"
       >
-        <LogOut class="h-4 w-4" />
+        <LogOut class="h-4 w-4" animateOnHover triggerTarget="parent" />
       </Button>
     </div>
   </header>

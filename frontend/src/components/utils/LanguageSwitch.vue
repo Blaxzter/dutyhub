@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ChevronDownIcon } from 'lucide-vue-next'
+import { ChevronDown as ChevronDownIcon } from '@respeak/lucide-motion-vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -78,7 +78,7 @@ const changeLanguage = async (languageCode: string) => {
       <Button :variant="variant" :size="size" class="gap-2">
         <span :class="`fi fi-${currentLanguage.flag}`" class="h-4 w-6 rounded-sm" />
         <span v-if="showText" class="hidden sm:inline">{{ currentLanguage.nativeName }}</span>
-        <ChevronDownIcon class="h-3 w-3 opacity-50" />
+        <ChevronDownIcon class="h-3 w-3 opacity-50" animateOnHover triggerTarget="parent" animation="default-loop" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="w-48">

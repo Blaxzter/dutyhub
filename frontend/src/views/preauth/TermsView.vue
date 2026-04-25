@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeftIcon } from 'lucide-vue-next'
+import { ArrowLeft as ArrowLeftIcon } from '@respeak/lucide-motion-vue'
 import { useRouter } from 'vue-router'
 
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ const goBackToHome = () => {
         </p>
       </div>
       <Button @click="goBackToHome" variant="ghost" size="sm" class="gap-2">
-        <ArrowLeftIcon class="h-4 w-4" />
+        <ArrowLeftIcon class="h-4 w-4" animateOnHover triggerTarget="parent" />
         {{ $t('preauth.terms.backToHome') }}
       </Button>
     </div>

@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { Bell, ShieldCheck, Users } from '@respeak/lucide-motion-vue'
 import { useColorMode } from '@vueuse/core'
-import { Bell, CalendarRange, Megaphone, ShieldCheck, Users } from 'lucide-vue-next'
+import { CalendarRange, Megaphone } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import wirksamDarkLogo from '@/assets/logo/wirksam-dark.svg'
@@ -82,7 +83,7 @@ const subhead = computed(() =>
           </div>
         </div>
         <div class="flex items-start gap-3 rounded-xl bg-hero-foreground/10 p-4">
-          <Users class="h-5 w-5 shrink-0" />
+          <Users class="h-5 w-5 shrink-0" animateOnHover triggerTarget="parent" />
           <div class="text-sm">
             <p class="font-semibold">
               {{ t('duties.selectEvent.visual.features.coordTitle') }}
@@ -97,7 +98,7 @@ const subhead = computed(() =>
       <!-- Step 2: what the notifications are for -->
       <div v-else class="space-y-3 pt-4">
         <div class="flex items-start gap-3 rounded-xl bg-hero-foreground/10 p-4">
-          <Bell class="mt-0.5 h-5 w-5 shrink-0" />
+          <Bell class="mt-0.5 h-5 w-5 shrink-0" animateOnHover triggerTarget="parent" />
           <div class="text-sm">
             <p class="font-semibold">
               {{ t('duties.selectEvent.visual.step2.features.remindersTitle') }}
@@ -119,7 +120,7 @@ const subhead = computed(() =>
           </div>
         </div>
         <div class="flex items-start gap-3 rounded-xl bg-hero-foreground/10 p-4">
-          <ShieldCheck class="mt-0.5 h-5 w-5 shrink-0" />
+          <ShieldCheck class="mt-0.5 h-5 w-5 shrink-0" animateOnHover triggerTarget="parent" />
           <div class="text-sm">
             <p class="font-semibold">
               {{ t('duties.selectEvent.visual.step2.features.controlTitle') }}

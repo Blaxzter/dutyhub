@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 
-import { PanelLeft } from 'lucide-vue-next'
+import { PanelLeft } from '@respeak/lucide-motion-vue'
 
 import { Button } from '@/components/ui/button'
 
@@ -25,7 +25,7 @@ const { toggleSidebar } = useSidebar()
     :class="cn('h-7 w-7', props.class)"
     @click="toggleSidebar"
   >
-    <PanelLeft />
+    <PanelLeft animateOnHover triggerTarget="parent" />
     <span class="sr-only">Toggle Sidebar</span>
   </Button>
 </template>
