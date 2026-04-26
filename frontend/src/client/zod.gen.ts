@@ -14,6 +14,20 @@ export const zAffectedBookingInfo = z.object({
 })
 
 /**
+ * AvatarUploadResponse
+ */
+export const zAvatarUploadResponse = z.object({
+  etag: z.string(),
+})
+
+/**
+ * Body_users-upload_my_avatar
+ */
+export const zBodyUsersUploadMyAvatar = z.object({
+  file: z.string(),
+})
+
+/**
  * BookingCreate
  *
  * User only provides the shift and optional notes. user_id is set server-side.
@@ -630,7 +644,7 @@ export const zShiftBookingEntry = z
     user_id: z.uuid(),
     user_name: z.string().nullish(),
     user_email: z.string().nullish(),
-    user_picture: z.string().nullish(),
+    user_avatar_etag: z.string().nullish(),
     user_phone_number: z.string().nullish(),
     notes: z.string().nullish(),
     created_at: z.iso.datetime(),
@@ -1238,7 +1252,6 @@ export const zUserCreate = z.object({
   }),
   email: z.email().nullish(),
   name: z.string().nullish(),
-  picture: z.string().nullish(),
   email_verified: z
     .boolean()
     .register(z.globalRegistry, {
@@ -1272,11 +1285,12 @@ export const zUserCreate = z.object({
  * UserProfile
  */
 export const zUserProfile = z.object({
+  id: z.uuid(),
   sub: z.string(),
   name: z.string().nullish(),
   nickname: z.string().nullish(),
   email: z.string().nullish(),
-  picture: z.string().nullish(),
+  avatar_etag: z.string().nullish(),
   bio: z.string().nullish(),
   phone_number: z.string().nullish(),
   preferred_language: z.string().optional().default('en'),
@@ -1324,7 +1338,6 @@ export const zUserProfile = z.object({
 export const zUserProfileUpdate = z.object({
   name: z.string().max(100).nullish(),
   nickname: z.string().max(50).nullish(),
-  picture: z.url().min(1).max(2083).nullish(),
   bio: z.string().max(500).nullish(),
   phone_number: z.string().max(30).nullish(),
   preferred_language: z
@@ -1341,7 +1354,7 @@ export const zUserRead = z.object({
   auth0_sub: z.string(),
   email: z.email().nullish(),
   name: z.string().nullish(),
-  picture: z.string().nullish(),
+  avatar_etag: z.string().nullish(),
   phone_number: z.string().nullish(),
   preferred_language: z.string().optional().default('en'),
   roles: z.array(z.string()),
@@ -1541,6 +1554,24 @@ export const zUsersExportUserDataResponse = z
   .register(z.globalRegistry, {
     description: 'Successful Response',
   })
+
+/**
+ * Successful Response
+ */
+export const zUsersDeleteMyAvatarResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zUsersUploadMyAvatarBody = zBodyUsersUploadMyAvatar
+
+/**
+ * Successful Response
+ */
+export const zUsersUploadMyAvatarResponse = zAvatarUploadResponse
+
+export const zUsersGetUserAvatarPath = z.object({
+  user_id: z.uuid(),
+})
 
 /**
  * Successful Response

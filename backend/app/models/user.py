@@ -24,10 +24,10 @@ class User(Base, table=True):
         description="User's email address",
     )
     name: str | None = Field(default=None, description="User's display name")
-    picture: str | None = Field(
+    avatar_etag: str | None = Field(
         default=None,
-        sa_column=sa.Column(sa.String, nullable=True),
-        description="URL to user's profile picture",
+        sa_column=sa.Column(sa.String(64), nullable=True),
+        description="sha256 of the locally stored avatar; null when no avatar is set",
     )
     email_verified: bool = Field(
         default=False,

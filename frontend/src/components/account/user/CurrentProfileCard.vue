@@ -12,7 +12,7 @@
         <!-- Avatar -->
         <div class="flex flex-col items-center gap-4">
           <Avatar class="h-24 w-24">
-            <AvatarImage v-if="user?.picture" :src="user.picture" :alt="displayName" />
+            <AvatarImage v-if="avatarUrl" :src="avatarUrl" :alt="displayName" />
             <AvatarFallback class="text-xl">
               {{ initials }}
             </AvatarFallback>
@@ -81,6 +81,10 @@ import type { User } from '@auth0/auth0-vue'
 import { UserIcon } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
+import { useAvatarUrl } from '@/composables/useAvatarUrl'
+
+import { useAuthStore } from '@/stores/auth'
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -96,6 +100,10 @@ interface Props {
 
 const props = defineProps<Props>()
 useI18n()
+const authStore = useAuthStore()
+
+// Avatar bytes are served by our backend; the etag lives on UserProfile.
+const avatarUrl = useAvatarUrl(() => authStore.profile)
 
 // Computed properties
 const displayName = computed(

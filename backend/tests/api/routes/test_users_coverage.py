@@ -296,11 +296,11 @@ class TestDeleteCurrentUser:
 class TestUserProfileUpdate:
     """Test PATCH /me endpoint."""
 
-    async def test_update_profile_picture(self, async_client: AsyncClient):
-        """Test updating user profile picture."""
+    async def test_update_profile_nickname(self, async_client: AsyncClient):
+        """Test updating user nickname (avatar updates go through /me/avatar)."""
         r = await async_client.patch(
             "/api/v1/users/me",
-            json={"picture": "https://example.com/new-pic.jpg"},
+            json={"nickname": "Updated"},
         )
 
         assert r.status_code == 200

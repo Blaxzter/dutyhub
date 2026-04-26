@@ -185,7 +185,7 @@ async def list_shift_bookings(
             user_id=b.user_id,
             user_name=b.user.name if b.user else None,
             user_email=b.user.email if b.user else None,
-            user_picture=b.user.picture if b.user else None,
+            user_avatar_etag=b.user.avatar_etag if b.user else None,
             user_phone_number=b.user.phone_number if b.user else None,
             notes=b.notes,
             created_at=b.created_at,

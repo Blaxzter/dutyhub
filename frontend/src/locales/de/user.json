@@ -141,13 +141,24 @@
                         "placeholder": "+49 123 456789"
                     },
                     "picture": {
-                        "description": "URL zu Ihrem Profilbild. Muss eine gültige Bild-URL sein.",
-                        "label": "Profilbild-URL",
-                        "placeholder": "https://example.com/ihr-bild.jpg"
+                        "cropper": {
+                            "confirm": "Diesen Ausschnitt verwenden",
+                            "description": "Ziehen und skalieren Sie das Quadrat, um den gewünschten Bereich zu wählen. Mit den Schaltflächen darunter können Sie drehen.",
+                            "reset": "Zurücksetzen",
+                            "rotateLeft": "Nach links drehen",
+                            "rotateRight": "Nach rechts drehen",
+                            "title": "Profilbild anpassen"
+                        },
+                        "description": "PNG, JPEG, WebP oder GIF (erstes Bild) bis 5 MB. Wir skalieren und speichern lokal ein kleines WebP.",
+                        "label": "Profilbild",
+                        "remove": "Entfernen",
+                        "removeSuccess": "Profilbild entfernt.",
+                        "upload": "Bild hochladen",
+                        "uploadSuccess": "Profilbild aktualisiert.",
+                        "uploading": "Wird hochgeladen..."
                     }
                 },
-                "providerLimitation": "Profilbild-Änderungen sind für {provider}-Konten nicht verfügbar. Bitte aktualisieren Sie Ihr Profilbild über Ihre {provider}-Kontoeinstellungen.",
-                "subtitle": "Aktualisieren Sie Ihre Profilinformationen. Änderungen werden über Auth0 verarbeitet.",
+                "subtitle": "Aktualisieren Sie Ihre Profilinformationen.",
                 "success": "Profil erfolgreich aktualisiert!",
                 "title": "Profil aktualisieren"
             }

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { UserIcon } from 'lucide-vue-next'
 
+import { useAvatarUrl } from '@/composables/useAvatarUrl'
+
 import { useAuthStore } from '@/stores/auth'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -19,6 +21,7 @@ defineEmits<{
 }>()
 
 const authStore = useAuthStore()
+const avatarUrl = useAvatarUrl(() => authStore.profile)
 </script>
 
 <template>
@@ -33,7 +36,8 @@ const authStore = useAuthStore()
   >
     <Avatar class="h-8 w-8">
       <AvatarImage
-        :src="authStore.user?.picture || ''"
+        v-if="avatarUrl"
+        :src="avatarUrl"
         :alt="authStore.user?.name || authStore.user?.email || 'User'"
       />
       <AvatarFallback>

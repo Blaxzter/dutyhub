@@ -69,6 +69,26 @@ export type AffectedBookingInfo = {
 }
 
 /**
+ * AvatarUploadResponse
+ */
+export type AvatarUploadResponse = {
+  /**
+   * Etag
+   */
+  etag: string
+}
+
+/**
+ * Body_users-upload_my_avatar
+ */
+export type BodyUsersUploadMyAvatar = {
+  /**
+   * File
+   */
+  file: Blob | File
+}
+
+/**
  * BookingCreate
  *
  * User only provides the shift and optional notes. user_id is set server-side.
@@ -1457,9 +1477,9 @@ export type ShiftBookingEntry = {
    */
   user_email?: string | null
   /**
-   * User Picture
+   * User Avatar Etag
    */
-  user_picture?: string | null
+  user_avatar_etag?: string | null
   /**
    * User Phone Number
    */
@@ -2647,12 +2667,6 @@ export type UserCreate = {
    */
   name?: string | null
   /**
-   * Picture
-   *
-   * URL to user's profile picture
-   */
-  picture?: string | null
-  /**
    * Email Verified
    *
    * Whether the user's email is verified
@@ -2702,6 +2716,10 @@ export type UserListResponse = {
  */
 export type UserProfile = {
   /**
+   * Id
+   */
+  id: string
+  /**
    * Sub
    */
   sub: string
@@ -2718,9 +2736,9 @@ export type UserProfile = {
    */
   email?: string | null
   /**
-   * Picture
+   * Avatar Etag
    */
-  picture?: string | null
+  avatar_etag?: string | null
   /**
    * Bio
    */
@@ -2798,12 +2816,6 @@ export type UserProfileUpdate = {
    */
   nickname?: string | null
   /**
-   * Picture
-   *
-   * URL to user's profile picture
-   */
-  picture?: string | null
-  /**
    * Bio
    *
    * User's biography
@@ -2844,9 +2856,9 @@ export type UserRead = {
    */
   name?: string | null
   /**
-   * Picture
+   * Avatar Etag
    */
-  picture?: string | null
+  avatar_etag?: string | null
   /**
    * Phone Number
    */
@@ -3861,6 +3873,170 @@ export type UsersExportUserDataResponses = {
 
 export type UsersExportUserDataResponse =
   UsersExportUserDataResponses[keyof UsersExportUserDataResponses]
+
+export type UsersDeleteMyAvatarData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/users/me/avatar'
+}
+
+export type UsersDeleteMyAvatarErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersDeleteMyAvatarError = UsersDeleteMyAvatarErrors[keyof UsersDeleteMyAvatarErrors]
+
+export type UsersDeleteMyAvatarResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type UsersDeleteMyAvatarResponse =
+  UsersDeleteMyAvatarResponses[keyof UsersDeleteMyAvatarResponses]
+
+export type UsersUploadMyAvatarData = {
+  body: BodyUsersUploadMyAvatar
+  path?: never
+  query?: never
+  url: '/api/v1/users/me/avatar'
+}
+
+export type UsersUploadMyAvatarErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersUploadMyAvatarError = UsersUploadMyAvatarErrors[keyof UsersUploadMyAvatarErrors]
+
+export type UsersUploadMyAvatarResponses = {
+  /**
+   * Successful Response
+   */
+  200: AvatarUploadResponse
+}
+
+export type UsersUploadMyAvatarResponse =
+  UsersUploadMyAvatarResponses[keyof UsersUploadMyAvatarResponses]
+
+export type UsersGetUserAvatarData = {
+  body?: never
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string
+  }
+  query?: never
+  url: '/api/v1/users/{user_id}/avatar'
+}
+
+export type UsersGetUserAvatarErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersGetUserAvatarError = UsersGetUserAvatarErrors[keyof UsersGetUserAvatarErrors]
+
+export type UsersGetUserAvatarResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown
+}
 
 export type SettingsGetSiteSettingsData = {
   body?: never

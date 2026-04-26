@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { avatarUrlFor } from '@/composables/useAvatarUrl'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Badge from '@/components/ui/badge/Badge.vue'
@@ -132,7 +133,7 @@ const removeManager = async (userId: string) => {
         >
           <div class="flex min-w-0 items-center gap-3">
             <Avatar class="size-7">
-              <AvatarImage v-if="manager.picture" :src="manager.picture" />
+              <AvatarImage v-if="avatarUrlFor(manager)" :src="avatarUrlFor(manager)!" />
               <AvatarFallback class="text-xs">
                 {{ (manager.name ?? manager.email ?? '?').slice(0, 2).toUpperCase() }}
               </AvatarFallback>
@@ -175,7 +176,7 @@ const removeManager = async (userId: string) => {
           class="flex items-center gap-2.5 rounded-full border px-3 py-1.5"
         >
           <Avatar class="size-6">
-            <AvatarImage v-if="manager.picture" :src="manager.picture" />
+            <AvatarImage v-if="avatarUrlFor(manager)" :src="avatarUrlFor(manager)!" />
             <AvatarFallback class="text-xs">
               {{ (manager.name ?? manager.email ?? '?').slice(0, 2).toUpperCase() }}
             </AvatarFallback>
@@ -213,7 +214,7 @@ const removeManager = async (userId: string) => {
               @click="assignManager(user.id)"
             >
               <Avatar class="size-7 shrink-0">
-                <AvatarImage v-if="user.picture" :src="user.picture" />
+                <AvatarImage v-if="avatarUrlFor(user)" :src="avatarUrlFor(user)!" />
                 <AvatarFallback class="text-xs">
                   {{ (user.name ?? user.email ?? '?').slice(0, 2).toUpperCase() }}
                 </AvatarFallback>

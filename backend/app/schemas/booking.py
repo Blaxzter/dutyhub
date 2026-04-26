@@ -76,7 +76,7 @@ class ShiftBookingEntry(BaseModel):
     user_id: uuid.UUID
     user_name: str | None = None
     user_email: str | None = None
-    user_picture: str | None = None
+    user_avatar_etag: str | None = None
     user_phone_number: str | None = None
     notes: str | None = None
     created_at: dt.datetime

@@ -60,6 +60,7 @@ async def _build_user_profile(user: User, session: Any) -> UserProfile:
 @router.post("/me", response_model=UserProfile)
 async def get_current_user_profile(
     user: AnyUser,
+    background_tasks: BackgroundTasks,
     profile_init: ProfileInit | None = None,
     *,
     session: DBDep,
@@ -73,12 +74,13 @@ async def get_current_user_profile(
     Does NOT require is_active, so even pending users can retrieve
     their profile status after registering.
     """
+    seed_picture_url: str | None = None
+
     if profile_init:
         dirty = False
         for field in (
             "name",
             "email",
-            "picture",
             "email_verified",
             "preferred_language",
         ):
@@ -86,6 +88,11 @@ async def get_current_user_profile(
             if value is not None and getattr(user, field) != value:
                 setattr(user, field, value)
                 dirty = True
+
+        # The Auth0 picture URL is captured here only to seed a local avatar
+        # the first time a user signs in; we never persist the URL itself.
+        if profile_init.picture and user.avatar_etag is None:
+            seed_picture_url = profile_init.picture
 
         # Auto-activate superadmin emails that were created before email was synced
         if user.email and user.email in [str(e) for e in settings.SUPERADMIN_EMAILS]:
@@ -100,6 +107,11 @@ async def get_current_user_profile(
             session.add(user)
             await session.flush()
 
+    if seed_picture_url:
+        from app.logic.avatar_seed import seed_avatar_from_url
+
+        background_tasks.add_task(seed_avatar_from_url, user.id, seed_picture_url)
+
     return await _build_user_profile(user, session)
 
 
@@ -110,7 +122,11 @@ async def update_user_profile(
     *,
     session: DBDep,
 ) -> UserProfile:
-    """Update current user profile information using Auth0 Management API."""
+    """Update current user profile fields stored in Auth0 (name, nickname, bio)
+    plus locally-stored fields (phone_number, preferred_language).
+
+    Avatar changes go through the dedicated /users/me/avatar endpoints.
+    """
     auth0_sub = current_user.auth0_sub
 
     # In test mode, skip Auth0 Management API call
@@ -121,15 +137,9 @@ async def update_user_profile(
                 status_code=500, detail="Failed to update user profile in Auth0"
             )
 
-    # Sync picture to local DB
-    if user_update.picture is not None:
-        current_user.picture = str(user_update.picture)
-
-    # Sync phone_number to local DB
     if user_update.phone_number is not None:
         current_user.phone_number = user_update.phone_number
 
-    # Sync preferred_language to local DB (no Auth0 call needed)
     if user_update.preferred_language is not None:
         current_user.preferred_language = user_update.preferred_language
 
@@ -139,9 +149,6 @@ async def update_user_profile(
             k: v
             for k, v in {
                 "name": user_update.name,
-                "picture": str(user_update.picture)
-                if user_update.picture is not None
-                else None,
                 "bio": user_update.bio,
                 "nickname": user_update.nickname,
             }.items()
@@ -390,7 +397,6 @@ async def export_user_data(
         "profile": {
             "name": current_user.name,
             "email": current_user.email,
-            "picture": current_user.picture,
             "preferred_language": current_user.preferred_language,
             "email_verified": current_user.email_verified,
             "roles": current_user.roles,

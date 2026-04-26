@@ -25,6 +25,7 @@ from .site_settings import SiteSettings
 from .task import Task
 from .user import User
 from .user_availability import UserAvailability, UserAvailabilityDate
+from .user_avatar import UserAvatar
 
 __all__ = [
     "SQLModel",
@@ -46,4 +47,5 @@ __all__ = [
     "User",
     "UserAvailability",
     "UserAvailabilityDate",
+    "UserAvatar",
 ]

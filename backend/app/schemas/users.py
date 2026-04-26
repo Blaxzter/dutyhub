@@ -1,6 +1,6 @@
 import uuid
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, HttpUrl
+from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field
 
 
 class ProfileInit(BaseModel):
@@ -17,7 +17,6 @@ class ProfileInit(BaseModel):
 class UserProfileUpdate(BaseModel):
     name: str | None = Field(None, max_length=100, description="User's display name")
     nickname: str | None = Field(None, max_length=50, description="User's nickname")
-    picture: HttpUrl | None = Field(None, description="URL to user's profile picture")
     bio: str | None = Field(None, max_length=500, description="User's biography")
     phone_number: str | None = Field(
         None, max_length=30, description="User's phone number"
@@ -30,11 +29,12 @@ class UserProfileUpdate(BaseModel):
 class UserProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+    id: uuid.UUID
     sub: str = Field(validation_alias=AliasChoices("sub", "auth0_sub"))
     name: str | None = None
     nickname: str | None = None
     email: str | None = None
-    picture: str | None = None
+    avatar_etag: str | None = None
     bio: str | None = None
     phone_number: str | None = None
     preferred_language: str = "en"

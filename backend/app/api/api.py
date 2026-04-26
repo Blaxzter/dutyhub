@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    avatars,
     booking_reminders,
     bookings,
     calendar_feed,
@@ -21,6 +22,7 @@ api_router = APIRouter()
 
 api_router.include_router(health.router)
 api_router.include_router(users.router)
+api_router.include_router(avatars.router)
 api_router.include_router(site_settings.router)
 api_router.include_router(tasks.router)
 api_router.include_router(shifts.router)

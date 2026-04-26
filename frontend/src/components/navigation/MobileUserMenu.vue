@@ -13,6 +13,8 @@ import {
 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
+import { useAvatarUrl } from '@/composables/useAvatarUrl'
+
 import { useAuthStore } from '@/stores/auth'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -37,7 +39,7 @@ const displayName = computed(
   () => user.value?.name || user.value?.nickname || user.value?.email || 'User',
 )
 const displayEmail = computed(() => user.value?.email || '')
-const avatarUrl = computed(() => user.value?.picture || '')
+const avatarUrl = useAvatarUrl(() => authStore.profile)
 const initials = computed(() => {
   if (user.value?.name) {
     return user.value.name

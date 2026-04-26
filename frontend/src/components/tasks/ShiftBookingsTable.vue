@@ -3,6 +3,8 @@ import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
 
+import { avatarUrlFor } from '@/composables/useAvatarUrl'
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   Table,
@@ -35,6 +37,9 @@ const initials = (name: string | null | undefined, email: string | null | undefi
   if (email) return email[0].toUpperCase()
   return '?'
 }
+
+const entryAvatarUrl = (entry: ShiftBookingEntry): string | null =>
+  avatarUrlFor({ id: entry.user_id, avatar_etag: entry.user_avatar_etag ?? null })
 
 const formatDateTime = (isoStr: string) => {
   return new Date(isoStr).toLocaleDateString(locale.value, {
@@ -72,7 +77,7 @@ const formatDateTime = (isoStr: string) => {
             <TableCell class="max-w-0">
               <div class="flex items-center gap-2.5 min-w-0">
                 <Avatar class="h-7 w-7 shrink-0">
-                  <AvatarImage v-if="entry.user_picture" :src="entry.user_picture" />
+                  <AvatarImage v-if="entryAvatarUrl(entry)" :src="entryAvatarUrl(entry)!" />
                   <AvatarFallback class="text-xs">
                     {{ initials(entry.user_name, entry.user_email) }}
                   </AvatarFallback>

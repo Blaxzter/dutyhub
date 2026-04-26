@@ -46,8 +46,6 @@ async def update_auth0_user(user_id: str, update_data: UserProfileUpdate) -> boo
             user_data["name"] = update_data.name
         if update_data.nickname is not None:
             user_data["nickname"] = update_data.nickname
-        if update_data.picture is not None:
-            user_data["picture"] = str(update_data.picture)
 
         # Add bio to user_metadata
         if update_data.bio is not None:

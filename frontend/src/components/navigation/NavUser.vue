@@ -5,6 +5,8 @@ import { useColorMode } from '@vueuse/core'
 import { BadgeCheck, Bell, ChevronsUpDown, Globe, LogOut, Moon, Sun } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
+import { useAvatarUrl } from '@/composables/useAvatarUrl'
+
 import { useAuthStore } from '@/stores/auth'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -41,8 +43,8 @@ const displayName = computed(
 // Create display email
 const displayEmail = computed(() => user.value?.email || '')
 
-// Create avatar URL
-const avatarUrl = computed(() => user.value?.picture || '')
+// Avatar lives on our profile (UserProfile) rather than on the Auth0 user.
+const avatarUrl = useAvatarUrl(() => authStore.profile)
 
 // Create initials for fallback
 const initials = computed(() => {

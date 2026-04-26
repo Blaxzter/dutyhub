@@ -8,9 +8,6 @@ class UserCreate(BaseModel):
     auth0_sub: str = Field(..., description="Auth0 subject identifier")
     email: EmailStr | None = Field(default=None, description="User's email address")
     name: str | None = Field(default=None, description="User's display name")
-    picture: str | None = Field(
-        default=None, description="URL to user's profile picture"
-    )
     email_verified: bool = Field(
         default=False, description="Whether the user's email is verified"
     )
@@ -45,7 +42,7 @@ class UserRead(BaseModel):
     auth0_sub: str
     email: EmailStr | None = None
     name: str | None = None
-    picture: str | None = None
+    avatar_etag: str | None = None
     phone_number: str | None = None
     preferred_language: str = "en"
     roles: list[str]

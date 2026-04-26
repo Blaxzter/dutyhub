@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
+import { avatarUrlFor } from '@/composables/useAvatarUrl'
+
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Badge from '@/components/ui/badge/Badge.vue'
 import {
@@ -84,7 +86,11 @@ const formatDate = (iso: string) =>
           <TableCell>
             <div class="flex items-center gap-3">
               <Avatar class="h-8 w-8 rounded-sm">
-                <AvatarImage v-if="user.picture" :src="user.picture" :alt="user.name ?? ''" />
+                <AvatarImage
+                  v-if="avatarUrlFor(user)"
+                  :src="avatarUrlFor(user)!"
+                  :alt="user.name ?? ''"
+                />
                 <AvatarFallback class="rounded-sm text-xs">{{
                   getInitials(user)
                 }}</AvatarFallback>

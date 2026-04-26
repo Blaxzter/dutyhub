@@ -95,10 +95,6 @@ async def get_or_create_user(
                 dirty = True
         # Sync profile data from Auth0 on each login
         if profile_data:
-            picture = profile_data.get("picture")
-            if picture and picture != user.picture:
-                user.picture = picture
-                dirty = True
             ev = profile_data.get("email_verified")
             if ev is not None and bool(ev) != user.email_verified:
                 user.email_verified = bool(ev)
@@ -111,13 +107,11 @@ async def get_or_create_user(
     # Use profile_data from frontend if available, fallback to claims
     email: str | None = None
     name: str | None = None
-    picture: str | None = None
     email_verified: bool = False
     preferred_language: str = "en"
     if profile_data:
         email = profile_data.get("email")
         name = profile_data.get("name") or profile_data.get("nickname")
-        picture = profile_data.get("picture")
         email_verified = bool(profile_data.get("email_verified"))
         preferred_language = profile_data.get("preferred_language") or "en"
 
@@ -126,8 +120,6 @@ async def get_or_create_user(
         email = claims.get("email")
     if not name:
         name = claims.get("name") or claims.get("nickname")
-    if not picture:
-        picture = claims.get("picture")
 
     is_superadmin = bool(
         email and email in [str(e) for e in settings.SUPERADMIN_EMAILS]
@@ -136,7 +128,6 @@ async def get_or_create_user(
         auth0_sub=auth0_sub,
         email=email,
         name=name,
-        picture=picture,
         email_verified=email_verified,
         roles=["admin"] if is_superadmin else [],
         is_active=is_superadmin,
