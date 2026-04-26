@@ -5,20 +5,20 @@ export type ClientOptions = {
 }
 
 /**
- * AddSlotsResponse
+ * AddShiftsResponse
  */
-export type AddSlotsResponse = {
-  event: EventRead
+export type AddShiftsResponse = {
+  task: TaskRead
   /**
-   * Slots Added
+   * Shifts Added
    */
-  slots_added: number
+  shifts_added: number
 }
 
 /**
- * AddSlotsToEvent
+ * AddShiftsToTask
  */
-export type AddSlotsToEvent = {
+export type AddShiftsToTask = {
   /**
    * Start Date
    */
@@ -35,7 +35,7 @@ export type AddSlotsToEvent = {
    * Category
    */
   category?: string | null
-  schedule: SlotGenerationConfig
+  schedule: ShiftGenerationConfig
 }
 
 /**
@@ -69,15 +69,35 @@ export type AffectedBookingInfo = {
 }
 
 /**
+ * AvatarUploadResponse
+ */
+export type AvatarUploadResponse = {
+  /**
+   * Etag
+   */
+  etag: string
+}
+
+/**
+ * Body_users-upload_my_avatar
+ */
+export type BodyUsersUploadMyAvatar = {
+  /**
+   * File
+   */
+  file: Blob | File
+}
+
+/**
  * BookingCreate
  *
- * User only provides the slot and optional notes. user_id is set server-side.
+ * User only provides the shift and optional notes. user_id is set server-side.
  */
 export type BookingCreate = {
   /**
-   * Duty Slot Id
+   * Shift Id
    */
-  duty_slot_id: string
+  shift_id: string
   /**
    * Notes
    */
@@ -89,9 +109,9 @@ export type BookingCreate = {
  */
 export type BookingRead = {
   /**
-   * Duty Slot Id
+   * Shift Id
    */
-  duty_slot_id?: string | null
+  shift_id?: string | null
   /**
    * User Id
    */
@@ -121,37 +141,37 @@ export type BookingRead = {
    */
   cancellation_reason?: string | null
   /**
-   * Cancelled Slot Title
+   * Cancelled Shift Title
    */
-  cancelled_slot_title?: string | null
+  cancelled_shift_title?: string | null
   /**
-   * Cancelled Slot Date
+   * Cancelled Shift Date
    */
-  cancelled_slot_date?: string | null
+  cancelled_shift_date?: string | null
   /**
-   * Cancelled Slot Start Time
+   * Cancelled Shift Start Time
    */
-  cancelled_slot_start_time?: string | null
+  cancelled_shift_start_time?: string | null
   /**
-   * Cancelled Slot End Time
+   * Cancelled Shift End Time
    */
-  cancelled_slot_end_time?: string | null
+  cancelled_shift_end_time?: string | null
   /**
-   * Cancelled Event Name
+   * Cancelled Task Name
    */
-  cancelled_event_name?: string | null
+  cancelled_task_name?: string | null
 }
 
 /**
- * BookingReadWithSlot
+ * BookingReadWithShift
  *
- * BookingRead enriched with nested slot + event name (for /me endpoint).
+ * BookingRead enriched with nested shift + task name (for /me endpoint).
  */
-export type BookingReadWithSlot = {
+export type BookingReadWithShift = {
   /**
-   * Duty Slot Id
+   * Shift Id
    */
-  duty_slot_id?: string | null
+  shift_id?: string | null
   /**
    * User Id
    */
@@ -181,26 +201,26 @@ export type BookingReadWithSlot = {
    */
   cancellation_reason?: string | null
   /**
-   * Cancelled Slot Title
+   * Cancelled Shift Title
    */
-  cancelled_slot_title?: string | null
+  cancelled_shift_title?: string | null
   /**
-   * Cancelled Slot Date
+   * Cancelled Shift Date
    */
-  cancelled_slot_date?: string | null
+  cancelled_shift_date?: string | null
   /**
-   * Cancelled Slot Start Time
+   * Cancelled Shift Start Time
    */
-  cancelled_slot_start_time?: string | null
+  cancelled_shift_start_time?: string | null
   /**
-   * Cancelled Slot End Time
+   * Cancelled Shift End Time
    */
-  cancelled_slot_end_time?: string | null
+  cancelled_shift_end_time?: string | null
   /**
-   * Cancelled Event Name
+   * Cancelled Task Name
    */
-  cancelled_event_name?: string | null
-  duty_slot?: DutySlotSummary | null
+  cancelled_task_name?: string | null
+  shift?: ShiftSummary | null
 }
 
 /**
@@ -370,7 +390,7 @@ export type CategoryBreakdown = {
 /**
  * DashboardBookingItem
  *
- * Booking with inline slot info for calendar display — avoids N+1.
+ * Booking with inline shift info for calendar display — avoids N+1.
  */
 export type DashboardBookingItem = {
   /**
@@ -414,6 +434,60 @@ export type DashboardEvent = {
    */
   name: string
   /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+}
+
+/**
+ * DashboardFeedResponse
+ */
+export type DashboardFeedResponse = {
+  /**
+   * Tasks
+   */
+  tasks: Array<DashboardTask>
+  /**
+   * Task Count
+   */
+  task_count: number
+  /**
+   * Events
+   */
+  events: Array<DashboardEvent>
+  /**
+   * Bookings
+   */
+  bookings: Array<DashboardBookingItem>
+  /**
+   * Booking Count
+   */
+  booking_count: number
+  /**
+   * Pending User Count
+   */
+  pending_user_count?: number | null
+}
+
+/**
+ * DashboardTask
+ *
+ * Slim task for the dashboard calendar.
+ */
+export type DashboardTask = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Name
+   */
+  name: string
+  /**
    * Status
    */
   status: string
@@ -433,60 +507,6 @@ export type DashboardEvent = {
    * End Date
    */
   end_date: string
-}
-
-/**
- * DashboardEventGroup
- *
- * Slim event group for the dashboard calendar.
- */
-export type DashboardEventGroup = {
-  /**
-   * Id
-   */
-  id: string
-  /**
-   * Name
-   */
-  name: string
-  /**
-   * Start Date
-   */
-  start_date: string
-  /**
-   * End Date
-   */
-  end_date: string
-}
-
-/**
- * DashboardFeedResponse
- */
-export type DashboardFeedResponse = {
-  /**
-   * Events
-   */
-  events: Array<DashboardEvent>
-  /**
-   * Event Count
-   */
-  event_count: number
-  /**
-   * Event Groups
-   */
-  event_groups: Array<DashboardEventGroup>
-  /**
-   * Bookings
-   */
-  bookings: Array<DashboardBookingItem>
-  /**
-   * Booking Count
-   */
-  booking_count: number
-  /**
-   * Pending User Count
-   */
-  pending_user_count?: number | null
 }
 
 /**
@@ -514,21 +534,21 @@ export type DefaultReminderOffsetsUpdate = {
  */
 export type DemoDataCreatedResponse = {
   /**
-   * Event Groups Created
-   */
-  event_groups_created: number
-  /**
    * Events Created
    */
   events_created: number
+  /**
+   * Tasks Created
+   */
+  tasks_created: number
   /**
    * Users Created
    */
   users_created: number
   /**
-   * Duty Slots Created
+   * Shifts Created
    */
-  duty_slots_created: number
+  shifts_created: number
   /**
    * Bookings Created
    */
@@ -540,21 +560,21 @@ export type DemoDataCreatedResponse = {
  */
 export type DemoDataDeletedResponse = {
   /**
+   * Tasks Deleted
+   */
+  tasks_deleted: number
+  /**
    * Events Deleted
    */
   events_deleted: number
-  /**
-   * Event Groups Deleted
-   */
-  event_groups_deleted: number
   /**
    * Users Deleted
    */
   users_deleted: number
   /**
-   * Duty Slots Deleted
+   * Shifts Deleted
    */
-  duty_slots_deleted: number
+  shifts_deleted: number
   /**
    * Bookings Deleted
    */
@@ -566,265 +586,25 @@ export type DemoDataDeletedResponse = {
  */
 export type DemoDataParams = {
   /**
+   * Num Tasks
+   */
+  num_tasks?: number
+  /**
    * Num Events
    */
   num_events?: number
-  /**
-   * Num Event Groups
-   */
-  num_event_groups?: number
   /**
    * Num Users
    */
   num_users?: number
   /**
-   * Num Slots Per Event
+   * Num Shifts Per Task
    */
-  num_slots_per_event?: number
+  num_shifts_per_task?: number
   /**
-   * Publish Events
+   * Publish Tasks
    */
-  publish_events?: boolean
-}
-
-/**
- * DutySlotCreate
- */
-export type DutySlotCreate = {
-  /**
-   * Event Id
-   */
-  event_id: string
-  /**
-   * Title
-   */
-  title: string
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Date
-   */
-  date: string
-  /**
-   * Start Time
-   */
-  start_time?: string | null
-  /**
-   * End Time
-   */
-  end_time?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-  /**
-   * Max Bookings
-   */
-  max_bookings?: number
-  /**
-   * Batch Id
-   */
-  batch_id?: string | null
-}
-
-/**
- * DutySlotListResponse
- */
-export type DutySlotListResponse = {
-  /**
-   * Items
-   */
-  items: Array<DutySlotRead>
-  /**
-   * Total
-   */
-  total: number
-  /**
-   * Skip
-   */
-  skip: number
-  /**
-   * Limit
-   */
-  limit: number
-}
-
-/**
- * DutySlotRead
- */
-export type DutySlotRead = {
-  /**
-   * Event Id
-   */
-  event_id: string
-  /**
-   * Title
-   */
-  title: string
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Date
-   */
-  date: string
-  /**
-   * Start Time
-   */
-  start_time?: string | null
-  /**
-   * End Time
-   */
-  end_time?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-  /**
-   * Max Bookings
-   */
-  max_bookings?: number
-  /**
-   * Batch Id
-   */
-  batch_id?: string | null
-  /**
-   * Id
-   */
-  id: string
-  /**
-   * Created At
-   */
-  created_at: string
-  /**
-   * Updated At
-   */
-  updated_at: string
-  /**
-   * Current Bookings
-   */
-  current_bookings?: number
-  /**
-   * Is Booked By Me
-   */
-  is_booked_by_me?: boolean
-}
-
-/**
- * DutySlotSummary
- *
- * Lightweight slot info nested inside a booking response.
- */
-export type DutySlotSummary = {
-  /**
-   * Id
-   */
-  id: string
-  /**
-   * Event Id
-   */
-  event_id: string
-  /**
-   * Title
-   */
-  title: string
-  /**
-   * Date
-   */
-  date: string
-  /**
-   * Start Time
-   */
-  start_time?: string | null
-  /**
-   * End Time
-   */
-  end_time?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-  /**
-   * Event Name
-   */
-  event_name?: string | null
-}
-
-/**
- * DutySlotUpdate
- */
-export type DutySlotUpdate = {
-  /**
-   * Title
-   */
-  title?: string | null
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Date
-   */
-  date?: string | null
-  /**
-   * Start Time
-   */
-  start_time?: string | null
-  /**
-   * End Time
-   */
-  end_time?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-  /**
-   * Max Bookings
-   */
-  max_bookings?: number | null
-}
-
-/**
- * EventBookingEntry
- *
- * A confirmed booking with slot_id, for the bulk event bookings endpoint.
- */
-export type EventBookingEntry = {
-  /**
-   * Id
-   */
-  id: string
-  /**
-   * Duty Slot Id
-   */
-  duty_slot_id: string
-  /**
-   * User Name
-   */
-  user_name?: string | null
-  /**
-   * User Phone Number
-   */
-  user_phone_number?: string | null
+  publish_tasks?: boolean
 }
 
 /**
@@ -855,238 +635,6 @@ export type EventCreate = {
    * Created By Id
    */
   created_by_id?: string | null
-  /**
-   * Event Group Id
-   */
-  event_group_id?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-}
-
-/**
- * EventCreateWithSlots
- */
-export type EventCreateWithSlots = {
-  /**
-   * Name
-   */
-  name: string
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Start Date
-   */
-  start_date: string
-  /**
-   * End Date
-   */
-  end_date: string
-  /**
-   * Status
-   */
-  status?: 'draft' | 'published' | 'archived'
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-  /**
-   * Event Group Id
-   */
-  event_group_id?: string | null
-  new_event_group?: EventGroupCreate | null
-  schedule: SlotGenerationConfig
-}
-
-/**
- * EventCreateWithSlotsResponse
- */
-export type EventCreateWithSlotsResponse = {
-  event: EventRead
-  /**
-   * Duty Slots Created
-   */
-  duty_slots_created: number
-  event_group?: EventGroupRead | null
-}
-
-/**
- * EventFeedResponse
- */
-export type EventFeedResponse = {
-  /**
-   * Items
-   */
-  items: Array<FeedEventItem>
-  /**
-   * Total
-   */
-  total: number
-  /**
-   * Skip
-   */
-  skip: number
-  /**
-   * Limit
-   */
-  limit: number
-}
-
-/**
- * EventFillRate
- */
-export type EventFillRate = {
-  /**
-   * Event Id
-   */
-  event_id: string
-  /**
-   * Event Name
-   */
-  event_name: string
-  /**
-   * Total Capacity
-   */
-  total_capacity: number
-  /**
-   * Confirmed Bookings
-   */
-  confirmed_bookings: number
-  /**
-   * Fill Rate
-   */
-  fill_rate: number
-}
-
-/**
- * EventGroupCreate
- */
-export type EventGroupCreate = {
-  /**
-   * Name
-   */
-  name: string
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Start Date
-   */
-  start_date: string
-  /**
-   * End Date
-   */
-  end_date: string
-  /**
-   * Status
-   */
-  status?: 'draft' | 'published' | 'archived'
-  /**
-   * Created By Id
-   */
-  created_by_id?: string | null
-}
-
-/**
- * EventGroupListResponse
- */
-export type EventGroupListResponse = {
-  /**
-   * Items
-   */
-  items: Array<EventGroupRead>
-  /**
-   * Total
-   */
-  total: number
-  /**
-   * Skip
-   */
-  skip: number
-  /**
-   * Limit
-   */
-  limit: number
-}
-
-/**
- * EventGroupRead
- */
-export type EventGroupRead = {
-  /**
-   * Name
-   */
-  name: string
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Start Date
-   */
-  start_date: string
-  /**
-   * End Date
-   */
-  end_date: string
-  /**
-   * Status
-   */
-  status?: 'draft' | 'published' | 'archived'
-  /**
-   * Id
-   */
-  id: string
-  /**
-   * Created By Id
-   */
-  created_by_id?: string | null
-  /**
-   * Created At
-   */
-  created_at: string
-  /**
-   * Updated At
-   */
-  updated_at: string
-}
-
-/**
- * EventGroupUpdate
- */
-export type EventGroupUpdate = {
-  /**
-   * Name
-   */
-  name?: string | null
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Start Date
-   */
-  start_date?: string | null
-  /**
-   * End Date
-   */
-  end_date?: string | null
-  /**
-   * Status
-   */
-  status?: 'draft' | 'published' | 'archived' | null
 }
 
 /**
@@ -1136,25 +684,13 @@ export type EventRead = {
    */
   status?: 'draft' | 'published' | 'archived'
   /**
-   * Created By Id
-   */
-  created_by_id?: string | null
-  /**
-   * Event Group Id
-   */
-  event_group_id?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-  /**
    * Id
    */
   id: string
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
   /**
    * Created At
    */
@@ -1164,27 +700,9 @@ export type EventRead = {
    */
   updated_at: string
   /**
-   * Slot Duration Minutes
+   * Is Expired
    */
-  slot_duration_minutes?: number | null
-  /**
-   * Default Start Time
-   */
-  default_start_time?: string | null
-  /**
-   * Default End Time
-   */
-  default_end_time?: string | null
-  /**
-   * People Per Slot
-   */
-  people_per_slot?: number | null
-  /**
-   * Schedule Overrides
-   */
-  schedule_overrides?: Array<{
-    [key: string]: unknown
-  }> | null
+  readonly is_expired: boolean
 }
 
 /**
@@ -1211,55 +729,12 @@ export type EventUpdate = {
    * Status
    */
   status?: 'draft' | 'published' | 'archived' | null
-  /**
-   * Event Group Id
-   */
-  event_group_id?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
 }
 
 /**
- * EventUpdateWithSlots
+ * ExcludedShift
  */
-export type EventUpdateWithSlots = {
-  /**
-   * Name
-   */
-  name?: string | null
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Start Date
-   */
-  start_date?: string | null
-  /**
-   * End Date
-   */
-  end_date?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-  schedule: SlotGenerationConfig
-}
-
-/**
- * ExcludedSlot
- */
-export type ExcludedSlot = {
+export type ExcludedShift = {
   /**
    * Date
    */
@@ -1275,105 +750,11 @@ export type ExcludedSlot = {
 }
 
 /**
- * FeedEventItem
+ * FeedShiftEntry
  *
- * Event with view-dependent embedded data.
+ * Lightweight shift for the feed — no title/description, just booking info.
  */
-export type FeedEventItem = {
-  /**
-   * Name
-   */
-  name: string
-  /**
-   * Description
-   */
-  description?: string | null
-  /**
-   * Start Date
-   */
-  start_date: string
-  /**
-   * End Date
-   */
-  end_date: string
-  /**
-   * Status
-   */
-  status?: 'draft' | 'published' | 'archived'
-  /**
-   * Created By Id
-   */
-  created_by_id?: string | null
-  /**
-   * Event Group Id
-   */
-  event_group_id?: string | null
-  /**
-   * Location
-   */
-  location?: string | null
-  /**
-   * Category
-   */
-  category?: string | null
-  /**
-   * Id
-   */
-  id: string
-  /**
-   * Created At
-   */
-  created_at: string
-  /**
-   * Updated At
-   */
-  updated_at: string
-  /**
-   * Slot Duration Minutes
-   */
-  slot_duration_minutes?: number | null
-  /**
-   * Default Start Time
-   */
-  default_start_time?: string | null
-  /**
-   * Default End Time
-   */
-  default_end_time?: string | null
-  /**
-   * People Per Slot
-   */
-  people_per_slot?: number | null
-  /**
-   * Schedule Overrides
-   */
-  schedule_overrides?: Array<{
-    [key: string]: unknown
-  }> | null
-  /**
-   * Slots
-   */
-  slots?: Array<FeedSlotEntry> | null
-  /**
-   * Slot Window Start
-   */
-  slot_window_start?: string | null
-  /**
-   * Total Slots
-   */
-  total_slots?: number | null
-  /**
-   * Available Slots
-   */
-  available_slots?: number | null
-}
-
-/**
- * FeedSlotEntry
- *
- * Lightweight slot for the feed — no title/description, just booking info.
- */
-export type FeedSlotEntry = {
+export type FeedShiftEntry = {
   /**
    * Id
    */
@@ -1402,6 +783,100 @@ export type FeedSlotEntry = {
    * Is Booked By Me
    */
   is_booked_by_me?: boolean
+}
+
+/**
+ * FeedTaskItem
+ *
+ * Task with view-dependent embedded data.
+ */
+export type FeedTaskItem = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
+  /**
+   * Event Id
+   */
+  event_id?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+  /**
+   * Shift Duration Minutes
+   */
+  shift_duration_minutes?: number | null
+  /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
+  /**
+   * People Per Shift
+   */
+  people_per_shift?: number | null
+  /**
+   * Schedule Overrides
+   */
+  schedule_overrides?: Array<{
+    [key: string]: unknown
+  }> | null
+  /**
+   * Shifts
+   */
+  shifts?: Array<FeedShiftEntry> | null
+  /**
+   * Slot Window Start
+   */
+  slot_window_start?: string | null
+  /**
+   * Total Shifts
+   */
+  total_shifts?: number | null
+  /**
+   * Available Shifts
+   */
+  available_shifts?: number | null
 }
 
 /**
@@ -1447,7 +922,7 @@ export type MyBookingsListResponse = {
   /**
    * Items
    */
-  items: Array<BookingReadWithSlot>
+  items: Array<BookingReadWithShift>
   /**
    * Total
    */
@@ -1575,7 +1050,7 @@ export type NotificationSubscriptionCreate = {
   /**
    * Scope Type
    */
-  scope_type?: 'global' | 'event_group' | 'event' | 'duty_slot'
+  scope_type?: 'global' | 'event' | 'task' | 'shift'
   /**
    * Scope Id
    */
@@ -1813,21 +1288,21 @@ export type ReportingOverviewStats = {
    */
   cancellation_rate: number
   /**
-   * Total Events
+   * Total Tasks
    */
-  total_events: number
+  total_tasks: number
   /**
-   * Total Slots
+   * Total Shifts
    */
-  total_slots: number
+  total_shifts: number
   /**
-   * Total Slot Capacity
+   * Total Shift Capacity
    */
-  total_slot_capacity: number
+  total_shift_capacity: number
   /**
-   * Filled Slots
+   * Filled Shifts
    */
-  filled_slots: number
+  filled_shifts: number
   /**
    * Fill Rate
    */
@@ -1864,9 +1339,9 @@ export type ReportingResponse = {
    */
   bookings_by_hour: Array<BookingsByHour>
   /**
-   * Event Fill Rates
+   * Task Fill Rates
    */
-  event_fill_rates: Array<EventFillRate>
+  task_fill_rates: Array<TaskFillRate>
 }
 
 /**
@@ -1888,6 +1363,18 @@ export type ScheduleOverride = {
 }
 
 /**
+ * SelectedEventUpdate
+ *
+ * Request body for PUT /users/me/selected-event.
+ */
+export type SelectedEventUpdate = {
+  /**
+   * Selected Event Id
+   */
+  selected_event_id?: string | null
+}
+
+/**
  * SelfApproveRequest
  */
 export type SelfApproveRequest = {
@@ -1900,6 +1387,160 @@ export type SelfApproveRequest = {
 }
 
 /**
+ * ShiftBatchRead
+ */
+export type ShiftBatchRead = {
+  /**
+   * Task Id
+   */
+  task_id: string
+  /**
+   * Label
+   */
+  label?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
+  /**
+   * Shift Duration Minutes
+   */
+  shift_duration_minutes?: number | null
+  /**
+   * People Per Shift
+   */
+  people_per_shift?: number | null
+  /**
+   * Remainder Mode
+   */
+  remainder_mode?: 'drop' | 'short' | 'extend' | null
+  /**
+   * Schedule Overrides
+   */
+  schedule_overrides?: Array<{
+    [key: string]: unknown
+  }> | null
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+}
+
+/**
+ * ShiftBookingEntry
+ *
+ * A confirmed booking for a shift, with basic user info.
+ */
+export type ShiftBookingEntry = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * User Id
+   */
+  user_id: string
+  /**
+   * User Name
+   */
+  user_name?: string | null
+  /**
+   * User Email
+   */
+  user_email?: string | null
+  /**
+   * User Avatar Etag
+   */
+  user_avatar_etag?: string | null
+  /**
+   * User Phone Number
+   */
+  user_phone_number?: string | null
+  /**
+   * Notes
+   */
+  notes?: string | null
+  /**
+   * Created At
+   */
+  created_at: string
+}
+
+/**
+ * ShiftCreate
+ */
+export type ShiftCreate = {
+  /**
+   * Task Id
+   */
+  task_id: string
+  /**
+   * Title
+   */
+  title: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Date
+   */
+  date: string
+  /**
+   * Start Time
+   */
+  start_time?: string | null
+  /**
+   * End Time
+   */
+  end_time?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
+   * Max Bookings
+   */
+  max_bookings?: number
+  /**
+   * Batch Id
+   */
+  batch_id?: string | null
+}
+
+/**
  * ShiftDatesRequest
  */
 export type ShiftDatesRequest = {
@@ -1907,6 +1548,253 @@ export type ShiftDatesRequest = {
    * New Start Date
    */
   new_start_date: string
+}
+
+/**
+ * ShiftGenerationConfig
+ */
+export type ShiftGenerationConfig = {
+  /**
+   * Default Start Time
+   */
+  default_start_time: string
+  /**
+   * Default End Time
+   */
+  default_end_time: string
+  /**
+   * Shift Duration Minutes
+   */
+  shift_duration_minutes: number
+  /**
+   * People Per Shift
+   */
+  people_per_shift?: number
+  /**
+   * Remainder Mode
+   */
+  remainder_mode?: 'drop' | 'short' | 'extend'
+  /**
+   * Overrides
+   */
+  overrides?: Array<ScheduleOverride>
+  /**
+   * Excluded Shifts
+   */
+  excluded_shifts?: Array<ExcludedShift>
+}
+
+/**
+ * ShiftListResponse
+ */
+export type ShiftListResponse = {
+  /**
+   * Items
+   */
+  items: Array<ShiftRead>
+  /**
+   * Total
+   */
+  total: number
+  /**
+   * Skip
+   */
+  skip: number
+  /**
+   * Limit
+   */
+  limit: number
+}
+
+/**
+ * ShiftRead
+ */
+export type ShiftRead = {
+  /**
+   * Task Id
+   */
+  task_id: string
+  /**
+   * Title
+   */
+  title: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Date
+   */
+  date: string
+  /**
+   * Start Time
+   */
+  start_time?: string | null
+  /**
+   * End Time
+   */
+  end_time?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
+   * Max Bookings
+   */
+  max_bookings?: number
+  /**
+   * Batch Id
+   */
+  batch_id?: string | null
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+  /**
+   * Current Bookings
+   */
+  current_bookings?: number
+  /**
+   * Is Booked By Me
+   */
+  is_booked_by_me?: boolean
+}
+
+/**
+ * ShiftRegenerationResult
+ */
+export type ShiftRegenerationResult = {
+  task: TaskRead
+  /**
+   * Shifts Added
+   */
+  shifts_added: number
+  /**
+   * Shifts Removed
+   */
+  shifts_removed: number
+  /**
+   * Shifts Kept
+   */
+  shifts_kept: number
+  /**
+   * Affected Bookings
+   */
+  affected_bookings: Array<AffectedBookingInfo>
+}
+
+/**
+ * ShiftSummary
+ *
+ * Lightweight shift info nested inside a booking response.
+ */
+export type ShiftSummary = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Task Id
+   */
+  task_id: string
+  /**
+   * Title
+   */
+  title: string
+  /**
+   * Date
+   */
+  date: string
+  /**
+   * Start Time
+   */
+  start_time?: string | null
+  /**
+   * End Time
+   */
+  end_time?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
+   * Task Name
+   */
+  task_name?: string | null
+}
+
+/**
+ * ShiftUpdate
+ */
+export type ShiftUpdate = {
+  /**
+   * Title
+   */
+  title?: string | null
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Date
+   */
+  date?: string | null
+  /**
+   * Start Time
+   */
+  start_time?: string | null
+  /**
+   * End Time
+   */
+  end_time?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  /**
+   * Max Bookings
+   */
+  max_bookings?: number | null
+}
+
+/**
+ * ShiftWindowResponse
+ *
+ * Response for the shift-window endpoint (next/prev day navigation).
+ */
+export type ShiftWindowResponse = {
+  /**
+   * Shifts
+   */
+  shifts: Array<FeedShiftEntry>
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * Days
+   */
+  days: number
 }
 
 /**
@@ -1922,9 +1810,9 @@ export type SidebarBooking = {
    */
   slot_id: string
   /**
-   * Event Id
+   * Task Id
    */
-  event_id: string
+  task_id: string
   /**
    * Slot Title
    */
@@ -1955,24 +1843,30 @@ export type SidebarEvent = {
    * Status
    */
   status?: string
-  /**
-   * Open Slots
-   */
-  open_slots: number
-  /**
-   * Next Slot Date
-   */
-  next_slot_date?: string | null
-  /**
-   * Next Slot Start Time
-   */
-  next_slot_start_time?: string | null
 }
 
 /**
- * SidebarEventGroup
+ * SidebarResponse
  */
-export type SidebarEventGroup = {
+export type SidebarResponse = {
+  /**
+   * Events
+   */
+  events: Array<SidebarEvent>
+  /**
+   * Tasks
+   */
+  tasks: Array<SidebarTask>
+  /**
+   * Bookings
+   */
+  bookings: Array<SidebarBooking>
+}
+
+/**
+ * SidebarTask
+ */
+export type SidebarTask = {
   /**
    * Id
    */
@@ -1985,24 +1879,18 @@ export type SidebarEventGroup = {
    * Status
    */
   status?: string
-}
-
-/**
- * SidebarResponse
- */
-export type SidebarResponse = {
   /**
-   * Event Groups
+   * Open Shifts
    */
-  event_groups: Array<SidebarEventGroup>
+  open_shifts: number
   /**
-   * Events
+   * Next Shift Date
    */
-  events: Array<SidebarEvent>
+  next_shift_date?: string | null
   /**
-   * Bookings
+   * Next Shift Start Time
    */
-  bookings: Array<SidebarBooking>
+  next_shift_start_time?: string | null
 }
 
 /**
@@ -2030,17 +1918,41 @@ export type SiteSettingsUpdate = {
 }
 
 /**
- * SlotBatchRead
+ * TaskBookingEntry
+ *
+ * A confirmed booking with slot_id, for the bulk task bookings endpoint.
  */
-export type SlotBatchRead = {
+export type TaskBookingEntry = {
   /**
-   * Event Id
+   * Id
    */
-  event_id: string
+  id: string
   /**
-   * Label
+   * Shift Id
    */
-  label?: string | null
+  shift_id: string
+  /**
+   * User Name
+   */
+  user_name?: string | null
+  /**
+   * User Phone Number
+   */
+  user_phone_number?: string | null
+}
+
+/**
+ * TaskCreate
+ */
+export type TaskCreate = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
   /**
    * Start Date
    */
@@ -2050,6 +1962,52 @@ export type SlotBatchRead = {
    */
   end_date: string
   /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
+  /**
+   * Event Id
+   */
+  event_id?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+}
+
+/**
+ * TaskCreateWithShifts
+ */
+export type TaskCreateWithShifts = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
    * Location
    */
   location?: string | null
@@ -2058,31 +2016,135 @@ export type SlotBatchRead = {
    */
   category?: string | null
   /**
-   * Default Start Time
+   * Event Id
    */
-  default_start_time?: string | null
+  event_id?: string | null
+  new_event?: EventCreate | null
+  schedule: ShiftGenerationConfig
+}
+
+/**
+ * TaskCreateWithShiftsResponse
+ */
+export type TaskCreateWithShiftsResponse = {
+  task: TaskRead
   /**
-   * Default End Time
+   * Shifts Created
    */
-  default_end_time?: string | null
+  shifts_created: number
+  event?: EventRead | null
+}
+
+/**
+ * TaskFeedResponse
+ */
+export type TaskFeedResponse = {
   /**
-   * Slot Duration Minutes
+   * Items
    */
-  slot_duration_minutes?: number | null
+  items: Array<FeedTaskItem>
   /**
-   * People Per Slot
+   * Total
    */
-  people_per_slot?: number | null
+  total: number
   /**
-   * Remainder Mode
+   * Skip
    */
-  remainder_mode?: 'drop' | 'short' | 'extend' | null
+  skip: number
   /**
-   * Schedule Overrides
+   * Limit
    */
-  schedule_overrides?: Array<{
-    [key: string]: unknown
-  }> | null
+  limit: number
+}
+
+/**
+ * TaskFillRate
+ */
+export type TaskFillRate = {
+  /**
+   * Task Id
+   */
+  task_id: string
+  /**
+   * Task Name
+   */
+  task_name: string
+  /**
+   * Total Capacity
+   */
+  total_capacity: number
+  /**
+   * Confirmed Bookings
+   */
+  confirmed_bookings: number
+  /**
+   * Fill Rate
+   */
+  fill_rate: number
+}
+
+/**
+ * TaskListResponse
+ */
+export type TaskListResponse = {
+  /**
+   * Items
+   */
+  items: Array<TaskRead>
+  /**
+   * Total
+   */
+  total: number
+  /**
+   * Skip
+   */
+  skip: number
+  /**
+   * Limit
+   */
+  limit: number
+}
+
+/**
+ * TaskRead
+ */
+export type TaskRead = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
+  /**
+   * Event Id
+   */
+  event_id?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
   /**
    * Id
    */
@@ -2095,123 +2157,97 @@ export type SlotBatchRead = {
    * Updated At
    */
   updated_at: string
-}
-
-/**
- * SlotBookingEntry
- *
- * A confirmed booking for a slot, with basic user info.
- */
-export type SlotBookingEntry = {
   /**
-   * Id
+   * Shift Duration Minutes
    */
-  id: string
-  /**
-   * User Id
-   */
-  user_id: string
-  /**
-   * User Name
-   */
-  user_name?: string | null
-  /**
-   * User Email
-   */
-  user_email?: string | null
-  /**
-   * User Picture
-   */
-  user_picture?: string | null
-  /**
-   * User Phone Number
-   */
-  user_phone_number?: string | null
-  /**
-   * Notes
-   */
-  notes?: string | null
-  /**
-   * Created At
-   */
-  created_at: string
-}
-
-/**
- * SlotGenerationConfig
- */
-export type SlotGenerationConfig = {
+  shift_duration_minutes?: number | null
   /**
    * Default Start Time
    */
-  default_start_time: string
+  default_start_time?: string | null
   /**
    * Default End Time
    */
-  default_end_time: string
+  default_end_time?: string | null
   /**
-   * Slot Duration Minutes
+   * People Per Shift
    */
-  slot_duration_minutes: number
+  people_per_shift?: number | null
   /**
-   * People Per Slot
+   * Schedule Overrides
    */
-  people_per_slot?: number
-  /**
-   * Remainder Mode
-   */
-  remainder_mode?: 'drop' | 'short' | 'extend'
-  /**
-   * Overrides
-   */
-  overrides?: Array<ScheduleOverride>
-  /**
-   * Excluded Slots
-   */
-  excluded_slots?: Array<ExcludedSlot>
+  schedule_overrides?: Array<{
+    [key: string]: unknown
+  }> | null
 }
 
 /**
- * SlotRegenerationResult
+ * TaskUpdate
  */
-export type SlotRegenerationResult = {
-  event: EventRead
+export type TaskUpdate = {
   /**
-   * Slots Added
+   * Name
    */
-  slots_added: number
+  name?: string | null
   /**
-   * Slots Removed
+   * Description
    */
-  slots_removed: number
-  /**
-   * Slots Kept
-   */
-  slots_kept: number
-  /**
-   * Affected Bookings
-   */
-  affected_bookings: Array<AffectedBookingInfo>
-}
-
-/**
- * SlotWindowResponse
- *
- * Response for the slot-window endpoint (next/prev day navigation).
- */
-export type SlotWindowResponse = {
-  /**
-   * Slots
-   */
-  slots: Array<FeedSlotEntry>
+  description?: string | null
   /**
    * Start Date
    */
-  start_date: string
+  start_date?: string | null
   /**
-   * Days
+   * End Date
    */
-  days: number
+  end_date?: string | null
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived' | null
+  /**
+   * Event Id
+   */
+  event_id?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+}
+
+/**
+ * TaskUpdateWithShifts
+ */
+export type TaskUpdateWithShifts = {
+  /**
+   * Name
+   */
+  name?: string | null
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date?: string | null
+  /**
+   * End Date
+   */
+  end_date?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Category
+   */
+  category?: string | null
+  schedule: ShiftGenerationConfig
 }
 
 /**
@@ -2513,9 +2549,9 @@ export type UserAvailabilityRead = {
    */
   user_id: string
   /**
-   * Event Group Id
+   * Event Id
    */
-  event_group_id: string
+  event_id: string
   /**
    * Available Dates
    */
@@ -2561,9 +2597,9 @@ export type UserAvailabilityWithUser = {
    */
   user_id: string
   /**
-   * Event Group Id
+   * Event Id
    */
-  event_group_id: string
+  event_id: string
   /**
    * Available Dates
    */
@@ -2631,12 +2667,6 @@ export type UserCreate = {
    */
   name?: string | null
   /**
-   * Picture
-   *
-   * URL to user's profile picture
-   */
-  picture?: string | null
-  /**
    * Email Verified
    *
    * Whether the user's email is verified
@@ -2686,6 +2716,10 @@ export type UserListResponse = {
  */
 export type UserProfile = {
   /**
+   * Id
+   */
+  id: string
+  /**
    * Sub
    */
   sub: string
@@ -2702,9 +2736,9 @@ export type UserProfile = {
    */
   email?: string | null
   /**
-   * Picture
+   * Avatar Etag
    */
-  picture?: string | null
+  avatar_etag?: string | null
   /**
    * Bio
    */
@@ -2734,11 +2768,11 @@ export type UserProfile = {
    */
   is_admin?: boolean
   /**
-   * Is Event Manager
+   * Is Task Manager
    *
-   * Whether user has event_manager role
+   * Whether user has task_manager role
    */
-  is_event_manager?: boolean
+  is_task_manager?: boolean
   /**
    * Is Active
    *
@@ -2752,11 +2786,17 @@ export type UserProfile = {
    */
   rejection_reason?: string | null
   /**
-   * Managed Event Group Ids
+   * Managed Event Ids
    *
-   * IDs of event groups this user manages (via event_group_managers)
+   * IDs of events this user manages (via event_managers)
    */
-  managed_event_group_ids?: Array<string>
+  managed_event_ids?: Array<string>
+  /**
+   * Selected Event Id
+   *
+   * Event currently selected as the user's dashboard scope
+   */
+  selected_event_id?: string | null
 }
 
 /**
@@ -2775,12 +2815,6 @@ export type UserProfileUpdate = {
    * User's nickname
    */
   nickname?: string | null
-  /**
-   * Picture
-   *
-   * URL to user's profile picture
-   */
-  picture?: string | null
   /**
    * Bio
    *
@@ -2822,9 +2856,9 @@ export type UserRead = {
    */
   name?: string | null
   /**
-   * Picture
+   * Avatar Etag
    */
-  picture?: string | null
+  avatar_etag?: string | null
   /**
    * Phone Number
    */
@@ -2911,6 +2945,82 @@ export type ProblemDetails = {
   detail?: string
   instance?: string
   errors?: Array<ValidationErrorItem>
+}
+
+/**
+ * EventListResponse
+ */
+export type EventListResponseWritable = {
+  /**
+   * Items
+   */
+  items: Array<EventReadWritable>
+  /**
+   * Total
+   */
+  total: number
+  /**
+   * Skip
+   */
+  skip: number
+  /**
+   * Limit
+   */
+  limit: number
+}
+
+/**
+ * EventRead
+ */
+export type EventReadWritable = {
+  /**
+   * Name
+   */
+  name: string
+  /**
+   * Description
+   */
+  description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Status
+   */
+  status?: 'draft' | 'published' | 'archived'
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created By Id
+   */
+  created_by_id?: string | null
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Updated At
+   */
+  updated_at: string
+}
+
+/**
+ * TaskCreateWithShiftsResponse
+ */
+export type TaskCreateWithShiftsResponseWritable = {
+  task: TaskRead
+  /**
+   * Shifts Created
+   */
+  shifts_created: number
+  event?: EventReadWritable | null
 }
 
 export type HealthHealthCheckData = {
@@ -3182,6 +3292,61 @@ export type UsersGetCurrentUserProfileResponses = {
 
 export type UsersGetCurrentUserProfileResponse =
   UsersGetCurrentUserProfileResponses[keyof UsersGetCurrentUserProfileResponses]
+
+export type UsersUpdateSelectedEventData = {
+  body: SelectedEventUpdate
+  path?: never
+  query?: never
+  url: '/api/v1/users/me/selected-event'
+}
+
+export type UsersUpdateSelectedEventErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersUpdateSelectedEventError =
+  UsersUpdateSelectedEventErrors[keyof UsersUpdateSelectedEventErrors]
+
+export type UsersUpdateSelectedEventResponses = {
+  /**
+   * Successful Response
+   */
+  200: UserProfile
+}
+
+export type UsersUpdateSelectedEventResponse =
+  UsersUpdateSelectedEventResponses[keyof UsersUpdateSelectedEventResponses]
 
 export type UsersGetApprovalPasswordStatusData = {
   body?: never
@@ -3709,6 +3874,170 @@ export type UsersExportUserDataResponses = {
 export type UsersExportUserDataResponse =
   UsersExportUserDataResponses[keyof UsersExportUserDataResponses]
 
+export type UsersDeleteMyAvatarData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/users/me/avatar'
+}
+
+export type UsersDeleteMyAvatarErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersDeleteMyAvatarError = UsersDeleteMyAvatarErrors[keyof UsersDeleteMyAvatarErrors]
+
+export type UsersDeleteMyAvatarResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type UsersDeleteMyAvatarResponse =
+  UsersDeleteMyAvatarResponses[keyof UsersDeleteMyAvatarResponses]
+
+export type UsersUploadMyAvatarData = {
+  body: BodyUsersUploadMyAvatar
+  path?: never
+  query?: never
+  url: '/api/v1/users/me/avatar'
+}
+
+export type UsersUploadMyAvatarErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersUploadMyAvatarError = UsersUploadMyAvatarErrors[keyof UsersUploadMyAvatarErrors]
+
+export type UsersUploadMyAvatarResponses = {
+  /**
+   * Successful Response
+   */
+  200: AvatarUploadResponse
+}
+
+export type UsersUploadMyAvatarResponse =
+  UsersUploadMyAvatarResponses[keyof UsersUploadMyAvatarResponses]
+
+export type UsersGetUserAvatarData = {
+  body?: never
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string
+  }
+  query?: never
+  url: '/api/v1/users/{user_id}/avatar'
+}
+
+export type UsersGetUserAvatarErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersGetUserAvatarError = UsersGetUserAvatarErrors[keyof UsersGetUserAvatarErrors]
+
+export type UsersGetUserAvatarResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown
+}
+
 export type SettingsGetSiteSettingsData = {
   body?: never
   path?: never
@@ -3819,7 +4148,7 @@ export type SettingsUpdateSiteSettingsResponses = {
 export type SettingsUpdateSiteSettingsResponse =
   SettingsUpdateSiteSettingsResponses[keyof SettingsUpdateSiteSettingsResponses]
 
-export type EventsEventFeedData = {
+export type TasksTaskFeedData = {
   body?: never
   path?: never
   query?: {
@@ -3859,11 +4188,19 @@ export type EventsEventFeedData = {
      * Days
      */
     days?: number
+    /**
+     * Event Id
+     */
+    event_id?: string | null
+    /**
+     * All Events
+     */
+    all_events?: boolean
   }
-  url: '/api/v1/events/feed'
+  url: '/api/v1/tasks/feed'
 }
 
-export type EventsEventFeedErrors = {
+export type TasksTaskFeedErrors = {
   /**
    * Bad Request
    */
@@ -3898,18 +4235,18 @@ export type EventsEventFeedErrors = {
   500: ProblemDetails
 }
 
-export type EventsEventFeedError = EventsEventFeedErrors[keyof EventsEventFeedErrors]
+export type TasksTaskFeedError = TasksTaskFeedErrors[keyof TasksTaskFeedErrors]
 
-export type EventsEventFeedResponses = {
+export type TasksTaskFeedResponses = {
   /**
    * Successful Response
    */
-  200: EventFeedResponse
+  200: TaskFeedResponse
 }
 
-export type EventsEventFeedResponse = EventsEventFeedResponses[keyof EventsEventFeedResponses]
+export type TasksTaskFeedResponse = TasksTaskFeedResponses[keyof TasksTaskFeedResponses]
 
-export type EventsEventActiveDatesData = {
+export type TasksTaskActiveDatesData = {
   body?: never
   path?: never
   query: {
@@ -3922,10 +4259,10 @@ export type EventsEventActiveDatesData = {
      */
     date_to: string
   }
-  url: '/api/v1/events/active-dates'
+  url: '/api/v1/tasks/active-dates'
 }
 
-export type EventsEventActiveDatesErrors = {
+export type TasksTaskActiveDatesErrors = {
   /**
    * Bad Request
    */
@@ -3960,28 +4297,27 @@ export type EventsEventActiveDatesErrors = {
   500: ProblemDetails
 }
 
-export type EventsEventActiveDatesError =
-  EventsEventActiveDatesErrors[keyof EventsEventActiveDatesErrors]
+export type TasksTaskActiveDatesError = TasksTaskActiveDatesErrors[keyof TasksTaskActiveDatesErrors]
 
-export type EventsEventActiveDatesResponses = {
+export type TasksTaskActiveDatesResponses = {
   /**
-   * Response Events-Event Active Dates
+   * Response Tasks-Task Active Dates
    *
    * Successful Response
    */
   200: Array<string>
 }
 
-export type EventsEventActiveDatesResponse =
-  EventsEventActiveDatesResponses[keyof EventsEventActiveDatesResponses]
+export type TasksTaskActiveDatesResponse =
+  TasksTaskActiveDatesResponses[keyof TasksTaskActiveDatesResponses]
 
-export type EventsGetSlotWindowData = {
+export type TasksGetShiftWindowData = {
   body?: never
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
   }
   query: {
     /**
@@ -3993,10 +4329,10 @@ export type EventsGetSlotWindowData = {
      */
     days?: number
   }
-  url: '/api/v1/events/{event_id}/slot-window'
+  url: '/api/v1/tasks/{task_id}/shift-window'
 }
 
-export type EventsGetSlotWindowErrors = {
+export type TasksGetShiftWindowErrors = {
   /**
    * Bad Request
    */
@@ -4031,19 +4367,19 @@ export type EventsGetSlotWindowErrors = {
   500: ProblemDetails
 }
 
-export type EventsGetSlotWindowError = EventsGetSlotWindowErrors[keyof EventsGetSlotWindowErrors]
+export type TasksGetShiftWindowError = TasksGetShiftWindowErrors[keyof TasksGetShiftWindowErrors]
 
-export type EventsGetSlotWindowResponses = {
+export type TasksGetShiftWindowResponses = {
   /**
    * Successful Response
    */
-  200: SlotWindowResponse
+  200: ShiftWindowResponse
 }
 
-export type EventsGetSlotWindowResponse =
-  EventsGetSlotWindowResponses[keyof EventsGetSlotWindowResponses]
+export type TasksGetShiftWindowResponse =
+  TasksGetShiftWindowResponses[keyof TasksGetShiftWindowResponses]
 
-export type EventsListEventsData = {
+export type TasksListTasksData = {
   body?: never
   path?: never
   query?: {
@@ -4068,14 +4404,18 @@ export type EventsListEventsData = {
      */
     my_bookings?: boolean
     /**
-     * Event Group Id
+     * Event Id
      */
-    event_group_id?: string | null
+    event_id?: string | null
+    /**
+     * All Events
+     */
+    all_events?: boolean
   }
-  url: '/api/v1/events/'
+  url: '/api/v1/tasks/'
 }
 
-export type EventsListEventsErrors = {
+export type TasksListTasksErrors = {
   /**
    * Bad Request
    */
@@ -4110,25 +4450,25 @@ export type EventsListEventsErrors = {
   500: ProblemDetails
 }
 
-export type EventsListEventsError = EventsListEventsErrors[keyof EventsListEventsErrors]
+export type TasksListTasksError = TasksListTasksErrors[keyof TasksListTasksErrors]
 
-export type EventsListEventsResponses = {
+export type TasksListTasksResponses = {
   /**
    * Successful Response
    */
-  200: EventListResponse
+  200: TaskListResponse
 }
 
-export type EventsListEventsResponse = EventsListEventsResponses[keyof EventsListEventsResponses]
+export type TasksListTasksResponse = TasksListTasksResponses[keyof TasksListTasksResponses]
 
-export type EventsCreateEventData = {
-  body: EventCreate
+export type TasksCreateTaskData = {
+  body: TaskCreate
   path?: never
   query?: never
-  url: '/api/v1/events/'
+  url: '/api/v1/tasks/'
 }
 
-export type EventsCreateEventErrors = {
+export type TasksCreateTaskErrors = {
   /**
    * Bad Request
    */
@@ -4163,24 +4503,24 @@ export type EventsCreateEventErrors = {
   500: ProblemDetails
 }
 
-export type EventsCreateEventError = EventsCreateEventErrors[keyof EventsCreateEventErrors]
+export type TasksCreateTaskError = TasksCreateTaskErrors[keyof TasksCreateTaskErrors]
 
-export type EventsCreateEventResponses = {
+export type TasksCreateTaskResponses = {
   /**
    * Successful Response
    */
-  201: EventRead
+  201: TaskRead
 }
 
-export type EventsCreateEventResponse = EventsCreateEventResponses[keyof EventsCreateEventResponses]
+export type TasksCreateTaskResponse = TasksCreateTaskResponses[keyof TasksCreateTaskResponses]
 
-export type EventsDeleteEventData = {
+export type TasksDeleteTaskData = {
   body?: never
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
   }
   query?: {
     /**
@@ -4188,10 +4528,10 @@ export type EventsDeleteEventData = {
      */
     cancellation_reason?: string | null
   }
-  url: '/api/v1/events/{event_id}'
+  url: '/api/v1/tasks/{task_id}'
 }
 
-export type EventsDeleteEventErrors = {
+export type TasksDeleteTaskErrors = {
   /**
    * Bad Request
    */
@@ -4226,30 +4566,30 @@ export type EventsDeleteEventErrors = {
   500: ProblemDetails
 }
 
-export type EventsDeleteEventError = EventsDeleteEventErrors[keyof EventsDeleteEventErrors]
+export type TasksDeleteTaskError = TasksDeleteTaskErrors[keyof TasksDeleteTaskErrors]
 
-export type EventsDeleteEventResponses = {
+export type TasksDeleteTaskResponses = {
   /**
    * Successful Response
    */
   204: void
 }
 
-export type EventsDeleteEventResponse = EventsDeleteEventResponses[keyof EventsDeleteEventResponses]
+export type TasksDeleteTaskResponse = TasksDeleteTaskResponses[keyof TasksDeleteTaskResponses]
 
-export type EventsGetEventData = {
+export type TasksGetTaskData = {
   body?: never
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
   }
   query?: never
-  url: '/api/v1/events/{event_id}'
+  url: '/api/v1/tasks/{task_id}'
 }
 
-export type EventsGetEventErrors = {
+export type TasksGetTaskErrors = {
   /**
    * Bad Request
    */
@@ -4284,30 +4624,30 @@ export type EventsGetEventErrors = {
   500: ProblemDetails
 }
 
-export type EventsGetEventError = EventsGetEventErrors[keyof EventsGetEventErrors]
+export type TasksGetTaskError = TasksGetTaskErrors[keyof TasksGetTaskErrors]
 
-export type EventsGetEventResponses = {
+export type TasksGetTaskResponses = {
   /**
    * Successful Response
    */
-  200: EventRead
+  200: TaskRead
 }
 
-export type EventsGetEventResponse = EventsGetEventResponses[keyof EventsGetEventResponses]
+export type TasksGetTaskResponse = TasksGetTaskResponses[keyof TasksGetTaskResponses]
 
-export type EventsUpdateEventData = {
-  body: EventUpdate
+export type TasksUpdateTaskData = {
+  body: TaskUpdate
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
   }
   query?: never
-  url: '/api/v1/events/{event_id}'
+  url: '/api/v1/tasks/{task_id}'
 }
 
-export type EventsUpdateEventErrors = {
+export type TasksUpdateTaskErrors = {
   /**
    * Bad Request
    */
@@ -4342,30 +4682,30 @@ export type EventsUpdateEventErrors = {
   500: ProblemDetails
 }
 
-export type EventsUpdateEventError = EventsUpdateEventErrors[keyof EventsUpdateEventErrors]
+export type TasksUpdateTaskError = TasksUpdateTaskErrors[keyof TasksUpdateTaskErrors]
 
-export type EventsUpdateEventResponses = {
+export type TasksUpdateTaskResponses = {
   /**
    * Successful Response
    */
-  200: EventRead
+  200: TaskRead
 }
 
-export type EventsUpdateEventResponse = EventsUpdateEventResponses[keyof EventsUpdateEventResponses]
+export type TasksUpdateTaskResponse = TasksUpdateTaskResponses[keyof TasksUpdateTaskResponses]
 
-export type EventsListEventBookingsData = {
+export type TasksListTaskBookingsData = {
   body?: never
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
   }
   query?: never
-  url: '/api/v1/events/{event_id}/bookings'
+  url: '/api/v1/tasks/{task_id}/bookings'
 }
 
-export type EventsListEventBookingsErrors = {
+export type TasksListTaskBookingsErrors = {
   /**
    * Bad Request
    */
@@ -4400,29 +4740,29 @@ export type EventsListEventBookingsErrors = {
   500: ProblemDetails
 }
 
-export type EventsListEventBookingsError =
-  EventsListEventBookingsErrors[keyof EventsListEventBookingsErrors]
+export type TasksListTaskBookingsError =
+  TasksListTaskBookingsErrors[keyof TasksListTaskBookingsErrors]
 
-export type EventsListEventBookingsResponses = {
+export type TasksListTaskBookingsResponses = {
   /**
-   * Response Events-List Event Bookings
+   * Response Tasks-List Task Bookings
    *
    * Successful Response
    */
-  200: Array<EventBookingEntry>
+  200: Array<TaskBookingEntry>
 }
 
-export type EventsListEventBookingsResponse =
-  EventsListEventBookingsResponses[keyof EventsListEventBookingsResponses]
+export type TasksListTaskBookingsResponse =
+  TasksListTaskBookingsResponses[keyof TasksListTaskBookingsResponses]
 
-export type EventsCreateEventWithSlotsData = {
-  body: EventCreateWithSlots
+export type TasksCreateTaskWithShiftsData = {
+  body: TaskCreateWithShifts
   path?: never
   query?: never
-  url: '/api/v1/events/with-slots'
+  url: '/api/v1/tasks/with-shifts'
 }
 
-export type EventsCreateEventWithSlotsErrors = {
+export type TasksCreateTaskWithShiftsErrors = {
   /**
    * Bad Request
    */
@@ -4457,32 +4797,32 @@ export type EventsCreateEventWithSlotsErrors = {
   500: ProblemDetails
 }
 
-export type EventsCreateEventWithSlotsError =
-  EventsCreateEventWithSlotsErrors[keyof EventsCreateEventWithSlotsErrors]
+export type TasksCreateTaskWithShiftsError =
+  TasksCreateTaskWithShiftsErrors[keyof TasksCreateTaskWithShiftsErrors]
 
-export type EventsCreateEventWithSlotsResponses = {
+export type TasksCreateTaskWithShiftsResponses = {
   /**
    * Successful Response
    */
-  201: EventCreateWithSlotsResponse
+  201: TaskCreateWithShiftsResponse
 }
 
-export type EventsCreateEventWithSlotsResponse =
-  EventsCreateEventWithSlotsResponses[keyof EventsCreateEventWithSlotsResponses]
+export type TasksCreateTaskWithShiftsResponse =
+  TasksCreateTaskWithShiftsResponses[keyof TasksCreateTaskWithShiftsResponses]
 
-export type EventsAddSlotsToEventData = {
-  body: AddSlotsToEvent
+export type TasksAddShiftsToTaskData = {
+  body: AddShiftsToTask
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
   }
   query?: never
-  url: '/api/v1/events/{event_id}/add-slots'
+  url: '/api/v1/tasks/{task_id}/add-shifts'
 }
 
-export type EventsAddSlotsToEventErrors = {
+export type TasksAddShiftsToTaskErrors = {
   /**
    * Bad Request
    */
@@ -4517,26 +4857,25 @@ export type EventsAddSlotsToEventErrors = {
   500: ProblemDetails
 }
 
-export type EventsAddSlotsToEventError =
-  EventsAddSlotsToEventErrors[keyof EventsAddSlotsToEventErrors]
+export type TasksAddShiftsToTaskError = TasksAddShiftsToTaskErrors[keyof TasksAddShiftsToTaskErrors]
 
-export type EventsAddSlotsToEventResponses = {
+export type TasksAddShiftsToTaskResponses = {
   /**
    * Successful Response
    */
-  201: AddSlotsResponse
+  201: AddShiftsResponse
 }
 
-export type EventsAddSlotsToEventResponse =
-  EventsAddSlotsToEventResponses[keyof EventsAddSlotsToEventResponses]
+export type TasksAddShiftsToTaskResponse =
+  TasksAddShiftsToTaskResponses[keyof TasksAddShiftsToTaskResponses]
 
-export type EventsRegenerateEventSlotsData = {
-  body: EventUpdateWithSlots
+export type TasksRegenerateTaskShiftsData = {
+  body: TaskUpdateWithShifts
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
   }
   query?: {
     /**
@@ -4548,10 +4887,10 @@ export type EventsRegenerateEventSlotsData = {
      */
     batch_id?: string | null
   }
-  url: '/api/v1/events/{event_id}/regenerate-slots'
+  url: '/api/v1/tasks/{task_id}/regenerate-shifts'
 }
 
-export type EventsRegenerateEventSlotsErrors = {
+export type TasksRegenerateTaskShiftsErrors = {
   /**
    * Bad Request
    */
@@ -4586,32 +4925,32 @@ export type EventsRegenerateEventSlotsErrors = {
   500: ProblemDetails
 }
 
-export type EventsRegenerateEventSlotsError =
-  EventsRegenerateEventSlotsErrors[keyof EventsRegenerateEventSlotsErrors]
+export type TasksRegenerateTaskShiftsError =
+  TasksRegenerateTaskShiftsErrors[keyof TasksRegenerateTaskShiftsErrors]
 
-export type EventsRegenerateEventSlotsResponses = {
+export type TasksRegenerateTaskShiftsResponses = {
   /**
    * Successful Response
    */
-  200: SlotRegenerationResult
+  200: ShiftRegenerationResult
 }
 
-export type EventsRegenerateEventSlotsResponse =
-  EventsRegenerateEventSlotsResponses[keyof EventsRegenerateEventSlotsResponses]
+export type TasksRegenerateTaskShiftsResponse =
+  TasksRegenerateTaskShiftsResponses[keyof TasksRegenerateTaskShiftsResponses]
 
-export type EventsListBatchesData = {
+export type TasksListBatchesData = {
   body?: never
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
   }
   query?: never
-  url: '/api/v1/events/{event_id}/batches'
+  url: '/api/v1/tasks/{task_id}/batches'
 }
 
-export type EventsListBatchesErrors = {
+export type TasksListBatchesErrors = {
   /**
    * Bad Request
    */
@@ -4646,26 +4985,26 @@ export type EventsListBatchesErrors = {
   500: ProblemDetails
 }
 
-export type EventsListBatchesError = EventsListBatchesErrors[keyof EventsListBatchesErrors]
+export type TasksListBatchesError = TasksListBatchesErrors[keyof TasksListBatchesErrors]
 
-export type EventsListBatchesResponses = {
+export type TasksListBatchesResponses = {
   /**
-   * Response Events-List Batches
+   * Response Tasks-List Batches
    *
    * Successful Response
    */
-  200: Array<SlotBatchRead>
+  200: Array<ShiftBatchRead>
 }
 
-export type EventsListBatchesResponse = EventsListBatchesResponses[keyof EventsListBatchesResponses]
+export type TasksListBatchesResponse = TasksListBatchesResponses[keyof TasksListBatchesResponses]
 
-export type EventsDeleteBatchData = {
+export type TasksDeleteBatchData = {
   body?: never
   path: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id: string
+    task_id: string
     /**
      * Batch Id
      */
@@ -4677,10 +5016,10 @@ export type EventsDeleteBatchData = {
      */
     cancellation_reason?: string | null
   }
-  url: '/api/v1/events/{event_id}/batches/{batch_id}'
+  url: '/api/v1/tasks/{task_id}/batches/{batch_id}'
 }
 
-export type EventsDeleteBatchErrors = {
+export type TasksDeleteBatchErrors = {
   /**
    * Bad Request
    */
@@ -4715,25 +5054,25 @@ export type EventsDeleteBatchErrors = {
   500: ProblemDetails
 }
 
-export type EventsDeleteBatchError = EventsDeleteBatchErrors[keyof EventsDeleteBatchErrors]
+export type TasksDeleteBatchError = TasksDeleteBatchErrors[keyof TasksDeleteBatchErrors]
 
-export type EventsDeleteBatchResponses = {
+export type TasksDeleteBatchResponses = {
   /**
    * Successful Response
    */
   204: void
 }
 
-export type EventsDeleteBatchResponse = EventsDeleteBatchResponses[keyof EventsDeleteBatchResponses]
+export type TasksDeleteBatchResponse = TasksDeleteBatchResponses[keyof TasksDeleteBatchResponses]
 
-export type DutySlotsListDutySlotsData = {
+export type ShiftsListShiftsData = {
   body?: never
   path?: never
   query?: {
     /**
-     * Event Id
+     * Task Id
      */
-    event_id?: string | null
+    task_id?: string | null
     /**
      * Category
      */
@@ -4751,10 +5090,10 @@ export type DutySlotsListDutySlotsData = {
      */
     limit?: number
   }
-  url: '/api/v1/duty-slots/'
+  url: '/api/v1/shifts/'
 }
 
-export type DutySlotsListDutySlotsErrors = {
+export type ShiftsListShiftsErrors = {
   /**
    * Bad Request
    */
@@ -4789,27 +5128,25 @@ export type DutySlotsListDutySlotsErrors = {
   500: ProblemDetails
 }
 
-export type DutySlotsListDutySlotsError =
-  DutySlotsListDutySlotsErrors[keyof DutySlotsListDutySlotsErrors]
+export type ShiftsListShiftsError = ShiftsListShiftsErrors[keyof ShiftsListShiftsErrors]
 
-export type DutySlotsListDutySlotsResponses = {
+export type ShiftsListShiftsResponses = {
   /**
    * Successful Response
    */
-  200: DutySlotListResponse
+  200: ShiftListResponse
 }
 
-export type DutySlotsListDutySlotsResponse =
-  DutySlotsListDutySlotsResponses[keyof DutySlotsListDutySlotsResponses]
+export type ShiftsListShiftsResponse = ShiftsListShiftsResponses[keyof ShiftsListShiftsResponses]
 
-export type DutySlotsCreateDutySlotData = {
-  body: DutySlotCreate
+export type ShiftsCreateShiftData = {
+  body: ShiftCreate
   path?: never
   query?: never
-  url: '/api/v1/duty-slots/'
+  url: '/api/v1/shifts/'
 }
 
-export type DutySlotsCreateDutySlotErrors = {
+export type ShiftsCreateShiftErrors = {
   /**
    * Bad Request
    */
@@ -4844,20 +5181,18 @@ export type DutySlotsCreateDutySlotErrors = {
   500: ProblemDetails
 }
 
-export type DutySlotsCreateDutySlotError =
-  DutySlotsCreateDutySlotErrors[keyof DutySlotsCreateDutySlotErrors]
+export type ShiftsCreateShiftError = ShiftsCreateShiftErrors[keyof ShiftsCreateShiftErrors]
 
-export type DutySlotsCreateDutySlotResponses = {
+export type ShiftsCreateShiftResponses = {
   /**
    * Successful Response
    */
-  201: DutySlotRead
+  201: ShiftRead
 }
 
-export type DutySlotsCreateDutySlotResponse =
-  DutySlotsCreateDutySlotResponses[keyof DutySlotsCreateDutySlotResponses]
+export type ShiftsCreateShiftResponse = ShiftsCreateShiftResponses[keyof ShiftsCreateShiftResponses]
 
-export type DutySlotsDeleteDutySlotData = {
+export type ShiftsDeleteShiftData = {
   body?: never
   path: {
     /**
@@ -4871,10 +5206,10 @@ export type DutySlotsDeleteDutySlotData = {
      */
     cancellation_reason?: string | null
   }
-  url: '/api/v1/duty-slots/{slot_id}'
+  url: '/api/v1/shifts/{slot_id}'
 }
 
-export type DutySlotsDeleteDutySlotErrors = {
+export type ShiftsDeleteShiftErrors = {
   /**
    * Bad Request
    */
@@ -4909,20 +5244,18 @@ export type DutySlotsDeleteDutySlotErrors = {
   500: ProblemDetails
 }
 
-export type DutySlotsDeleteDutySlotError =
-  DutySlotsDeleteDutySlotErrors[keyof DutySlotsDeleteDutySlotErrors]
+export type ShiftsDeleteShiftError = ShiftsDeleteShiftErrors[keyof ShiftsDeleteShiftErrors]
 
-export type DutySlotsDeleteDutySlotResponses = {
+export type ShiftsDeleteShiftResponses = {
   /**
    * Successful Response
    */
   204: void
 }
 
-export type DutySlotsDeleteDutySlotResponse =
-  DutySlotsDeleteDutySlotResponses[keyof DutySlotsDeleteDutySlotResponses]
+export type ShiftsDeleteShiftResponse = ShiftsDeleteShiftResponses[keyof ShiftsDeleteShiftResponses]
 
-export type DutySlotsGetDutySlotData = {
+export type ShiftsGetShiftData = {
   body?: never
   path: {
     /**
@@ -4931,10 +5264,10 @@ export type DutySlotsGetDutySlotData = {
     slot_id: string | null
   }
   query?: never
-  url: '/api/v1/duty-slots/{slot_id}'
+  url: '/api/v1/shifts/{slot_id}'
 }
 
-export type DutySlotsGetDutySlotErrors = {
+export type ShiftsGetShiftErrors = {
   /**
    * Bad Request
    */
@@ -4969,20 +5302,19 @@ export type DutySlotsGetDutySlotErrors = {
   500: ProblemDetails
 }
 
-export type DutySlotsGetDutySlotError = DutySlotsGetDutySlotErrors[keyof DutySlotsGetDutySlotErrors]
+export type ShiftsGetShiftError = ShiftsGetShiftErrors[keyof ShiftsGetShiftErrors]
 
-export type DutySlotsGetDutySlotResponses = {
+export type ShiftsGetShiftResponses = {
   /**
    * Successful Response
    */
-  200: DutySlotRead
+  200: ShiftRead
 }
 
-export type DutySlotsGetDutySlotResponse =
-  DutySlotsGetDutySlotResponses[keyof DutySlotsGetDutySlotResponses]
+export type ShiftsGetShiftResponse = ShiftsGetShiftResponses[keyof ShiftsGetShiftResponses]
 
-export type DutySlotsUpdateDutySlotData = {
-  body: DutySlotUpdate
+export type ShiftsUpdateShiftData = {
+  body: ShiftUpdate
   path: {
     /**
      * Slot Id
@@ -4990,10 +5322,10 @@ export type DutySlotsUpdateDutySlotData = {
     slot_id: string
   }
   query?: never
-  url: '/api/v1/duty-slots/{slot_id}'
+  url: '/api/v1/shifts/{slot_id}'
 }
 
-export type DutySlotsUpdateDutySlotErrors = {
+export type ShiftsUpdateShiftErrors = {
   /**
    * Bad Request
    */
@@ -5028,20 +5360,18 @@ export type DutySlotsUpdateDutySlotErrors = {
   500: ProblemDetails
 }
 
-export type DutySlotsUpdateDutySlotError =
-  DutySlotsUpdateDutySlotErrors[keyof DutySlotsUpdateDutySlotErrors]
+export type ShiftsUpdateShiftError = ShiftsUpdateShiftErrors[keyof ShiftsUpdateShiftErrors]
 
-export type DutySlotsUpdateDutySlotResponses = {
+export type ShiftsUpdateShiftResponses = {
   /**
    * Successful Response
    */
-  200: DutySlotRead
+  200: ShiftRead
 }
 
-export type DutySlotsUpdateDutySlotResponse =
-  DutySlotsUpdateDutySlotResponses[keyof DutySlotsUpdateDutySlotResponses]
+export type ShiftsUpdateShiftResponse = ShiftsUpdateShiftResponses[keyof ShiftsUpdateShiftResponses]
 
-export type DutySlotsListSlotBookingsData = {
+export type ShiftsListShiftBookingsData = {
   body?: never
   path: {
     /**
@@ -5050,10 +5380,10 @@ export type DutySlotsListSlotBookingsData = {
     slot_id: string
   }
   query?: never
-  url: '/api/v1/duty-slots/{slot_id}/bookings'
+  url: '/api/v1/shifts/{slot_id}/bookings'
 }
 
-export type DutySlotsListSlotBookingsErrors = {
+export type ShiftsListShiftBookingsErrors = {
   /**
    * Bad Request
    */
@@ -5088,20 +5418,20 @@ export type DutySlotsListSlotBookingsErrors = {
   500: ProblemDetails
 }
 
-export type DutySlotsListSlotBookingsError =
-  DutySlotsListSlotBookingsErrors[keyof DutySlotsListSlotBookingsErrors]
+export type ShiftsListShiftBookingsError =
+  ShiftsListShiftBookingsErrors[keyof ShiftsListShiftBookingsErrors]
 
-export type DutySlotsListSlotBookingsResponses = {
+export type ShiftsListShiftBookingsResponses = {
   /**
-   * Response Duty-Slots-List Slot Bookings
+   * Response Shifts-List Shift Bookings
    *
    * Successful Response
    */
-  200: Array<SlotBookingEntry>
+  200: Array<ShiftBookingEntry>
 }
 
-export type DutySlotsListSlotBookingsResponse =
-  DutySlotsListSlotBookingsResponses[keyof DutySlotsListSlotBookingsResponses]
+export type ShiftsListShiftBookingsResponse =
+  ShiftsListShiftBookingsResponses[keyof ShiftsListShiftBookingsResponses]
 
 export type BookingsListMyBookingsData = {
   body?: never
@@ -5127,6 +5457,14 @@ export type BookingsListMyBookingsData = {
      * Date To
      */
     date_to?: string | null
+    /**
+     * Event Id
+     */
+    event_id?: string | null
+    /**
+     * All Events
+     */
+    all_events?: boolean
   }
   url: '/api/v1/bookings/me'
 }
@@ -6049,7 +6387,7 @@ export type CalendarRegenerateFeedResponses = {
 export type CalendarRegenerateFeedResponse =
   CalendarRegenerateFeedResponses[keyof CalendarRegenerateFeedResponses]
 
-export type EventGroupsListEventGroupsData = {
+export type EventsListEventsData = {
   body?: never
   path?: never
   query?: {
@@ -6078,10 +6416,10 @@ export type EventGroupsListEventGroupsData = {
      */
     date_to?: string | null
   }
-  url: '/api/v1/event-groups/'
+  url: '/api/v1/events/'
 }
 
-export type EventGroupsListEventGroupsErrors = {
+export type EventsListEventsErrors = {
   /**
    * Bad Request
    */
@@ -6116,27 +6454,25 @@ export type EventGroupsListEventGroupsErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsListEventGroupsError =
-  EventGroupsListEventGroupsErrors[keyof EventGroupsListEventGroupsErrors]
+export type EventsListEventsError = EventsListEventsErrors[keyof EventsListEventsErrors]
 
-export type EventGroupsListEventGroupsResponses = {
+export type EventsListEventsResponses = {
   /**
    * Successful Response
    */
-  200: EventGroupListResponse
+  200: EventListResponse
 }
 
-export type EventGroupsListEventGroupsResponse =
-  EventGroupsListEventGroupsResponses[keyof EventGroupsListEventGroupsResponses]
+export type EventsListEventsResponse = EventsListEventsResponses[keyof EventsListEventsResponses]
 
-export type EventGroupsCreateEventGroupData = {
-  body: EventGroupCreate
+export type EventsCreateEventData = {
+  body: EventCreate
   path?: never
   query?: never
-  url: '/api/v1/event-groups/'
+  url: '/api/v1/events/'
 }
 
-export type EventGroupsCreateEventGroupErrors = {
+export type EventsCreateEventErrors = {
   /**
    * Bad Request
    */
@@ -6171,20 +6507,18 @@ export type EventGroupsCreateEventGroupErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsCreateEventGroupError =
-  EventGroupsCreateEventGroupErrors[keyof EventGroupsCreateEventGroupErrors]
+export type EventsCreateEventError = EventsCreateEventErrors[keyof EventsCreateEventErrors]
 
-export type EventGroupsCreateEventGroupResponses = {
+export type EventsCreateEventResponses = {
   /**
    * Successful Response
    */
-  201: EventGroupRead
+  201: EventRead
 }
 
-export type EventGroupsCreateEventGroupResponse =
-  EventGroupsCreateEventGroupResponses[keyof EventGroupsCreateEventGroupResponses]
+export type EventsCreateEventResponse = EventsCreateEventResponses[keyof EventsCreateEventResponses]
 
-export type EventGroupsDeleteEventGroupData = {
+export type EventsDeleteEventData = {
   body?: never
   path: {
     /**
@@ -6193,10 +6527,10 @@ export type EventGroupsDeleteEventGroupData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}'
+  url: '/api/v1/events/{group_id}'
 }
 
-export type EventGroupsDeleteEventGroupErrors = {
+export type EventsDeleteEventErrors = {
   /**
    * Bad Request
    */
@@ -6231,20 +6565,18 @@ export type EventGroupsDeleteEventGroupErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsDeleteEventGroupError =
-  EventGroupsDeleteEventGroupErrors[keyof EventGroupsDeleteEventGroupErrors]
+export type EventsDeleteEventError = EventsDeleteEventErrors[keyof EventsDeleteEventErrors]
 
-export type EventGroupsDeleteEventGroupResponses = {
+export type EventsDeleteEventResponses = {
   /**
    * Successful Response
    */
   204: void
 }
 
-export type EventGroupsDeleteEventGroupResponse =
-  EventGroupsDeleteEventGroupResponses[keyof EventGroupsDeleteEventGroupResponses]
+export type EventsDeleteEventResponse = EventsDeleteEventResponses[keyof EventsDeleteEventResponses]
 
-export type EventGroupsGetEventGroupData = {
+export type EventsGetEventData = {
   body?: never
   path: {
     /**
@@ -6253,10 +6585,10 @@ export type EventGroupsGetEventGroupData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}'
+  url: '/api/v1/events/{group_id}'
 }
 
-export type EventGroupsGetEventGroupErrors = {
+export type EventsGetEventErrors = {
   /**
    * Bad Request
    */
@@ -6291,21 +6623,19 @@ export type EventGroupsGetEventGroupErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsGetEventGroupError =
-  EventGroupsGetEventGroupErrors[keyof EventGroupsGetEventGroupErrors]
+export type EventsGetEventError = EventsGetEventErrors[keyof EventsGetEventErrors]
 
-export type EventGroupsGetEventGroupResponses = {
+export type EventsGetEventResponses = {
   /**
    * Successful Response
    */
-  200: EventGroupRead
+  200: EventRead
 }
 
-export type EventGroupsGetEventGroupResponse =
-  EventGroupsGetEventGroupResponses[keyof EventGroupsGetEventGroupResponses]
+export type EventsGetEventResponse = EventsGetEventResponses[keyof EventsGetEventResponses]
 
-export type EventGroupsUpdateEventGroupData = {
-  body: EventGroupUpdate
+export type EventsUpdateEventData = {
+  body: EventUpdate
   path: {
     /**
      * Group Id
@@ -6313,10 +6643,10 @@ export type EventGroupsUpdateEventGroupData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}'
+  url: '/api/v1/events/{group_id}'
 }
 
-export type EventGroupsUpdateEventGroupErrors = {
+export type EventsUpdateEventErrors = {
   /**
    * Bad Request
    */
@@ -6351,20 +6681,18 @@ export type EventGroupsUpdateEventGroupErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsUpdateEventGroupError =
-  EventGroupsUpdateEventGroupErrors[keyof EventGroupsUpdateEventGroupErrors]
+export type EventsUpdateEventError = EventsUpdateEventErrors[keyof EventsUpdateEventErrors]
 
-export type EventGroupsUpdateEventGroupResponses = {
+export type EventsUpdateEventResponses = {
   /**
    * Successful Response
    */
-  200: EventGroupRead
+  200: EventRead
 }
 
-export type EventGroupsUpdateEventGroupResponse =
-  EventGroupsUpdateEventGroupResponses[keyof EventGroupsUpdateEventGroupResponses]
+export type EventsUpdateEventResponse = EventsUpdateEventResponses[keyof EventsUpdateEventResponses]
 
-export type EventGroupsGetEventDateBoundsData = {
+export type EventsGetTaskDateBoundsData = {
   body?: never
   path: {
     /**
@@ -6373,10 +6701,10 @@ export type EventGroupsGetEventDateBoundsData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}/event-date-bounds'
+  url: '/api/v1/events/{group_id}/task-date-bounds'
 }
 
-export type EventGroupsGetEventDateBoundsErrors = {
+export type EventsGetTaskDateBoundsErrors = {
   /**
    * Bad Request
    */
@@ -6411,12 +6739,12 @@ export type EventGroupsGetEventDateBoundsErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsGetEventDateBoundsError =
-  EventGroupsGetEventDateBoundsErrors[keyof EventGroupsGetEventDateBoundsErrors]
+export type EventsGetTaskDateBoundsError =
+  EventsGetTaskDateBoundsErrors[keyof EventsGetTaskDateBoundsErrors]
 
-export type EventGroupsGetEventDateBoundsResponses = {
+export type EventsGetTaskDateBoundsResponses = {
   /**
-   * Response Event-Groups-Get Event Date Bounds
+   * Response Events-Get Task Date Bounds
    *
    * Successful Response
    */
@@ -6425,10 +6753,10 @@ export type EventGroupsGetEventDateBoundsResponses = {
   }
 }
 
-export type EventGroupsGetEventDateBoundsResponse =
-  EventGroupsGetEventDateBoundsResponses[keyof EventGroupsGetEventDateBoundsResponses]
+export type EventsGetTaskDateBoundsResponse =
+  EventsGetTaskDateBoundsResponses[keyof EventsGetTaskDateBoundsResponses]
 
-export type EventGroupsShiftEventGroupDatesData = {
+export type EventsShiftEventDatesData = {
   body: ShiftDatesRequest
   path: {
     /**
@@ -6437,10 +6765,10 @@ export type EventGroupsShiftEventGroupDatesData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}/shift-dates'
+  url: '/api/v1/events/{group_id}/shift-dates'
 }
 
-export type EventGroupsShiftEventGroupDatesErrors = {
+export type EventsShiftEventDatesErrors = {
   /**
    * Bad Request
    */
@@ -6475,20 +6803,20 @@ export type EventGroupsShiftEventGroupDatesErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsShiftEventGroupDatesError =
-  EventGroupsShiftEventGroupDatesErrors[keyof EventGroupsShiftEventGroupDatesErrors]
+export type EventsShiftEventDatesError =
+  EventsShiftEventDatesErrors[keyof EventsShiftEventDatesErrors]
 
-export type EventGroupsShiftEventGroupDatesResponses = {
+export type EventsShiftEventDatesResponses = {
   /**
    * Successful Response
    */
-  200: EventGroupRead
+  200: EventRead
 }
 
-export type EventGroupsShiftEventGroupDatesResponse =
-  EventGroupsShiftEventGroupDatesResponses[keyof EventGroupsShiftEventGroupDatesResponses]
+export type EventsShiftEventDatesResponse =
+  EventsShiftEventDatesResponses[keyof EventsShiftEventDatesResponses]
 
-export type EventGroupsListGroupAvailabilitiesData = {
+export type EventsListEventAvailabilitiesData = {
   body?: never
   path: {
     /**
@@ -6506,10 +6834,10 @@ export type EventGroupsListGroupAvailabilitiesData = {
      */
     limit?: number
   }
-  url: '/api/v1/event-groups/{group_id}/availabilities'
+  url: '/api/v1/events/{group_id}/availabilities'
 }
 
-export type EventGroupsListGroupAvailabilitiesErrors = {
+export type EventsListEventAvailabilitiesErrors = {
   /**
    * Bad Request
    */
@@ -6544,22 +6872,22 @@ export type EventGroupsListGroupAvailabilitiesErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsListGroupAvailabilitiesError =
-  EventGroupsListGroupAvailabilitiesErrors[keyof EventGroupsListGroupAvailabilitiesErrors]
+export type EventsListEventAvailabilitiesError =
+  EventsListEventAvailabilitiesErrors[keyof EventsListEventAvailabilitiesErrors]
 
-export type EventGroupsListGroupAvailabilitiesResponses = {
+export type EventsListEventAvailabilitiesResponses = {
   /**
-   * Response Event-Groups-List Group Availabilities
+   * Response Events-List Event Availabilities
    *
    * Successful Response
    */
   200: Array<UserAvailabilityWithUser>
 }
 
-export type EventGroupsListGroupAvailabilitiesResponse =
-  EventGroupsListGroupAvailabilitiesResponses[keyof EventGroupsListGroupAvailabilitiesResponses]
+export type EventsListEventAvailabilitiesResponse =
+  EventsListEventAvailabilitiesResponses[keyof EventsListEventAvailabilitiesResponses]
 
-export type EventGroupsDeleteMyAvailabilityData = {
+export type EventsDeleteMyAvailabilityData = {
   body?: never
   path: {
     /**
@@ -6568,10 +6896,10 @@ export type EventGroupsDeleteMyAvailabilityData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}/availability/me'
+  url: '/api/v1/events/{group_id}/availability/me'
 }
 
-export type EventGroupsDeleteMyAvailabilityErrors = {
+export type EventsDeleteMyAvailabilityErrors = {
   /**
    * Bad Request
    */
@@ -6606,20 +6934,20 @@ export type EventGroupsDeleteMyAvailabilityErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsDeleteMyAvailabilityError =
-  EventGroupsDeleteMyAvailabilityErrors[keyof EventGroupsDeleteMyAvailabilityErrors]
+export type EventsDeleteMyAvailabilityError =
+  EventsDeleteMyAvailabilityErrors[keyof EventsDeleteMyAvailabilityErrors]
 
-export type EventGroupsDeleteMyAvailabilityResponses = {
+export type EventsDeleteMyAvailabilityResponses = {
   /**
    * Successful Response
    */
   204: void
 }
 
-export type EventGroupsDeleteMyAvailabilityResponse =
-  EventGroupsDeleteMyAvailabilityResponses[keyof EventGroupsDeleteMyAvailabilityResponses]
+export type EventsDeleteMyAvailabilityResponse =
+  EventsDeleteMyAvailabilityResponses[keyof EventsDeleteMyAvailabilityResponses]
 
-export type EventGroupsGetMyAvailabilityData = {
+export type EventsGetMyAvailabilityData = {
   body?: never
   path: {
     /**
@@ -6628,10 +6956,10 @@ export type EventGroupsGetMyAvailabilityData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}/availability/me'
+  url: '/api/v1/events/{group_id}/availability/me'
 }
 
-export type EventGroupsGetMyAvailabilityErrors = {
+export type EventsGetMyAvailabilityErrors = {
   /**
    * Bad Request
    */
@@ -6666,20 +6994,20 @@ export type EventGroupsGetMyAvailabilityErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsGetMyAvailabilityError =
-  EventGroupsGetMyAvailabilityErrors[keyof EventGroupsGetMyAvailabilityErrors]
+export type EventsGetMyAvailabilityError =
+  EventsGetMyAvailabilityErrors[keyof EventsGetMyAvailabilityErrors]
 
-export type EventGroupsGetMyAvailabilityResponses = {
+export type EventsGetMyAvailabilityResponses = {
   /**
    * Successful Response
    */
   200: UserAvailabilityRead
 }
 
-export type EventGroupsGetMyAvailabilityResponse =
-  EventGroupsGetMyAvailabilityResponses[keyof EventGroupsGetMyAvailabilityResponses]
+export type EventsGetMyAvailabilityResponse =
+  EventsGetMyAvailabilityResponses[keyof EventsGetMyAvailabilityResponses]
 
-export type EventGroupsSetMyAvailabilityData = {
+export type EventsSetMyAvailabilityData = {
   body: UserAvailabilityCreate
   path: {
     /**
@@ -6688,10 +7016,10 @@ export type EventGroupsSetMyAvailabilityData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}/availability'
+  url: '/api/v1/events/{group_id}/availability'
 }
 
-export type EventGroupsSetMyAvailabilityErrors = {
+export type EventsSetMyAvailabilityErrors = {
   /**
    * Bad Request
    */
@@ -6726,20 +7054,20 @@ export type EventGroupsSetMyAvailabilityErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsSetMyAvailabilityError =
-  EventGroupsSetMyAvailabilityErrors[keyof EventGroupsSetMyAvailabilityErrors]
+export type EventsSetMyAvailabilityError =
+  EventsSetMyAvailabilityErrors[keyof EventsSetMyAvailabilityErrors]
 
-export type EventGroupsSetMyAvailabilityResponses = {
+export type EventsSetMyAvailabilityResponses = {
   /**
    * Successful Response
    */
   201: UserAvailabilityRead
 }
 
-export type EventGroupsSetMyAvailabilityResponse =
-  EventGroupsSetMyAvailabilityResponses[keyof EventGroupsSetMyAvailabilityResponses]
+export type EventsSetMyAvailabilityResponse =
+  EventsSetMyAvailabilityResponses[keyof EventsSetMyAvailabilityResponses]
 
-export type EventGroupsListGroupManagersData = {
+export type EventsListEventManagersData = {
   body?: never
   path: {
     /**
@@ -6748,10 +7076,10 @@ export type EventGroupsListGroupManagersData = {
     group_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}/managers'
+  url: '/api/v1/events/{group_id}/managers'
 }
 
-export type EventGroupsListGroupManagersErrors = {
+export type EventsListEventManagersErrors = {
   /**
    * Bad Request
    */
@@ -6786,22 +7114,22 @@ export type EventGroupsListGroupManagersErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsListGroupManagersError =
-  EventGroupsListGroupManagersErrors[keyof EventGroupsListGroupManagersErrors]
+export type EventsListEventManagersError =
+  EventsListEventManagersErrors[keyof EventsListEventManagersErrors]
 
-export type EventGroupsListGroupManagersResponses = {
+export type EventsListEventManagersResponses = {
   /**
-   * Response Event-Groups-List Group Managers
+   * Response Events-List Event Managers
    *
    * Successful Response
    */
   200: Array<UserRead>
 }
 
-export type EventGroupsListGroupManagersResponse =
-  EventGroupsListGroupManagersResponses[keyof EventGroupsListGroupManagersResponses]
+export type EventsListEventManagersResponse =
+  EventsListEventManagersResponses[keyof EventsListEventManagersResponses]
 
-export type EventGroupsRemoveGroupManagerData = {
+export type EventsRemoveGroupManagerData = {
   body?: never
   path: {
     /**
@@ -6814,10 +7142,10 @@ export type EventGroupsRemoveGroupManagerData = {
     user_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}/managers/{user_id}'
+  url: '/api/v1/events/{group_id}/managers/{user_id}'
 }
 
-export type EventGroupsRemoveGroupManagerErrors = {
+export type EventsRemoveGroupManagerErrors = {
   /**
    * Bad Request
    */
@@ -6852,20 +7180,20 @@ export type EventGroupsRemoveGroupManagerErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsRemoveGroupManagerError =
-  EventGroupsRemoveGroupManagerErrors[keyof EventGroupsRemoveGroupManagerErrors]
+export type EventsRemoveGroupManagerError =
+  EventsRemoveGroupManagerErrors[keyof EventsRemoveGroupManagerErrors]
 
-export type EventGroupsRemoveGroupManagerResponses = {
+export type EventsRemoveGroupManagerResponses = {
   /**
    * Successful Response
    */
   204: void
 }
 
-export type EventGroupsRemoveGroupManagerResponse =
-  EventGroupsRemoveGroupManagerResponses[keyof EventGroupsRemoveGroupManagerResponses]
+export type EventsRemoveGroupManagerResponse =
+  EventsRemoveGroupManagerResponses[keyof EventsRemoveGroupManagerResponses]
 
-export type EventGroupsAssignGroupManagerData = {
+export type EventsAssignGroupManagerData = {
   body?: never
   path: {
     /**
@@ -6878,10 +7206,10 @@ export type EventGroupsAssignGroupManagerData = {
     user_id: string
   }
   query?: never
-  url: '/api/v1/event-groups/{group_id}/managers/{user_id}'
+  url: '/api/v1/events/{group_id}/managers/{user_id}'
 }
 
-export type EventGroupsAssignGroupManagerErrors = {
+export type EventsAssignGroupManagerErrors = {
   /**
    * Bad Request
    */
@@ -6916,18 +7244,18 @@ export type EventGroupsAssignGroupManagerErrors = {
   500: ProblemDetails
 }
 
-export type EventGroupsAssignGroupManagerError =
-  EventGroupsAssignGroupManagerErrors[keyof EventGroupsAssignGroupManagerErrors]
+export type EventsAssignGroupManagerError =
+  EventsAssignGroupManagerErrors[keyof EventsAssignGroupManagerErrors]
 
-export type EventGroupsAssignGroupManagerResponses = {
+export type EventsAssignGroupManagerResponses = {
   /**
    * Successful Response
    */
   201: UserRead
 }
 
-export type EventGroupsAssignGroupManagerResponse =
-  EventGroupsAssignGroupManagerResponses[keyof EventGroupsAssignGroupManagerResponses]
+export type EventsAssignGroupManagerResponse =
+  EventsAssignGroupManagerResponses[keyof EventsAssignGroupManagerResponses]
 
 export type NotificationsListNotificationTypesData = {
   body?: never

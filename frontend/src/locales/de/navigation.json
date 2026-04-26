@@ -3,19 +3,20 @@
         "home": "Startseite",
         "settings": "Einstellungen"
     },
+    "mobileBottomNav": {
+        "bookings": "Buchungen",
+        "inbox": "Posteingang",
+        "tasks": "Tasks"
+    },
     "sidebar": {
         "badges": {
             "managersOnly": "Nur für Verwalter sichtbar",
-            "openSlots": "{count} offener Platz | {count} offene Plätze"
+            "openShifts": "{count} offener Platz | {count} offene Plätze"
         },
         "items": {
-            "eventGroups": {
-                "description": "Veranstaltungsprogramme durchsuchen",
-                "label": "Veranstaltungsgruppen"
-            },
-            "events": {
-                "description": "Dienst-Veranstaltungen durchsuchen",
-                "label": "Veranstaltungen"
+            "availability": {
+                "description": "Ihre Verfügbarkeit für die ausgewählte Veranstaltung",
+                "label": "Verfügbarkeit"
             },
             "home": {
                 "label": "Startseite"
@@ -27,7 +28,11 @@
                 "description": "Ihre Reservierungen",
                 "label": "Meine Buchungen"
             },
-            "settings": "Einstellungen"
+            "settings": "Einstellungen",
+            "tasks": {
+                "description": "Dienst-Veranstaltungen durchsuchen",
+                "label": "Veranstaltungen"
+            }
         },
         "platform": "Plattform",
         "sections": {}

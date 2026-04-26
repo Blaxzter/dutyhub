@@ -16,11 +16,13 @@ from app.api.deps import (
 )
 from app.core.config import settings
 from app.core.security import verify_password
+from app.crud.event import event as crud_event
+from app.crud.event_manager import event_manager as crud_egm
 from app.crud.site_settings import site_settings as crud_site_settings
 from app.crud.user import user as crud_user
 from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
 from app.models.booking import Booking
-from app.models.event_group_manager import EventGroupManager
+from app.models.event_manager import EventManager
 from app.models.notification import NotificationSubscription
 from app.models.user import User
 from app.models.user_availability import UserAvailability, UserAvailabilityDate
@@ -32,7 +34,12 @@ from app.schemas.user import (
     UserRead,
     UserUpdate,
 )
-from app.schemas.users import ProfileInit, UserProfile, UserProfileUpdate
+from app.schemas.users import (
+    ProfileInit,
+    SelectedEventUpdate,
+    UserProfile,
+    UserProfileUpdate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,21 +47,20 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 async def _build_user_profile(user: User, session: Any) -> UserProfile:
-    """Build a UserProfile including scoped managed_event_group_ids."""
+    """Build a UserProfile including scoped managed_event_ids."""
     result = await session.execute(
-        select(col(EventGroupManager.event_group_id)).where(
-            col(EventGroupManager.user_id) == user.id
-        )
+        select(col(EventManager.event_id)).where(col(EventManager.user_id) == user.id)
     )
     managed_ids = list(result.scalars().all())
     profile = UserProfile.model_validate(user)
-    profile.managed_event_group_ids = managed_ids
+    profile.managed_event_ids = managed_ids
     return profile
 
 
 @router.post("/me", response_model=UserProfile)
 async def get_current_user_profile(
     user: AnyUser,
+    background_tasks: BackgroundTasks,
     profile_init: ProfileInit | None = None,
     *,
     session: DBDep,
@@ -68,12 +74,13 @@ async def get_current_user_profile(
     Does NOT require is_active, so even pending users can retrieve
     their profile status after registering.
     """
+    seed_picture_url: str | None = None
+
     if profile_init:
         dirty = False
         for field in (
             "name",
             "email",
-            "picture",
             "email_verified",
             "preferred_language",
         ):
@@ -81,6 +88,11 @@ async def get_current_user_profile(
             if value is not None and getattr(user, field) != value:
                 setattr(user, field, value)
                 dirty = True
+
+        # The Auth0 picture URL is captured here only to seed a local avatar
+        # the first time a user signs in; we never persist the URL itself.
+        if profile_init.picture and user.avatar_etag is None:
+            seed_picture_url = profile_init.picture
 
         # Auto-activate superadmin emails that were created before email was synced
         if user.email and user.email in [str(e) for e in settings.SUPERADMIN_EMAILS]:
@@ -95,6 +107,11 @@ async def get_current_user_profile(
             session.add(user)
             await session.flush()
 
+    if seed_picture_url:
+        from app.logic.avatar_seed import seed_avatar_from_url
+
+        background_tasks.add_task(seed_avatar_from_url, user.id, seed_picture_url)
+
     return await _build_user_profile(user, session)
 
 
@@ -105,7 +122,11 @@ async def update_user_profile(
     *,
     session: DBDep,
 ) -> UserProfile:
-    """Update current user profile information using Auth0 Management API."""
+    """Update current user profile fields stored in Auth0 (name, nickname, bio)
+    plus locally-stored fields (phone_number, preferred_language).
+
+    Avatar changes go through the dedicated /users/me/avatar endpoints.
+    """
     auth0_sub = current_user.auth0_sub
 
     # In test mode, skip Auth0 Management API call
@@ -116,15 +137,9 @@ async def update_user_profile(
                 status_code=500, detail="Failed to update user profile in Auth0"
             )
 
-    # Sync picture to local DB
-    if user_update.picture is not None:
-        current_user.picture = str(user_update.picture)
-
-    # Sync phone_number to local DB
     if user_update.phone_number is not None:
         current_user.phone_number = user_update.phone_number
 
-    # Sync preferred_language to local DB (no Auth0 call needed)
     if user_update.preferred_language is not None:
         current_user.preferred_language = user_update.preferred_language
 
@@ -134,15 +149,41 @@ async def update_user_profile(
             k: v
             for k, v in {
                 "name": user_update.name,
-                "picture": str(user_update.picture)
-                if user_update.picture is not None
-                else None,
                 "bio": user_update.bio,
                 "nickname": user_update.nickname,
             }.items()
             if v is not None
         }
     )
+
+
+@router.put("/me/selected-event", response_model=UserProfile)
+async def update_selected_event(
+    body: SelectedEventUpdate,
+    current_user: CurrentUser,
+    *,
+    session: DBDep,
+) -> UserProfile:
+    """Set or clear the event that scopes this user's dashboard."""
+    if body.selected_event_id is not None:
+        event = await crud_event.get(
+            session, body.selected_event_id, raise_404_error=True
+        )
+        if event.status != "published" and not current_user.is_manager:
+            is_scoped = await crud_egm.is_manager(
+                session, user_id=current_user.id, event_id=event.id
+            )
+            if not is_scoped:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Event is not accessible",
+                )
+
+    current_user.selected_event_id = body.selected_event_id
+    session.add(current_user)
+    await session.flush()
+    await session.refresh(current_user)
+    return await _build_user_profile(current_user, session)
 
 
 @router.get("/approval-password-status")
@@ -299,11 +340,11 @@ async def export_user_data(
             "status": b.status,
             "notes": b.notes,
             "cancellation_reason": b.cancellation_reason,
-            "cancelled_slot_title": b.cancelled_slot_title,
-            "cancelled_slot_date": str(b.cancelled_slot_date)
-            if b.cancelled_slot_date
+            "cancelled_shift_title": b.cancelled_shift_title,
+            "cancelled_shift_date": str(b.cancelled_shift_date)
+            if b.cancelled_shift_date
             else None,
-            "cancelled_event_name": b.cancelled_event_name,
+            "cancelled_task_name": b.cancelled_task_name,
             "created_at": b.created_at.isoformat(),
         }
         for b in bookings_result.scalars().all()
@@ -356,7 +397,6 @@ async def export_user_data(
         "profile": {
             "name": current_user.name,
             "email": current_user.email,
-            "picture": current_user.picture,
             "preferred_language": current_user.preferred_language,
             "email_verified": current_user.email_verified,
             "roles": current_user.roles,

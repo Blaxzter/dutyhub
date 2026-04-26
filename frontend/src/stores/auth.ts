@@ -11,14 +11,14 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import ActionToast from '@/components/ui/sonner/ActionToast.vue'
 
-import type { UserProfile, UserRead } from '@/client/types.gen'
+import type { EventRead, UserProfile, UserRead } from '@/client/types.gen'
 import i18n from '@/locales/i18n'
 
 export type { User }
 
 export const useAuthStore = defineStore('auth', () => {
   const auth0 = useAuth0()
-  const { post, get } = useAuthenticatedClient()
+  const { post, get, put } = useAuthenticatedClient()
   const { t } = useI18n()
   const router = useRouter()
   const loading = ref(false)
@@ -30,16 +30,18 @@ export const useAuthStore = defineStore('auth', () => {
   const profile = ref<UserProfile | null>(null)
   const roles = computed(() => profile.value?.roles ?? [])
   const isAdmin = computed(() => profile.value?.is_admin ?? false)
-  const isEventManager = computed(() => profile.value?.is_event_manager ?? false)
-  const managedEventGroupIds = computed(() => profile.value?.managed_event_group_ids ?? [])
-  const isGroupManager = computed(() => managedEventGroupIds.value.length > 0)
-  const isManager = computed(() => isAdmin.value || isEventManager.value || isGroupManager.value)
+  const isTaskManager = computed(() => profile.value?.is_task_manager ?? false)
+  const managedEventIds = computed(() => profile.value?.managed_event_ids ?? [])
+  const isEventManager = computed(() => managedEventIds.value.length > 0)
+  const isManager = computed(() => isAdmin.value || isTaskManager.value || isEventManager.value)
   const isActive = computed(() => profile.value?.is_active ?? true)
+  const selectedEventId = computed(() => profile.value?.selected_event_id ?? null)
+  const selectedEvent = ref<EventRead | null>(null)
 
-  /** Check if current user can manage an event/group by its event_group_id. */
-  function canManageGroup(eventGroupId: string | null | undefined): boolean {
-    if (isAdmin.value || isEventManager.value) return true
-    return !!eventGroupId && managedEventGroupIds.value.includes(eventGroupId)
+  /** Check if current user can manage a task/event by its event_id. */
+  function canManageEvent(eventId: string | null | undefined): boolean {
+    if (isAdmin.value || isTaskManager.value) return true
+    return !!eventId && managedEventIds.value.includes(eventId)
   }
 
   let profilePromise: Promise<UserProfile | null> | null = null
@@ -71,6 +73,29 @@ export const useAuthStore = defineStore('auth', () => {
       ...auth0.user.value,
       ...userData,
     }
+  }
+
+  const loadSelectedEvent = async (eventId: string | null) => {
+    if (!eventId) {
+      selectedEvent.value = null
+      return
+    }
+    try {
+      const res = await get<{ data: EventRead }>({ url: `/events/${eventId}` })
+      selectedEvent.value = res.data
+    } catch {
+      selectedEvent.value = null
+    }
+  }
+
+  const setSelectedEvent = async (id: string | null) => {
+    const response = await put<{ data: UserProfile }>({
+      url: '/users/me/selected-event',
+      body: { selected_event_id: id },
+    })
+    profile.value = response.data
+    await loadSelectedEvent(response.data.selected_event_id ?? null)
+    return response.data
   }
 
   const loadProfile = async () => {
@@ -108,6 +133,9 @@ export const useAuthStore = defineStore('auth', () => {
       if (response.data.is_admin) {
         checkPendingUsers()
       }
+
+      // Resolve the selected event (best-effort, non-blocking)
+      void loadSelectedEvent(response.data.selected_event_id ?? null)
 
       return response.data
     })()
@@ -172,6 +200,7 @@ export const useAuthStore = defineStore('auth', () => {
   watch(isAuthenticated, (next) => {
     if (!next) {
       profile.value = null
+      selectedEvent.value = null
     }
   })
 
@@ -183,19 +212,22 @@ export const useAuthStore = defineStore('auth', () => {
     roles,
     isActive,
     isAdmin,
+    isTaskManager,
     isEventManager,
-    isGroupManager,
-    managedEventGroupIds,
+    managedEventIds,
     isManager,
-    canManageGroup,
+    canManageEvent,
     pendingUserCount,
     loading,
     profileLoading,
+    selectedEventId,
+    selectedEvent,
     logout,
     getAccessToken,
     updateUser,
     loadProfile,
     ensureProfile,
+    setSelectedEvent,
     callProtectedAPI,
   }
 })

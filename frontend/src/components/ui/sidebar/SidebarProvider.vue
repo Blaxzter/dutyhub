@@ -55,9 +55,9 @@ function toggleSidebar() {
   return isMobile.value ? setOpenMobile(!openMobile.value) : setOpen(!open.value)
 }
 
-useEventListener('keydown', (event: KeyboardEvent) => {
-  if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
-    event.preventDefault()
+useEventListener('keydown', (task: KeyboardEvent) => {
+  if (task.key === SIDEBAR_KEYBOARD_SHORTCUT && (task.metaKey || task.ctrlKey)) {
+    task.preventDefault()
     toggleSidebar()
   }
 })
@@ -87,7 +87,7 @@ provideSidebarContext({
       }"
       :class="
         cn(
-          'group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full',
+          'event/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full',
           props.class,
         )
       "

@@ -5,16 +5,16 @@
 import type { Page } from '@playwright/test'
 import type {
   BookingRead,
-  DutySlotRead,
-  EventCreateWithSlotsResponse,
-  EventGroupRead,
+  ShiftRead,
+  TaskCreateWithShiftsResponse,
   EventRead,
+  TaskRead,
 } from '../../src/client/types.gen.js'
 
-export type { BookingRead, DutySlotRead, EventGroupRead, EventRead }
-export type EventWithSlots = EventCreateWithSlotsResponse
+export type { BookingRead, ShiftRead, EventRead, TaskRead }
+export type TaskWithShifts = TaskCreateWithShiftsResponse
 
-export const API = process.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+export const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
 
 /** Return a unique test name to avoid collisions between parallel workers. */
 export function uniqueName(prefix: string): string {
@@ -70,74 +70,17 @@ export async function api<T = unknown>(page: Page, method: string, path: string,
   return result.__body as T
 }
 
-/** Create an event group (draft or published). Admin token required. */
-export async function createGroup(
+/** Create an event (draft or published). Admin token required. */
+export async function createEvent(
   page: Page,
   name: string,
   status: 'draft' | 'published' = 'published',
-): Promise<EventGroupRead> {
-  return api<EventGroupRead>(page, 'POST', '/event-groups/', {
+): Promise<EventRead> {
+  return api<EventRead>(page, 'POST', '/events/', {
     name,
     status,
     start_date: futureDate(30),
     end_date: futureDate(34),
-  })
-}
-
-/** Delete an event group. Admin token required. */
-export async function deleteGroup(page: Page, id: string): Promise<void> {
-  if (!id || id === 'undefined') return
-  await api(page, 'DELETE', `/event-groups/${id}`)
-}
-
-/** Remove the current user's availability for a group (best-effort). */
-export async function clearAvailability(page: Page, groupId: string): Promise<void> {
-  if (!groupId || groupId === 'undefined') return
-  await api(page, 'DELETE', `/event-groups/${groupId}/availability/me`)
-}
-
-// ── Event helpers ──────────────────────────────────────────────────────────────
-
-/** Create an event with auto-generated slots via the /events/with-slots endpoint. */
-export async function createEventWithSlots(
-  page: Page,
-  opts: {
-    name: string
-    description?: string
-    startDate?: string
-    endDate?: string
-    status?: 'draft' | 'published' | 'archived'
-    location?: string
-    category?: string
-    eventGroupId?: string
-    startTime?: string
-    endTime?: string
-    slotDuration?: number
-    peoplePerSlot?: number
-  },
-): Promise<EventCreateWithSlotsResponse> {
-  // Use tomorrow to avoid the backend's future_slots_cutoff filtering out past-time slots
-  const defaultDate = futureDate(1)
-  const startDate = opts.startDate ?? defaultDate
-  const endDate = opts.endDate ?? defaultDate
-  return api<EventCreateWithSlotsResponse>(page, 'POST', '/events/with-slots', {
-    name: opts.name,
-    description: opts.description ?? null,
-    start_date: startDate,
-    end_date: endDate,
-    status: opts.status ?? 'draft',
-    location: opts.location ?? null,
-    category: opts.category ?? null,
-    event_group_id: opts.eventGroupId ?? null,
-    schedule: {
-      default_start_time: (opts.startTime ?? '10:00') + ':00',
-      default_end_time: (opts.endTime ?? '12:00') + ':00',
-      slot_duration_minutes: opts.slotDuration ?? 60,
-      people_per_slot: opts.peoplePerSlot ?? 2,
-      remainder_mode: 'drop',
-      overrides: [],
-      excluded_slots: [],
-    },
   })
 }
 
@@ -147,20 +90,108 @@ export async function deleteEvent(page: Page, id: string): Promise<void> {
   await api(page, 'DELETE', `/events/${id}`)
 }
 
-/** Publish an event (set status to published). */
-export async function publishEvent(page: Page, id: string): Promise<EventRead> {
-  return api<EventRead>(page, 'PATCH', `/events/${id}`, { status: 'published' })
+/** Remove the current user's availability for an event (best-effort). */
+export async function clearAvailability(page: Page, eventId: string): Promise<void> {
+  if (!eventId || eventId === 'undefined') return
+  await api(page, 'DELETE', `/events/${eventId}/availability/me`)
 }
 
-/** List duty slots for an event. */
-export async function listSlots(page: Page, eventId: string): Promise<DutySlotRead[]> {
-  const res = await api<{ items: DutySlotRead[] }>(page, 'GET', `/duty-slots/?event_id=${eventId}&limit=200`)
+/** Point the current user's `selected_event_id` at a given event. */
+export async function setSelectedEvent(page: Page, eventId: string | null): Promise<void> {
+  await api(page, 'PUT', '/users/me/selected-event', { selected_event_id: eventId })
+}
+
+/** Look up a seeded test user's UUID by email (admin-only endpoint). */
+export async function getUserIdByEmail(adminPage: Page, email: string): Promise<string> {
+  const res = await api<{ items: { id: string; email: string }[] }>(
+    adminPage,
+    'GET',
+    '/users/?limit=200',
+  )
+  const user = res.items.find((u) => u.email === email)
+  if (!user) throw new Error(`User ${email} not found`)
+  return user.id
+}
+
+// ── Task helpers ──────────────────────────────────────────────────────────────
+
+/** Create a task with auto-generated shifts via the /tasks/with-shifts endpoint.
+ *
+ * `eventId` defaults to the current user's `selected_event_id` so created tasks
+ * show up under the user's dashboard scope. Pass `eventId: null` to create an
+ * orphan task (rarely what you want under the new scoped-UI model).
+ */
+export async function createTaskWithShifts(
+  page: Page,
+  opts: {
+    name: string
+    description?: string
+    startDate?: string
+    endDate?: string
+    status?: 'draft' | 'published' | 'archived'
+    location?: string
+    category?: string
+    eventId?: string | null
+    startTime?: string
+    endTime?: string
+    slotDuration?: number
+    peoplePerShift?: number
+  },
+): Promise<TaskCreateWithShiftsResponse> {
+  // Use tomorrow to avoid the backend's future_shifts_cutoff filtering out past-time shifts
+  const defaultDate = futureDate(1)
+  const startDate = opts.startDate ?? defaultDate
+  const endDate = opts.endDate ?? defaultDate
+
+  let eventId: string | null
+  if (opts.eventId !== undefined) {
+    eventId = opts.eventId
+  } else {
+    const profile = await api<{ selected_event_id: string | null }>(page, 'POST', '/users/me')
+    eventId = profile.selected_event_id ?? null
+  }
+
+  return api<TaskCreateWithShiftsResponse>(page, 'POST', '/tasks/with-shifts', {
+    name: opts.name,
+    description: opts.description ?? null,
+    start_date: startDate,
+    end_date: endDate,
+    status: opts.status ?? 'draft',
+    location: opts.location ?? null,
+    category: opts.category ?? null,
+    event_id: eventId,
+    schedule: {
+      default_start_time: (opts.startTime ?? '10:00') + ':00',
+      default_end_time: (opts.endTime ?? '12:00') + ':00',
+      shift_duration_minutes: opts.slotDuration ?? 60,
+      people_per_shift: opts.peoplePerShift ?? 2,
+      remainder_mode: 'drop',
+      overrides: [],
+      excluded_shifts: [],
+    },
+  })
+}
+
+/** Delete a task. Admin token required. */
+export async function deleteTask(page: Page, id: string): Promise<void> {
+  if (!id || id === 'undefined') return
+  await api(page, 'DELETE', `/tasks/${id}`)
+}
+
+/** Publish a task (set status to published). */
+export async function publishTask(page: Page, id: string): Promise<TaskRead> {
+  return api<TaskRead>(page, 'PATCH', `/tasks/${id}`, { status: 'published' })
+}
+
+/** List duty shifts for a task. */
+export async function listShifts(page: Page, eventId: string): Promise<ShiftRead[]> {
+  const res = await api<{ items: ShiftRead[] }>(page, 'GET', `/shifts/?task_id=${eventId}&limit=200`)
   return res.items
 }
 
-/** Book a duty slot. */
-export async function bookSlot(page: Page, slotId: string): Promise<BookingRead> {
-  return api<BookingRead>(page, 'POST', '/bookings/', { duty_slot_id: slotId })
+/** Book a duty shift. */
+export async function bookShift(page: Page, slotId: string): Promise<BookingRead> {
+  return api<BookingRead>(page, 'POST', '/bookings/', { shift_id: slotId })
 }
 
 /** Cancel a booking. */

@@ -26,9 +26,9 @@ pnpm dev
 
 Useful local URLs:
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000
-- OpenAPI docs: http://localhost:8000/docs
+- Frontend: http://localhost:5555
+- Backend API: http://localhost:8787
+- OpenAPI docs: http://localhost:8787/docs
 
 ## Tech Stack (source of truth)
 

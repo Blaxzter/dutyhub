@@ -27,7 +27,7 @@
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
-            "args": ["app.main:app", "--reload"],
+            "args": ["app.main:app", "--reload", "--port", "8787"],
             "cwd": "${workspaceFolder}/backend",
             "jinja": true,
             "envFile": "${workspaceFolder}/.env",
@@ -73,8 +73,8 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Debug Frontend: Launch Chrome against http://localhost:5173",
-            "url": "http://localhost:5173",
+            "name": "Debug Frontend: Launch Chrome against http://localhost:5555",
+            "url": "http://localhost:5555",
             "webRoot": "${workspaceFolder}/frontend"
         }
     ]

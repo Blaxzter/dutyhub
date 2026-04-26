@@ -6,6 +6,7 @@ import {
   BarChart3,
   Bell,
   BookCheck,
+  CalendarCheck,
   CalendarDays,
   CalendarRange,
   Database,
@@ -79,28 +80,28 @@ router.afterEach(() => {
 })
 
 /**
- * Compute urgency badge variant for an event based on its next open slot.
+ * Compute urgency badge variant for a task based on its next open shift.
  * - Within 15 min → destructive (red)
  * - Today → default (primary)
  * - Otherwise → secondary (neutral)
  */
 function statusBadge(status: string): NavSubItem['badge'] {
   return {
-    text: t(`duties.events.statuses.${status}`),
+    text: t(`duties.tasks.statuses.${status}`),
     tooltip: t('navigation.sidebar.badges.managersOnly'),
     variant: 'secondary',
   }
 }
 
 function eventBadge(
-  openSlots: number,
+  openShifts: number,
   nextDate: string | null,
   nextTime: string | null,
 ): NavSubItem['badge'] | undefined {
-  if (openSlots <= 0) return undefined
+  if (openShifts <= 0) return undefined
 
-  const label = `${openSlots}`
-  const tooltip = t('navigation.sidebar.badges.openSlots', { count: openSlots })
+  const label = `${openShifts}`
+  const tooltip = t('navigation.sidebar.badges.openShifts', { count: openShifts })
   if (!nextDate) return { text: label, tooltip, variant: 'outline' }
 
   const now = new Date()
@@ -126,43 +127,28 @@ function formatBookingTitle(slotDate: string, slotTitle: string): string {
 }
 
 const navMain = computed(() => {
-  const groupItems: NavSubItem[] = sidebarStore.eventGroups.map((g) => ({
-    title: g.name,
-    routeName: 'event-group-detail',
-    routeParams: { groupId: g.id },
-    badge: g.status && g.status !== 'published' ? statusBadge(g.status) : undefined,
-  }))
-
-  const eventItems: NavSubItem[] = sidebarStore.events.map((e) => ({
+  const eventItems: NavSubItem[] = sidebarStore.tasks.map((e) => ({
     title: e.name,
-    routeName: 'event-detail',
+    routeName: 'task-detail',
     routeParams: { eventId: e.id },
     badge:
       e.status && e.status !== 'published'
         ? statusBadge(e.status)
-        : eventBadge(e.open_slots, e.next_slot_date ?? null, e.next_slot_start_time ?? null),
+        : eventBadge(e.open_shifts, e.next_shift_date ?? null, e.next_shift_start_time ?? null),
   }))
 
   const bookingItems: NavSubItem[] = sidebarStore.bookings.map((b) => ({
     title: formatBookingTitle(b.slot_date, b.slot_title),
-    routeName: 'event-detail',
-    routeParams: { eventId: b.event_id },
+    routeName: 'task-detail',
+    routeParams: { eventId: b.task_id },
   }))
 
   return [
     {
-      title: 'Event Groups',
-      titleKey: 'navigation.sidebar.items.eventGroups.label',
-      icon: CalendarRange,
-      routeName: 'event-groups',
-      isActive: groupItems.length > 0,
-      items: groupItems,
-    },
-    {
-      title: 'Events',
-      titleKey: 'navigation.sidebar.items.events.label',
+      title: 'Tasks',
+      titleKey: 'navigation.sidebar.items.tasks.label',
       icon: CalendarDays,
-      routeName: 'events',
+      routeName: 'tasks',
       isActive: eventItems.length > 0,
       items: eventItems,
     },
@@ -173,6 +159,12 @@ const navMain = computed(() => {
       routeName: 'my-bookings',
       isActive: bookingItems.length > 0,
       items: bookingItems,
+    },
+    {
+      title: 'Availability',
+      titleKey: 'navigation.sidebar.items.availability.label',
+      icon: CalendarCheck,
+      routeName: 'availability',
     },
   ]
 })
@@ -190,24 +182,39 @@ const navManager = computed(() => {
   return items
 })
 
-const navAdmin = computed(() =>
-  authStore.isAdmin
-    ? [
-        {
-          title: 'User Management',
-          titleKey: 'admin.users.title',
-          icon: Users,
-          routeName: 'admin-users',
-        },
-        {
-          title: 'Demo Data',
-          titleKey: 'admin.demoData.title',
-          icon: Database,
-          routeName: 'admin-demo-data',
-        },
-      ]
-    : [],
-)
+const navAdmin = computed(() => {
+  const items: {
+    title: string
+    titleKey: string
+    icon: typeof Users
+    routeName: string
+  }[] = []
+  if (authStore.isAdmin || authStore.isTaskManager) {
+    items.push({
+      title: 'Manage Events',
+      titleKey: 'admin.events.title',
+      icon: CalendarRange,
+      routeName: 'admin-events',
+    })
+  }
+  if (authStore.isAdmin) {
+    items.push(
+      {
+        title: 'User Management',
+        titleKey: 'admin.users.title',
+        icon: Users,
+        routeName: 'admin-users',
+      },
+      {
+        title: 'Demo Data',
+        titleKey: 'admin.demoData.title',
+        icon: Database,
+        routeName: 'admin-demo-data',
+      },
+    )
+  }
+  return items
+})
 </script>
 
 <template>
@@ -275,14 +282,14 @@ const navAdmin = computed(() =>
       v-if="navManager.length > 0"
       :items="navManager"
       :open="props.open"
-      group-label-key="navigation.sidebar.items.management.label"
+      event-label-key="navigation.sidebar.items.management.label"
       class="shrink-0 px-2 pb-2"
     />
     <NavMain
       v-if="navAdmin.length > 0"
       :items="navAdmin"
       :open="props.open"
-      group-label-key="admin.sidebar.section"
+      event-label-key="admin.sidebar.section"
       class="shrink-0 px-2 pb-2"
     />
     <SidebarFooter class="flex flex-col gap-1 p-2 pb-1">
@@ -290,7 +297,7 @@ const navAdmin = computed(() =>
       <RouterLink
         :to="{ name: 'changelog' }"
         data-testid="sidebar-version-link"
-        class="inline-flex items-center justify-center gap-1 w-full text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors pb-1 group-data-[collapsible=icon]:hidden"
+        class="inline-flex items-center justify-center gap-1 w-full text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors pb-1 event-data-[collapsible=icon]:hidden"
       >
         <span>WirkSam {{ appVersion }}</span>
         <span v-if="hasNewVersions" class="size-1.5 rounded-full bg-primary" />

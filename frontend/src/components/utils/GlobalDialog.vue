@@ -157,7 +157,7 @@ const titleIconClass = computed(() => {
   }
 })
 
-// Event handlers
+// Task handlers
 const handleConfirm = async () => {
   const onConfirm = dialogStore.dialog.onConfirm
   if (onConfirm) {

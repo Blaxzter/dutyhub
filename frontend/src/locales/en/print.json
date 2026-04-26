@@ -1,5 +1,5 @@
 {
-    "allEvents": "Print all events",
+    "allTasks": "Print all tasks",
     "contactColumn": "Contact",
     "nameColumn": "Name",
     "optionsDialog": {
@@ -7,7 +7,7 @@
     },
     "overview": "Print overview",
     "printButton": "Print",
-    "printEvent": "Print event",
+    "printTask": "Print task",
     "scanToSignUp": "Scan to sign up online",
     "toolbar": {
         "filterDates": "Filter dates",

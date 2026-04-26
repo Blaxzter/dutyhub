@@ -53,7 +53,7 @@ class UserAvailabilityRead(UserAvailabilityBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     user_id: uuid.UUID
-    event_group_id: uuid.UUID
+    event_id: uuid.UUID
     available_dates: list[UserAvailabilityDateRead] = []
     created_at: dt.datetime
     updated_at: dt.datetime

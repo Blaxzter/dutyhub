@@ -1,3 +1,5 @@
+import uuid
+
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Field
@@ -22,10 +24,10 @@ class User(Base, table=True):
         description="User's email address",
     )
     name: str | None = Field(default=None, description="User's display name")
-    picture: str | None = Field(
+    avatar_etag: str | None = Field(
         default=None,
-        sa_column=sa.Column(sa.String, nullable=True),
-        description="URL to user's profile picture",
+        sa_column=sa.Column(sa.String(64), nullable=True),
+        description="sha256 of the locally stored avatar; null when no avatar is set",
     )
     email_verified: bool = Field(
         default=False,
@@ -54,6 +56,17 @@ class User(Base, table=True):
         default="en",
         sa_column=sa.Column(sa.String(5), nullable=False, server_default="en"),
         description="User's preferred language for notifications (e.g., 'en', 'de')",
+    )
+
+    selected_event_id: uuid.UUID | None = Field(
+        default=None,
+        sa_column=sa.Column(
+            sa.Uuid,
+            sa.ForeignKey("events.id", ondelete="SET NULL"),
+            nullable=True,
+            index=True,
+        ),
+        description="Event that scopes this user's dashboard experience",
     )
 
     # Global notification channel kill switches
@@ -90,11 +103,11 @@ class User(Base, table=True):
         return "admin" in self.roles
 
     @property
-    def is_event_manager(self) -> bool:
-        """Check if user has event_manager role."""
-        return "event_manager" in self.roles
+    def is_task_manager(self) -> bool:
+        """Check if user has task_manager role."""
+        return "task_manager" in self.roles
 
     @property
     def is_manager(self) -> bool:
-        """Check if user has admin or event_manager role."""
-        return self.is_admin or self.is_event_manager
+        """Check if user has admin or task_manager role."""
+        return self.is_admin or self.is_task_manager

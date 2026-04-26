@@ -6,8 +6,8 @@
         "availability": "Availability",
         "booking": "Bookings",
         "event": "Events",
-        "eventGroup": "Event Groups",
-        "slot": "Duty Slots",
+        "shift": "Duty Shifts",
+        "task": "Tasks",
         "user": "Account"
     },
     "channels": {
@@ -52,7 +52,7 @@
     },
     "push": {
         "denied": "Push notifications are blocked. Please enable them in your browser settings.",
-        "description": "Receive push notifications in your browser when important events occur.",
+        "description": "Receive push notifications in your browser when important tasks occur.",
         "disable": "Disable",
         "disableFailed": "Failed to disable push notifications",
         "disabled": "Push notifications disabled",
@@ -69,7 +69,7 @@
     "reminders": {
         "addReminder": "Add reminder",
         "channelActiveHint": "You'll be notified via {channel} {offset}",
-        "description": "Automatically add reminders when you book a slot. You can also adjust reminders individually per booking.",
+        "description": "Automatically add reminders when you book a shift. You can also adjust reminders individually per booking.",
         "lastChannelHint": "At least one channel must stay enabled",
         "noDefaults": "No default reminders set. You can add them below.",
         "offset": {
@@ -137,7 +137,7 @@
     "types": {
         "availability": {
             "reminder": {
-                "description": "Reminder to submit your availability for a published event group",
+                "description": "Reminder to submit your availability for a published event",
                 "name": "Availability Reminder"
             }
         },
@@ -155,12 +155,12 @@
                 "name": "Booking Confirmed"
             },
             "reminder": {
-                "description": "Reminder before a booked slot starts",
+                "description": "Reminder before a booked shift starts",
                 "name": "Booking Reminder"
             },
             "slot_cobooked": {
-                "description": "When someone else books a slot you are on",
-                "name": "Slot Co-booked"
+                "description": "When someone else books a shift you are on",
+                "name": "Shift Co-booked"
             }
         },
         "event": {
@@ -169,20 +169,20 @@
                 "name": "Event Published"
             }
         },
-        "event_group": {
-            "published": {
-                "description": "When a new event group is published",
-                "name": "Event Group Published"
-            }
-        },
-        "slot": {
+        "shift": {
             "starting_soon_unfilled": {
-                "description": "When a slot starts soon but still has open spots",
-                "name": "Slot Starting Soon (Unfilled)"
+                "description": "When a shift starts soon but still has open spots",
+                "name": "Shift Starting Soon (Unfilled)"
             },
             "time_changed": {
-                "description": "When a slot you booked has its time changed",
-                "name": "Slot Time Changed"
+                "description": "When a shift you booked has its time changed",
+                "name": "Shift Time Changed"
+            }
+        },
+        "task": {
+            "published": {
+                "description": "When a new task is published",
+                "name": "Task Published"
             }
         },
         "user": {

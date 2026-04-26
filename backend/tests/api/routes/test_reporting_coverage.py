@@ -7,8 +7,8 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.shift import Shift
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -21,22 +21,22 @@ class TestReportingCoverage:
         db_session: AsyncSession,
         test_user: User,
         test_admin_user: User,
-    ) -> Event:
+    ) -> Task:
         """Seed a realistic dataset for reporting tests."""
-        event = Event(
-            name="Reporting Test Event",
+        task = Task(
+            name="Reporting Test Task",
             start_date=date(2026, 6, 1),
             end_date=date(2026, 6, 3),
             status="published",
         )
-        db_session.add(event)
+        db_session.add(task)
         await db_session.flush()
-        await db_session.refresh(event)
+        await db_session.refresh(task)
 
-        # Multiple slots with different categories and times
-        slots = [
-            DutySlot(
-                event_id=event.id,
+        # Multiple shifts with different categories and times
+        shifts = [
+            Shift(
+                task_id=task.id,
                 title="Morning Security",
                 date=date(2026, 6, 1),
                 start_time=time(8, 0),
@@ -45,8 +45,8 @@ class TestReportingCoverage:
                 category="Security",
                 location="Gate A",
             ),
-            DutySlot(
-                event_id=event.id,
+            Shift(
+                task_id=task.id,
                 title="Afternoon Catering",
                 date=date(2026, 6, 1),
                 start_time=time(14, 0),
@@ -55,8 +55,8 @@ class TestReportingCoverage:
                 category="Catering",
                 location="Kitchen",
             ),
-            DutySlot(
-                event_id=event.id,
+            Shift(
+                task_id=task.id,
                 title="Evening Security",
                 date=date(2026, 6, 2),
                 start_time=time(18, 0),
@@ -66,30 +66,30 @@ class TestReportingCoverage:
                 location="Gate B",
             ),
         ]
-        db_session.add_all(slots)
+        db_session.add_all(shifts)
         await db_session.flush()
-        for s in slots:
+        for s in shifts:
             await db_session.refresh(s)
 
         # Bookings by different users
         bookings = [
             Booking(
-                duty_slot_id=slots[0].id,
+                shift_id=shifts[0].id,
                 user_id=test_user.id,
                 status="confirmed",
             ),
             Booking(
-                duty_slot_id=slots[1].id,
+                shift_id=shifts[1].id,
                 user_id=test_user.id,
                 status="confirmed",
             ),
             Booking(
-                duty_slot_id=slots[0].id,
+                shift_id=shifts[0].id,
                 user_id=test_admin_user.id,
                 status="confirmed",
             ),
             Booking(
-                duty_slot_id=slots[2].id,
+                shift_id=shifts[2].id,
                 user_id=test_admin_user.id,
                 status="cancelled",
             ),
@@ -97,7 +97,7 @@ class TestReportingCoverage:
         db_session.add_all(bookings)
         await db_session.flush()
 
-        return event
+        return task
 
     async def test_overview_with_rich_data(
         self,
@@ -107,7 +107,7 @@ class TestReportingCoverage:
         test_user: User,
         test_admin_user: User,
     ):
-        """Test overview stats with multiple bookings, slots, and users."""
+        """Test overview stats with multiple bookings, shifts, and users."""
         await self._seed_reporting_data(db_session, test_user, test_admin_user)
 
         r = await async_client.get("/api/v1/reporting/overview")
@@ -118,9 +118,9 @@ class TestReportingCoverage:
         assert overview["confirmed_bookings"] >= 3
         assert overview["cancelled_bookings"] >= 1
         assert overview["cancellation_rate"] > 0
-        assert overview["total_slots"] >= 3
-        assert overview["total_slot_capacity"] >= 7
-        assert overview["filled_slots"] >= 2
+        assert overview["total_shifts"] >= 3
+        assert overview["total_shift_capacity"] >= 7
+        assert overview["filled_shifts"] >= 2
         assert overview["fill_rate"] > 0
         assert overview["total_volunteers"] >= 2
 
@@ -208,7 +208,7 @@ class TestReportingCoverage:
         assert "hour" in by_hour[0]
         assert "booking_count" in by_hour[0]
 
-    async def test_event_fill_rates(
+    async def test_task_fill_rates(
         self,
         async_client: AsyncClient,
         as_admin: None,
@@ -216,15 +216,15 @@ class TestReportingCoverage:
         test_user: User,
         test_admin_user: User,
     ):
-        """Test event fill rates."""
+        """Test task fill rates."""
         await self._seed_reporting_data(db_session, test_user, test_admin_user)
 
         r = await async_client.get("/api/v1/reporting/overview")
 
         assert r.status_code == 200
-        fill_rates = r.json()["event_fill_rates"]
+        fill_rates = r.json()["task_fill_rates"]
         assert len(fill_rates) >= 1
-        assert "event_name" in fill_rates[0]
+        assert "task_name" in fill_rates[0]
         assert "total_capacity" in fill_rates[0]
         assert "confirmed_bookings" in fill_rates[0]
         assert "fill_rate" in fill_rates[0]
@@ -247,8 +247,8 @@ class TestReportingCoverage:
         assert len(lines) >= 5  # header + at least 4 data rows
         # Check header columns
         header = lines[0]
-        assert "Slot Title" in header
-        assert "Event Name" in header
+        assert "Shift Title" in header
+        assert "Task Name" in header
         assert "Location" in header
         assert "Category" in header
 
@@ -292,5 +292,5 @@ class TestReportingCoverage:
 
         assert r.status_code == 200
         overview = r.json()["overview"]
-        # Only slots from June 1 should be included
-        assert overview["total_slots"] >= 2
+        # Only shifts from June 1 should be included
+        assert overview["total_shifts"] >= 2

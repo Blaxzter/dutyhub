@@ -5,9 +5,9 @@
         "admin": "Admin",
         "availability": "Verfügbarkeit",
         "booking": "Buchungen",
-        "event": "Veranstaltungen",
-        "eventGroup": "Veranstaltungsgruppen",
-        "slot": "Dienstschichten",
+        "event": "Veranstaltungsgruppen",
+        "shift": "Dienstschichten",
+        "task": "Veranstaltungen",
         "user": "Konto"
     },
     "channels": {
@@ -69,7 +69,7 @@
     "reminders": {
         "addReminder": "Erinnerung hinzufuegen",
         "channelActiveHint": "Du wirst {offset} per {channel} benachrichtigt",
-        "description": "Erinnerungen werden automatisch hinzugefuegt, wenn du einen Slot buchst. Du kannst sie auch pro Buchung anpassen.",
+        "description": "Erinnerungen werden automatisch hinzugefuegt, wenn du einen Shift buchst. Du kannst sie auch pro Buchung anpassen.",
         "lastChannelHint": "Mindestens ein Kanal muss aktiviert bleiben",
         "noDefaults": "Keine Standard-Erinnerungen gesetzt. Du kannst sie unten hinzufuegen.",
         "offset": {
@@ -165,17 +165,11 @@
         },
         "event": {
             "published": {
-                "description": "Wenn eine neue Veranstaltung veröffentlicht wird",
-                "name": "Veranstaltung veröffentlicht"
-            }
-        },
-        "event_group": {
-            "published": {
                 "description": "Wenn eine neue Veranstaltungsgruppe veröffentlicht wird",
                 "name": "Veranstaltungsgruppe veröffentlicht"
             }
         },
-        "slot": {
+        "shift": {
             "starting_soon_unfilled": {
                 "description": "Wenn eine Schicht bald beginnt, aber noch freie Plätze hat",
                 "name": "Schicht beginnt bald (unbesetzt)"
@@ -183,6 +177,12 @@
             "time_changed": {
                 "description": "Wenn sich die Zeit einer gebuchten Schicht ändert",
                 "name": "Schichtzeit geändert"
+            }
+        },
+        "task": {
+            "published": {
+                "description": "Wenn eine neue Veranstaltung veröffentlicht wird",
+                "name": "Veranstaltung veröffentlicht"
             }
         },
         "user": {

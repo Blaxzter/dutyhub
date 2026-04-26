@@ -1,0 +1,71 @@
+<script setup lang="ts">
+import { Users } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+
+import { useFormatters } from '@/composables/useFormatters'
+import type { PreviewShift } from '@/composables/useShiftPreview'
+
+import Badge from '@/components/ui/badge/Badge.vue'
+import { Card, CardContent } from '@/components/ui/card'
+
+defineProps<{
+  shiftsByDate: Map<string, PreviewShift[]>
+  isShiftExcluded: (shift: PreviewShift) => boolean
+  getBookingCount?: (shift: PreviewShift) => number
+}>()
+
+const emit = defineEmits<{
+  toggleExclusion: [shift: PreviewShift]
+}>()
+
+const { t } = useI18n()
+const { formatDateLabel } = useFormatters()
+</script>
+
+<template>
+  <div class="space-y-4">
+    <div v-for="[dateStr, shifts] in shiftsByDate" :key="dateStr" class="space-y-2">
+      <div class="flex items-center gap-2">
+        <p class="font-medium">{{ formatDateLabel(dateStr) }}</p>
+        <Badge variant="outline">
+          {{
+            t('duties.tasks.createView.preview.shiftsOnDate', {
+              count: shifts.filter((s) => !isShiftExcluded(s)).length,
+            })
+          }}
+        </Badge>
+      </div>
+      <div class="grid grid-cols-2 items-center gap-2 sm:grid-cols-3 md:grid-cols-4">
+        <Card
+          v-for="shift in shifts"
+          :key="shift.startTime"
+          class="cursor-pointer p-2 transition-opacity"
+          :class="[
+            isShiftExcluded(shift) ? 'opacity-30' : 'hover:ring-1 hover:ring-destructive/40',
+            getBookingCount && getBookingCount(shift) > 0 && !isShiftExcluded(shift)
+              ? 'ring-1 ring-primary/30'
+              : '',
+          ]"
+          @click="emit('toggleExclusion', shift)"
+        >
+          <CardContent class="p-0">
+            <p
+              class="text-center text-sm font-mono"
+              :class="isShiftExcluded(shift) ? 'line-through text-muted-foreground' : ''"
+            >
+              {{ shift.startTime }} - {{ shift.endTime }}
+            </p>
+            <p
+              v-if="getBookingCount && getBookingCount(shift) > 0"
+              class="mt-0.5 flex items-center justify-center gap-1 text-xs"
+              :class="isShiftExcluded(shift) ? 'text-destructive line-through' : 'text-primary'"
+            >
+              <Users class="h-3 w-3" />
+              {{ t('duties.tasks.editView.preview.booked', { count: getBookingCount(shift) }) }}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+</template>

@@ -25,31 +25,31 @@ import { toastApiError } from '@/lib/api-errors'
 const { t } = useI18n()
 const { post, delete: del } = useAuthenticatedClient()
 
-const numEvents = ref(10)
-const numEventGroups = ref(3)
+const numTasks = ref(10)
+const numEvents = ref(3)
 const numUsers = ref(5)
-const numSlotsPerEvent = ref(4)
-const publishEvents = ref(true)
+const numShiftsPerTask = ref(4)
+const publishTasks = ref(true)
 
 const creating = ref(false)
 const deleting = ref(false)
 
 interface DemoDataCreatedResponse {
   data: {
-    event_groups_created: number
     events_created: number
+    tasks_created: number
     users_created: number
-    duty_slots_created: number
+    shifts_created: number
     bookings_created: number
   }
 }
 
 interface DemoDataDeletedResponse {
   data: {
+    tasks_deleted: number
     events_deleted: number
-    event_groups_deleted: number
     users_deleted: number
-    duty_slots_deleted: number
+    shifts_deleted: number
     bookings_deleted: number
   }
 }
@@ -60,20 +60,20 @@ async function handleCreate() {
     const response = await post<DemoDataCreatedResponse>({
       url: '/demo-data/',
       body: {
+        num_tasks: numTasks.value,
         num_events: numEvents.value,
-        num_event_groups: numEventGroups.value,
         num_users: numUsers.value,
-        num_slots_per_event: numSlotsPerEvent.value,
-        publish_events: publishEvents.value,
+        num_shifts_per_task: numShiftsPerTask.value,
+        publish_tasks: publishTasks.value,
       },
     })
     const d = response.data
     toast.success(
       t('admin.demoData.createSuccess', {
+        tasks: d.tasks_created,
         events: d.events_created,
-        groups: d.event_groups_created,
         users: d.users_created,
-        slots: d.duty_slots_created,
+        shifts: d.shifts_created,
         bookings: d.bookings_created,
       }),
     )
@@ -93,10 +93,10 @@ async function handleDelete() {
     const d = response.data
     toast.success(
       t('admin.demoData.deleteSuccess', {
+        tasks: d.tasks_deleted,
         events: d.events_deleted,
-        groups: d.event_groups_deleted,
         users: d.users_deleted,
-        slots: d.duty_slots_deleted,
+        shifts: d.shifts_deleted,
         bookings: d.bookings_deleted,
       }),
     )
@@ -126,14 +126,14 @@ async function handleDelete() {
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="grid gap-2">
-            <Label for="numEvents">{{ t('admin.demoData.fields.numEvents') }}</Label>
-            <Input id="numEvents" v-model.number="numEvents" type="number" :min="1" :max="50" />
+            <Label for="numTasks">{{ t('admin.demoData.fields.numTasks') }}</Label>
+            <Input id="numTasks" v-model.number="numTasks" type="number" :min="1" :max="50" />
           </div>
           <div class="grid gap-2">
-            <Label for="numEventGroups">{{ t('admin.demoData.fields.numEventGroups') }}</Label>
+            <Label for="numEvents">{{ t('admin.demoData.fields.numEvents') }}</Label>
             <Input
-              id="numEventGroups"
-              v-model.number="numEventGroups"
+              id="numEvents"
+              v-model.number="numEvents"
               type="number"
               :min="0"
               :max="10"
@@ -144,18 +144,18 @@ async function handleDelete() {
             <Input id="numUsers" v-model.number="numUsers" type="number" :min="0" :max="20" />
           </div>
           <div class="grid gap-2">
-            <Label for="numSlotsPerEvent">{{ t('admin.demoData.fields.numSlotsPerEvent') }}</Label>
+            <Label for="numShiftsPerTask">{{ t('admin.demoData.fields.numShiftsPerTask') }}</Label>
             <Input
-              id="numSlotsPerEvent"
-              v-model.number="numSlotsPerEvent"
+              id="numShiftsPerTask"
+              v-model.number="numShiftsPerTask"
               type="number"
               :min="1"
               :max="20"
             />
           </div>
           <div class="flex items-center gap-3">
-            <Switch id="publishEvents" v-model:checked="publishEvents" />
-            <Label for="publishEvents">{{ t('admin.demoData.fields.publishEvents') }}</Label>
+            <Switch id="publishTasks" v-model:checked="publishTasks" />
+            <Label for="publishTasks">{{ t('admin.demoData.fields.publishTasks') }}</Label>
           </div>
         </CardContent>
         <CardFooter>

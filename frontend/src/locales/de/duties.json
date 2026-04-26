@@ -38,7 +38,7 @@
         "cancellationReason": "Grund der Stornierung",
         "detail": {
             "loadFailed": "Buchungsdetails konnten nicht geladen werden.",
-            "pastEvent": "Diese Veranstaltung hat bereits stattgefunden.",
+            "pastTask": "Diese Veranstaltung hat bereits stattgefunden.",
             "title": "Buchungsdetails",
             "viewBooking": "Buchung anzeigen"
         },
@@ -55,13 +55,13 @@
         },
         "groupBy": {
             "date": "Nach Datum",
-            "event": "Nach Veranstaltung",
             "location": "Nach Ort",
-            "none": "Keine Gruppierung"
+            "none": "Keine Gruppierung",
+            "task": "Nach Veranstaltung"
         },
         "noDate": "Kein Datum",
-        "noEvent": "Keine Veranstaltung",
         "noLocation": "Kein Ort",
+        "noTask": "Keine Veranstaltung",
         "slotDeleted": "Diese Schicht wurde von einem Administrator entfernt.",
         "statuses": {
             "cancelled": "Storniert",
@@ -71,7 +71,7 @@
         "title": "Meine Buchungen",
         "today": "Heute",
         "tomorrow": "Morgen",
-        "unknownSlot": "Unbekannte Schicht",
+        "unknownShift": "Unbekannte Schicht",
         "yesterday": "Gestern"
     },
     "deleteDialog": {
@@ -81,7 +81,125 @@
         "reasonLabel": "Stornierungsgrund (optional)",
         "reasonPlaceholder": "z.B. Veranstaltung verschoben, nicht mehr benötigt..."
     },
-    "dutySlots": {
+    "events": {
+        "create": "Veranstaltungsgruppe erstellen",
+        "delete": "Veranstaltungsgruppe löschen",
+        "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",
+        "detail": {
+            "addManager": "Verwalter hinzufügen",
+            "dateConstraintHint": "Der Zeitraum ist durch vorhandene Veranstaltungen eingeschränkt. Verwenden Sie \"Termine verschieben\", um alles gleichzeitig zu verschieben.",
+            "earliestTask": "Früheste Veranstaltung: {date}",
+            "editDescription": "Name, Beschreibung und Zeitraum dieser Veranstaltungsgruppe bearbeiten.",
+            "latestTask": "Späteste Veranstaltung: {date}",
+            "legend": {
+                "eventDay": "Veranstaltungstag",
+                "eventEnd": "Veranstaltungsende",
+                "eventStart": "Veranstaltungsbeginn",
+                "today": "Heute"
+            },
+            "managerAdded": "Verwalter hinzugefügt.",
+            "managerRemoved": "Verwalter entfernt.",
+            "managers": "Gruppenverwalter",
+            "managersEmpty": "Dieser Gruppe sind noch keine eingeschränkten Verwalter zugewiesen.",
+            "managersNoResults": "Keine Benutzer gefunden.",
+            "managersSearch": "Benutzer nach Name oder E-Mail suchen...",
+            "managersSubtitle": "Benutzer mit eingeschränktem Zugriff zur Verwaltung von Veranstaltungen in dieser Gruppe",
+            "nav": {
+                "availability": "Verfügbarkeit",
+                "details": "Details",
+                "management": "Verwaltung",
+                "print": "Drucken",
+                "tasks": "Veranstaltungen"
+            },
+            "printDescription": "Druckbare Übersichtsblätter oder vollständige Veranstaltungsdetails für diese Gruppe erstellen.",
+            "roleTaskManager": "Veranstaltungsverwalter",
+            "shiftApply": "Alle Termine verschieben",
+            "shiftBackward": "zurück",
+            "shiftDates": "Termine verschieben",
+            "shiftDescription": "Das gesamte Programm auf ein neues Datum verschieben. Alle Veranstaltungen, Dienstschichten und Verfügbarkeiten werden um denselben Zeitraum verschoben.",
+            "shiftForward": "vorwärts",
+            "shiftNewStart": "Neues Startdatum",
+            "shiftPreview": "{days} Tage {direction}",
+            "shiftSuccess": "Alle Termine erfolgreich verschoben.",
+            "tasks": "Veranstaltungen in dieser Gruppe",
+            "tasksEmpty": "Noch keine Veranstaltungen dieser Gruppe zugeordnet.",
+            "title": "Veranstaltungsgruppendetails",
+            "updated": "Veranstaltungsgruppe aktualisiert."
+        },
+        "draftBanner": "Diese Veranstaltungsgruppe ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
+        "edit": "Veranstaltungsgruppe bearbeiten",
+        "empty": "Keine Veranstaltungsgruppen gefunden.",
+        "expired": "Abgelaufen",
+        "fields": {
+            "description": "Beschreibung",
+            "endDate": "Enddatum",
+            "name": "Name",
+            "startDate": "Startdatum",
+            "status": "Status"
+        },
+        "pickDate": "Datum auswählen",
+        "statuses": {
+            "archived": "Archiviert",
+            "draft": "Entwurf",
+            "published": "Veröffentlicht"
+        },
+        "subtitle": "Anstehende Veranstaltungsprogramme durchsuchen",
+        "title": "Veranstaltungsgruppen"
+    },
+    "selectEvent": {
+        "changeEvent": "Veranstaltung wechseln",
+        "empty": "Keine anstehenden Veranstaltungen verfügbar. Bitte schauen Sie später wieder vorbei oder wenden Sie sich an eine organisierende Person.",
+        "expired": {
+            "body": "Die Veranstaltung, mit der Sie zuletzt gearbeitet haben, ist beendet. Wählen Sie eine andere, um fortzufahren.",
+            "title": "Ihre Veranstaltung ist beendet"
+        },
+        "notifications": {
+            "finish": "Einrichtung abschließen",
+            "phoneHint": "Wird von Organisatoren genutzt, um Sie zu Schichten zu erreichen.",
+            "phoneLabel": "Telefonnummer",
+            "phonePlaceholder": "z.B. +49 151 23456789",
+            "phoneTitle": "Telefonnummer",
+            "subtitle": "Wählen Sie, wie Sie von uns hören möchten.",
+            "title": "Benachrichtigungseinstellungen"
+        },
+        "pick": {
+            "continue": "Weiter",
+            "createNew": "Neue Veranstaltung erstellen",
+            "current": "Aktuell",
+            "selectAction": "Diese Veranstaltung auswählen",
+            "stats": "{tasks} Aufgabe und {shifts} Schicht brauchen dich | {tasks} Aufgaben und {shifts} Schichten brauchen dich",
+            "subtitle": "Wählen Sie die Veranstaltung, mit der Sie arbeiten möchten.",
+            "title": "Veranstaltung auswählen",
+            "upcomingTasks": "Anstehende Aufgaben"
+        },
+        "success": "Ausgewählte Veranstaltung aktualisiert.",
+        "visual": {
+            "expiredHeadline": "Lassen Sie uns zur nächsten Veranstaltung übergehen.",
+            "features": {
+                "coordBody": "Verwalter, Helfer und Teilnehmer bleiben auf dem gleichen Stand.",
+                "coordTitle": "Gemeinsam koordinieren",
+                "scopedBody": "Aufgaben, Schichten und Buchungen bleiben in der gewählten Veranstaltung.",
+                "scopedTitle": "Fokus auf eine Veranstaltung"
+            },
+            "footer": "Eine Gemeinschaft, ein Fokus — wählen Sie die Veranstaltung, WirkSam erledigt den Rest.",
+            "onboardingHeadline": "Willkommen. Wählen Sie die Veranstaltung, für die Sie hier sind.",
+            "step2": {
+                "features": {
+                    "controlBody": "Alles, was Sie nicht möchten, lässt sich pro Kanal global stummschalten.",
+                    "controlTitle": "Sie behalten die Kontrolle",
+                    "remindersBody": "Wir erinnern Sie vor jeder Schicht, damit nichts untergeht.",
+                    "remindersTitle": "Schicht-Erinnerungen",
+                    "updatesBody": "Erfahren Sie von neu veröffentlichten Schichten, Planänderungen und Absagen, die Sie betreffen.",
+                    "updatesTitle": "Planungs-Updates"
+                },
+                "headline": "Wählen Sie, wie wir Sie erreichen.",
+                "subhead": "Benachrichtigungen halten Sie über Ihre Schichten auf dem Laufenden und ermöglichen es Organisatoren, Sie im Zweifel zu erreichen. Wählen Sie beliebige Kombinationen — E-Mail, Push, Telegram oder Telefon."
+            },
+            "subhead": "WirkSam richtet Ihre Ansicht auf eine einzelne Veranstaltung aus, damit Sie nicht die richtige Liste suchen müssen.",
+            "switchHeadline": "Zu einer anderen Veranstaltung wechseln."
+        }
+    },
+    "shifts": {
         "availability": "{current} / {max} gebucht",
         "available": "Verfügbar",
         "book": "Dienstschicht buchen",
@@ -96,7 +214,6 @@
             "category": "Kategorie",
             "date": "Datum",
             "description": "Beschreibung",
-            "event": "Veranstaltung",
             "location": "Ort",
             "myNotes": "Meine Anmerkungen",
             "noBookings": "Noch keine Buchungen.",
@@ -105,11 +222,12 @@
             "notesSaved": "Anmerkungen gespeichert.",
             "openBookingDetails": "Buchungsdetails öffnen",
             "openDetails": "Details anzeigen",
+            "task": "Veranstaltung",
             "time": "Zeit",
             "title": "Schicht-Details",
             "userName": "Name",
             "userNotes": "Anmerkungen",
-            "viewEvent": "Veranstaltung anzeigen"
+            "viewTask": "Veranstaltung anzeigen"
         },
         "edit": "Dienstschicht bearbeiten",
         "empty": "Noch keine Dienstschichten für diese Veranstaltung.",
@@ -127,72 +245,8 @@
         "pickDate": "Datum auswählen",
         "title": "Dienstschicht"
     },
-    "eventGroups": {
-        "create": "Veranstaltungsgruppe erstellen",
-        "delete": "Veranstaltungsgruppe löschen",
-        "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",
-        "detail": {
-            "addManager": "Verwalter hinzufügen",
-            "dateConstraintHint": "Der Zeitraum ist durch vorhandene Veranstaltungen eingeschränkt. Verwenden Sie \"Termine verschieben\", um alles gleichzeitig zu verschieben.",
-            "earliestEvent": "Früheste Veranstaltung: {date}",
-            "editDescription": "Name, Beschreibung und Zeitraum dieser Veranstaltungsgruppe bearbeiten.",
-            "events": "Veranstaltungen in dieser Gruppe",
-            "eventsEmpty": "Noch keine Veranstaltungen dieser Gruppe zugeordnet.",
-            "latestEvent": "Späteste Veranstaltung: {date}",
-            "legend": {
-                "eventDay": "Veranstaltungstag",
-                "eventEnd": "Veranstaltungsende",
-                "eventStart": "Veranstaltungsbeginn",
-                "today": "Heute"
-            },
-            "managerAdded": "Verwalter hinzugefügt.",
-            "managerRemoved": "Verwalter entfernt.",
-            "managers": "Gruppenverwalter",
-            "managersEmpty": "Dieser Gruppe sind noch keine eingeschränkten Verwalter zugewiesen.",
-            "managersNoResults": "Keine Benutzer gefunden.",
-            "managersSearch": "Benutzer nach Name oder E-Mail suchen...",
-            "managersSubtitle": "Benutzer mit eingeschränktem Zugriff zur Verwaltung von Veranstaltungen in dieser Gruppe",
-            "nav": {
-                "availability": "Verfügbarkeit",
-                "details": "Details",
-                "events": "Veranstaltungen",
-                "management": "Verwaltung",
-                "print": "Drucken"
-            },
-            "printDescription": "Druckbare Übersichtsblätter oder vollständige Veranstaltungsdetails für diese Gruppe erstellen.",
-            "roleEventManager": "Veranstaltungsverwalter",
-            "shiftApply": "Alle Termine verschieben",
-            "shiftBackward": "zurück",
-            "shiftDates": "Termine verschieben",
-            "shiftDescription": "Das gesamte Programm auf ein neues Datum verschieben. Alle Veranstaltungen, Dienstschichten und Verfügbarkeiten werden um denselben Zeitraum verschoben.",
-            "shiftForward": "vorwärts",
-            "shiftNewStart": "Neues Startdatum",
-            "shiftPreview": "{days} Tage {direction}",
-            "shiftSuccess": "Alle Termine erfolgreich verschoben.",
-            "title": "Veranstaltungsgruppendetails",
-            "updated": "Veranstaltungsgruppe aktualisiert."
-        },
-        "draftBanner": "Diese Veranstaltungsgruppe ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
-        "edit": "Veranstaltungsgruppe bearbeiten",
-        "empty": "Keine Veranstaltungsgruppen gefunden.",
-        "fields": {
-            "description": "Beschreibung",
-            "endDate": "Enddatum",
-            "name": "Name",
-            "startDate": "Startdatum",
-            "status": "Status"
-        },
-        "pickDate": "Datum auswählen",
-        "statuses": {
-            "archived": "Archiviert",
-            "draft": "Entwurf",
-            "published": "Veröffentlicht"
-        },
-        "subtitle": "Anstehende Veranstaltungsprogramme durchsuchen",
-        "title": "Veranstaltungsgruppen"
-    },
-    "events": {
-        "addSlotsView": {
+    "tasks": {
+        "addShiftsView": {
             "sections": {
                 "batch": "Batch-Details",
                 "batchDesc": "Optionaler Ort und Kategorie für diese Schichten"
@@ -221,7 +275,7 @@
                 "single": "Ein Tag",
                 "specific": "Bestimmte Tage"
             },
-            "eventGroupOption": {
+            "eventOption": {
                 "existing": "Bestehende auswählen",
                 "new": "Neue erstellen",
                 "none": "Keine Veranstaltungsgruppe"
@@ -230,9 +284,9 @@
             "noDatesSelected": "Noch keine Termine ausgewählt",
             "preview": {
                 "clickToExclude": "Klicken Sie auf eine Schicht, um sie von der Erstellung auszuschließen.",
-                "noSlots": "Mit der aktuellen Konfiguration werden keine Schichten generiert. Bitte füllen Sie den Zeitplan aus.",
-                "slotsOnDate": "{count} Schichten",
-                "summary": "{slots} Schichten über {days} Tage"
+                "noShifts": "Mit der aktuellen Konfiguration werden keine Schichten generiert. Bitte füllen Sie den Zeitplan aus.",
+                "shiftsOnDate": "{count} Schichten",
+                "summary": "{shifts} Schichten über {days} Tage"
             },
             "schedule": {
                 "addException": "Ausnahme hinzufügen",
@@ -241,7 +295,7 @@
                 "minutes": "{n} Minuten",
                 "overrides": "Datumsausnahmen",
                 "overridesDesc": "Zeiten für bestimmte Tage anpassen",
-                "peoplePerSlot": "Personen pro Schicht",
+                "peoplePerShift": "Personen pro Schicht",
                 "remainder": "Restzeit",
                 "remainderDesc": "Wie mit übrig gebliebener Zeit umgegangen wird, wenn Schichten nicht gleichmäßig aufgehen",
                 "remainderMode": {
@@ -257,8 +311,8 @@
                 "datesDesc": "Wählen Sie, wann die Veranstaltung stattfindet",
                 "details": "Veranstaltungsdetails",
                 "detailsDesc": "Grundlegende Informationen zur Veranstaltung",
-                "eventGroup": "Veranstaltungsgruppe",
-                "eventGroupDesc": "Diese Veranstaltung optional einer Gruppe zuordnen",
+                "event": "Veranstaltungsgruppe",
+                "eventDesc": "Diese Veranstaltung optional einer Gruppe zuordnen",
                 "preview": "Vorschau",
                 "previewDesc": "Überprüfen Sie die Schichten, die generiert werden",
                 "schedule": "Zeitplan & Schichten",
@@ -272,24 +326,24 @@
         "delete": "Veranstaltung löschen",
         "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltung löschen möchten? Alle Dienstschichten und Buchungen gehen verloren.",
         "detail": {
-            "addSingleSlot": "Einzelne Schicht hinzufügen",
-            "addSlot": "Dienstschicht hinzufügen",
-            "addSlotBatch": "Schicht-Batch generieren",
-            "addSlots": "Schichten hinzufügen",
+            "addShift": "Dienstschicht hinzufügen",
+            "addShiftBatch": "Schicht-Batch generieren",
+            "addShifts": "Schichten hinzufügen",
+            "addSingleShift": "Einzelne Schicht hinzufügen",
             "allCategories": "Alle Kategorien",
             "allLocations": "Alle Orte",
             "booked": "Gebucht",
             "deleteBatchConfirm": "Sind Sie sicher, dass Sie diesen Batch löschen möchten? Alle zugehörigen Schichten und Buchungen werden entfernt.",
             "deleteBatchSuccess": "Batch erfolgreich gelöscht.",
-            "hiddenSlots": "{count} Schichten durch Filter ausgeblendet",
+            "hiddenShifts": "{count} Schichten durch Filter ausgeblendet",
             "myBookings": "Meine Buchungen",
             "myBookingsCount": "{count} gebucht",
             "noBookingsYet": "Klicken Sie auf eine Schicht, um sie zu buchen.",
-            "noSlotsMatch": "Keine Schichten entsprechen den aktuellen Filtern.",
-            "slots": "Dienstschichten",
-            "slotsCount": "{count} Schichten",
+            "noShiftsMatch": "Keine Schichten entsprechen den aktuellen Filtern.",
+            "shifts": "Dienstschichten",
+            "shiftsCount": "{count} Schichten",
             "title": "Veranstaltungsdetails",
-            "unbatchedSlots": "Weitere Schichten"
+            "unbatchedShifts": "Weitere Schichten"
         },
         "draftBanner": "Diese Veranstaltung ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
         "edit": "Veranstaltung bearbeiten",
@@ -298,7 +352,7 @@
                 "cancel": "Abbrechen",
                 "confirm": "Trotzdem fortfahren",
                 "description": "Die folgenden bestätigten Buchungen werden storniert, da ihre Schichten nach der Neugenerierung nicht mehr existieren. Die Benutzer wurden noch nicht benachrichtigt — dies ist derzeit ein manueller Prozess.",
-                "slot": "Schicht",
+                "shift": "Schicht",
                 "title": "Betroffene Buchungen",
                 "user": "Benutzer"
             },
@@ -337,11 +391,11 @@
             "firstAvailable": "Zur ersten Verfügbarkeit springen",
             "today": "Auf heute zentrieren"
         },
-        "hideFullSlots": "Ausgebuchte ausblenden",
+        "hideFullShifts": "Ausgebuchte ausblenden",
         "myBookingsFilter": "Nur meine Buchungen",
         "pickDate": "Datum auswählen",
         "quickView": {
-            "availableSlots": "{count} verfügbar",
+            "availableShifts": "{count} verfügbar",
             "noMore": "Keine weiteren Veranstaltungen",
             "showLess": "Weniger anzeigen",
             "showMore": "{count} weitere anzeigen"

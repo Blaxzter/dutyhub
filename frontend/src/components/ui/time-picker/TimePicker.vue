@@ -28,15 +28,15 @@ watch(
   },
 )
 
-// Generate time slots in 30-minute increments
-const timeSlots = (() => {
-  const slots: string[] = []
+// Generate time shifts in 30-minute increments
+const timeShifts = (() => {
+  const shifts: string[] = []
   for (let h = 0; h < 24; h++) {
     for (let m = 0; m < 60; m += 30) {
-      slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`)
+      shifts.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`)
     }
   }
-  return slots
+  return shifts
 })()
 
 function selectTime(time: string) {
@@ -105,7 +105,7 @@ function onInteractOutside(e: Event) {
     >
       <div ref="listRef" class="max-h-[12rem] overflow-y-auto">
         <button
-          v-for="time in timeSlots"
+          v-for="time in timeShifts"
           :key="time"
           type="button"
           :data-selected="time === modelValue"

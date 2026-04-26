@@ -16,7 +16,7 @@ services:
     backend:
         restart: "no"
         ports:
-            - "8000:8000"
+            - "8787:8787"
         build:
             context: ./backend
         command:
@@ -24,6 +24,8 @@ services:
             - dev
             - --host
             - "0.0.0.0"
+            - --port
+            - "8787"
             - app/main.py
         develop:
             watch:
@@ -40,12 +42,12 @@ services:
     frontend:
         restart: "no"
         ports:
-            - "5173:5173"
+            - "5555:5555"
         build:
             context: ./frontend
             dockerfile: Dockerfile.dev
         environment:
-            - VITE_API_URL=http://localhost:8000/api/v1
+            - VITE_API_URL=http://localhost:8787/api/v1
         develop:
             watch:
                 - path: ./frontend/src
@@ -73,7 +75,7 @@ services:
             context: ./frontend
             dockerfile: Dockerfile.playwright
             args:
-                - VITE_API_URL=http://backend:8000/api/v1
+                - VITE_API_URL=http://backend:8787/api/v1
                 - NODE_ENV=production
         ipc: host
         depends_on:
@@ -82,7 +84,7 @@ services:
         env_file:
             - .env
         environment:
-            - VITE_API_URL=http://backend:8000/api/v1
+            - VITE_API_URL=http://backend:8787/api/v1
             - MAILCATCHER_HOST=http://mailcatcher:1080
             - PLAYWRIGHT_HTML_HOST=0.0.0.0
             - CI=${CI}

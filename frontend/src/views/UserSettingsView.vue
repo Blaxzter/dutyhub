@@ -4,12 +4,7 @@
     <div class="space-y-6" :data-testid="`section-${id}`">
       <template v-if="id === 'profile'">
         <CurrentProfileCard :user="user" />
-        <EditProfileForm
-          :user="user"
-          :can-edit-profile-picture="canEditProfilePicture"
-          :auth-provider-name="authProvider.name"
-          @profile-updated="handleProfileUpdated"
-        />
+        <EditProfileForm :user="user" @profile-updated="handleProfileUpdated" />
       </template>
 
       <template v-if="id === 'security'">
@@ -139,11 +134,9 @@ const [DefineSectionContent, SectionContent] = createReusableTemplate<{ id: stri
 // Computed properties
 const user = computed(() => authStore.user)
 
-// Determine auth provider
+// Determine auth provider (used to gate the security/password section,
+// since password reset only makes sense for Auth0-managed identities).
 const authProvider = useAuthProvider(user.value)
-
-// Check if current provider is Auth0 (allows profile picture changes)
-const canEditProfilePicture = computed(() => authProvider.value.isAuth0)
 
 // Navigation items
 const navItems = computed<NavItem[]>(() => [
@@ -216,7 +209,7 @@ watch(activeSection, (id) => {
   }
 })
 
-// Handle profile updated event
+// Handle profile updated task
 const handleProfileUpdated = async (values: Record<string, unknown>) => {
   authStore.updateUser({
     ...authStore.user,

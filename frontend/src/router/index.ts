@@ -82,82 +82,96 @@ const router = createRouter({
           },
         },
         {
-          path: 'event-groups',
-          name: 'event-groups',
-          component: () => import('@/views/event-groups/EventGroupsView.vue'),
+          path: 'availability',
+          name: 'availability',
+          component: () => import('@/views/events/AvailabilityView.vue'),
           meta: {
-            breadcrumbs: [{ title: 'Event Groups', titleKey: 'duties.eventGroups.title' }],
+            breadcrumbs: [{ title: 'Availability', titleKey: 'duties.availability.title' }],
           },
         },
         {
-          path: 'event-groups/:groupId/:section?',
-          name: 'event-group-detail',
-          component: () => import('@/views/event-groups/EventGroupDetailView.vue'),
+          path: 'print',
+          name: 'event-print',
+          component: () => import('@/views/events/PrintView.vue'),
           meta: {
-            routerViewKey: (route: { params: { groupId?: string } }) =>
-              `event-group-${route.params.groupId}`,
+            breadcrumbs: [{ title: 'Print', titleKey: 'duties.events.detail.nav.print' }],
+          },
+        },
+        {
+          path: 'event-settings',
+          name: 'event-settings',
+          component: () => import('@/views/events/EventSettingsView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
             breadcrumbs: [
-              {
-                title: 'Event Groups',
-                titleKey: 'duties.eventGroups.title',
-                to: { name: 'event-groups' },
-              },
-              { title: 'Event Group Details', titleKey: 'duties.eventGroups.detail.title' },
-            ],
-          },
-        },
-        {
-          path: 'events',
-          name: 'events',
-          component: () => import('@/views/events/EventsView.vue'),
-          meta: {
-            breadcrumbs: [{ title: 'Events', titleKey: 'duties.events.title' }],
-          },
-        },
-        {
-          path: 'events/create',
-          name: 'event-create',
-          component: () => import('@/views/events/EventCreateView.vue'),
-          meta: {
-            requiresRole: ['admin', 'event_manager'],
-            breadcrumbs: [
-              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
-              { title: 'Create Event', titleKey: 'duties.events.createView.title' },
-            ],
-          },
-        },
-        {
-          path: 'events/:eventId/edit',
-          name: 'event-edit',
-          component: () => import('@/views/events/EventEditView.vue'),
-          meta: {
-            requiresRole: ['admin', 'event_manager'],
-            breadcrumbs: [
-              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
-              { title: 'Edit Event', titleKey: 'duties.events.editView.title' },
-            ],
-          },
-        },
-        {
-          path: 'events/:eventId/add-slots',
-          name: 'event-add-slots',
-          component: () => import('@/views/events/EventAddSlotsView.vue'),
-          meta: {
-            requiresRole: ['admin', 'event_manager'],
-            breadcrumbs: [
-              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
-              { title: 'Add Slots', titleKey: 'duties.events.addSlotsView.title' },
-            ],
-          },
-        },
-        {
-          path: 'events/:eventId',
-          name: 'event-detail',
-          component: () => import('@/views/events/EventDetailView.vue'),
-          meta: {
-            breadcrumbs: [
-              { title: 'Events', titleKey: 'duties.events.title', to: { name: 'events' } },
               { title: 'Event Details', titleKey: 'duties.events.detail.title' },
+            ],
+          },
+        },
+        {
+          path: 'admin/events',
+          name: 'admin-events',
+          component: () => import('@/views/admin/AdminEventsView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
+            breadcrumbs: [
+              { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
+              { title: 'Manage Events', titleKey: 'admin.events.title' },
+            ],
+          },
+        },
+        {
+          path: 'tasks',
+          name: 'tasks',
+          component: () => import('@/views/tasks/TasksView.vue'),
+          meta: {
+            breadcrumbs: [{ title: 'Tasks', titleKey: 'duties.tasks.title' }],
+          },
+        },
+        {
+          path: 'tasks/create',
+          name: 'task-create',
+          component: () => import('@/views/tasks/TaskCreateView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
+            breadcrumbs: [
+              { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
+              { title: 'Create Task', titleKey: 'duties.tasks.createView.title' },
+            ],
+          },
+        },
+        {
+          path: 'tasks/:eventId/edit',
+          name: 'task-edit',
+          component: () => import('@/views/tasks/TaskEditView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
+            breadcrumbs: [
+              { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
+              { title: 'Edit Task', titleKey: 'duties.tasks.editView.title' },
+            ],
+          },
+        },
+        {
+          path: 'tasks/:eventId/add-shifts',
+          name: 'task-add-shifts',
+          component: () => import('@/views/tasks/TaskAddShiftsView.vue'),
+          meta: {
+            requiresRole: ['admin', 'task_manager'],
+            breadcrumbs: [
+              { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
+              { title: 'Add Shifts', titleKey: 'duties.tasks.addShiftsView.title' },
+            ],
+          },
+        },
+        {
+          path: 'tasks/:eventId',
+          name: 'task-detail',
+          component: () => import('@/views/tasks/TaskDetailView.vue'),
+          meta: {
+            breadcrumbs: [
+              { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
+              { title: 'Task Details', titleKey: 'duties.tasks.detail.title' },
             ],
           },
         },
@@ -240,7 +254,7 @@ const router = createRouter({
           name: 'reporting',
           component: () => import('@/views/admin/ReportingView.vue'),
           meta: {
-            requiresRole: ['admin', 'event_manager'],
+            requiresRole: ['admin', 'task_manager'],
             breadcrumbs: [
               { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
               { title: 'Reports', titleKey: 'admin.reporting.title' },
@@ -280,14 +294,14 @@ const router = createRouter({
       beforeEnter: authGuard,
       children: [
         {
+          path: 'tasks/:eventId',
+          name: 'print-task',
+          component: () => import('@/views/print/PrintTaskView.vue'),
+        },
+        {
           path: 'events/:eventId',
           name: 'print-event',
           component: () => import('@/views/print/PrintEventView.vue'),
-        },
-        {
-          path: 'event-groups/:groupId',
-          name: 'print-event-group',
-          component: () => import('@/views/print/PrintEventGroupView.vue'),
         },
       ],
     },
@@ -309,6 +323,12 @@ const router = createRouter({
         },
       ],
     },
+    {
+      path: '/app/select-event',
+      name: 'select-event',
+      component: () => import('@/views/events/SelectEventView.vue'),
+      beforeEnter: authGuard,
+    },
 
     // Catch-all route - redirect to 404 in no layout
     {
@@ -320,20 +340,27 @@ const router = createRouter({
 
 const normalizeRoles = (roles: string | string[]) => (Array.isArray(roles) ? roles : [roles])
 
+// Routes that bypass the "must have a selected event" guard
+const SELECTED_EVENT_EXEMPT_ROUTES = new Set<string>([
+  'select-event',
+  'admin-events',
+  'event-settings',
+  'admin-users',
+  'admin-demo-data',
+  'settings',
+  'notification-preferences',
+  'pending-approval',
+  'changelog',
+  'preauth-changelog',
+])
+
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
-
-  console.log('Auth0 isLoading:', authStore.auth0.isLoading)
 
   // Wait for Auth0 to finish loading before checking authentication
   while (authStore.auth0.isLoading) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
-
-  console.log('Checking access for route:', to.name)
-  // print auth store authenticated status and roles
-  console.log('User is authenticated:', authStore.isAuthenticated)
-  console.log('User roles:', authStore.roles)
 
   if (authStore.isAuthenticated) {
     try {
@@ -353,6 +380,18 @@ router.beforeEach(async (to) => {
     if (authStore.isActive && to.name === 'pending-approval') {
       return { name: 'home' }
     }
+
+    // Selected-event gate: force users without a valid selection into the picker
+    const routeName = typeof to.name === 'string' ? to.name : ''
+    const isExempt = SELECTED_EVENT_EXEMPT_ROUTES.has(routeName)
+    if (authStore.isActive && !isExempt) {
+      if (!authStore.selectedEventId) {
+        return { name: 'select-event', query: { mode: 'onboarding' } }
+      }
+      if (authStore.selectedEvent?.is_expired) {
+        return { name: 'select-event', query: { mode: 'expired' } }
+      }
+    }
   }
 
   if (!to.meta.requiresRole) return true
@@ -360,10 +399,10 @@ router.beforeEach(async (to) => {
 
   const requiredRoles = normalizeRoles(to.meta.requiresRole)
   const hasRole = requiredRoles.some((role) => authStore.roles.includes(role))
-  // Scoped group managers are allowed on routes that accept event_manager
-  const groupManagerAllowed =
-    !hasRole && requiredRoles.includes('event_manager') && authStore.isGroupManager
-  if (!hasRole && !groupManagerAllowed) {
+  // Scoped event managers are allowed on routes that accept task_manager
+  const eventManagerAllowed =
+    !hasRole && requiredRoles.includes('task_manager') && authStore.isEventManager
+  if (!hasRole && !eventManagerAllowed) {
     return { name: 'home' }
   }
 

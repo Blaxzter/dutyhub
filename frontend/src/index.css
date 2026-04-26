@@ -13,6 +13,9 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-hero: var(--hero);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-speck: var(--hero-speck);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -52,6 +55,18 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
+  /* Hero surface: used for the onboarding/select-event left pane.
+     Intentionally softer than --primary so it's not pure black/white.
+     Keep chroma=0 (monochrome) for now; later swap to earthy tones. */
+  --hero: oklch(0.26 0 0);
+  --hero-foreground: oklch(0.97 0 0);
+  /* Color of the decorative bubbles/glows on the hero surface.
+     Swap freely — the hero pane picks this up via --color-hero-speck.
+     Tip: switch to oklch(L C H) if you want to tune lightness with one number,
+     e.g. oklch(69.78% 0.1211 24.37) = #df7e78 — raise L to lighten, lower to darken. */
+  --hero-speck: oklch(69.78% 0.1211 24.37);
+  /* How prominent the bubbles appear. 0% = invisible, 100% = full colour. */
+  --hero-speck-opacity: 15%;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -88,6 +103,12 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.985 0 0);
   --primary-foreground: oklch(0.205 0 0);
+  /* Hero: softer than pure-white primary; a clear light grey that still
+     contrasts with the near-black --background. */
+  --hero: oklch(0.95 0 0);
+  --hero-foreground: oklch(0.2 0 0);
+  --hero-speck: oklch(69.78% 0.1211 24.37);
+  --hero-speck-opacity: 40%;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -163,6 +184,10 @@
     --border: oklch(0.922 0 0) !important;
     --primary: oklch(0.205 0 0) !important;
     --primary-foreground: oklch(0.985 0 0) !important;
+    --hero: oklch(0.26 0 0) !important;
+    --hero-foreground: oklch(0.97 0 0) !important;
+    --hero-speck: #df7e78 !important;
+    --hero-speck-opacity: 100% !important;
     --secondary: oklch(0.97 0 0) !important;
     --secondary-foreground: oklch(0.205 0 0) !important;
     --accent: oklch(0.97 0 0) !important;

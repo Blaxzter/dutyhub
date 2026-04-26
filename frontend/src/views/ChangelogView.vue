@@ -328,4 +328,52 @@ watch(activeIndex, (index) => {
   padding: 0.125rem 0.375rem;
   border-radius: var(--radius-sm);
 }
+
+.changelog-content :deep(table) {
+  width: 100%;
+  margin: 1rem 0 1.25rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.changelog-content :deep(thead) {
+  background: var(--muted);
+}
+
+.changelog-content :deep(th) {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.changelog-content :deep(td) {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted-foreground);
+  vertical-align: top;
+}
+
+.changelog-content :deep(tbody tr:last-child td) {
+  border-bottom: 0;
+}
+
+.changelog-content :deep(tbody tr:hover) {
+  background: var(--accent);
+}
+
+.changelog-content :deep(td:first-child),
+.changelog-content :deep(th:first-child) {
+  padding-left: 1rem;
+}
+
+.changelog-content :deep(td:last-child),
+.changelog-content :deep(th:last-child) {
+  padding-right: 1rem;
+}
 </style>

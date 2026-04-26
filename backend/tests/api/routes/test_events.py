@@ -1,21 +1,20 @@
-"""Route tests for Event endpoints."""
+"""Route tests for Event and UserAvailability endpoints."""
+
+from typing import Any
 
 import pytest
-from fastapi import FastAPI
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.event import Event
-from app.models.event_group import EventGroup
-from app.models.user import User
+from app.models.user_availability import UserAvailability
 
 
 @pytest.mark.asyncio
-class TestEventsRoutes:
+class TestEventRoutes:
     """Test suite for /events/ routes."""
 
     async def test_list_events(self, async_client: AsyncClient, test_event: Event):
-        """Test listing events returns published events."""
+        """Test listing events returns published groups for normal users."""
         r = await async_client.get("/api/v1/events/")
 
         assert r.status_code == 200
@@ -23,17 +22,34 @@ class TestEventsRoutes:
         assert data["total"] >= 1
         assert any(item["name"] == test_event.name for item in data["items"])
 
-    async def test_list_events_filters_drafts_for_normal_user(
-        self, async_client: AsyncClient, test_event: Event, test_draft_event: Event
+    async def test_list_events_hides_drafts_from_normal_user(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        test_draft_event: Event,
     ):
-        """Test that normal users only see published events by default."""
+        """Test that draft groups are not visible to normal users."""
         r = await async_client.get("/api/v1/events/")
 
         assert r.status_code == 200
-        data = r.json()
-        names = [item["name"] for item in data["items"]]
+        names = [item["name"] for item in r.json()["items"]]
         assert test_event.name in names
         assert test_draft_event.name not in names
+
+    async def test_list_events_admin_sees_all(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        test_draft_event: Event,
+        as_admin: None,
+    ):
+        """Test that admins can see all groups including drafts."""
+        r = await async_client.get("/api/v1/events/")
+
+        assert r.status_code == 200
+        names = [item["name"] for item in r.json()["items"]]
+        assert test_event.name in names
+        assert test_draft_event.name in names
 
     async def test_get_event(self, async_client: AsyncClient, test_event: Event):
         """Test getting a single published event."""
@@ -41,6 +57,7 @@ class TestEventsRoutes:
 
         assert r.status_code == 200
         assert r.json()["name"] == test_event.name
+        assert r.json()["status"] == "published"
 
     async def test_draft_event_hidden_from_normal_user(
         self, async_client: AsyncClient, test_draft_event: Event
@@ -50,6 +67,25 @@ class TestEventsRoutes:
 
         assert r.status_code == 403
 
+    async def test_draft_event_accessible_to_admin(
+        self,
+        async_client: AsyncClient,
+        test_draft_event: Event,
+        as_admin: None,
+    ):
+        """Test that an admin can access a draft event."""
+        r = await async_client.get(f"/api/v1/events/{test_draft_event.id}")
+
+        assert r.status_code == 200
+        assert r.json()["status"] == "draft"
+
+    async def test_get_nonexistent_event(self, async_client: AsyncClient):
+        """Test getting a non-existent event returns 404."""
+        import uuid
+
+        r = await async_client.get(f"/api/v1/events/{uuid.uuid4()}")
+        assert r.status_code == 404
+
     async def test_create_event_as_admin(
         self, async_client: AsyncClient, as_admin: None
     ):
@@ -57,196 +93,243 @@ class TestEventsRoutes:
         r = await async_client.post(
             "/api/v1/events/",
             json={
-                "name": "Admin Event",
-                "start_date": "2026-07-01",
-                "end_date": "2026-07-03",
+                "name": "Neue Gruppe",
+                "start_date": "2026-08-01",
+                "end_date": "2026-08-07",
             },
         )
 
         assert r.status_code == 201
-        assert r.json()["name"] == "Admin Event"
+        assert r.json()["name"] == "Neue Gruppe"
         assert r.json()["status"] == "draft"
 
     async def test_update_event_as_admin(
-        self, async_client: AsyncClient, test_event: Event, as_admin: None
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        as_admin: None,
     ):
         """Test that an admin can update an event."""
         r = await async_client.patch(
             f"/api/v1/events/{test_event.id}",
-            json={"name": "Updated Event Name"},
+            json={"name": "Renamed Group"},
         )
 
         assert r.status_code == 200
-        assert r.json()["name"] == "Updated Event Name"
+        assert r.json()["name"] == "Renamed Group"
 
     async def test_delete_event_as_admin(
-        self, async_client: AsyncClient, test_event: Event, as_admin: None
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        as_admin: None,
     ):
         """Test that an admin can delete an event."""
         r = await async_client.delete(f"/api/v1/events/{test_event.id}")
-
         assert r.status_code == 204
 
-    async def test_list_events_with_search(
-        self, async_client: AsyncClient, test_event: Event
-    ):
+    async def test_search_events(self, async_client: AsyncClient, test_event: Event):
         """Test searching events by name."""
-        r = await async_client.get("/api/v1/events/", params={"search": "Pfingsten"})
+        r = await async_client.get("/api/v1/events/", params={"search": "Kirchentags"})
 
         assert r.status_code == 200
         data = r.json()
         assert data["total"] >= 1
         assert any(item["name"] == test_event.name for item in data["items"])
 
-    async def test_get_nonexistent_event(self, async_client: AsyncClient):
-        """Test getting a non-existent event returns 404."""
-        import uuid
 
-        fake_id = uuid.uuid4()
-        r = await async_client.get(f"/api/v1/events/{fake_id}")
+@pytest.mark.asyncio
+class TestAvailabilityRoutes:
+    """Test suite for /events/{id}/availability routes."""
 
+    async def test_set_availability_fully_available(
+        self, async_client: AsyncClient, test_event: Event
+    ):
+        """Test registering as fully available."""
+        r = await async_client.post(
+            f"/api/v1/events/{test_event.id}/availability",
+            json={
+                "availability_type": "fully_available",
+                "notes": "Ready!",
+                "dates": [],
+            },
+        )
+
+        assert r.status_code == 201
+        assert r.json()["availability_type"] == "fully_available"
+        assert r.json()["notes"] == "Ready!"
+        assert r.json()["available_dates"] == []
+
+    async def test_set_availability_specific_dates(
+        self, async_client: AsyncClient, test_event: Event
+    ):
+        """Test registering availability on specific dates."""
+        r = await async_client.post(
+            f"/api/v1/events/{test_event.id}/availability",
+            json={
+                "availability_type": "specific_dates",
+                "dates": ["2026-06-10", "2026-06-11"],
+            },
+        )
+
+        assert r.status_code == 201
+        assert r.json()["availability_type"] == "specific_dates"
+        assert len(r.json()["available_dates"]) == 2
+
+    async def test_set_availability_upserts(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        test_user_availability: UserAvailability,
+    ):
+        """Test that posting again updates the existing availability record."""
+        r = await async_client.post(
+            f"/api/v1/events/{test_event.id}/availability",
+            json={
+                "availability_type": "specific_dates",
+                "notes": "Updated",
+                "dates": ["2026-06-13"],
+            },
+        )
+
+        assert r.status_code == 201
+        data = r.json()
+        assert data["availability_type"] == "specific_dates"
+        assert data["notes"] == "Updated"
+        assert len(data["available_dates"]) == 1
+
+    async def test_get_my_availability(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        test_user_availability: UserAvailability,
+    ):
+        """Test retrieving the current user's availability."""
+        r = await async_client.get(f"/api/v1/events/{test_event.id}/availability/me")
+
+        assert r.status_code == 200
+        assert r.json()["availability_type"] == test_user_availability.availability_type
+        assert r.json()["user_id"] == str(test_user_availability.user_id)
+
+    async def test_get_my_availability_not_found(
+        self, async_client: AsyncClient, test_event: Event
+    ):
+        """Test that 404 is returned when no availability is registered."""
+        r = await async_client.get(f"/api/v1/events/{test_event.id}/availability/me")
         assert r.status_code == 404
 
-    async def test_create_event_with_slots(
-        self, async_client: AsyncClient, as_admin: None
+    async def test_delete_my_availability(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        test_user_availability: UserAvailability,
     ):
-        """Test creating an event with auto-generated duty slots."""
-        r = await async_client.post(
-            "/api/v1/events/with-slots",
-            json={
-                "name": "Bierstand",
-                "description": "Beer stand duty",
-                "start_date": "2026-06-01",
-                "end_date": "2026-06-02",
-                "location": "Halle A",
-                "category": "Bar",
-                "schedule": {
-                    "default_start_time": "10:00:00",
-                    "default_end_time": "12:00:00",
-                    "slot_duration_minutes": 60,
-                    "people_per_slot": 3,
-                },
-            },
+        """Test removing own availability."""
+        r = await async_client.delete(f"/api/v1/events/{test_event.id}/availability/me")
+        assert r.status_code == 204
+
+        # Confirm it's gone
+        r2 = await async_client.get(f"/api/v1/events/{test_event.id}/availability/me")
+        assert r2.status_code == 404
+
+    async def test_delete_my_availability_not_found(
+        self, async_client: AsyncClient, test_event: Event
+    ):
+        """Test that deleting non-existent availability returns 404."""
+        r = await async_client.delete(f"/api/v1/events/{test_event.id}/availability/me")
+        assert r.status_code == 404
+
+    async def test_list_availabilities_as_admin(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        test_user_availability: UserAvailability,
+        as_admin: None,
+    ):
+        """Test admin can list all availabilities for a group."""
+        r = await async_client.get(f"/api/v1/events/{test_event.id}/availabilities")
+
+        assert r.status_code == 200
+        data: list[dict[str, Any]] = r.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        assert any(
+            item["user_id"] == str(test_user_availability.user_id) for item in data
         )
 
-        assert r.status_code == 201
-        data = r.json()
-        assert data["event"]["name"] == "Bierstand"
-        assert data["event"]["location"] == "Halle A"
-        assert data["event"]["slot_duration_minutes"] == 60
-        assert data["event"]["people_per_slot"] == 3
-        assert data["duty_slots_created"] == 4  # 2 days * 2 slots/day
-        assert data["event_group"] is None
+    async def test_availability_for_nonexistent_group(self, async_client: AsyncClient):
+        """Test that posting availability for a non-existent group returns 404."""
+        import uuid
 
-    async def test_create_event_with_slots_and_new_group(
-        self, async_client: AsyncClient, as_admin: None
-    ):
-        """Test creating an event with slots and a new event group."""
         r = await async_client.post(
-            "/api/v1/events/with-slots",
-            json={
-                "name": "Weinstand",
-                "start_date": "2026-06-01",
-                "end_date": "2026-06-01",
-                "new_event_group": {
-                    "name": "Sommerfest 2026",
-                    "start_date": "2026-06-01",
-                    "end_date": "2026-06-03",
-                },
-                "schedule": {
-                    "default_start_time": "18:00:00",
-                    "default_end_time": "20:00:00",
-                    "slot_duration_minutes": 30,
-                    "people_per_slot": 2,
-                },
-            },
+            f"/api/v1/events/{uuid.uuid4()}/availability",
+            json={"availability_type": "fully_available", "dates": []},
         )
+        assert r.status_code == 404
 
-        assert r.status_code == 201
-        data = r.json()
-        assert data["event"]["name"] == "Weinstand"
-        assert data["event_group"] is not None
-        assert data["event_group"]["name"] == "Sommerfest 2026"
-        assert data["event"]["event_group_id"] == data["event_group"]["id"]
-        assert data["duty_slots_created"] == 4  # 2 hours / 30 min
-
-    async def test_create_event_with_slots_and_overrides(
-        self, async_client: AsyncClient, as_admin: None
+    async def test_availability_with_dates_returned(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        test_user_availability_with_dates: UserAvailability,
     ):
-        """Test per-date schedule overrides."""
-        r = await async_client.post(
-            "/api/v1/events/with-slots",
-            json={
-                "name": "Kasse",
-                "start_date": "2026-06-01",
-                "end_date": "2026-06-02",
-                "schedule": {
-                    "default_start_time": "10:00:00",
-                    "default_end_time": "12:00:00",
-                    "slot_duration_minutes": 60,
-                    "people_per_slot": 1,
-                    "overrides": [
-                        {
-                            "date": "2026-06-02",
-                            "start_time": "14:00:00",
-                            "end_time": "18:00:00",
-                        }
-                    ],
-                },
-            },
-        )
+        """Test that specific-date availability includes date entries in response."""
+        r = await async_client.get(f"/api/v1/events/{test_event.id}/availability/me")
 
-        assert r.status_code == 201
+        assert r.status_code == 200
         data = r.json()
-        # Day 1: 10-12 = 2 slots, Day 2: 14-18 = 4 slots
-        assert data["duty_slots_created"] == 6
+        assert data["availability_type"] == "specific_dates"
+        assert len(data["available_dates"]) == 2
+        dates = {d["slot_date"] for d in data["available_dates"]}
+        assert "2026-06-10" in dates
+        assert "2026-06-11" in dates
 
 
 @pytest.mark.asyncio
-class TestEventsEventManagerRole:
-    """Test suite verifying event_manager role access on /events/ routes."""
+class TestEventsTaskManagerRole:
+    """Test task_manager role access on /events/ routes."""
 
-    async def test_create_event_as_event_manager(
+    async def test_create_event_as_task_manager(
         self,
         async_client: AsyncClient,
-        as_event_manager: None,
+        as_task_manager: None,
     ):
-        """Test that an event_manager can create an event (no group required)."""
+        """Test that a task_manager can create an event."""
         r = await async_client.post(
             "/api/v1/events/",
             json={
-                "name": "Manager Event",
-                "start_date": "2026-08-01",
-                "end_date": "2026-08-02",
+                "name": "Manager Group",
+                "start_date": "2026-09-01",
+                "end_date": "2026-09-07",
             },
         )
 
         assert r.status_code == 201
-        assert r.json()["name"] == "Manager Event"
+        assert r.json()["name"] == "Manager Group"
 
     async def test_create_event_as_normal_user_raises_403(
         self,
         async_client: AsyncClient,
     ):
-        """Test that a plain user cannot create events without group assignment."""
+        """Test that a plain user cannot create events."""
         r = await async_client.post(
             "/api/v1/events/",
             json={
-                "name": "Unauthorized Event",
-                "start_date": "2026-08-01",
-                "end_date": "2026-08-02",
+                "name": "Unauthorized Group",
+                "start_date": "2026-09-01",
+                "end_date": "2026-09-07",
             },
         )
 
         assert r.status_code == 403
 
-    async def test_update_event_as_event_manager(
+    async def test_update_event_as_task_manager(
         self,
         async_client: AsyncClient,
         test_event: Event,
-        as_event_manager: None,
+        as_task_manager: None,
     ):
-        """Test that an event_manager can update any event."""
+        """Test that a task_manager can update any event."""
         r = await async_client.patch(
             f"/api/v1/events/{test_event.id}",
             json={"name": "Updated by Manager"},
@@ -268,13 +351,13 @@ class TestEventsEventManagerRole:
 
         assert r.status_code == 403
 
-    async def test_delete_event_as_event_manager(
+    async def test_delete_event_as_task_manager(
         self,
         async_client: AsyncClient,
         test_event: Event,
-        as_event_manager: None,
+        as_task_manager: None,
     ):
-        """Test that an event_manager can delete any event."""
+        """Test that a task_manager can delete any event."""
         r = await async_client.delete(f"/api/v1/events/{test_event.id}")
 
         assert r.status_code == 204
@@ -289,119 +372,24 @@ class TestEventsEventManagerRole:
 
         assert r.status_code == 403
 
-    async def test_scoped_manager_can_manage_own_group_event(
+    async def test_list_availabilities_as_task_manager(
         self,
         async_client: AsyncClient,
-        app: FastAPI,
-        db_session: AsyncSession,
-        test_event_manager_user: User,
-        test_event_group: EventGroup,
+        test_event: Event,
+        test_user_availability: UserAvailability,
+        as_task_manager: None,
     ):
-        """Test that a scoped group manager can edit events in their assigned group."""
-        from datetime import date
-        from typing import Any, get_args
-
-        from app.api import deps as deps_module
-        from app.crud.event_group_manager import event_group_manager as crud_egm
-        from app.models.event import Event as EventModel
-
-        # Assign test_event_manager_user as scoped manager (no global role)
-        test_event_manager_user.roles = []
-        db_session.add(test_event_manager_user)
-        await db_session.flush()
-        await crud_egm.assign(
-            db_session,
-            user_id=test_event_manager_user.id,
-            event_group_id=test_event_group.id,
-        )
-
-        # Create an event in that group
-        event = EventModel(
-            name="Group Event",
-            start_date=date(2026, 7, 1),
-            end_date=date(2026, 7, 1),
-            status="published",
-            created_by_id=test_event_manager_user.id,
-            event_group_id=test_event_group.id,
-        )
-        db_session.add(event)
-        await db_session.flush()
-        await db_session.refresh(event)
-
-        # Override deps to return the scoped user
-        user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
-        manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
-
-        async def override():
-            return test_event_manager_user
-
-        app.dependency_overrides[user_dep] = override
-        app.dependency_overrides[manager_dep] = override
-
-        r = await async_client.patch(
-            f"/api/v1/events/{event.id}", json={"name": "Renamed by Scoped Manager"}
-        )
-
-        app.dependency_overrides.pop(user_dep, None)
-        app.dependency_overrides.pop(manager_dep, None)
+        """Test that a task_manager can list availabilities for a group."""
+        r = await async_client.get(f"/api/v1/events/{test_event.id}/availabilities")
 
         assert r.status_code == 200
-        assert r.json()["name"] == "Renamed by Scoped Manager"
 
-    async def test_scoped_manager_cannot_manage_other_group_event(
+    async def test_list_availabilities_blocked_for_normal_user(
         self,
         async_client: AsyncClient,
-        app: FastAPI,
-        db_session: AsyncSession,
-        test_event_manager_user: User,
-        test_event_group: EventGroup,
-        test_draft_event_group: EventGroup,
+        test_event: Event,
     ):
-        """Test that a scoped group manager cannot edit events in another group."""
-        from datetime import date
-        from typing import Any, get_args
-
-        from app.api import deps as deps_module
-        from app.crud.event_group_manager import event_group_manager as crud_egm
-        from app.models.event import Event as EventModel
-
-        # Assign user as scoped manager for test_event_group only (no global role)
-        test_event_manager_user.roles = []
-        db_session.add(test_event_manager_user)
-        await db_session.flush()
-        await crud_egm.assign(
-            db_session,
-            user_id=test_event_manager_user.id,
-            event_group_id=test_event_group.id,
-        )
-
-        # Create event in the OTHER group
-        event = EventModel(
-            name="Other Group Event",
-            start_date=date(2026, 7, 1),
-            end_date=date(2026, 7, 1),
-            status="published",
-            created_by_id=test_event_manager_user.id,
-            event_group_id=test_draft_event_group.id,
-        )
-        db_session.add(event)
-        await db_session.flush()
-        await db_session.refresh(event)
-
-        user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
-        manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
-
-        async def override():
-            return test_event_manager_user
-
-        app.dependency_overrides[user_dep] = override
-        app.dependency_overrides[manager_dep] = override
-
-        r = await async_client.patch(
-            f"/api/v1/events/{event.id}", json={"name": "Should Fail"}
-        )
-
-        app.dependency_overrides.pop(user_dep, None)
-        app.dependency_overrides.pop(manager_dep, None)
+        """Test that a plain user cannot list all group availabilities."""
+        r = await async_client.get(f"/api/v1/events/{test_event.id}/availabilities")
 
         assert r.status_code == 403

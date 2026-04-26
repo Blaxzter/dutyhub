@@ -55,7 +55,7 @@ function onSelect(value: DateValue | undefined) {
       >
         <CalendarIcon class="mr-2 h-4 w-4 shrink-0" />
         <span class="truncate">{{
-          displayText ?? placeholder ?? t('duties.events.pickDate')
+          displayText ?? placeholder ?? t('duties.tasks.pickDate')
         }}</span>
       </Button>
     </PopoverTrigger>

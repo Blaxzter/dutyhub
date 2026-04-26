@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 
 import { defineStore } from 'pinia'
-import type { RouteLocationNormalized, RouteParamsRawGeneric } from 'vue-router'
+import type { RouteLocationNormalizedLoaded, RouteParamsRawGeneric } from 'vue-router'
 import { useRoute } from 'vue-router'
 
 export interface BreadcrumbItem {
@@ -12,37 +12,28 @@ export interface BreadcrumbItem {
   /**
    * When true, the mobile parent-link walker skips this item and looks
    * further up the chain. Useful for crumbs that represent the same
-   * routed page as the current section (e.g. a group-detail root whose
+   * routed page as the current section (e.g. a event-detail root whose
    * sub-tabs are internal sections).
    */
   mobileSkip?: boolean
 }
 
 export const useBreadcrumbStore = defineStore('breadcrumb', () => {
-  // State
   const dynamicBreadcrumbs = ref<BreadcrumbItem[]>([])
-  const currentRoute = ref<RouteLocationNormalized | null>(null)
-
-  // Set up route watcher
   const route = useRoute()
 
-  // Getters
-  const breadcrumbs = computed(() => {
-    // If dynamic breadcrumbs are set, use them
+  const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     if (dynamicBreadcrumbs.value.length > 0) {
       return dynamicBreadcrumbs.value
     }
 
-    // Otherwise, generate breadcrumbs from route meta
-    if (currentRoute.value?.meta?.breadcrumbs) {
-      return currentRoute.value.meta.breadcrumbs as BreadcrumbItem[]
+    if (route.meta?.breadcrumbs) {
+      return route.meta.breadcrumbs as BreadcrumbItem[]
     }
 
-    // Fallback: generate breadcrumbs from route path segments
-    return generateBreadcrumbsFromRoute(currentRoute.value)
+    return generateBreadcrumbsFromRoute(route)
   })
 
-  // Actions
   const setBreadcrumbs = (items: BreadcrumbItem[]) => {
     dynamicBreadcrumbs.value = items
   }
@@ -64,40 +55,20 @@ export const useBreadcrumbStore = defineStore('breadcrumb', () => {
     }
   }
 
-  const updateCurrentRoute = (route: RouteLocationNormalized) => {
-    const prevName = currentRoute.value?.name
-    currentRoute.value = route
-    // Only wipe dynamic breadcrumbs when navigating to a different route (by name).
-    // Param-only changes (e.g. /:section) keep the dynamic title intact.
-    if (
-      dynamicBreadcrumbs.value.length > 0 &&
-      route.meta?.breadcrumbs &&
-      prevName !== route.name
-    ) {
-      dynamicBreadcrumbs.value = []
-    }
-  }
-
-  // Helper function to generate breadcrumbs from route path
   const generateBreadcrumbsFromRoute = (
-    route: RouteLocationNormalized | null,
+    route: RouteLocationNormalizedLoaded,
   ): BreadcrumbItem[] => {
-    if (!route) return []
-
     const items: BreadcrumbItem[] = []
     const pathSegments = route.path.split('/').filter((segment) => segment !== '')
 
-    // Always add home
     if (route.path !== '/') {
       items.push({ title: 'Home', to: '/' })
     }
 
-    // Add segments as breadcrumbs
     let currentPath = ''
     pathSegments.forEach((segment, index) => {
       currentPath += `/${segment}`
 
-      // Skip dynamic segments like :id unless we have a way to resolve them
       if (!segment.startsWith(':')) {
         const isLast = index === pathSegments.length - 1
         const title = segment.charAt(0).toUpperCase() + segment.slice(1).replace('-', ' ')
@@ -112,31 +83,27 @@ export const useBreadcrumbStore = defineStore('breadcrumb', () => {
     return items
   }
 
+  // Clear dynamic breadcrumbs when the route name changes so top-level
+  // navigation falls back to the new route's meta.breadcrumbs.
+  // Param-only changes (e.g. section tabs on the same view) are preserved.
   watch(
-    () => route,
-    (newRoute) => {
-      if (newRoute) {
-        updateCurrentRoute(newRoute)
+    () => route.name,
+    (newName, oldName) => {
+      if (newName !== oldName && dynamicBreadcrumbs.value.length > 0) {
+        dynamicBreadcrumbs.value = []
       }
     },
-    { immediate: true, deep: true },
   )
 
   return {
-    // State
     breadcrumbs,
-    currentRoute,
-
-    // Actions
     setBreadcrumbs,
     clearBreadcrumbs,
     addBreadcrumb,
     setDynamicTitle,
-    updateCurrentRoute,
   }
 })
 
-// Extend route meta type
 declare module 'vue-router' {
   interface RouteMeta {
     breadcrumbs?: BreadcrumbItem[]

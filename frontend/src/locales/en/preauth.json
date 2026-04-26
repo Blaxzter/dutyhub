@@ -3,12 +3,12 @@
         "backToHome": "Back to Home",
         "sections": {
             "development": {
-                "description": "WirkSam is a digital duty scheduling platform for churches and communities. Organizers create events with duty slots, and volunteers book themselves in — simple, transparent, and reliable.",
+                "description": "WirkSam is a digital duty scheduling platform for churches and communities. Organizers create tasks with duty shifts, and volunteers book themselves in — simple, transparent, and reliable.",
                 "title": "How It Works"
             },
             "features": {
                 "apiIntegration": {
-                    "description": "Browse available duty slots, book with one click, and manage your commitments from anywhere.",
+                    "description": "Browse available duty shifts, book with one click, and manage your commitments from anywhere.",
                     "title": "Easy Booking"
                 },
                 "authentication": {
@@ -24,19 +24,19 @@
             "techStack": {
                 "backend": {
                     "items": {
-                        "0": "Create events (e.g. Pfingsten, Kirchentag)",
-                        "1": "Define duty slots with date, time, and location",
-                        "2": "Set how many volunteers each slot needs",
+                        "0": "Create tasks (e.g. Pfingsten, Kirchentag)",
+                        "1": "Define duty shifts with date, time, and location",
+                        "2": "Set how many volunteers each shift needs",
                         "3": "Publish when ready for booking",
                         "4": "See who's signed up at a glance",
-                        "5": "Manage bookings across all events"
+                        "5": "Manage bookings across all tasks"
                     },
                     "title": "For Organizers"
                 },
                 "frontend": {
                     "items": {
-                        "0": "Browse published events and duty slots",
-                        "1": "Book a slot with one click",
+                        "0": "Browse published tasks and duty shifts",
+                        "1": "Book a shift with one click",
                         "2": "See all your bookings in one place",
                         "3": "Cancel if your plans change",
                         "4": "Get a clear overview of availability"
@@ -57,52 +57,52 @@
     "howItWorks": {
         "backToHome": "Back to Home",
         "features": {
-            "batchSlots": {
-                "description": "Add multiple slot batches to the same event with different schedules, locations, or time ranges.",
-                "title": "Multi-Batch Slots"
+            "batchShifts": {
+                "description": "Add multiple shift batches to the same task with different schedules, locations, or time ranges.",
+                "title": "Multi-Batch Shifts"
             },
             "dryRun": {
-                "description": "Before regenerating, see exactly which slots will be added, removed, or kept — and which bookings would be affected.",
+                "description": "Before regenerating, see exactly which shifts will be added, removed, or kept — and which bookings would be affected.",
                 "title": "Dry-Run Preview"
             },
             "overrides": {
-                "description": "Need different hours on Saturday? Add schedule overrides for specific dates without changing the rest of the event.",
+                "description": "Need different hours on Saturday? Add schedule overrides for specific dates without changing the rest of the task.",
                 "title": "Per-Day Overrides"
             },
             "smartRegeneration": {
-                "description": "When you change a schedule, WirkSam matches existing slots by date and time — preserving bookings on unchanged slots.",
+                "description": "When you change a schedule, WirkSam matches existing shifts by date and time — preserving bookings on unchanged shifts.",
                 "title": "Smart Regeneration"
             },
             "title": "Advanced Capabilities"
         },
         "steps": {
             "dates": {
-                "description": "Select a single date, a continuous date range, or pick specific individual dates. If linked to an event group, dates are constrained to the group's timeframe.",
+                "description": "Select a single date, a continuous date range, or pick specific individual dates. If linked to an event, dates are constrained to the event's timeframe.",
                 "title": "2. Choose Dates"
             },
             "details": {
-                "description": "Start by giving your event a name, description, location, and category. Optionally link it to an event group like a conference or festival.",
-                "title": "1. Event Details"
+                "description": "Start by giving your task a name, description, location, and category. Optionally link it to an event like a conference or festival.",
+                "title": "1. Task Details"
             },
             "preview": {
-                "description": "See a real-time preview of all generated slots. Click any slot to exclude it before creating. The preview updates live as you adjust settings.",
+                "description": "See a real-time preview of all generated shifts. Click any shift to exclude it before creating. The preview updates live as you adjust settings.",
                 "title": "5. Preview & Exclude"
             },
             "publish": {
-                "description": "Created events start as drafts. Publish when ready so volunteers can see and book slots. Add more slot batches later or regenerate slots without losing existing bookings.",
+                "description": "Created tasks start as drafts. Publish when ready so volunteers can see and book shifts. Add more shift batches later or regenerate shifts without losing existing bookings.",
                 "title": "6. Publish & Manage"
             },
             "remainder": {
-                "description": "If the day doesn't divide evenly into slots, choose what to do with leftover time: drop it, create a shorter final slot, or extend the last slot to fill the gap.",
+                "description": "If the day doesn't divide evenly into shifts, choose what to do with leftover time: drop it, create a shorter final shift, or extend the last shift to fill the gap.",
                 "title": "4. Handle Remainders"
             },
             "schedule": {
-                "description": "Set the daily start and end times, slot duration (15 min to 2 hours), and how many volunteers each slot needs. Add per-date overrides for days with different hours.",
+                "description": "Set the daily start and end times, shift duration (15 min to 2 hours), and how many volunteers each shift needs. Add per-date overrides for days with different hours.",
                 "title": "3. Configure Schedule"
             }
         },
-        "subtitle": "A step-by-step look at how organizers create events and generate duty slots in WirkSam.",
-        "title": "How Event Creation Works"
+        "subtitle": "A step-by-step look at how organizers create tasks and generate duty shifts in WirkSam.",
+        "title": "How Task Creation Works"
     },
     "impressum": {
         "backToHome": "Back to Home",
@@ -117,7 +117,7 @@
         },
         "country": "Germany",
         "disclaimer": {
-            "content": "This is a private, non-commercial project for coordinating volunteer duty schedules at church events and community service. It is operated by a private individual.",
+            "content": "This is a private, non-commercial project for coordinating volunteer duty schedules at church tasks and community service. It is operated by a private individual.",
             "title": "Disclaimer"
         },
         "liability": {
@@ -135,10 +135,10 @@
         "title": "Legal Notice"
     },
     "landing": {
-        "authNote": "Sign in to browse events and book your duties",
+        "authNote": "Sign in to browse tasks and book your duties",
         "features": {
             "easyToUse": {
-                "description": "Browse events, pick a slot, and book — it's that simple. No spreadsheets, no confusion.",
+                "description": "Browse tasks, pick a shift, and book — it's that simple. No spreadsheets, no confusion.",
                 "title": "Easy Booking"
             },
             "fastSecure": {
@@ -147,7 +147,7 @@
             },
             "scalable": {
                 "description": "Whether it's a small gathering or a large church congress — WirkSam scales with your needs.",
-                "title": "Any Event Size"
+                "title": "Any Task Size"
             }
         },
         "getStarted": "Sign In",
@@ -160,28 +160,28 @@
                     "title": "My Bookings"
                 },
                 "dashboard": {
-                    "description": "Get a bird's-eye view of your events, bookings, and an interactive calendar — all in one place.",
+                    "description": "Get a bird's-eye view of your tasks, bookings, and an interactive calendar — all in one place.",
                     "title": "Dashboard"
                 },
                 "eventDetail": {
-                    "description": "See all available duty slots by day, book with one click, and track availability.",
-                    "title": "Event Detail"
-                },
-                "eventGroups": {
-                    "description": "Organize related events into groups like conferences or festivals for easy management.",
-                    "title": "Event Groups"
+                    "description": "See all available duty shifts by day, book with one click, and track availability.",
+                    "title": "Task Detail"
                 },
                 "events": {
-                    "description": "Browse all duty events with inline slot previews, search, and smart filters.",
-                    "title": "Events & Slots"
+                    "description": "Organize related tasks into events like conferences or festivals for easy management.",
+                    "title": "Events"
                 },
                 "notificationPreferences": {
                     "description": "Fine-tune how you receive notifications — via email, push, or Telegram — for each notification type.",
                     "title": "Notification Settings"
                 },
                 "notifications": {
-                    "description": "Stay informed with real-time notifications for bookings, events, and slot changes — right in your dashboard.",
+                    "description": "Stay informed with real-time notifications for bookings, tasks, and shift changes — right in your dashboard.",
                     "title": "Notifications"
+                },
+                "tasks": {
+                    "description": "Browse all duty tasks with inline shift previews, search, and smart filters.",
+                    "title": "Tasks & Shifts"
                 },
                 "userManagement": {
                     "description": "Admins can manage users, roles, and approval workflows from a central dashboard.",
@@ -191,7 +191,7 @@
             "subtitle": "Explore the key features that make duty scheduling effortless.",
             "title": "See WirkSam in Action"
         },
-        "subtitle": "The volunteer scheduling platform for church events and community service. Book your shifts for Pfingsten, Kirchentag, and more — effective together.",
+        "subtitle": "The volunteer scheduling platform for church tasks and community service. Book your shifts for Pfingsten, Kirchentag, and more — effective together.",
         "welcome": "Welcome to WirkSam"
     },
     "layout": {
@@ -226,7 +226,7 @@
         "dataCollected": {
             "intro": "When you create an account and use WirkSam, we process the following personal data:",
             "items": {
-                "bookings": "Booking data (which duty slots you signed up for)",
+                "bookings": "Booking data (which duty shifts you signed up for)",
                 "email": "Email address",
                 "name": "Name (as provided by your Auth0 login)",
                 "picture": "Profile picture (if provided by your login provider)"
@@ -242,8 +242,8 @@
         "purpose": {
             "items": {
                 "account": "To create and manage your user account",
-                "notifications": "To send you notifications about your bookings and events (email, push, or Telegram if configured)",
-                "scheduling": "To enable duty scheduling and slot booking",
+                "notifications": "To send you notifications about your bookings and tasks (email, push, or Telegram if configured)",
+                "scheduling": "To enable duty scheduling and shift booking",
                 "security": "To ensure the security and proper operation of the platform"
             },
             "title": "How We Use Your Data"
@@ -294,7 +294,7 @@
         },
         "backToHome": "Back to Home",
         "bookings": {
-            "description": "When you book a duty slot, you commit to being available at the scheduled time and place. If you can no longer attend, please cancel your booking as early as possible so the slot can be filled by someone else. Organizers and administrators may cancel or reassign bookings if necessary.",
+            "description": "When you book a duty shift, you commit to being available at the scheduled time and place. If you can no longer attend, please cancel your booking as early as possible so the shift can be filled by someone else. Organizers and administrators may cancel or reassign bookings if necessary.",
             "title": "Bookings & Cancellations"
         },
         "changes": {
@@ -311,7 +311,7 @@
             "title": "Limitation of Liability"
         },
         "scope": {
-            "description": "WirkSam is a free, non-commercial platform for coordinating volunteer duty schedules at church events and community service. By creating an account and using the platform, you agree to these terms.",
+            "description": "WirkSam is a free, non-commercial platform for coordinating volunteer duty schedules at church tasks and community service. By creating an account and using the platform, you agree to these terms.",
             "title": "Scope of Service"
         },
         "termination": {
@@ -324,7 +324,7 @@
             "items": {
                 "lawful": "Use the platform only for its intended purpose of volunteer duty scheduling.",
                 "noAbuse": "Not attempt to manipulate, overload, or exploit the platform.",
-                "reliable": "Honor your booked duty slots or cancel in a timely manner if you cannot attend.",
+                "reliable": "Honor your booked duty shifts or cancel in a timely manner if you cannot attend.",
                 "respectful": "Be respectful to other users and organizers."
             },
             "title": "Acceptable Use"

@@ -57,13 +57,13 @@ async function toggleGlobalChannel(
 
 // Per-type preferences (only show user-configurable types)
 const groupedTypes = computed(() => {
-  const groups: Record<string, NotificationType[]> = {}
+  const events: Record<string, NotificationType[]> = {}
   for (const type of types.value) {
     if (!type.is_user_configurable) continue
-    if (!groups[type.category]) groups[type.category] = []
-    groups[type.category].push(type)
+    if (!events[type.category]) events[type.category] = []
+    events[type.category].push(type)
   }
-  return groups
+  return events
 })
 
 function getPreference(typeId: string) {
@@ -263,7 +263,7 @@ onMounted(async () => {
     >
       <div
         v-if="autoSaveStatus === 'saving' || autoSaveStatus === 'saved'"
-        class="fixed bottom-6 left-1/2 z-50 -translate-x-1/2"
+        class="fixed bottom-24 md:bottom-6 left-1/2 z-50 -translate-x-1/2"
       >
         <div
           :class="[

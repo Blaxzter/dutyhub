@@ -158,8 +158,11 @@ class TestUserRouteHelpers:
         test_user: User,
         mock_auth0_claims: dict[str, str],
     ):
+        from fastapi import BackgroundTasks
+
         profile = await get_current_user_profile(
             user=test_user,
+            background_tasks=BackgroundTasks(),
             profile_init=None,
             session=db_session,
         )

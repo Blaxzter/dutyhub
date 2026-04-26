@@ -25,7 +25,7 @@ just dev-frontend      #   terminal 2
 
 `just test-e2e` also respects `dev_mode`: docker runs Playwright in a container, local runs `pnpm test:e2e` directly.
 
-Local URLs: frontend `http://localhost:5173`, backend `http://localhost:8000`, OpenAPI docs `http://localhost:8000/docs`
+Local URLs: frontend `http://localhost:5555`, backend `http://localhost:8787`, OpenAPI docs `http://localhost:8787/docs`
 
 ### Linting & Formatting
 
@@ -120,7 +120,7 @@ Two layouts: `PreAuthLayout` (public pages) and `PostAuthLayout` (authenticated 
 ### Frontend–Backend Connection
 
 - API base path: `/api/v1`
-- Frontend reads `VITE_API_URL` (set to `http://localhost:8000/api/v1` locally)
+- Frontend reads `VITE_API_URL` (set to `http://localhost:8787/api/v1` locally)
 - Auto-generated client in `src/client/` handles auth tokens and typed requests
 
 ## Shell Commands

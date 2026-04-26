@@ -35,9 +35,9 @@ class TestCRUDNotification:
         notif = await crud_notification.create_notification(
             db_session,
             recipient_id=test_user.id,
-            notification_type_code="slot.time_changed",
-            title="Slot Changed",
-            body="The slot time changed.",
+            notification_type_code="shift.time_changed",
+            title="Shift Changed",
+            body="The shift time changed.",
             data={"slot_id": "abc123"},
             channels_sent=["email"],
             channels_failed=["push"],

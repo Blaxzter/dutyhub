@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { Ban, UserCheck } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
+import { avatarUrlFor } from '@/composables/useAvatarUrl'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import Badge from '@/components/ui/badge/Badge.vue'
@@ -23,7 +24,7 @@ const emit = defineEmits<{
   toggleActive: [user: UserRead]
   reject: [user: UserRead]
   toggleAdmin: [user: UserRead]
-  toggleEventManager: [user: UserRead]
+  toggleTaskManager: [user: UserRead]
   delete: [user: UserRead]
 }>()
 
@@ -65,7 +66,11 @@ const formatDate = (iso: string) =>
         <CardContent class="space-y-4 p-4">
           <div class="flex items-start gap-3">
             <Avatar class="h-10 w-10 rounded-sm">
-              <AvatarImage v-if="user.picture" :src="user.picture" :alt="user.name ?? ''" />
+              <AvatarImage
+              v-if="avatarUrlFor(user)"
+              :src="avatarUrlFor(user)!"
+              :alt="user.name ?? ''"
+            />
               <AvatarFallback class="rounded-sm text-sm">{{ getInitials(user) }}</AvatarFallback>
             </Avatar>
             <div class="min-w-0 flex-1 space-y-1">
@@ -107,7 +112,11 @@ const formatDate = (iso: string) =>
           class="flex items-center gap-3 p-3"
         >
           <Avatar class="h-9 w-9 shrink-0 rounded-sm">
-            <AvatarImage v-if="user.picture" :src="user.picture" :alt="user.name ?? ''" />
+            <AvatarImage
+              v-if="avatarUrlFor(user)"
+              :src="avatarUrlFor(user)!"
+              :alt="user.name ?? ''"
+            />
             <AvatarFallback class="rounded-sm text-xs">{{ getInitials(user) }}</AvatarFallback>
           </Avatar>
           <div class="min-w-0 flex-1">
@@ -125,7 +134,7 @@ const formatDate = (iso: string) =>
             @toggle-active="emit('toggleActive', $event)"
             @reject="emit('reject', $event)"
             @toggle-admin="emit('toggleAdmin', $event)"
-            @toggle-event-manager="emit('toggleEventManager', $event)"
+            @toggle-task-manager="emit('toggleTaskManager', $event)"
             @delete="emit('delete', $event)"
           />
         </div>
@@ -140,7 +149,11 @@ const formatDate = (iso: string) =>
           class="flex items-start gap-3 p-3"
         >
           <Avatar class="h-9 w-9 shrink-0 rounded-sm opacity-60">
-            <AvatarImage v-if="user.picture" :src="user.picture" :alt="user.name ?? ''" />
+            <AvatarImage
+              v-if="avatarUrlFor(user)"
+              :src="avatarUrlFor(user)!"
+              :alt="user.name ?? ''"
+            />
             <AvatarFallback class="rounded-sm text-xs">{{ getInitials(user) }}</AvatarFallback>
           </Avatar>
           <div class="min-w-0 flex-1">
@@ -159,7 +172,7 @@ const formatDate = (iso: string) =>
             @toggle-active="emit('toggleActive', $event)"
             @reject="emit('reject', $event)"
             @toggle-admin="emit('toggleAdmin', $event)"
-            @toggle-event-manager="emit('toggleEventManager', $event)"
+            @toggle-task-manager="emit('toggleTaskManager', $event)"
             @delete="emit('delete', $event)"
           />
         </div>

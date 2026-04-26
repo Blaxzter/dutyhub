@@ -10,7 +10,7 @@ from sqlmodel import col
 from app.core.config import settings
 from app.core.db import async_session
 from app.crud.user import user as crud_user
-from app.models.event_group_manager import EventGroupManager
+from app.models.event_manager import EventManager
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -95,10 +95,6 @@ async def get_or_create_user(
                 dirty = True
         # Sync profile data from Auth0 on each login
         if profile_data:
-            picture = profile_data.get("picture")
-            if picture and picture != user.picture:
-                user.picture = picture
-                dirty = True
             ev = profile_data.get("email_verified")
             if ev is not None and bool(ev) != user.email_verified:
                 user.email_verified = bool(ev)
@@ -111,13 +107,11 @@ async def get_or_create_user(
     # Use profile_data from frontend if available, fallback to claims
     email: str | None = None
     name: str | None = None
-    picture: str | None = None
     email_verified: bool = False
     preferred_language: str = "en"
     if profile_data:
         email = profile_data.get("email")
         name = profile_data.get("name") or profile_data.get("nickname")
-        picture = profile_data.get("picture")
         email_verified = bool(profile_data.get("email_verified"))
         preferred_language = profile_data.get("preferred_language") or "en"
 
@@ -126,8 +120,6 @@ async def get_or_create_user(
         email = claims.get("email")
     if not name:
         name = claims.get("name") or claims.get("nickname")
-    if not picture:
-        picture = claims.get("picture")
 
     is_superadmin = bool(
         email and email in [str(e) for e in settings.SUPERADMIN_EMAILS]
@@ -136,7 +128,6 @@ async def get_or_create_user(
         auth0_sub=auth0_sub,
         email=email,
         name=name,
-        picture=picture,
         email_verified=email_verified,
         roles=["admin"] if is_superadmin else [],
         is_active=is_superadmin,
@@ -172,10 +163,10 @@ def current_user(
     any_of_roles_list = _normalize_required_roles(any_of_roles)
 
     async def _is_any_group_manager(session: AsyncSession, user: User) -> bool:
-        """Check if user manages at least one event group."""
+        """Check if user manages at least one event."""
         result = await session.execute(
-            select(col(EventGroupManager.id))
-            .where(col(EventGroupManager.user_id) == user.id)
+            select(col(EventManager.id))
+            .where(col(EventManager.user_id) == user.id)
             .limit(1)
         )
         return result.scalar_one_or_none() is not None
@@ -241,12 +232,12 @@ def current_user(
 CurrentUser = Annotated[User, Depends(current_user())]
 CurrentSuperuser = Annotated[User, Depends(current_user("admin"))]
 CurrentGlobalManager = Annotated[
-    User, Depends(current_user(any_of_roles=["admin", "event_manager"]))
+    User, Depends(current_user(any_of_roles=["admin", "task_manager"]))
 ]
 CurrentManager = Annotated[
     User,
     Depends(
-        current_user(any_of_roles=["admin", "event_manager"], allow_group_managers=True)
+        current_user(any_of_roles=["admin", "task_manager"], allow_group_managers=True)
     ),
 ]
 AnyUser = Annotated[User, Depends(current_user(require_active=False))]

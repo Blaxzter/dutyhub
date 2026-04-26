@@ -4,31 +4,31 @@ import uuid
 from pydantic import BaseModel
 
 
-class SidebarEventGroup(BaseModel):
-    id: uuid.UUID
-    name: str
-    status: str = "published"
-
-
 class SidebarEvent(BaseModel):
     id: uuid.UUID
     name: str
     status: str = "published"
-    open_slots: int
-    next_slot_date: dt.date | None = None
-    next_slot_start_time: dt.time | None = None
+
+
+class SidebarTask(BaseModel):
+    id: uuid.UUID
+    name: str
+    status: str = "published"
+    open_shifts: int
+    next_shift_date: dt.date | None = None
+    next_shift_start_time: dt.time | None = None
 
 
 class SidebarBooking(BaseModel):
     id: uuid.UUID
     slot_id: uuid.UUID
-    event_id: uuid.UUID
+    task_id: uuid.UUID
     slot_title: str
     slot_date: dt.date
     slot_start_time: dt.time | None = None
 
 
 class SidebarResponse(BaseModel):
-    event_groups: list[SidebarEventGroup]
     events: list[SidebarEvent]
+    tasks: list[SidebarTask]
     bookings: list[SidebarBooking]

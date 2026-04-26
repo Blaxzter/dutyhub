@@ -141,13 +141,24 @@
                         "placeholder": "+49 123 456789"
                     },
                     "picture": {
-                        "description": "URL to your profile picture. Must be a valid image URL.",
-                        "label": "Profile Picture URL",
-                        "placeholder": "https://example.com/your-picture.jpg"
+                        "cropper": {
+                            "confirm": "Use this crop",
+                            "description": "Drag and resize the square to frame the area you want. Use the buttons below to rotate.",
+                            "reset": "Reset",
+                            "rotateLeft": "Rotate left",
+                            "rotateRight": "Rotate right",
+                            "title": "Adjust your profile picture"
+                        },
+                        "description": "PNG, JPEG, WebP, or GIF (first frame) up to 5 MB. We resize and store a small WebP locally.",
+                        "label": "Profile Picture",
+                        "remove": "Remove",
+                        "removeSuccess": "Profile picture removed.",
+                        "upload": "Upload picture",
+                        "uploadSuccess": "Profile picture updated.",
+                        "uploading": "Uploading..."
                     }
                 },
-                "providerLimitation": "Profile picture changes are not available for {provider} accounts. Please update your profile picture through your {provider} account settings.",
-                "subtitle": "Update your profile information. Changes will be processed through Auth0.",
+                "subtitle": "Update your profile information.",
                 "success": "Profile updated successfully!",
                 "title": "Update Profile"
             }

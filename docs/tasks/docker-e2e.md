@@ -15,11 +15,11 @@ Instead of running Playwright inside a Docker container (`docker compose run --r
 ```
 Host machine                         Docker (wirksam-e2e)
 ┌──────────────────┐                ┌────────────────────────┐
-│  Playwright       │───:5173──────▶│  frontend (Vite dev)   │
+│  Playwright       │───:5555──────▶│  frontend (Vite dev)   │
 │  (npx playwright) │               │  VITE_E2E_AUTH_BYPASS  │
 │                   │               └────────────────────────┘
 │  Fixtures call    │               ┌────────────────────────┐
-│  /testing/seed    │───:8000──────▶│  backend (FastAPI)     │
+│  /testing/seed    │───:8787──────▶│  backend (FastAPI)     │
 │  /testing/reset   │               │  TESTING=true          │
 │                   │               └───────────┬────────────┘
 │                   │               ┌───────────▼────────────┐
@@ -30,7 +30,7 @@ Host machine                         Docker (wirksam-e2e)
 └──────────────────┘               └────────────────────────┘
 ```
 
-The browser (launched by Playwright on the host) loads `http://localhost:5173` (Docker frontend), which makes API calls to `http://localhost:8000/api/v1` (Docker backend). Playwright's `reuseExistingServer: true` detects the Docker frontend on port 5173 and skips starting its own dev server.
+The browser (launched by Playwright on the host) loads `http://localhost:5555` (Docker frontend), which makes API calls to `http://localhost:8787/api/v1` (Docker backend). Playwright's `reuseExistingServer: true` detects the Docker frontend on port 5555 and skips starting its own dev server.
 
 ## Files
 
@@ -97,7 +97,7 @@ just e2e-down
 just e2e-up
 
 # Run headed so you can watch the browser
-cd frontend && VITE_E2E_AUTH_BYPASS=true VITE_API_URL=http://localhost:8000/api/v1 \
+cd frontend && VITE_E2E_AUTH_BYPASS=true VITE_API_URL=http://localhost:8787/api/v1 \
   npx playwright test tests/authenticated/flaky.spec.ts --headed --retries=0
 
 just e2e-down
@@ -112,10 +112,10 @@ just e2e-down
 3. **Start**: `docker compose up -d`
 4. **Health checks**:
    - PostgreSQL: polls `docker compose ps db` until health status is "healthy"
-   - Backend: polls `GET http://localhost:8000/api/v1/healthz` (up to 40 attempts, 10s apart)
-   - Frontend: polls `GET http://localhost:5173` (up to 20 attempts, 5s apart)
+   - Backend: polls `GET http://localhost:8787/api/v1/healthz` (up to 40 attempts, 10s apart)
+   - Frontend: polls `GET http://localhost:5555` (up to 20 attempts, 5s apart)
 5. **Tests**: Runs `npx playwright test` from `frontend/` with env vars:
-   - `VITE_API_URL=http://localhost:8000/api/v1`
+   - `VITE_API_URL=http://localhost:8787/api/v1`
    - `VITE_E2E_AUTH_BYPASS=true`
    - `PLAYWRIGHT_HTML_OPEN=never`
 6. **Log collection**: Saves each service's logs to `e2e-logs/<timestamp>/`
@@ -137,7 +137,7 @@ The database uses `tmpfs` instead of a named volume — data lives in RAM and is
 | Problem | Fix |
 |---|---|
 | `.env file not found` | Copy `.env.example` to `.env` and fill in Auth0 values |
-| Port 8000/5173 already in use | Stop your local dev servers or the dev Docker stack first |
+| Port 8787/5555 already in use | Stop your local dev servers or the dev Docker stack first |
 | Backend never becomes healthy | Check `just e2e-logs backend` and `just e2e-logs prestart` for migration errors |
 | Tests pass locally but fail in Docker | Check if tests depend on local filesystem state or non-deterministic ordering |
 | Stale images after code changes | Run `just e2e` (builds by default) or `just e2e-down` then `just e2e` |

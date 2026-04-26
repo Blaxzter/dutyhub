@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.booking_reminder import booking_reminder as crud_reminder
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 from app.models.user import User
 
 
@@ -20,15 +20,15 @@ class TestCRUDBookingReminder:
         db_session: AsyncSession,
         test_booking: Booking,
         test_user: User,
-        test_duty_slot: DutySlot,
+        test_shift: Shift,
     ):
-        """Test creating a reminder for a future slot."""
+        """Test creating a reminder for a future shift."""
         slot_start = dt.datetime(2030, 6, 1, 10, 0)
         reminder = await crud_reminder.create_reminder(
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=30,
             slot_start=slot_start,
         )
@@ -42,15 +42,15 @@ class TestCRUDBookingReminder:
         db_session: AsyncSession,
         test_booking: Booking,
         test_user: User,
-        test_duty_slot: DutySlot,
+        test_shift: Shift,
     ):
-        """Test creating a reminder for a past slot marks it expired."""
+        """Test creating a reminder for a past shift marks it expired."""
         slot_start = dt.datetime(2020, 1, 1, 10, 0)
         reminder = await crud_reminder.create_reminder(
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=30,
             slot_start=slot_start,
         )
@@ -62,7 +62,7 @@ class TestCRUDBookingReminder:
         db_session: AsyncSession,
         test_booking: Booking,
         test_user: User,
-        test_duty_slot: DutySlot,
+        test_shift: Shift,
     ):
         """Test creating a reminder with custom channels."""
         slot_start = dt.datetime(2030, 6, 1, 10, 0)
@@ -70,7 +70,7 @@ class TestCRUDBookingReminder:
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=60,
             slot_start=slot_start,
             channels=["email", "push"],
@@ -83,7 +83,7 @@ class TestCRUDBookingReminder:
         db_session: AsyncSession,
         test_booking: Booking,
         test_user: User,
-        test_duty_slot: DutySlot,
+        test_shift: Shift,
     ):
         """Test getting reminders for a booking."""
         slot_start = dt.datetime(2030, 6, 1, 10, 0)
@@ -91,7 +91,7 @@ class TestCRUDBookingReminder:
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=30,
             slot_start=slot_start,
         )
@@ -99,7 +99,7 @@ class TestCRUDBookingReminder:
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=60,
             slot_start=slot_start,
         )
@@ -116,7 +116,7 @@ class TestCRUDBookingReminder:
         db_session: AsyncSession,
         test_booking: Booking,
         test_user: User,
-        test_duty_slot: DutySlot,
+        test_shift: Shift,
     ):
         """Test counting pending reminders for a booking."""
         slot_start = dt.datetime(2030, 6, 1, 10, 0)
@@ -124,7 +124,7 @@ class TestCRUDBookingReminder:
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=30,
             slot_start=slot_start,
         )
@@ -139,7 +139,7 @@ class TestCRUDBookingReminder:
         db_session: AsyncSession,
         test_booking: Booking,
         test_user: User,
-        test_duty_slot: DutySlot,
+        test_shift: Shift,
     ):
         """Test cancelling all pending reminders for a booking."""
         slot_start = dt.datetime(2030, 6, 1, 10, 0)
@@ -147,7 +147,7 @@ class TestCRUDBookingReminder:
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=30,
             slot_start=slot_start,
         )
@@ -155,7 +155,7 @@ class TestCRUDBookingReminder:
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=60,
             slot_start=slot_start,
         )
@@ -175,7 +175,7 @@ class TestCRUDBookingReminder:
         db_session: AsyncSession,
         test_booking: Booking,
         test_user: User,
-        test_duty_slot: DutySlot,
+        test_shift: Shift,
     ):
         """Test marking a reminder as sent."""
         slot_start = dt.datetime(2030, 6, 1, 10, 0)
@@ -183,7 +183,7 @@ class TestCRUDBookingReminder:
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             offset_minutes=30,
             slot_start=slot_start,
         )
@@ -201,7 +201,7 @@ class TestCRUDBookingReminder:
         db_session: AsyncSession,
         test_booking: Booking,
         test_user: User,
-        test_duty_slot: DutySlot,
+        test_shift: Shift,
     ):
         """Test creating reminders from default offsets."""
         from app.schemas.booking_reminder import ReminderOffsetEntry
@@ -216,7 +216,7 @@ class TestCRUDBookingReminder:
             db_session,
             booking_id=test_booking.id,
             user_id=test_user.id,
-            duty_slot_id=test_duty_slot.id,
+            shift_id=test_shift.id,
             slot_start=slot_start,
             defaults=defaults,
         )

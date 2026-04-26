@@ -218,7 +218,7 @@ class TestCRUDNotificationSubscription:
         prefs = [
             NotificationSubscriptionCreate(
                 notification_type_id=nt.id,
-                scope_type="event_group",
+                scope_type="event",
                 scope_id=scope_id,
                 email_enabled=False,
             )
@@ -228,5 +228,5 @@ class TestCRUDNotificationSubscription:
         )
 
         assert len(results) == 1
-        assert results[0].scope_type == "event_group"
+        assert results[0].scope_type == "event"
         assert results[0].scope_id == scope_id

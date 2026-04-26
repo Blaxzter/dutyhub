@@ -7,7 +7,7 @@ from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.booking_reminder import booking_reminder as crud_reminder
-from app.crud.duty_slot import duty_slot as crud_duty_slot
+from app.crud.shift import shift as crud_shift
 from app.models.booking_reminder import BookingReminder
 from app.schemas.booking_reminder import (
     MAX_REMINDERS_PER_BOOKING,
@@ -102,8 +102,10 @@ async def add_booking_reminder(
             code="reminder.booking_not_confirmed",
             detail="Booking is not confirmed",
         )
-    if not db_booking.duty_slot_id:
-        raise_problem(400, code="reminder.no_slot", detail="Booking has no linked slot")
+    if not db_booking.shift_id:
+        raise_problem(
+            400, code="reminder.no_shift", detail="Booking has no linked shift"
+        )
 
     # Check max reminders
     count = await crud_reminder.count_by_booking(session, booking_id=booking_id)
@@ -114,18 +116,18 @@ async def add_booking_reminder(
             detail=f"Maximum {MAX_REMINDERS_PER_BOOKING} reminders per booking",
         )
 
-    slot = await crud_duty_slot.get(
-        session, str(db_booking.duty_slot_id), raise_404_error=True
+    shift = await crud_shift.get(
+        session, str(db_booking.shift_id), raise_404_error=True
     )
 
-    # Compute slot start datetime
-    slot_start = _slot_start_datetime(slot.date, slot.start_time)
+    # Compute shift start datetime
+    slot_start = _shift_start_datetime(shift.date, shift.start_time)
 
     return await crud_reminder.create_reminder(
         session,
         booking_id=booking_id,
         user_id=current_user.id,
-        duty_slot_id=slot.id,
+        shift_id=shift.id,
         offset_minutes=body.offset_minutes,
         slot_start=slot_start,
         channels=body.channels,
@@ -151,10 +153,10 @@ async def delete_reminder(
     await session.delete(reminder)
 
 
-def _slot_start_datetime(
+def _shift_start_datetime(
     slot_date: dt.date, slot_start_time: dt.time | None
 ) -> dt.datetime:
-    """Combine slot date + time into a naive UTC datetime."""
+    """Combine shift date + time into a naive UTC datetime."""
     if slot_start_time:
         return dt.datetime.combine(slot_date, slot_start_time)
     # If no start time, default to start of day

@@ -1,4 +1,5 @@
 import datetime as dt
+import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Query
 from sqlalchemy import func, select
@@ -8,22 +9,23 @@ from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.booking_reminder import booking_reminder as crud_reminder
-from app.crud.duty_slot import duty_slot as crud_duty_slot
+from app.crud.shift import shift as crud_shift
+from app.logic.event_scope import get_user_event_scope
 from app.logic.notifications.triggers import (
     dispatch_booking_cancelled_by_user,
     dispatch_booking_cobooked,
     dispatch_booking_confirmed,
 )
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
+from app.models.shift import Shift
 from app.schemas.booking import (
     BookingBase,
     BookingCreate,
     BookingRead,
-    BookingReadWithSlot,
+    BookingReadWithShift,
     BookingUpdate,
-    DutySlotSummary,
     MyBookingsListResponse,
+    ShiftSummary,
 )
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -38,17 +40,28 @@ async def list_my_bookings(
     status: str | None = None,
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
+    event_id: uuid.UUID | None = Query(default=None),
+    all_events: bool = Query(default=False),
 ) -> MyBookingsListResponse:
-    """List the current user's bookings with joined slot + event data."""
+    """List the current user's bookings with joined shift + task data.
+
+    Defaults to scoping by the user's selected event. Pass ``all_events=true``
+    to opt out of scoping (e.g. archived-bookings view).
+    """
+    effective_event_id = event_id
+    if effective_event_id is None and not all_events:
+        effective_event_id = get_user_event_scope(current_user)
+
     items = await crud_booking.get_multi_by_user(
         session,
         user_id=current_user.id,
         skip=skip,
         limit=limit,
         status=status,
-        with_slot=True,
+        with_shift=True,
         date_from=date_from,
         date_to=date_to,
+        event_id=effective_event_id,
     )
     total = await crud_booking.count_by_user(
         session,
@@ -56,17 +69,16 @@ async def list_my_bookings(
         status=status,
         date_from=date_from,
         date_to=date_to,
+        event_id=effective_event_id,
     )
 
-    enriched: list[BookingReadWithSlot] = []
+    enriched: list[BookingReadWithShift] = []
     for b in items:
-        bws = BookingReadWithSlot.model_validate(b)
-        if b.duty_slot is not None:
-            slot_summary = DutySlotSummary.model_validate(b.duty_slot)
-            slot_summary.event_name = (
-                b.duty_slot.event.name if b.duty_slot.event else None
-            )
-            bws.duty_slot = slot_summary
+        bws = BookingReadWithShift.model_validate(b)
+        if b.shift is not None:
+            slot_summary = ShiftSummary.model_validate(b.shift)
+            slot_summary.task_name = b.shift.task.name if b.shift.task else None
+            bws.shift = slot_summary
         enriched.append(bws)
 
     return MyBookingsListResponse(
@@ -84,17 +96,17 @@ async def my_booking_active_dates(
     date_from: dt.date = Query(...),
     date_to: dt.date = Query(...),
 ) -> list[dt.date]:
-    """Return distinct slot dates within a range where the user has confirmed bookings."""
+    """Return distinct shift dates within a range where the user has confirmed bookings."""
     query = (
-        select(func.distinct(col(DutySlot.date)))
-        .join(Booking, col(Booking.duty_slot_id) == col(DutySlot.id))
+        select(func.distinct(col(Shift.date)))
+        .join(Booking, col(Booking.shift_id) == col(Shift.id))
         .where(
             col(Booking.user_id) == current_user.id,
             col(Booking.status) == "confirmed",
-            col(DutySlot.date) >= date_from,
-            col(DutySlot.date) <= date_to,
+            col(Shift.date) >= date_from,
+            col(Shift.date) <= date_to,
         )
-        .order_by(col(DutySlot.date))
+        .order_by(col(Shift.date))
     )
     result = await session.execute(query)
     return [row[0] for row in result.all()]
@@ -107,32 +119,30 @@ async def create_booking(
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
 ) -> Booking:
-    """Book a duty slot for the current user."""
-    slot = await crud_duty_slot.get(
-        session, str(booking_in.duty_slot_id), raise_404_error=True
+    """Book a duty shift for the current user."""
+    shift = await crud_shift.get(
+        session, str(booking_in.shift_id), raise_404_error=True
     )
 
-    existing = await crud_booking.get_by_slot_and_user(
-        session, duty_slot_id=slot.id, user_id=current_user.id
+    existing = await crud_booking.get_by_shift_and_user(
+        session, shift_id=shift.id, user_id=current_user.id
     )
     if existing and existing.status == "confirmed":
         raise_problem(
             409,
             code="booking.already_exists",
-            detail="You already have a confirmed booking for this slot",
+            detail="You already have a confirmed booking for this shift",
         )
 
-    confirmed_count = await crud_booking.get_confirmed_count(
-        session, duty_slot_id=slot.id
-    )
-    if confirmed_count >= slot.max_bookings:
+    confirmed_count = await crud_booking.get_confirmed_count(session, shift_id=shift.id)
+    if confirmed_count >= shift.max_bookings:
         raise_problem(
-            409, code="booking.slot_full", detail="This duty slot is fully booked"
+            409, code="booking.slot_full", detail="This duty shift is fully booked"
         )
 
     # Collect existing confirmed bookers for co-booking notification
-    existing_bookings = await crud_booking.get_multi_by_slot(
-        session, duty_slot_id=slot.id, status="confirmed"
+    existing_bookings = await crud_booking.get_multi_by_shift(
+        session, shift_id=shift.id, status="confirmed"
     )
     existing_user_ids = [
         b.user_id for b in existing_bookings if b.user_id != current_user.id
@@ -147,51 +157,51 @@ async def create_booking(
         )
     else:
         full_booking = BookingBase(
-            duty_slot_id=booking_in.duty_slot_id,
+            shift_id=booking_in.shift_id,
             user_id=current_user.id,
             notes=booking_in.notes,
         )
         result = await crud_booking.create(session, obj_in=full_booking)  # type: ignore[arg-type]
 
-    # Load event name for richer notification
-    from app.crud.event import event as crud_event
+    # Load task name for richer notification
+    from app.crud.task import task as crud_task
 
-    event = await crud_event.get(session, str(slot.event_id))
-    event_name = event.name if event else None
+    task = await crud_task.get(session, str(shift.task_id))
+    task_name = task.name if task else None
 
     # Dispatch notifications
     background_tasks.add_task(
         dispatch_booking_confirmed,
         booking_id=result.id,
         user_id=current_user.id,
-        slot_title=slot.title,
-        slot_date=slot.date,
-        slot_start_time=slot.start_time,
-        slot_end_time=slot.end_time,
-        slot_location=slot.location,
-        event_name=event_name,
-        slot_id=slot.id,
-        event_id=slot.event_id,
-        event_group_id=event.event_group_id if event else None,
+        slot_title=shift.title,
+        slot_date=shift.date,
+        slot_start_time=shift.start_time,
+        slot_end_time=shift.end_time,
+        slot_location=shift.location,
+        task_name=task_name,
+        slot_id=shift.id,
+        task_id=shift.task_id,
+        event_id=task.event_id if task else None,
     )
     if existing_user_ids:
         background_tasks.add_task(
             dispatch_booking_cobooked,
-            slot_id=slot.id,
-            slot_title=slot.title,
-            event_id=slot.event_id,
+            slot_id=shift.id,
+            slot_title=shift.title,
+            task_id=shift.task_id,
             new_user_name=current_user.name,
             existing_user_ids=existing_user_ids,
         )
 
     # Create default reminders for this booking
     if current_user.default_reminder_offsets:
-        slot_start = _slot_start_datetime(slot.date, slot.start_time)
+        slot_start = _shift_start_datetime(shift.date, shift.start_time)
         await crud_reminder.create_from_defaults(
             session,
             booking_id=result.id,
             user_id=current_user.id,
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             slot_start=slot_start,
             defaults=current_user.default_reminder_offsets,
         )
@@ -254,16 +264,16 @@ async def cancel_booking(
     await crud_reminder.cancel_by_booking(session, booking_id=db_booking.id)
 
     # Dispatch cancellation notification
-    if db_booking.duty_slot_id:
-        slot = await crud_duty_slot.get(session, str(db_booking.duty_slot_id))
-        if slot:
+    if db_booking.shift_id:
+        shift = await crud_shift.get(session, str(db_booking.shift_id))
+        if shift:
             background_tasks.add_task(
                 dispatch_booking_cancelled_by_user,
                 booking_id=result.id,
                 user_id=db_booking.user_id,
-                slot_title=slot.title,
-                slot_id=slot.id,
-                event_id=slot.event_id,
+                slot_title=shift.title,
+                slot_id=shift.id,
+                task_id=shift.task_id,
             )
 
     return result
@@ -293,10 +303,10 @@ async def dismiss_booking(
     await session.commit()
 
 
-def _slot_start_datetime(
+def _shift_start_datetime(
     slot_date: dt.date, slot_start_time: dt.time | None
 ) -> dt.datetime:
-    """Combine slot date + time into a naive UTC datetime."""
+    """Combine shift date + time into a naive UTC datetime."""
     if slot_start_time:
         return dt.datetime.combine(slot_date, slot_start_time)
     return dt.datetime.combine(slot_date, dt.time(0, 0))

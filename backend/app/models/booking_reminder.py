@@ -10,7 +10,7 @@ from app.models.base import Base
 
 if TYPE_CHECKING:
     from app.models.booking import Booking
-    from app.models.duty_slot import DutySlot
+    from app.models.shift import Shift
     from app.models.user import User
 
 
@@ -48,14 +48,14 @@ class BookingReminder(Base, table=True):
         ),
         description="Denormalized for fast per-user queries",
     )
-    duty_slot_id: uuid.UUID | None = Field(
+    shift_id: uuid.UUID | None = Field(
         default=None,
         sa_column=sa.Column(
             sa.Uuid,
-            sa.ForeignKey("duty_slots.id", ondelete="SET NULL"),
+            sa.ForeignKey("shifts.id", ondelete="SET NULL"),
             nullable=True,
         ),
-        description="For joining to slot start times; nullable if slot deleted",
+        description="For joining to shift start times; nullable if shift deleted",
     )
 
     remind_at: dt.datetime = Field(
@@ -64,7 +64,7 @@ class BookingReminder(Base, table=True):
     )
     offset_minutes: int = Field(
         sa_column=sa.Column(sa.Integer, nullable=False),
-        description="Minutes before slot start (e.g. 15, 60, 1440)",
+        description="Minutes before shift start (e.g. 15, 60, 1440)",
     )
     status: str = Field(
         default="pending",
@@ -79,4 +79,4 @@ class BookingReminder(Base, table=True):
 
     booking: Optional["Booking"] = Relationship()
     user: Optional["User"] = Relationship()
-    duty_slot: Optional["DutySlot"] = Relationship()
+    shift: Optional["Shift"] = Relationship()

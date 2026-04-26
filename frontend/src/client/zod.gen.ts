@@ -14,24 +14,38 @@ export const zAffectedBookingInfo = z.object({
 })
 
 /**
+ * AvatarUploadResponse
+ */
+export const zAvatarUploadResponse = z.object({
+  etag: z.string(),
+})
+
+/**
+ * Body_users-upload_my_avatar
+ */
+export const zBodyUsersUploadMyAvatar = z.object({
+  file: z.string(),
+})
+
+/**
  * BookingCreate
  *
- * User only provides the slot and optional notes. user_id is set server-side.
+ * User only provides the shift and optional notes. user_id is set server-side.
  */
 export const zBookingCreate = z
   .object({
-    duty_slot_id: z.uuid(),
+    shift_id: z.uuid(),
     notes: z.string().nullish(),
   })
   .register(z.globalRegistry, {
-    description: 'User only provides the slot and optional notes. user_id is set server-side.',
+    description: 'User only provides the shift and optional notes. user_id is set server-side.',
   })
 
 /**
  * BookingRead
  */
 export const zBookingRead = z.object({
-  duty_slot_id: z.uuid().nullish(),
+  shift_id: z.uuid().nullish(),
   user_id: z.uuid(),
   status: z.enum(['confirmed', 'cancelled']).optional().default('confirmed'),
   notes: z.string().nullish(),
@@ -39,11 +53,11 @@ export const zBookingRead = z.object({
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
   cancellation_reason: z.string().nullish(),
-  cancelled_slot_title: z.string().nullish(),
-  cancelled_slot_date: z.iso.date().nullish(),
-  cancelled_slot_start_time: z.iso.time().nullish(),
-  cancelled_slot_end_time: z.iso.time().nullish(),
-  cancelled_event_name: z.string().nullish(),
+  cancelled_shift_title: z.string().nullish(),
+  cancelled_shift_date: z.iso.date().nullish(),
+  cancelled_shift_start_time: z.iso.time().nullish(),
+  cancelled_shift_end_time: z.iso.time().nullish(),
+  cancelled_task_name: z.string().nullish(),
 })
 
 /**
@@ -151,7 +165,7 @@ export const zCategoryBreakdown = z.object({
 /**
  * DashboardBookingItem
  *
- * Booking with inline slot info for calendar display — avoids N+1.
+ * Booking with inline shift info for calendar display — avoids N+1.
  */
 export const zDashboardBookingItem = z
   .object({
@@ -163,7 +177,7 @@ export const zDashboardBookingItem = z
     end_time: z.iso.time().nullish(),
   })
   .register(z.globalRegistry, {
-    description: 'Booking with inline slot info for calendar display — avoids N+1.',
+    description: 'Booking with inline shift info for calendar display — avoids N+1.',
   })
 
 /**
@@ -175,9 +189,6 @@ export const zDashboardEvent = z
   .object({
     id: z.uuid(),
     name: z.string(),
-    status: z.string(),
-    description: z.string().nullish(),
-    location: z.string().nullish(),
     start_date: z.iso.date(),
     end_date: z.iso.date(),
   })
@@ -186,28 +197,31 @@ export const zDashboardEvent = z
   })
 
 /**
- * DashboardEventGroup
+ * DashboardTask
  *
- * Slim event group for the dashboard calendar.
+ * Slim task for the dashboard calendar.
  */
-export const zDashboardEventGroup = z
+export const zDashboardTask = z
   .object({
     id: z.uuid(),
     name: z.string(),
+    status: z.string(),
+    description: z.string().nullish(),
+    location: z.string().nullish(),
     start_date: z.iso.date(),
     end_date: z.iso.date(),
   })
   .register(z.globalRegistry, {
-    description: 'Slim event group for the dashboard calendar.',
+    description: 'Slim task for the dashboard calendar.',
   })
 
 /**
  * DashboardFeedResponse
  */
 export const zDashboardFeedResponse = z.object({
+  tasks: z.array(zDashboardTask),
+  task_count: z.int(),
   events: z.array(zDashboardEvent),
-  event_count: z.int(),
-  event_groups: z.array(zDashboardEventGroup),
   bookings: z.array(zDashboardBookingItem),
   booking_count: z.int(),
   pending_user_count: z.int().nullish(),
@@ -217,10 +231,10 @@ export const zDashboardFeedResponse = z.object({
  * DemoDataCreatedResponse
  */
 export const zDemoDataCreatedResponse = z.object({
-  event_groups_created: z.int(),
   events_created: z.int(),
+  tasks_created: z.int(),
   users_created: z.int(),
-  duty_slots_created: z.int(),
+  shifts_created: z.int(),
   bookings_created: z.int(),
 })
 
@@ -228,10 +242,10 @@ export const zDemoDataCreatedResponse = z.object({
  * DemoDataDeletedResponse
  */
 export const zDemoDataDeletedResponse = z.object({
+  tasks_deleted: z.int(),
   events_deleted: z.int(),
-  event_groups_deleted: z.int(),
   users_deleted: z.int(),
-  duty_slots_deleted: z.int(),
+  shifts_deleted: z.int(),
   bookings_deleted: z.int(),
 })
 
@@ -239,136 +253,12 @@ export const zDemoDataDeletedResponse = z.object({
  * DemoDataParams
  */
 export const zDemoDataParams = z.object({
-  num_events: z.int().gte(1).lte(50).optional().default(10),
-  num_event_groups: z.int().gte(0).lte(10).optional().default(3),
+  num_tasks: z.int().gte(1).lte(50).optional().default(10),
+  num_events: z.int().gte(0).lte(10).optional().default(3),
   num_users: z.int().gte(0).lte(20).optional().default(5),
-  num_slots_per_event: z.int().gte(1).lte(20).optional().default(4),
-  publish_events: z.boolean().optional().default(true),
+  num_shifts_per_task: z.int().gte(1).lte(20).optional().default(4),
+  publish_tasks: z.boolean().optional().default(true),
 })
-
-/**
- * DutySlotCreate
- */
-export const zDutySlotCreate = z.object({
-  event_id: z.uuid(),
-  title: z.string(),
-  description: z.string().nullish(),
-  date: z.iso.date(),
-  start_time: z.iso.time().nullish(),
-  end_time: z.iso.time().nullish(),
-  location: z.string().nullish(),
-  category: z.string().nullish(),
-  max_bookings: z.int().optional().default(1),
-  batch_id: z.uuid().nullish(),
-})
-
-/**
- * DutySlotRead
- */
-export const zDutySlotRead = z.object({
-  event_id: z.uuid(),
-  title: z.string(),
-  description: z.string().nullish(),
-  date: z.iso.date(),
-  start_time: z.iso.time().nullish(),
-  end_time: z.iso.time().nullish(),
-  location: z.string().nullish(),
-  category: z.string().nullish(),
-  max_bookings: z.int().optional().default(1),
-  batch_id: z.uuid().nullish(),
-  id: z.uuid(),
-  created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
-  current_bookings: z.int().optional().default(0),
-  is_booked_by_me: z.boolean().optional().default(false),
-})
-
-/**
- * DutySlotListResponse
- */
-export const zDutySlotListResponse = z.object({
-  items: z.array(zDutySlotRead),
-  total: z.int(),
-  skip: z.int(),
-  limit: z.int(),
-})
-
-/**
- * DutySlotSummary
- *
- * Lightweight slot info nested inside a booking response.
- */
-export const zDutySlotSummary = z
-  .object({
-    id: z.uuid(),
-    event_id: z.uuid(),
-    title: z.string(),
-    date: z.iso.date(),
-    start_time: z.iso.time().nullish(),
-    end_time: z.iso.time().nullish(),
-    location: z.string().nullish(),
-    category: z.string().nullish(),
-    event_name: z.string().nullish(),
-  })
-  .register(z.globalRegistry, {
-    description: 'Lightweight slot info nested inside a booking response.',
-  })
-
-/**
- * BookingReadWithSlot
- *
- * BookingRead enriched with nested slot + event name (for /me endpoint).
- */
-export const zBookingReadWithSlot = z
-  .object({
-    duty_slot_id: z.uuid().nullish(),
-    user_id: z.uuid(),
-    status: z.enum(['confirmed', 'cancelled']).optional().default('confirmed'),
-    notes: z.string().nullish(),
-    id: z.uuid(),
-    created_at: z.iso.datetime(),
-    updated_at: z.iso.datetime(),
-    cancellation_reason: z.string().nullish(),
-    cancelled_slot_title: z.string().nullish(),
-    cancelled_slot_date: z.iso.date().nullish(),
-    cancelled_slot_start_time: z.iso.time().nullish(),
-    cancelled_slot_end_time: z.iso.time().nullish(),
-    cancelled_event_name: z.string().nullish(),
-    duty_slot: zDutySlotSummary.nullish(),
-  })
-  .register(z.globalRegistry, {
-    description: 'BookingRead enriched with nested slot + event name (for /me endpoint).',
-  })
-
-/**
- * DutySlotUpdate
- */
-export const zDutySlotUpdate = z.object({
-  title: z.string().nullish(),
-  description: z.string().nullish(),
-  date: z.iso.date().nullish(),
-  start_time: z.iso.time().nullish(),
-  end_time: z.iso.time().nullish(),
-  location: z.string().nullish(),
-  category: z.string().nullish(),
-  max_bookings: z.int().nullish(),
-})
-
-/**
- * EventBookingEntry
- *
- * A confirmed booking with slot_id, for the bulk event bookings endpoint.
- */
-export const zEventBookingEntry = z
-  .object({
-    id: z.uuid(),
-    duty_slot_id: z.uuid(),
-    user_name: z.string().nullish(),
-    user_phone_number: z.string().nullish(),
-  })
-  .register(z.globalRegistry, {
-    description: 'A confirmed booking with slot_id, for the bulk event bookings endpoint.',
-  })
 
 /**
  * EventCreate
@@ -380,68 +270,6 @@ export const zEventCreate = z.object({
   end_date: z.iso.date(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
   created_by_id: z.uuid().nullish(),
-  event_group_id: z.uuid().nullish(),
-  location: z.string().nullish(),
-  category: z.string().nullish(),
-})
-
-/**
- * EventFillRate
- */
-export const zEventFillRate = z.object({
-  event_id: z.uuid(),
-  event_name: z.string(),
-  total_capacity: z.int(),
-  confirmed_bookings: z.int(),
-  fill_rate: z.number(),
-})
-
-/**
- * EventGroupCreate
- */
-export const zEventGroupCreate = z.object({
-  name: z.string(),
-  description: z.string().nullish(),
-  start_date: z.iso.date(),
-  end_date: z.iso.date(),
-  status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
-  created_by_id: z.uuid().nullish(),
-})
-
-/**
- * EventGroupRead
- */
-export const zEventGroupRead = z.object({
-  name: z.string(),
-  description: z.string().nullish(),
-  start_date: z.iso.date(),
-  end_date: z.iso.date(),
-  status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
-  id: z.uuid(),
-  created_by_id: z.uuid().nullish(),
-  created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
-})
-
-/**
- * EventGroupListResponse
- */
-export const zEventGroupListResponse = z.object({
-  items: z.array(zEventGroupRead),
-  total: z.int(),
-  skip: z.int(),
-  limit: z.int(),
-})
-
-/**
- * EventGroupUpdate
- */
-export const zEventGroupUpdate = z.object({
-  name: z.string().nullish(),
-  description: z.string().nullish(),
-  start_date: z.iso.date().nullish(),
-  end_date: z.iso.date().nullish(),
-  status: z.enum(['draft', 'published', 'archived']).nullish(),
 })
 
 /**
@@ -453,35 +281,11 @@ export const zEventRead = z.object({
   start_date: z.iso.date(),
   end_date: z.iso.date(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
-  created_by_id: z.uuid().nullish(),
-  event_group_id: z.uuid().nullish(),
-  location: z.string().nullish(),
-  category: z.string().nullish(),
   id: z.uuid(),
+  created_by_id: z.uuid().nullish(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
-  slot_duration_minutes: z.int().nullish(),
-  default_start_time: z.iso.time().nullish(),
-  default_end_time: z.iso.time().nullish(),
-  people_per_slot: z.int().nullish(),
-  schedule_overrides: z.array(z.record(z.string(), z.unknown())).nullish(),
-})
-
-/**
- * AddSlotsResponse
- */
-export const zAddSlotsResponse = z.object({
-  event: zEventRead,
-  slots_added: z.int(),
-})
-
-/**
- * EventCreateWithSlotsResponse
- */
-export const zEventCreateWithSlotsResponse = z.object({
-  event: zEventRead,
-  duty_slots_created: z.int(),
-  event_group: zEventGroupRead.nullish(),
+  is_expired: z.boolean().readonly(),
 })
 
 /**
@@ -503,26 +307,23 @@ export const zEventUpdate = z.object({
   start_date: z.iso.date().nullish(),
   end_date: z.iso.date().nullish(),
   status: z.enum(['draft', 'published', 'archived']).nullish(),
-  event_group_id: z.uuid().nullish(),
-  location: z.string().nullish(),
-  category: z.string().nullish(),
 })
 
 /**
- * ExcludedSlot
+ * ExcludedShift
  */
-export const zExcludedSlot = z.object({
+export const zExcludedShift = z.object({
   date: z.iso.date(),
   start_time: z.iso.time(),
   end_time: z.iso.time(),
 })
 
 /**
- * FeedSlotEntry
+ * FeedShiftEntry
  *
- * Lightweight slot for the feed — no title/description, just booking info.
+ * Lightweight shift for the feed — no title/description, just booking info.
  */
-export const zFeedSlotEntry = z
+export const zFeedShiftEntry = z
   .object({
     id: z.uuid(),
     date: z.iso.date(),
@@ -533,15 +334,15 @@ export const zFeedSlotEntry = z
     is_booked_by_me: z.boolean().optional().default(false),
   })
   .register(z.globalRegistry, {
-    description: 'Lightweight slot for the feed — no title/description, just booking info.',
+    description: 'Lightweight shift for the feed — no title/description, just booking info.',
   })
 
 /**
- * FeedEventItem
+ * FeedTaskItem
  *
- * Event with view-dependent embedded data.
+ * Task with view-dependent embedded data.
  */
-export const zFeedEventItem = z
+export const zFeedTaskItem = z
   .object({
     name: z.string(),
     description: z.string().nullish(),
@@ -549,35 +350,25 @@ export const zFeedEventItem = z
     end_date: z.iso.date(),
     status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
     created_by_id: z.uuid().nullish(),
-    event_group_id: z.uuid().nullish(),
+    event_id: z.uuid().nullish(),
     location: z.string().nullish(),
     category: z.string().nullish(),
     id: z.uuid(),
     created_at: z.iso.datetime(),
     updated_at: z.iso.datetime(),
-    slot_duration_minutes: z.int().nullish(),
+    shift_duration_minutes: z.int().nullish(),
     default_start_time: z.iso.time().nullish(),
     default_end_time: z.iso.time().nullish(),
-    people_per_slot: z.int().nullish(),
+    people_per_shift: z.int().nullish(),
     schedule_overrides: z.array(z.record(z.string(), z.unknown())).nullish(),
-    slots: z.array(zFeedSlotEntry).nullish(),
+    shifts: z.array(zFeedShiftEntry).nullish(),
     slot_window_start: z.iso.date().nullish(),
-    total_slots: z.int().nullish(),
-    available_slots: z.int().nullish(),
+    total_shifts: z.int().nullish(),
+    available_shifts: z.int().nullish(),
   })
   .register(z.globalRegistry, {
-    description: 'Event with view-dependent embedded data.',
+    description: 'Task with view-dependent embedded data.',
   })
-
-/**
- * EventFeedResponse
- */
-export const zEventFeedResponse = z.object({
-  items: z.array(zFeedEventItem),
-  total: z.int(),
-  skip: z.int(),
-  limit: z.int(),
-})
 
 /**
  * GlobalChannelSettingsRead
@@ -595,16 +386,6 @@ export const zGlobalChannelSettingsUpdate = z.object({
   notify_email: z.boolean().nullish(),
   notify_push: z.boolean().nullish(),
   notify_telegram: z.boolean().nullish(),
-})
-
-/**
- * MyBookingsListResponse
- */
-export const zMyBookingsListResponse = z.object({
-  items: z.array(zBookingReadWithSlot),
-  total: z.int(),
-  skip: z.int(),
-  limit: z.int(),
 })
 
 /**
@@ -643,7 +424,7 @@ export const zNotificationSubscriptionCreate = z.object({
   email_enabled: z.boolean().optional().default(true),
   push_enabled: z.boolean().optional().default(true),
   telegram_enabled: z.boolean().optional().default(false),
-  scope_type: z.enum(['global', 'event_group', 'event', 'duty_slot']).optional().default('global'),
+  scope_type: z.enum(['global', 'event', 'task', 'shift']).optional().default('global'),
   scope_id: z.uuid().nullish(),
   is_muted: z.boolean().optional().default(false),
 })
@@ -791,10 +572,10 @@ export const zReportingOverviewStats = z.object({
   confirmed_bookings: z.int(),
   cancelled_bookings: z.int(),
   cancellation_rate: z.number(),
-  total_events: z.int(),
-  total_slots: z.int(),
-  total_slot_capacity: z.int(),
-  filled_slots: z.int(),
+  total_tasks: z.int(),
+  total_shifts: z.int(),
+  total_shift_capacity: z.int(),
+  filled_shifts: z.int(),
   fill_rate: z.number(),
   active_volunteers: z.int(),
   total_volunteers: z.int(),
@@ -810,12 +591,82 @@ export const zScheduleOverride = z.object({
 })
 
 /**
+ * SelectedEventUpdate
+ *
+ * Request body for PUT /users/me/selected-event.
+ */
+export const zSelectedEventUpdate = z
+  .object({
+    selected_event_id: z.uuid().nullish(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Request body for PUT /users/me/selected-event.',
+  })
+
+/**
  * SelfApproveRequest
  */
 export const zSelfApproveRequest = z.object({
   password: z.string().register(z.globalRegistry, {
     description: 'The approval password to verify',
   }),
+})
+
+/**
+ * ShiftBatchRead
+ */
+export const zShiftBatchRead = z.object({
+  task_id: z.uuid(),
+  label: z.string().nullish(),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  location: z.string().nullish(),
+  category: z.string().nullish(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
+  shift_duration_minutes: z.int().nullish(),
+  people_per_shift: z.int().nullish(),
+  remainder_mode: z.enum(['drop', 'short', 'extend']).nullish().default('drop'),
+  schedule_overrides: z.array(z.record(z.string(), z.unknown())).nullish(),
+  id: z.uuid(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+})
+
+/**
+ * ShiftBookingEntry
+ *
+ * A confirmed booking for a shift, with basic user info.
+ */
+export const zShiftBookingEntry = z
+  .object({
+    id: z.uuid(),
+    user_id: z.uuid(),
+    user_name: z.string().nullish(),
+    user_email: z.string().nullish(),
+    user_avatar_etag: z.string().nullish(),
+    user_phone_number: z.string().nullish(),
+    notes: z.string().nullish(),
+    created_at: z.iso.datetime(),
+  })
+  .register(z.globalRegistry, {
+    description: 'A confirmed booking for a shift, with basic user info.',
+  })
+
+/**
+ * ShiftCreate
+ */
+export const zShiftCreate = z.object({
+  task_id: z.uuid(),
+  title: z.string(),
+  description: z.string().nullish(),
+  date: z.iso.date(),
+  start_time: z.iso.time().nullish(),
+  end_time: z.iso.time().nullish(),
+  location: z.string().nullish(),
+  category: z.string().nullish(),
+  max_bookings: z.int().optional().default(1),
+  batch_id: z.uuid().nullish(),
 })
 
 /**
@@ -826,12 +677,153 @@ export const zShiftDatesRequest = z.object({
 })
 
 /**
+ * ShiftGenerationConfig
+ */
+export const zShiftGenerationConfig = z.object({
+  default_start_time: z.iso.time(),
+  default_end_time: z.iso.time(),
+  shift_duration_minutes: z.int(),
+  people_per_shift: z.int().optional().default(1),
+  remainder_mode: z.enum(['drop', 'short', 'extend']).optional().default('drop'),
+  overrides: z.array(zScheduleOverride).optional().default([]),
+  excluded_shifts: z.array(zExcludedShift).optional().default([]),
+})
+
+/**
+ * AddShiftsToTask
+ */
+export const zAddShiftsToTask = z.object({
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  location: z.string().nullish(),
+  category: z.string().nullish(),
+  schedule: zShiftGenerationConfig,
+})
+
+/**
+ * ShiftRead
+ */
+export const zShiftRead = z.object({
+  task_id: z.uuid(),
+  title: z.string(),
+  description: z.string().nullish(),
+  date: z.iso.date(),
+  start_time: z.iso.time().nullish(),
+  end_time: z.iso.time().nullish(),
+  location: z.string().nullish(),
+  category: z.string().nullish(),
+  max_bookings: z.int().optional().default(1),
+  batch_id: z.uuid().nullish(),
+  id: z.uuid(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+  current_bookings: z.int().optional().default(0),
+  is_booked_by_me: z.boolean().optional().default(false),
+})
+
+/**
+ * ShiftListResponse
+ */
+export const zShiftListResponse = z.object({
+  items: z.array(zShiftRead),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
+ * ShiftSummary
+ *
+ * Lightweight shift info nested inside a booking response.
+ */
+export const zShiftSummary = z
+  .object({
+    id: z.uuid(),
+    task_id: z.uuid(),
+    title: z.string(),
+    date: z.iso.date(),
+    start_time: z.iso.time().nullish(),
+    end_time: z.iso.time().nullish(),
+    location: z.string().nullish(),
+    category: z.string().nullish(),
+    task_name: z.string().nullish(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Lightweight shift info nested inside a booking response.',
+  })
+
+/**
+ * BookingReadWithShift
+ *
+ * BookingRead enriched with nested shift + task name (for /me endpoint).
+ */
+export const zBookingReadWithShift = z
+  .object({
+    shift_id: z.uuid().nullish(),
+    user_id: z.uuid(),
+    status: z.enum(['confirmed', 'cancelled']).optional().default('confirmed'),
+    notes: z.string().nullish(),
+    id: z.uuid(),
+    created_at: z.iso.datetime(),
+    updated_at: z.iso.datetime(),
+    cancellation_reason: z.string().nullish(),
+    cancelled_shift_title: z.string().nullish(),
+    cancelled_shift_date: z.iso.date().nullish(),
+    cancelled_shift_start_time: z.iso.time().nullish(),
+    cancelled_shift_end_time: z.iso.time().nullish(),
+    cancelled_task_name: z.string().nullish(),
+    shift: zShiftSummary.nullish(),
+  })
+  .register(z.globalRegistry, {
+    description: 'BookingRead enriched with nested shift + task name (for /me endpoint).',
+  })
+
+/**
+ * MyBookingsListResponse
+ */
+export const zMyBookingsListResponse = z.object({
+  items: z.array(zBookingReadWithShift),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
+ * ShiftUpdate
+ */
+export const zShiftUpdate = z.object({
+  title: z.string().nullish(),
+  description: z.string().nullish(),
+  date: z.iso.date().nullish(),
+  start_time: z.iso.time().nullish(),
+  end_time: z.iso.time().nullish(),
+  location: z.string().nullish(),
+  category: z.string().nullish(),
+  max_bookings: z.int().nullish(),
+})
+
+/**
+ * ShiftWindowResponse
+ *
+ * Response for the shift-window endpoint (next/prev day navigation).
+ */
+export const zShiftWindowResponse = z
+  .object({
+    shifts: z.array(zFeedShiftEntry),
+    start_date: z.iso.date(),
+    days: z.int(),
+  })
+  .register(z.globalRegistry, {
+    description: 'Response for the shift-window endpoint (next/prev day navigation).',
+  })
+
+/**
  * SidebarBooking
  */
 export const zSidebarBooking = z.object({
   id: z.uuid(),
   slot_id: z.uuid(),
-  event_id: z.uuid(),
+  task_id: z.uuid(),
   slot_title: z.string(),
   slot_date: z.iso.date(),
   slot_start_time: z.iso.time().nullish(),
@@ -844,26 +836,26 @@ export const zSidebarEvent = z.object({
   id: z.uuid(),
   name: z.string(),
   status: z.string().optional().default('published'),
-  open_slots: z.int(),
-  next_slot_date: z.iso.date().nullish(),
-  next_slot_start_time: z.iso.time().nullish(),
 })
 
 /**
- * SidebarEventGroup
+ * SidebarTask
  */
-export const zSidebarEventGroup = z.object({
+export const zSidebarTask = z.object({
   id: z.uuid(),
   name: z.string(),
   status: z.string().optional().default('published'),
+  open_shifts: z.int(),
+  next_shift_date: z.iso.date().nullish(),
+  next_shift_start_time: z.iso.time().nullish(),
 })
 
 /**
  * SidebarResponse
  */
 export const zSidebarResponse = z.object({
-  event_groups: z.array(zSidebarEventGroup),
   events: z.array(zSidebarEvent),
+  tasks: z.array(zSidebarTask),
   bookings: z.array(zSidebarBooking),
 })
 
@@ -888,74 +880,40 @@ export const zSiteSettingsUpdate = z.object({
 })
 
 /**
- * SlotBatchRead
- */
-export const zSlotBatchRead = z.object({
-  event_id: z.uuid(),
-  label: z.string().nullish(),
-  start_date: z.iso.date(),
-  end_date: z.iso.date(),
-  location: z.string().nullish(),
-  category: z.string().nullish(),
-  default_start_time: z.iso.time().nullish(),
-  default_end_time: z.iso.time().nullish(),
-  slot_duration_minutes: z.int().nullish(),
-  people_per_slot: z.int().nullish(),
-  remainder_mode: z.enum(['drop', 'short', 'extend']).nullish().default('drop'),
-  schedule_overrides: z.array(z.record(z.string(), z.unknown())).nullish(),
-  id: z.uuid(),
-  created_at: z.iso.datetime(),
-  updated_at: z.iso.datetime(),
-})
-
-/**
- * SlotBookingEntry
+ * TaskBookingEntry
  *
- * A confirmed booking for a slot, with basic user info.
+ * A confirmed booking with slot_id, for the bulk task bookings endpoint.
  */
-export const zSlotBookingEntry = z
+export const zTaskBookingEntry = z
   .object({
     id: z.uuid(),
-    user_id: z.uuid(),
+    shift_id: z.uuid(),
     user_name: z.string().nullish(),
-    user_email: z.string().nullish(),
-    user_picture: z.string().nullish(),
     user_phone_number: z.string().nullish(),
-    notes: z.string().nullish(),
-    created_at: z.iso.datetime(),
   })
   .register(z.globalRegistry, {
-    description: 'A confirmed booking for a slot, with basic user info.',
+    description: 'A confirmed booking with slot_id, for the bulk task bookings endpoint.',
   })
 
 /**
- * SlotGenerationConfig
+ * TaskCreate
  */
-export const zSlotGenerationConfig = z.object({
-  default_start_time: z.iso.time(),
-  default_end_time: z.iso.time(),
-  slot_duration_minutes: z.int(),
-  people_per_slot: z.int().optional().default(1),
-  remainder_mode: z.enum(['drop', 'short', 'extend']).optional().default('drop'),
-  overrides: z.array(zScheduleOverride).optional().default([]),
-  excluded_slots: z.array(zExcludedSlot).optional().default([]),
-})
-
-/**
- * AddSlotsToEvent
- */
-export const zAddSlotsToEvent = z.object({
+export const zTaskCreate = z.object({
+  name: z.string(),
+  description: z.string().nullish(),
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
+  created_by_id: z.uuid().nullish(),
+  event_id: z.uuid().nullish(),
   location: z.string().nullish(),
   category: z.string().nullish(),
-  schedule: zSlotGenerationConfig,
 })
 
 /**
- * EventCreateWithSlots
+ * TaskCreateWithShifts
  */
-export const zEventCreateWithSlots = z.object({
+export const zTaskCreateWithShifts = z.object({
   name: z.string(),
   description: z.string().nullish(),
   start_date: z.iso.date(),
@@ -963,49 +921,119 @@ export const zEventCreateWithSlots = z.object({
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
   location: z.string().nullish(),
   category: z.string().nullish(),
-  event_group_id: z.uuid().nullish(),
-  new_event_group: zEventGroupCreate.nullish(),
-  schedule: zSlotGenerationConfig,
+  event_id: z.uuid().nullish(),
+  new_event: zEventCreate.nullish(),
+  schedule: zShiftGenerationConfig,
 })
 
 /**
- * EventUpdateWithSlots
+ * TaskFeedResponse
  */
-export const zEventUpdateWithSlots = z.object({
+export const zTaskFeedResponse = z.object({
+  items: z.array(zFeedTaskItem),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
+ * TaskFillRate
+ */
+export const zTaskFillRate = z.object({
+  task_id: z.uuid(),
+  task_name: z.string(),
+  total_capacity: z.int(),
+  confirmed_bookings: z.int(),
+  fill_rate: z.number(),
+})
+
+/**
+ * TaskRead
+ */
+export const zTaskRead = z.object({
+  name: z.string(),
+  description: z.string().nullish(),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
+  created_by_id: z.uuid().nullish(),
+  event_id: z.uuid().nullish(),
+  location: z.string().nullish(),
+  category: z.string().nullish(),
+  id: z.uuid(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+  shift_duration_minutes: z.int().nullish(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
+  people_per_shift: z.int().nullish(),
+  schedule_overrides: z.array(z.record(z.string(), z.unknown())).nullish(),
+})
+
+/**
+ * AddShiftsResponse
+ */
+export const zAddShiftsResponse = z.object({
+  task: zTaskRead,
+  shifts_added: z.int(),
+})
+
+/**
+ * ShiftRegenerationResult
+ */
+export const zShiftRegenerationResult = z.object({
+  task: zTaskRead,
+  shifts_added: z.int(),
+  shifts_removed: z.int(),
+  shifts_kept: z.int(),
+  affected_bookings: z.array(zAffectedBookingInfo),
+})
+
+/**
+ * TaskCreateWithShiftsResponse
+ */
+export const zTaskCreateWithShiftsResponse = z.object({
+  task: zTaskRead,
+  shifts_created: z.int(),
+  event: zEventRead.nullish(),
+})
+
+/**
+ * TaskListResponse
+ */
+export const zTaskListResponse = z.object({
+  items: z.array(zTaskRead),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
+ * TaskUpdate
+ */
+export const zTaskUpdate = z.object({
+  name: z.string().nullish(),
+  description: z.string().nullish(),
+  start_date: z.iso.date().nullish(),
+  end_date: z.iso.date().nullish(),
+  status: z.enum(['draft', 'published', 'archived']).nullish(),
+  event_id: z.uuid().nullish(),
+  location: z.string().nullish(),
+  category: z.string().nullish(),
+})
+
+/**
+ * TaskUpdateWithShifts
+ */
+export const zTaskUpdateWithShifts = z.object({
   name: z.string().nullish(),
   description: z.string().nullish(),
   start_date: z.iso.date().nullish(),
   end_date: z.iso.date().nullish(),
   location: z.string().nullish(),
   category: z.string().nullish(),
-  schedule: zSlotGenerationConfig,
+  schedule: zShiftGenerationConfig,
 })
-
-/**
- * SlotRegenerationResult
- */
-export const zSlotRegenerationResult = z.object({
-  event: zEventRead,
-  slots_added: z.int(),
-  slots_removed: z.int(),
-  slots_kept: z.int(),
-  affected_bookings: z.array(zAffectedBookingInfo),
-})
-
-/**
- * SlotWindowResponse
- *
- * Response for the slot-window endpoint (next/prev day navigation).
- */
-export const zSlotWindowResponse = z
-  .object({
-    slots: z.array(zFeedSlotEntry),
-    start_date: z.iso.date(),
-    days: z.int(),
-  })
-  .register(z.globalRegistry, {
-    description: 'Response for the slot-window endpoint (next/prev day navigation).',
-  })
 
 /**
  * TelegramBindResponse
@@ -1122,7 +1150,7 @@ export const zReportingResponse = z.object({
   top_volunteers: z.array(zTopVolunteer),
   category_breakdown: z.array(zCategoryBreakdown),
   bookings_by_hour: z.array(zBookingsByHour),
-  event_fill_rates: z.array(zEventFillRate),
+  task_fill_rates: z.array(zTaskFillRate),
 })
 
 /**
@@ -1175,7 +1203,7 @@ export const zUserAvailabilityRead = z.object({
   default_end_time: z.iso.time().nullish(),
   id: z.uuid(),
   user_id: z.uuid(),
-  event_group_id: z.uuid(),
+  event_id: z.uuid(),
   available_dates: z.array(zUserAvailabilityDateRead).optional().default([]),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
@@ -1194,7 +1222,7 @@ export const zUserAvailabilityWithUser = z
     default_end_time: z.iso.time().nullish(),
     id: z.uuid(),
     user_id: z.uuid(),
-    event_group_id: z.uuid(),
+    event_id: z.uuid(),
     available_dates: z.array(zUserAvailabilityDateRead).optional().default([]),
     created_at: z.iso.datetime(),
     updated_at: z.iso.datetime(),
@@ -1224,7 +1252,6 @@ export const zUserCreate = z.object({
   }),
   email: z.email().nullish(),
   name: z.string().nullish(),
-  picture: z.string().nullish(),
   email_verified: z
     .boolean()
     .register(z.globalRegistry, {
@@ -1258,11 +1285,12 @@ export const zUserCreate = z.object({
  * UserProfile
  */
 export const zUserProfile = z.object({
+  id: z.uuid(),
   sub: z.string(),
   name: z.string().nullish(),
   nickname: z.string().nullish(),
   email: z.string().nullish(),
-  picture: z.string().nullish(),
+  avatar_etag: z.string().nullish(),
   bio: z.string().nullish(),
   phone_number: z.string().nullish(),
   preferred_language: z.string().optional().default('en'),
@@ -1280,10 +1308,10 @@ export const zUserProfile = z.object({
     })
     .optional()
     .default(false),
-  is_event_manager: z
+  is_task_manager: z
     .boolean()
     .register(z.globalRegistry, {
-      description: 'Whether user has event_manager role',
+      description: 'Whether user has task_manager role',
     })
     .optional()
     .default(false),
@@ -1295,12 +1323,13 @@ export const zUserProfile = z.object({
     .optional()
     .default(true),
   rejection_reason: z.string().nullish(),
-  managed_event_group_ids: z
+  managed_event_ids: z
     .array(z.uuid())
     .register(z.globalRegistry, {
-      description: 'IDs of event groups this user manages (via event_group_managers)',
+      description: 'IDs of events this user manages (via event_managers)',
     })
     .optional(),
+  selected_event_id: z.uuid().nullish(),
 })
 
 /**
@@ -1309,7 +1338,6 @@ export const zUserProfile = z.object({
 export const zUserProfileUpdate = z.object({
   name: z.string().max(100).nullish(),
   nickname: z.string().max(50).nullish(),
-  picture: z.url().min(1).max(2083).nullish(),
   bio: z.string().max(500).nullish(),
   phone_number: z.string().max(30).nullish(),
   preferred_language: z
@@ -1326,7 +1354,7 @@ export const zUserRead = z.object({
   auth0_sub: z.string(),
   email: z.email().nullish(),
   name: z.string().nullish(),
-  picture: z.string().nullish(),
+  avatar_etag: z.string().nullish(),
   phone_number: z.string().nullish(),
   preferred_language: z.string().optional().default('en'),
   roles: z.array(z.string()),
@@ -1375,6 +1403,40 @@ export const zProblemDetails = z.object({
 })
 
 /**
+ * EventRead
+ */
+export const zEventReadWritable = z.object({
+  name: z.string(),
+  description: z.string().nullish(),
+  start_date: z.iso.date(),
+  end_date: z.iso.date(),
+  status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
+  id: z.uuid(),
+  created_by_id: z.uuid().nullish(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
+})
+
+/**
+ * EventListResponse
+ */
+export const zEventListResponseWritable = z.object({
+  items: z.array(zEventReadWritable),
+  total: z.int(),
+  skip: z.int(),
+  limit: z.int(),
+})
+
+/**
+ * TaskCreateWithShiftsResponse
+ */
+export const zTaskCreateWithShiftsResponseWritable = z.object({
+  task: zTaskRead,
+  shifts_created: z.int(),
+  event: zEventReadWritable.nullish(),
+})
+
+/**
  * Successful Response
  */
 export const zUsersDeleteCurrentUserResponse = z.void().register(z.globalRegistry, {
@@ -1397,6 +1459,13 @@ export const zUsersGetCurrentUserProfileBody = zProfileInit.nullable()
  * Successful Response
  */
 export const zUsersGetCurrentUserProfileResponse = zUserProfile
+
+export const zUsersUpdateSelectedEventBody = zSelectedEventUpdate
+
+/**
+ * Successful Response
+ */
+export const zUsersUpdateSelectedEventResponse = zUserProfile
 
 /**
  * Response Users-Get Approval Password Status
@@ -1489,6 +1558,24 @@ export const zUsersExportUserDataResponse = z
 /**
  * Successful Response
  */
+export const zUsersDeleteMyAvatarResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zUsersUploadMyAvatarBody = zBodyUsersUploadMyAvatar
+
+/**
+ * Successful Response
+ */
+export const zUsersUploadMyAvatarResponse = zAvatarUploadResponse
+
+export const zUsersGetUserAvatarPath = z.object({
+  user_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
 export const zSettingsGetSiteSettingsResponse = zSiteSettingsRead
 
 export const zSettingsUpdateSiteSettingsBody = zSiteSettingsUpdate
@@ -1498,7 +1585,7 @@ export const zSettingsUpdateSiteSettingsBody = zSiteSettingsUpdate
  */
 export const zSettingsUpdateSiteSettingsResponse = zSiteSettingsRead
 
-export const zEventsEventFeedQuery = z.object({
+export const zTasksTaskFeedQuery = z.object({
   view: z.enum(['list', 'cards', 'calendar']).optional().default('list'),
   focus_mode: z.enum(['today', 'first_available']).optional().default('today'),
   search: z.string().nullish(),
@@ -1508,32 +1595,34 @@ export const zEventsEventFeedQuery = z.object({
   date_to: z.iso.date().nullish(),
   my_bookings: z.boolean().optional().default(false),
   days: z.int().gte(1).lte(31).optional().default(5),
+  event_id: z.uuid().nullish(),
+  all_events: z.boolean().optional().default(false),
 })
 
 /**
  * Successful Response
  */
-export const zEventsEventFeedResponse = zEventFeedResponse
+export const zTasksTaskFeedResponse = zTaskFeedResponse
 
-export const zEventsEventActiveDatesQuery = z.object({
+export const zTasksTaskActiveDatesQuery = z.object({
   date_from: z.iso.date(),
   date_to: z.iso.date(),
 })
 
 /**
- * Response Events-Event Active Dates
+ * Response Tasks-Task Active Dates
  *
  * Successful Response
  */
-export const zEventsEventActiveDatesResponse = z.array(z.iso.date()).register(z.globalRegistry, {
+export const zTasksTaskActiveDatesResponse = z.array(z.iso.date()).register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zEventsGetSlotWindowPath = z.object({
-  event_id: z.string(),
+export const zTasksGetShiftWindowPath = z.object({
+  task_id: z.string(),
 })
 
-export const zEventsGetSlotWindowQuery = z.object({
+export const zTasksGetShiftWindowQuery = z.object({
   start_date: z.iso.date(),
   days: z.int().gte(1).lte(31).optional().default(5),
 })
@@ -1541,104 +1630,105 @@ export const zEventsGetSlotWindowQuery = z.object({
 /**
  * Successful Response
  */
-export const zEventsGetSlotWindowResponse = zSlotWindowResponse
+export const zTasksGetShiftWindowResponse = zShiftWindowResponse
 
-export const zEventsListEventsQuery = z.object({
+export const zTasksListTasksQuery = z.object({
   skip: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(200).optional().default(100),
   search: z.string().nullish(),
   status: z.enum(['draft', 'published', 'archived']).nullish(),
   my_bookings: z.boolean().optional().default(false),
-  event_group_id: z.uuid().nullish(),
+  event_id: z.uuid().nullish(),
+  all_events: z.boolean().optional().default(false),
 })
 
 /**
  * Successful Response
  */
-export const zEventsListEventsResponse = zEventListResponse
+export const zTasksListTasksResponse = zTaskListResponse
 
-export const zEventsCreateEventBody = zEventCreate
+export const zTasksCreateTaskBody = zTaskCreate
 
 /**
  * Successful Response
  */
-export const zEventsCreateEventResponse = zEventRead
+export const zTasksCreateTaskResponse = zTaskRead
 
-export const zEventsDeleteEventPath = z.object({
-  event_id: z.string(),
+export const zTasksDeleteTaskPath = z.object({
+  task_id: z.string(),
 })
 
-export const zEventsDeleteEventQuery = z.object({
+export const zTasksDeleteTaskQuery = z.object({
   cancellation_reason: z.string().nullish(),
 })
 
 /**
  * Successful Response
  */
-export const zEventsDeleteEventResponse = z.void().register(z.globalRegistry, {
+export const zTasksDeleteTaskResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zEventsGetEventPath = z.object({
-  event_id: z.string(),
+export const zTasksGetTaskPath = z.object({
+  task_id: z.string(),
 })
 
 /**
  * Successful Response
  */
-export const zEventsGetEventResponse = zEventRead
+export const zTasksGetTaskResponse = zTaskRead
 
-export const zEventsUpdateEventBody = zEventUpdate
+export const zTasksUpdateTaskBody = zTaskUpdate
 
-export const zEventsUpdateEventPath = z.object({
-  event_id: z.string(),
+export const zTasksUpdateTaskPath = z.object({
+  task_id: z.string(),
 })
 
 /**
  * Successful Response
  */
-export const zEventsUpdateEventResponse = zEventRead
+export const zTasksUpdateTaskResponse = zTaskRead
 
-export const zEventsListEventBookingsPath = z.object({
-  event_id: z.string(),
+export const zTasksListTaskBookingsPath = z.object({
+  task_id: z.string(),
 })
 
 /**
- * Response Events-List Event Bookings
+ * Response Tasks-List Task Bookings
  *
  * Successful Response
  */
-export const zEventsListEventBookingsResponse = z
-  .array(zEventBookingEntry)
+export const zTasksListTaskBookingsResponse = z
+  .array(zTaskBookingEntry)
   .register(z.globalRegistry, {
     description: 'Successful Response',
   })
 
-export const zEventsCreateEventWithSlotsBody = zEventCreateWithSlots
+export const zTasksCreateTaskWithShiftsBody = zTaskCreateWithShifts
 
 /**
  * Successful Response
  */
-export const zEventsCreateEventWithSlotsResponse = zEventCreateWithSlotsResponse
+export const zTasksCreateTaskWithShiftsResponse = zTaskCreateWithShiftsResponse
 
-export const zEventsAddSlotsToEventBody = zAddSlotsToEvent
+export const zTasksAddShiftsToTaskBody = zAddShiftsToTask
 
-export const zEventsAddSlotsToEventPath = z.object({
-  event_id: z.string(),
+export const zTasksAddShiftsToTaskPath = z.object({
+  task_id: z.string(),
 })
 
 /**
  * Successful Response
  */
-export const zEventsAddSlotsToEventResponse = zAddSlotsResponse
+export const zTasksAddShiftsToTaskResponse = zAddShiftsResponse
 
-export const zEventsRegenerateEventSlotsBody = zEventUpdateWithSlots
+export const zTasksRegenerateTaskShiftsBody = zTaskUpdateWithShifts
 
-export const zEventsRegenerateEventSlotsPath = z.object({
-  event_id: z.string(),
+export const zTasksRegenerateTaskShiftsPath = z.object({
+  task_id: z.string(),
 })
 
-export const zEventsRegenerateEventSlotsQuery = z.object({
+export const zTasksRegenerateTaskShiftsQuery = z.object({
   dry_run: z.boolean().optional().default(false),
   batch_id: z.string().nullish(),
 })
@@ -1646,39 +1736,39 @@ export const zEventsRegenerateEventSlotsQuery = z.object({
 /**
  * Successful Response
  */
-export const zEventsRegenerateEventSlotsResponse = zSlotRegenerationResult
+export const zTasksRegenerateTaskShiftsResponse = zShiftRegenerationResult
 
-export const zEventsListBatchesPath = z.object({
-  event_id: z.string(),
+export const zTasksListBatchesPath = z.object({
+  task_id: z.string(),
 })
 
 /**
- * Response Events-List Batches
+ * Response Tasks-List Batches
  *
  * Successful Response
  */
-export const zEventsListBatchesResponse = z.array(zSlotBatchRead).register(z.globalRegistry, {
+export const zTasksListBatchesResponse = z.array(zShiftBatchRead).register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zEventsDeleteBatchPath = z.object({
-  event_id: z.string(),
+export const zTasksDeleteBatchPath = z.object({
+  task_id: z.string(),
   batch_id: z.string(),
 })
 
-export const zEventsDeleteBatchQuery = z.object({
+export const zTasksDeleteBatchQuery = z.object({
   cancellation_reason: z.string().nullish(),
 })
 
 /**
  * Successful Response
  */
-export const zEventsDeleteBatchResponse = z.void().register(z.globalRegistry, {
+export const zTasksDeleteBatchResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zDutySlotsListDutySlotsQuery = z.object({
-  event_id: z.string().nullish(),
+export const zShiftsListShiftsQuery = z.object({
+  task_id: z.string().nullish(),
   category: z.string().nullish(),
   search: z.string().nullish(),
   skip: z.int().gte(0).optional().default(0),
@@ -1688,61 +1778,61 @@ export const zDutySlotsListDutySlotsQuery = z.object({
 /**
  * Successful Response
  */
-export const zDutySlotsListDutySlotsResponse = zDutySlotListResponse
+export const zShiftsListShiftsResponse = zShiftListResponse
 
-export const zDutySlotsCreateDutySlotBody = zDutySlotCreate
+export const zShiftsCreateShiftBody = zShiftCreate
 
 /**
  * Successful Response
  */
-export const zDutySlotsCreateDutySlotResponse = zDutySlotRead
+export const zShiftsCreateShiftResponse = zShiftRead
 
-export const zDutySlotsDeleteDutySlotPath = z.object({
+export const zShiftsDeleteShiftPath = z.object({
   slot_id: z.string(),
 })
 
-export const zDutySlotsDeleteDutySlotQuery = z.object({
+export const zShiftsDeleteShiftQuery = z.object({
   cancellation_reason: z.string().nullish(),
 })
 
 /**
  * Successful Response
  */
-export const zDutySlotsDeleteDutySlotResponse = z.void().register(z.globalRegistry, {
+export const zShiftsDeleteShiftResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zDutySlotsGetDutySlotPath = z.object({
+export const zShiftsGetShiftPath = z.object({
   slot_id: z.string().nullable(),
 })
 
 /**
  * Successful Response
  */
-export const zDutySlotsGetDutySlotResponse = zDutySlotRead
+export const zShiftsGetShiftResponse = zShiftRead
 
-export const zDutySlotsUpdateDutySlotBody = zDutySlotUpdate
+export const zShiftsUpdateShiftBody = zShiftUpdate
 
-export const zDutySlotsUpdateDutySlotPath = z.object({
+export const zShiftsUpdateShiftPath = z.object({
   slot_id: z.string(),
 })
 
 /**
  * Successful Response
  */
-export const zDutySlotsUpdateDutySlotResponse = zDutySlotRead
+export const zShiftsUpdateShiftResponse = zShiftRead
 
-export const zDutySlotsListSlotBookingsPath = z.object({
+export const zShiftsListShiftBookingsPath = z.object({
   slot_id: z.string(),
 })
 
 /**
- * Response Duty-Slots-List Slot Bookings
+ * Response Shifts-List Shift Bookings
  *
  * Successful Response
  */
-export const zDutySlotsListSlotBookingsResponse = z
-  .array(zSlotBookingEntry)
+export const zShiftsListShiftBookingsResponse = z
+  .array(zShiftBookingEntry)
   .register(z.globalRegistry, {
     description: 'Successful Response',
   })
@@ -1753,6 +1843,8 @@ export const zBookingsListMyBookingsQuery = z.object({
   status: z.string().nullish(),
   date_from: z.iso.date().nullish(),
   date_to: z.iso.date().nullish(),
+  event_id: z.uuid().nullish(),
+  all_events: z.boolean().optional().default(false),
 })
 
 /**
@@ -1890,7 +1982,7 @@ export const zCalendarEnableFeedResponse = zCalendarFeedRead
  */
 export const zCalendarRegenerateFeedResponse = zCalendarFeedRead
 
-export const zEventGroupsListEventGroupsQuery = z.object({
+export const zEventsListEventsQuery = z.object({
   skip: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(200).optional().default(100),
   search: z.string().nullish(),
@@ -1902,137 +1994,137 @@ export const zEventGroupsListEventGroupsQuery = z.object({
 /**
  * Successful Response
  */
-export const zEventGroupsListEventGroupsResponse = zEventGroupListResponse
+export const zEventsListEventsResponse = zEventListResponse
 
-export const zEventGroupsCreateEventGroupBody = zEventGroupCreate
+export const zEventsCreateEventBody = zEventCreate
 
 /**
  * Successful Response
  */
-export const zEventGroupsCreateEventGroupResponse = zEventGroupRead
+export const zEventsCreateEventResponse = zEventRead
 
-export const zEventGroupsDeleteEventGroupPath = z.object({
+export const zEventsDeleteEventPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventGroupsDeleteEventGroupResponse = z.void().register(z.globalRegistry, {
+export const zEventsDeleteEventResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zEventGroupsGetEventGroupPath = z.object({
+export const zEventsGetEventPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventGroupsGetEventGroupResponse = zEventGroupRead
+export const zEventsGetEventResponse = zEventRead
 
-export const zEventGroupsUpdateEventGroupBody = zEventGroupUpdate
+export const zEventsUpdateEventBody = zEventUpdate
 
-export const zEventGroupsUpdateEventGroupPath = z.object({
+export const zEventsUpdateEventPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventGroupsUpdateEventGroupResponse = zEventGroupRead
+export const zEventsUpdateEventResponse = zEventRead
 
-export const zEventGroupsGetEventDateBoundsPath = z.object({
+export const zEventsGetTaskDateBoundsPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
- * Response Event-Groups-Get Event Date Bounds
+ * Response Events-Get Task Date Bounds
  *
  * Successful Response
  */
-export const zEventGroupsGetEventDateBoundsResponse = z
+export const zEventsGetTaskDateBoundsResponse = z
   .record(z.string(), z.iso.date().nullable())
   .register(z.globalRegistry, {
     description: 'Successful Response',
   })
 
-export const zEventGroupsShiftEventGroupDatesBody = zShiftDatesRequest
+export const zEventsShiftEventDatesBody = zShiftDatesRequest
 
-export const zEventGroupsShiftEventGroupDatesPath = z.object({
+export const zEventsShiftEventDatesPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventGroupsShiftEventGroupDatesResponse = zEventGroupRead
+export const zEventsShiftEventDatesResponse = zEventRead
 
-export const zEventGroupsListGroupAvailabilitiesPath = z.object({
+export const zEventsListEventAvailabilitiesPath = z.object({
   group_id: z.uuid(),
 })
 
-export const zEventGroupsListGroupAvailabilitiesQuery = z.object({
+export const zEventsListEventAvailabilitiesQuery = z.object({
   skip: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(500).optional().default(200),
 })
 
 /**
- * Response Event-Groups-List Group Availabilities
+ * Response Events-List Event Availabilities
  *
  * Successful Response
  */
-export const zEventGroupsListGroupAvailabilitiesResponse = z
+export const zEventsListEventAvailabilitiesResponse = z
   .array(zUserAvailabilityWithUser)
   .register(z.globalRegistry, {
     description: 'Successful Response',
   })
 
-export const zEventGroupsDeleteMyAvailabilityPath = z.object({
+export const zEventsDeleteMyAvailabilityPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventGroupsDeleteMyAvailabilityResponse = z.void().register(z.globalRegistry, {
+export const zEventsDeleteMyAvailabilityResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zEventGroupsGetMyAvailabilityPath = z.object({
+export const zEventsGetMyAvailabilityPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventGroupsGetMyAvailabilityResponse = zUserAvailabilityRead
+export const zEventsGetMyAvailabilityResponse = zUserAvailabilityRead
 
-export const zEventGroupsSetMyAvailabilityBody = zUserAvailabilityCreate
+export const zEventsSetMyAvailabilityBody = zUserAvailabilityCreate
 
-export const zEventGroupsSetMyAvailabilityPath = z.object({
+export const zEventsSetMyAvailabilityPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventGroupsSetMyAvailabilityResponse = zUserAvailabilityRead
+export const zEventsSetMyAvailabilityResponse = zUserAvailabilityRead
 
-export const zEventGroupsListGroupManagersPath = z.object({
+export const zEventsListEventManagersPath = z.object({
   group_id: z.uuid(),
 })
 
 /**
- * Response Event-Groups-List Group Managers
+ * Response Events-List Event Managers
  *
  * Successful Response
  */
-export const zEventGroupsListGroupManagersResponse = z.array(zUserRead).register(z.globalRegistry, {
+export const zEventsListEventManagersResponse = z.array(zUserRead).register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zEventGroupsRemoveGroupManagerPath = z.object({
+export const zEventsRemoveGroupManagerPath = z.object({
   group_id: z.uuid(),
   user_id: z.uuid(),
 })
@@ -2040,11 +2132,11 @@ export const zEventGroupsRemoveGroupManagerPath = z.object({
 /**
  * Successful Response
  */
-export const zEventGroupsRemoveGroupManagerResponse = z.void().register(z.globalRegistry, {
+export const zEventsRemoveGroupManagerResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zEventGroupsAssignGroupManagerPath = z.object({
+export const zEventsAssignGroupManagerPath = z.object({
   group_id: z.uuid(),
   user_id: z.uuid(),
 })
@@ -2052,7 +2144,7 @@ export const zEventGroupsAssignGroupManagerPath = z.object({
 /**
  * Successful Response
  */
-export const zEventGroupsAssignGroupManagerResponse = zUserRead
+export const zEventsAssignGroupManagerResponse = zUserRead
 
 /**
  * Response Notifications-List Notification Types

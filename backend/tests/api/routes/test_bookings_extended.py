@@ -7,8 +7,8 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.booking import Booking
-from app.models.duty_slot import DutySlot
-from app.models.event import Event
+from app.models.shift import Shift
+from app.models.task import Task
 from app.models.user import User
 
 
@@ -56,22 +56,22 @@ class TestBookingsExtendedRoutes:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test dismissing a cancelled booking."""
-        slot = DutySlot(
-            event_id=test_event.id,
+        shift = Shift(
+            task_id=test_task.id,
             title="Dismiss Test",
             date=date(2026, 7, 1),
             start_time=time(8, 0),
             end_time=time(12, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
-        await db_session.refresh(slot)
+        await db_session.refresh(shift)
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_user.id,
             status="cancelled",
         )
@@ -94,21 +94,21 @@ class TestBookingsExtendedRoutes:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_admin_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test that a user cannot view another user's booking."""
-        slot = DutySlot(
-            event_id=test_event.id,
-            title="Other User Slot",
+        shift = Shift(
+            task_id=test_task.id,
+            title="Other User Shift",
             date=date(2026, 7, 2),
             start_time=time(9, 0),
             end_time=time(13, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
 
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_admin_user.id,
             status="confirmed",
         )
@@ -119,28 +119,28 @@ class TestBookingsExtendedRoutes:
         r = await async_client.get(f"/api/v1/bookings/{booking.id}")
         assert r.status_code == 403
 
-    async def test_rebook_cancelled_slot(
+    async def test_rebook_cancelled_shift(
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        test_task: Task,
     ):
         """Test rebooking a previously cancelled booking."""
-        slot = DutySlot(
-            event_id=test_event.id,
+        shift = Shift(
+            task_id=test_task.id,
             title="Rebook Test",
             date=date(2026, 8, 1),
             start_time=time(10, 0),
             end_time=time(14, 0),
         )
-        db_session.add(slot)
+        db_session.add(shift)
         await db_session.flush()
-        await db_session.refresh(slot)
+        await db_session.refresh(shift)
 
         # Create cancelled booking
         booking = Booking(
-            duty_slot_id=slot.id,
+            shift_id=shift.id,
             user_id=test_user.id,
             status="cancelled",
         )
@@ -150,7 +150,7 @@ class TestBookingsExtendedRoutes:
         # Rebook
         r = await async_client.post(
             "/api/v1/bookings/",
-            json={"duty_slot_id": str(slot.id)},
+            json={"shift_id": str(shift.id)},
         )
         assert r.status_code == 201
         assert r.json()["status"] == "confirmed"

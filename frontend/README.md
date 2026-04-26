@@ -54,7 +54,7 @@ Configure the following environment variables:
 - `VITE_AUTH0_CLIENT_ID` - Your Auth0 application client ID
 - `VITE_AUTH0_API_AUDIENCE` - Your Auth0 API audience
 - `VITE_AUTH0_CALLBACK_URL` - Auth0 callback URL (optional, defaults to current origin)
-- `VITE_API_SERVER_URL` - Backend API URL (default: http://localhost:8000)
+- `VITE_API_SERVER_URL` - Backend API URL (default: http://localhost:8787)
 
 ## Customize configuration
 

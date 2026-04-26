@@ -47,7 +47,7 @@ const { t } = useI18n()
       <CardContent>
         <div class="text-2xl font-bold">{{ overview.fill_rate }}%</div>
         <p class="text-xs text-muted-foreground">
-          {{ overview.confirmed_bookings }} / {{ overview.total_slot_capacity }}
+          {{ overview.confirmed_bookings }} / {{ overview.total_shift_capacity }}
           {{ t('admin.reporting.overview.totalCapacity') }}
         </p>
       </CardContent>
@@ -57,16 +57,16 @@ const { t } = useI18n()
       <CardHeader>
         <div class="flex items-center justify-between">
           <CardTitle class="text-sm font-medium">
-            {{ t('admin.reporting.overview.totalEvents') }}
+            {{ t('admin.reporting.overview.totalTasks') }}
           </CardTitle>
           <Calendar class="size-4 text-muted-foreground" />
         </div>
       </CardHeader>
       <CardContent>
-        <div class="text-2xl font-bold">{{ overview.total_events }}</div>
+        <div class="text-2xl font-bold">{{ overview.total_tasks }}</div>
         <p class="text-xs text-muted-foreground">
-          {{ overview.total_slots }} {{ t('admin.reporting.overview.totalSlots') }} ·
-          {{ overview.filled_slots }} {{ t('admin.reporting.overview.filledSlots') }}
+          {{ overview.total_shifts }} {{ t('admin.reporting.overview.totalShifts') }} ·
+          {{ overview.filled_shifts }} {{ t('admin.reporting.overview.filledShifts') }}
         </p>
       </CardContent>
     </Card>

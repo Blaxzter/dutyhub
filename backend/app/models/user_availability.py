@@ -8,15 +8,13 @@ from sqlmodel import Field, Relationship
 from app.models.base import Base
 
 if TYPE_CHECKING:
-    from app.models.event_group import EventGroup
+    from app.models.event import Event
 
 
 class UserAvailability(Base, table=True):
     __tablename__ = "user_availabilities"  # type: ignore[assignment]
     __table_args__ = (
-        sa.UniqueConstraint(
-            "user_id", "event_group_id", name="uq_availability_user_group"
-        ),
+        sa.UniqueConstraint("user_id", "event_id", name="uq_availability_user_group"),
     )
 
     user_id: uuid.UUID = Field(
@@ -27,10 +25,10 @@ class UserAvailability(Base, table=True):
             index=True,
         )
     )
-    event_group_id: uuid.UUID = Field(
+    event_id: uuid.UUID = Field(
         sa_column=sa.Column(
             sa.Uuid,
-            sa.ForeignKey("event_groups.id", ondelete="CASCADE"),
+            sa.ForeignKey("events.id", ondelete="CASCADE"),
             nullable=False,
             index=True,
         )
@@ -46,7 +44,7 @@ class UserAvailability(Base, table=True):
         default=None, sa_column=sa.Column(sa.Time, nullable=True)
     )
 
-    event_group: "EventGroup" = Relationship(back_populates="availabilities")
+    event: "Event" = Relationship(back_populates="availabilities")
     available_dates: list["UserAvailabilityDate"] = Relationship(
         back_populates="availability",
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},

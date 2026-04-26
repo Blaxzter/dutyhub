@@ -3,17 +3,24 @@
 /**
  * Build Docker services, start the full stack, and run Playwright E2E tests.
  *
- * Usage:
- *   node scripts/run-e2e-docker.mjs                    # full run
- *   node scripts/run-e2e-docker.mjs --grep "login"      # run matching tests
- *   node scripts/run-e2e-docker.mjs --up-only           # start services, skip tests
- *   node scripts/run-e2e-docker.mjs --down              # stop services
- *   node scripts/run-e2e-docker.mjs --no-build          # skip image builds
- *   node scripts/run-e2e-docker.mjs --no-teardown       # keep services running after tests
+ * Script-specific flags (consumed here):
+ *   --up-only, --down, --no-build, --no-teardown
+ *
+ * Everything else is forwarded verbatim to `npx playwright test`. So you can
+ * pass test paths, --grep, --headed, --project=chromium, etc.:
+ *
+ *   node scripts/run-e2e-docker.mjs                                  # full run
+ *   node scripts/run-e2e-docker.mjs tests/authenticated/tasks.spec.ts
+ *   node scripts/run-e2e-docker.mjs --grep "login"
+ *   node scripts/run-e2e-docker.mjs --headed --project=chromium tests/authenticated/events.spec.ts
+ *   node scripts/run-e2e-docker.mjs --up-only
+ *   node scripts/run-e2e-docker.mjs --down
+ *   node scripts/run-e2e-docker.mjs --no-build
+ *   node scripts/run-e2e-docker.mjs --no-teardown
  */
 
-import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { execSync, spawn } from 'node:child_process';
+import { createWriteStream, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import http from 'node:http';
@@ -22,28 +29,32 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
 const COMPOSE_FILE = resolve(REPO_ROOT, 'docker-compose.e2e.yml');
 const PROJECT_NAME = 'wirksam-e2e';
-const FRONTEND_PORT = 5173;
-const BACKEND_PORT = 8000;
+const FRONTEND_PORT = 5555;
+const BACKEND_PORT = 8787;
 
 // ── Parse CLI args ───────────────────────────────────────────────────
 
 const args = process.argv.slice(2);
-let grep = '';
 let noBuild = false;
 let noTeardown = false;
 let upOnly = false;
 let down = false;
+/** Args forwarded verbatim to `npx playwright test`. */
+const playwrightArgs = [];
+
+const SCRIPT_FLAGS = new Set(['--up-only', '--down', '--no-build', '--no-teardown']);
 
 for (let i = 0; i < args.length; i++) {
-    switch (args[i]) {
-        case '--grep':        grep = args[++i] || ''; break;
-        case '--up-only':     upOnly = true; noTeardown = true; break;
-        case '--down':        down = true; break;
-        case '--no-build':    noBuild = true; break;
-        case '--no-teardown': noTeardown = true; break;
-        default:
-            console.error(`Unknown argument: ${args[i]}`);
-            process.exit(1);
+    const arg = args[i];
+    if (SCRIPT_FLAGS.has(arg)) {
+        switch (arg) {
+            case '--up-only':     upOnly = true; noTeardown = true; break;
+            case '--down':        down = true; break;
+            case '--no-build':    noBuild = true; break;
+            case '--no-teardown': noTeardown = true; break;
+        }
+    } else {
+        playwrightArgs.push(arg);
     }
 }
 
@@ -227,27 +238,62 @@ try {
         PLAYWRIGHT_HTML_OPEN: 'never',
     };
 
-    if (grep) {
-        console.log(`\n==> Running tests matching '${grep}' ...`);
-        const code = runForExitCode(`npx playwright test --grep "${grep}"`, {
+    // Tee Playwright output to both the terminal and a log file so failures
+    // can be diagnosed after the fact without re-running the suite. Each run
+    // gets its own timestamped file under e2e-logs/, and e2e-logs/latest.log
+    // mirrors the most recent run for convenience.
+    mkdirSync(LOGS_DIR, { recursive: true });
+    const runTimestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const runLog = resolve(LOGS_DIR, `playwright-${runTimestamp}.log`);
+    const latestLog = resolve(LOGS_DIR, 'latest.log');
+
+    console.log(`\n==> Running Playwright tests ...`);
+    console.log(`    Logging to: ${runLog}`);
+    const pwArgs = ['playwright', 'test', ...playwrightArgs];
+    console.log(`  $ npx ${pwArgs.join(' ')}`);
+
+    const code = await new Promise((resolvePromise) => {
+        const runStream = createWriteStream(runLog);
+        const latestStream = createWriteStream(latestLog);
+        const writeBoth = (chunk) => {
+            runStream.write(chunk);
+            latestStream.write(chunk);
+        };
+        const child = spawn('npx', pwArgs, {
             cwd: frontendDir,
             env: testEnv,
+            shell: true,
+            stdio: ['ignore', 'pipe', 'pipe'],
         });
-        if (code !== 0) failed = true;
-    } else {
-        console.log('\n==> Running Playwright tests ...');
-        const code = runForExitCode('npx playwright test', {
-            cwd: frontendDir,
-            env: testEnv,
+        child.stdout.on('data', (chunk) => {
+            process.stdout.write(chunk);
+            writeBoth(chunk);
         });
-        if (code !== 0) failed = true;
-    }
+        child.stderr.on('data', (chunk) => {
+            process.stderr.write(chunk);
+            writeBoth(chunk);
+        });
+        child.on('close', (exitCode) => {
+            runStream.end();
+            latestStream.end();
+            resolvePromise(exitCode ?? 1);
+        });
+        child.on('error', (err) => {
+            const msg = `\n[spawn error] ${err.message}\n`;
+            writeBoth(msg);
+            runStream.end();
+            latestStream.end();
+            resolvePromise(1);
+        });
+    });
+    if (code !== 0) failed = true;
 
     if (failed) {
         console.log('\n==> Tests FAILED');
     } else {
         console.log('\n==> All tests passed');
     }
+    console.log(`    Full log: ${runLog}`);
 } finally {
     if (!noTeardown && !upOnly) {
         teardown();

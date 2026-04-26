@@ -4,7 +4,7 @@
  */
 import { test as setup } from '@playwright/test'
 
-const API = process.env.VITE_API_URL ?? 'http://localhost:8000/api/v1'
+const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
 
 setup('reset test data', async () => {
   const resp = await fetch(`${API}/testing/reset`, { method: 'POST' })
