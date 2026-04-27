@@ -46,7 +46,102 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Palettes
+   Two palettes × two modes = four blocks.
+     Default (earthy)  — warm cream + forest/terracotta. Selected when the
+                         <html> element has no .palette-* class.
+     Classic (mono)    — original monochrome shadcn look. Opt-in via
+                         <html class="palette-classic">.
+   Dark mode is orthogonal: any palette + .dark on the same element.
+   The palette class is set by usePalette(); .dark by useColorMode().
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Default palette — light (earthy) */
 :root {
+  --background: oklch(0.945 0.018 80);
+  --foreground: oklch(0.27 0.012 60);
+  --card: oklch(0.965 0.014 80);
+  --card-foreground: oklch(0.27 0.012 60);
+  --popover: oklch(0.965 0.014 80);
+  --popover-foreground: oklch(0.27 0.012 60);
+  --primary: oklch(0.40 0.072 145);
+  --primary-foreground: oklch(0.965 0.014 80);
+  /* Hero surface: forest green, used for onboarding/select-event left pane. */
+  --hero: oklch(0.40 0.072 145);
+  --hero-foreground: oklch(0.965 0.014 80);
+  /* Decorative bubbles on the hero — warm amber to read as "sun on leaves". */
+  --hero-speck: oklch(0.76 0.135 75);
+  --hero-speck-opacity: 20%;
+  --secondary: oklch(0.91 0.022 78);
+  --secondary-foreground: oklch(0.27 0.012 60);
+  --muted: oklch(0.91 0.022 78);
+  --muted-foreground: oklch(0.43 0.013 70);
+  --accent: oklch(0.90 0.038 50);
+  --accent-foreground: oklch(0.50 0.13 45);
+  --destructive: oklch(0.46 0.13 17);
+  --destructive-foreground: oklch(0.965 0.014 80);
+  --border: oklch(0.87 0.025 80);
+  --input: oklch(0.87 0.025 80);
+  --ring: oklch(0.55 0.06 145);
+  --chart-1: oklch(0.40 0.072 145);
+  --chart-2: oklch(0.62 0.135 45);
+  --chart-3: oklch(0.76 0.135 75);
+  --chart-4: oklch(0.55 0.05 235);
+  --chart-5: oklch(0.46 0.13 17);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.91 0.022 78);
+  --sidebar-foreground: oklch(0.27 0.012 60);
+  --sidebar-primary: oklch(0.40 0.072 145);
+  --sidebar-primary-foreground: oklch(0.965 0.014 80);
+  --sidebar-accent: oklch(0.93 0.020 78);
+  --sidebar-accent-foreground: oklch(0.27 0.012 60);
+  --sidebar-border: oklch(0.87 0.025 80);
+  --sidebar-ring: oklch(0.55 0.06 145);
+}
+
+/* Default palette — dark (warm earthy dark) */
+.dark {
+  --background: oklch(0.18 0.008 75);
+  --foreground: oklch(0.92 0.015 80);
+  --card: oklch(0.22 0.010 75);
+  --card-foreground: oklch(0.92 0.015 80);
+  --popover: oklch(0.22 0.010 75);
+  --popover-foreground: oklch(0.92 0.015 80);
+  --primary: oklch(0.65 0.10 145);
+  --primary-foreground: oklch(0.18 0.008 75);
+  --hero: oklch(0.30 0.04 145);
+  --hero-foreground: oklch(0.92 0.015 80);
+  --hero-speck: oklch(0.76 0.135 75);
+  --hero-speck-opacity: 35%;
+  --secondary: oklch(0.27 0.012 75);
+  --secondary-foreground: oklch(0.92 0.015 80);
+  --muted: oklch(0.27 0.012 75);
+  --muted-foreground: oklch(0.70 0.014 75);
+  --accent: oklch(0.30 0.040 50);
+  --accent-foreground: oklch(0.78 0.110 45);
+  --destructive: oklch(0.62 0.18 17);
+  --destructive-foreground: oklch(0.92 0.015 80);
+  --border: oklch(0.30 0.012 75);
+  --input: oklch(0.30 0.012 75);
+  --ring: oklch(0.55 0.06 145);
+  --chart-1: oklch(0.65 0.10 145);
+  --chart-2: oklch(0.70 0.13 45);
+  --chart-3: oklch(0.80 0.13 75);
+  --chart-4: oklch(0.65 0.07 235);
+  --chart-5: oklch(0.62 0.18 17);
+  --sidebar: oklch(0.22 0.010 75);
+  --sidebar-foreground: oklch(0.92 0.015 80);
+  --sidebar-primary: oklch(0.65 0.10 145);
+  --sidebar-primary-foreground: oklch(0.18 0.008 75);
+  --sidebar-accent: oklch(0.27 0.012 75);
+  --sidebar-accent-foreground: oklch(0.92 0.015 80);
+  --sidebar-border: oklch(0.30 0.012 75);
+  --sidebar-ring: oklch(0.55 0.06 145);
+}
+
+/* Classic palette — light (monochrome, original shadcn look) */
+.palette-classic {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -55,17 +150,9 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  /* Hero surface: used for the onboarding/select-event left pane.
-     Intentionally softer than --primary so it's not pure black/white.
-     Keep chroma=0 (monochrome) for now; later swap to earthy tones. */
   --hero: oklch(0.26 0 0);
   --hero-foreground: oklch(0.97 0 0);
-  /* Color of the decorative bubbles/glows on the hero surface.
-     Swap freely — the hero pane picks this up via --color-hero-speck.
-     Tip: switch to oklch(L C H) if you want to tune lightness with one number,
-     e.g. oklch(69.78% 0.1211 24.37) = #df7e78 — raise L to lighten, lower to darken. */
   --hero-speck: oklch(69.78% 0.1211 24.37);
-  /* How prominent the bubbles appear. 0% = invisible, 100% = full colour. */
   --hero-speck-opacity: 15%;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -83,7 +170,6 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -94,7 +180,8 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
+/* Classic palette — dark */
+.palette-classic.dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
@@ -103,8 +190,6 @@
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.985 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  /* Hero: softer than pure-white primary; a clear light grey that still
-     contrasts with the near-black --background. */
   --hero: oklch(0.95 0 0);
   --hero-foreground: oklch(0.2 0 0);
   --hero-speck: oklch(69.78% 0.1211 24.37);

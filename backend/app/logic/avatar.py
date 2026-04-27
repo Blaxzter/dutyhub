@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # Pre-decode upload size cap. Anything larger is rejected before we hand
 # bytes to Pillow (defense against decompression bombs).
-MAX_INPUT_BYTES: Final = 5 * 1024 * 1024  # 5 MB
+MAX_INPUT_BYTES: Final = 20 * 1024 * 1024  # 20 MB
 MAX_DIM: Final = 256
 MAX_OUTPUT_BYTES: Final = 64 * 1024  # 64 KB
 
@@ -39,7 +39,7 @@ def normalize_avatar(raw: bytes) -> tuple[bytes, str, str]:
     if len(raw) == 0:
         raise AvatarProcessingError("Empty file")
     if len(raw) > MAX_INPUT_BYTES:
-        raise AvatarProcessingError("Image exceeds 5 MB upload limit")
+        raise AvatarProcessingError("Image exceeds 20 MB upload limit")
 
     try:
         with Image.open(io.BytesIO(raw)) as probe:

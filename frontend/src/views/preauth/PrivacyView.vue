@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router'
 import { useAppConfig } from '@/composables/useAppConfig'
 
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const router = useRouter()
 const config = useAppConfig()
@@ -50,9 +51,11 @@ const controllerBlock = computed(() => {
       <!-- Controller -->
       <section class="space-y-3">
         <h2 class="text-2xl font-semibold">{{ $t('preauth.privacy.controller.title') }}</h2>
-        <div class="p-4 border rounded-lg text-muted-foreground whitespace-pre-line">
-          {{ controllerBlock }}
-        </div>
+        <Card>
+          <CardContent class="text-muted-foreground whitespace-pre-line">
+            {{ controllerBlock }}
+          </CardContent>
+        </Card>
       </section>
 
       <!-- Data we collect -->
@@ -88,18 +91,26 @@ const controllerBlock = computed(() => {
       <section class="space-y-3">
         <h2 class="text-2xl font-semibold">{{ $t('preauth.privacy.thirdParty.title') }}</h2>
         <div class="space-y-4">
-          <div class="p-4 border rounded-lg">
-            <h3 class="font-semibold mb-1">{{ $t('preauth.privacy.thirdParty.auth0.title') }}</h3>
-            <p class="text-sm text-muted-foreground">
-              {{ $t('preauth.privacy.thirdParty.auth0.description') }}
-            </p>
-          </div>
-          <div class="p-4 border rounded-lg">
-            <h3 class="font-semibold mb-1">{{ $t('preauth.privacy.thirdParty.email.title') }}</h3>
-            <p class="text-sm text-muted-foreground">
-              {{ $t('preauth.privacy.thirdParty.email.description') }}
-            </p>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>{{ $t('preauth.privacy.thirdParty.auth0.title') }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="text-sm text-muted-foreground">
+                {{ $t('preauth.privacy.thirdParty.auth0.description') }}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>{{ $t('preauth.privacy.thirdParty.email.title') }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="text-sm text-muted-foreground">
+                {{ $t('preauth.privacy.thirdParty.email.description') }}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </section>
 

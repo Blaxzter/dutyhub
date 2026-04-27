@@ -1,5 +1,23 @@
 {
     "settings": {
+        "appearance": {
+            "description": "Wähle ein Design und einen Farbmodus für die App. Änderungen gelten sofort und werden auf diesem Gerät gespeichert.",
+            "mode": {
+                "dark": "Dunkel",
+                "light": "Hell",
+                "system": "System",
+                "title": "Modus"
+            },
+            "theme": {
+                "classic": "Klassisch",
+                "classicDescription": "Originaler Schwarz-Weiß-Look",
+                "default": "Standard",
+                "defaultDescription": "Warme, einladende Farbpalette",
+                "previewLabel": "Vorschau",
+                "title": "Design"
+            },
+            "title": "Erscheinungsbild"
+        },
         "calendarSync": {
             "addTo": {
                 "apple": "Apple Kalender",
@@ -69,6 +87,7 @@
             "title": "Sprache & Region"
         },
         "nav": {
+            "appearance": "Erscheinungsbild",
             "calendar": "Kalender",
             "dataPrivacy": "Daten & Datenschutz",
             "language": "Sprache",
@@ -149,7 +168,7 @@
                             "rotateRight": "Nach rechts drehen",
                             "title": "Profilbild anpassen"
                         },
-                        "description": "PNG, JPEG, WebP oder GIF (erstes Bild) bis 5 MB. Wir skalieren und speichern lokal ein kleines WebP.",
+                        "description": "PNG, JPEG, WebP oder GIF (erstes Bild) bis 20 MB. Wir skalieren und speichern lokal ein kleines WebP.",
                         "label": "Profilbild",
                         "remove": "Entfernen",
                         "removeSuccess": "Profilbild entfernt.",

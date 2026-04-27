@@ -6,6 +6,8 @@ import { useColorMode } from '@vueuse/core'
 import { RouterView } from 'vue-router'
 import 'vue-sonner/style.css'
 
+import { usePalette } from '@/composables/usePalette'
+
 import { useAuthStore } from '@/stores/auth'
 
 import { Toaster } from '@/components/ui/sonner'
@@ -18,8 +20,10 @@ const authStore = useAuthStore()
 // Show loading when either Auth0 is loading OR profile is being loaded
 const isLoading = computed(() => auth0.isLoading.value || authStore.profileLoading)
 
-// Initialize color mode early to ensure dark mode works properly
+// Initialize color mode + palette early so the right classes are on <html>
+// before the first render.
 useColorMode()
+usePalette()
 </script>
 
 <template>

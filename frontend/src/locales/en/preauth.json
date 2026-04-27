@@ -205,6 +205,7 @@
         },
         "navigation": {
             "about": "About",
+            "appearance": "Appearance",
             "goToDashboard": "Go to Dashboard",
             "howItWorks": "How It Works",
             "signIn": "Sign In"

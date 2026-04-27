@@ -52,7 +52,7 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
   open: true,
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const authStore = useAuthStore()
 const sidebarStore = useSidebarStore()
 const notificationStore = useNotificationStore()
@@ -116,14 +116,13 @@ function eventBadge(
   return { text: label, tooltip, variant: 'outline' }
 }
 
-function formatBookingTitle(slotDate: string, slotTitle: string): string {
+function formatBookingDate(slotDate: string): string {
   const d = new Date(slotDate + 'T00:00:00')
-  const formatted = d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(locale.value, {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
   })
-  return `${formatted} — ${slotTitle}`
 }
 
 const navMain = computed(() => {
@@ -138,9 +137,13 @@ const navMain = computed(() => {
   }))
 
   const bookingItems: NavSubItem[] = sidebarStore.bookings.map((b) => ({
-    title: formatBookingTitle(b.slot_date, b.slot_title),
+    title: b.slot_title,
     routeName: 'task-detail',
     routeParams: { eventId: b.task_id },
+    badge: {
+      text: formatBookingDate(b.slot_date),
+      variant: 'secondary',
+    },
   }))
 
   return [

@@ -176,7 +176,7 @@ onMounted(loadEvents)
         {{ t('duties.events.empty') }}
       </div>
 
-      <div v-else class="overflow-hidden rounded-lg border">
+      <div v-else class="overflow-hidden rounded-lg border bg-card">
         <table class="w-full text-sm">
           <thead class="bg-muted/50">
             <tr>

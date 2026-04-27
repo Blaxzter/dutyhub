@@ -21,6 +21,8 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import DeleteConfirmationDialog from '@/components/tasks/DeleteConfirmationDialog.vue'
@@ -226,18 +228,18 @@ onMounted(loadTasks)
       <div class="flex flex-wrap items-center gap-2">
         <!-- Focus Mode Toggle -->
         <TooltipProvider v-if="filters.viewMode === 'list'">
-          <div class="flex overflow-hidden rounded-md border">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            :model-value="filters.focusMode"
+            @update:model-value="(v) => v && (filters.focusMode = v as typeof filters.focusMode)"
+          >
             <Tooltip>
               <TooltipTrigger as-child>
-                <Button
-                  data-testid="btn-focus-today"
-                  :variant="filters.focusMode === 'today' ? 'default' : 'ghost'"
-                  size="sm"
-                  class="rounded-none border-0"
-                  @click="filters.focusMode = 'today'"
-                >
+                <ToggleGroupItem value="today" data-testid="btn-focus-today">
                   <CalendarClock class="h-4 w-4" />
-                </Button>
+                </ToggleGroupItem>
               </TooltipTrigger>
               <TooltipContent>
                 {{ t('duties.tasks.focusMode.today') }}
@@ -245,56 +247,34 @@ onMounted(loadTasks)
             </Tooltip>
             <Tooltip>
               <TooltipTrigger as-child>
-                <Button
-                  data-testid="btn-focus-first-available"
-                  :variant="filters.focusMode === 'first-available' ? 'default' : 'ghost'"
-                  size="sm"
-                  class="rounded-none border-0 border-l"
-                  @click="filters.focusMode = 'first-available'"
-                >
+                <ToggleGroupItem value="first-available" data-testid="btn-focus-first-available">
                   <CalendarSearch class="h-4 w-4" />
-                </Button>
+                </ToggleGroupItem>
               </TooltipTrigger>
               <TooltipContent>
                 {{ t('duties.tasks.focusMode.firstAvailable') }}
               </TooltipContent>
             </Tooltip>
-          </div>
+          </ToggleGroup>
         </TooltipProvider>
 
         <!-- View Toggle -->
-        <div class="flex overflow-hidden rounded-md border">
-          <Button
-            data-testid="btn-view-list"
-            :variant="filters.viewMode === 'list' ? 'default' : 'ghost'"
-            size="sm"
-            class="rounded-none border-0"
-            @click="filters.viewMode = 'list'"
-          >
-            <List class="mr-1.5 h-4 w-4" />
-            <span class="hidden sm:inline">{{ t('duties.tasks.views.list') }}</span>
-          </Button>
-          <Button
-            data-testid="btn-view-cards"
-            :variant="filters.viewMode === 'box' ? 'default' : 'ghost'"
-            size="sm"
-            class="rounded-none border-0 border-l"
-            @click="filters.viewMode = 'box'"
-          >
-            <Grid2x2 class="mr-1.5 h-4 w-4" />
-            <span class="hidden sm:inline">{{ t('duties.tasks.views.box') }}</span>
-          </Button>
-          <Button
-            data-testid="btn-view-calendar"
-            :variant="filters.viewMode === 'calendar' ? 'default' : 'ghost'"
-            size="sm"
-            class="rounded-none border-0 border-l"
-            @click="filters.viewMode = 'calendar'"
-          >
-            <Calendar class="mr-1.5 h-4 w-4" />
-            <span class="hidden sm:inline">{{ t('duties.tasks.views.calendar') }}</span>
-          </Button>
-        </div>
+        <Tabs v-model="filters.viewMode">
+          <TabsList>
+            <TabsTrigger value="list" data-testid="btn-view-list">
+              <List class="h-4 w-4" />
+              <span class="hidden sm:inline">{{ t('duties.tasks.views.list') }}</span>
+            </TabsTrigger>
+            <TabsTrigger value="box" data-testid="btn-view-cards">
+              <Grid2x2 class="h-4 w-4" />
+              <span class="hidden sm:inline">{{ t('duties.tasks.views.box') }}</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" data-testid="btn-view-calendar">
+              <Calendar class="h-4 w-4" />
+              <span class="hidden sm:inline">{{ t('duties.tasks.views.calendar') }}</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
         <Button
           v-if="authStore.isManager"

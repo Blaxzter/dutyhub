@@ -26,6 +26,11 @@ const VIEWPORT = { width: 1280, height: 720 }
 const EMAIL = process.env.E2E_AUTH0_USERNAME ?? ''
 const PASSWORD = process.env.E2E_AUTH0_PASSWORD ?? ''
 
+// Auth0 host (e.g. "tenant.auth0.com" or a custom domain like "auth.example.com").
+// Custom domains don't contain "auth0", so we read the configured domain instead
+// of substring-matching the URL.
+const AUTH0_HOST = (process.env.VITE_AUTH0_DOMAIN ?? '').replace(/^https?:\/\//, '').replace(/\/.*$/, '')
+
 // Locale-dependent UI labels
 const L = {
   en: {
@@ -57,7 +62,7 @@ const PAGES: Array<{
   fullPage?: boolean
 }> = [
   { name: 'dashboard', path: '/app/home' },
-  { name: 'events', path: '/app/events' },
+  { name: 'events', path: '/app/admin/events' },
   { name: 'tasks', path: '/app/tasks' },
   {
     name: 'task-detail',
@@ -69,6 +74,7 @@ const PAGES: Array<{
       await page.waitForTimeout(1000)
     },
   },
+  { name: 'select-event', path: '/app/select-event?mode=switch' },
   { name: 'my-bookings', path: '/app/bookings' },
   {
     name: 'notification-bell',
@@ -85,15 +91,40 @@ const PAGES: Array<{
   { name: 'user-management', path: '/app/admin/users' },
 ]
 
+function isOnAuth0(page: import('@playwright/test').Page) {
+  const url = page.url()
+  if (AUTH0_HOST && url.includes(AUTH0_HOST)) return true
+  return /auth0\.com|\.auth0\./.test(url)
+}
+
+async function settleNavigation(page: import('@playwright/test').Page) {
+  // Wait until the URL stops changing (Auth0 redirect chain has resolved).
+  await page
+    .waitForURL(
+      (url) =>
+        (AUTH0_HOST !== '' && url.host === AUTH0_HOST) ||
+        url.host.includes('auth0') ||
+        url.pathname.startsWith('/app/') ||
+        url.pathname === '/' ||
+        url.pathname.startsWith('/pending-approval'),
+      { timeout: 30_000 },
+    )
+    .catch(() => {})
+  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
+}
+
 async function login(page: import('@playwright/test').Page) {
-  // Set locale before any navigation so the app picks it up on first load
+  // Set locale + suppress overlays (cookie banner, "what's new" dialog)
+  // before any navigation so they never render in screenshots.
   await page.addInitScript((lang: string) => {
     localStorage.setItem('locale', lang)
+    localStorage.setItem('wirksam-cookie-notice-dismissed', '1')
+    localStorage.setItem('wirksam-last-seen-changelog', '999.999.999')
   }, LANG)
 
   // Navigate to the app — Auth0 may auto-redirect if session exists
   await page.goto(`${BASE_URL}/app/home`)
-  await page.waitForTimeout(3000)
+  await settleNavigation(page)
 
   // If we landed on the dashboard, we're already authenticated
   if (page.url().includes('/app/home')) {
@@ -105,7 +136,7 @@ async function login(page: import('@playwright/test').Page) {
   }
 
   // If redirected to Auth0, fill in credentials
-  if (page.url().includes('auth0')) {
+  if (isOnAuth0(page)) {
     if (!EMAIL || !PASSWORD) {
       throw new Error(
         'Not authenticated and no credentials found.\n' +
@@ -148,7 +179,7 @@ async function login(page: import('@playwright/test').Page) {
     }
 
     await page.waitForURL(/localhost:5555/, { timeout: 60_000 })
-    await page.waitForTimeout(2000)
+    await settleNavigation(page)
     return
   }
 
@@ -195,7 +226,7 @@ async function login(page: import('@playwright/test').Page) {
     }
 
     await page.waitForURL(/localhost:5555/, { timeout: 60_000 })
-    await page.waitForTimeout(2000)
+    await settleNavigation(page)
   }
 }
 
@@ -205,7 +236,19 @@ test(`Take landing page screenshots [${LANG}]`, async ({ page }) => {
 
   for (const { name, path, action, fullPage } of PAGES) {
     await page.goto(`${BASE_URL}${path}`)
-    await page.waitForTimeout(3000)
+    await settleNavigation(page)
+
+    // If we got bounced to Auth0, the session expired mid-run — re-authenticate.
+    if (isOnAuth0(page)) {
+      console.log(`  Bounced to Auth0 on ${path}, re-running login.`)
+      await login(page)
+      await page.goto(`${BASE_URL}${path}`)
+      await settleNavigation(page)
+    }
+
+    if (isOnAuth0(page)) {
+      throw new Error(`Still on Auth0 after re-login when navigating to ${path}`)
+    }
 
     if (action) {
       await action(page)
@@ -217,7 +260,7 @@ test(`Take landing page screenshots [${LANG}]`, async ({ page }) => {
       fullPage: fullPage ?? false,
     })
 
-    console.log(`  Saved: ${SCREENSHOT_DIR}/${name}.png`)
+    console.log(`  Saved: ${SCREENSHOT_DIR}/${name}.png  (url: ${page.url()})`)
   }
 
   console.log(`\nAll landing page screenshots captured! [${LANG}]`)
@@ -229,7 +272,12 @@ test(`Take How It Works step screenshots [${LANG}]`, async ({ page }) => {
 
   // Navigate to task creation
   await page.goto(`${BASE_URL}/app/tasks/create`)
-  await page.waitForTimeout(3000)
+  await settleNavigation(page)
+  if (isOnAuth0(page)) {
+    await login(page)
+    await page.goto(`${BASE_URL}/app/tasks/create`)
+    await settleNavigation(page)
+  }
 
   // --- Step 1: Task Details ---
   await page.getByRole('textbox').first().fill('Kirchentag 2026')

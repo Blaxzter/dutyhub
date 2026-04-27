@@ -23,6 +23,10 @@
         <LanguageSettingsCard />
       </template>
 
+      <template v-if="id === 'appearance'">
+        <AppearanceCard />
+      </template>
+
       <template v-if="id === 'dataPrivacy'">
         <DataExportCard />
         <DeleteAccountCard />
@@ -92,7 +96,15 @@
 <script setup lang="ts">
 import { type Component, computed, ref, watch } from 'vue'
 
-import { Bell, CalendarDays, GlobeIcon, KeyRound, ShieldIcon, UserIcon } from 'lucide-vue-next'
+import {
+  Bell,
+  CalendarDays,
+  GlobeIcon,
+  KeyRound,
+  Palette as PaletteIcon,
+  ShieldIcon,
+  UserIcon,
+} from 'lucide-vue-next'
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -104,6 +116,7 @@ import { useAdaptiveCarouselHeight } from '@/composables/useAdaptiveCarouselHeig
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
 import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
 
+import AppearanceCard from '@/components/account/user/AppearanceCard.vue'
 import CalendarSyncCard from '@/components/account/user/CalendarSyncCard.vue'
 import CurrentProfileCard from '@/components/account/user/CurrentProfileCard.vue'
 import DataExportCard from '@/components/account/user/DataExportCard.vue'
@@ -145,6 +158,7 @@ const navItems = computed<NavItem[]>(() => [
   { id: 'notifications', label: t('user.settings.nav.notifications'), icon: Bell },
   { id: 'calendar', label: t('user.settings.nav.calendar'), icon: CalendarDays },
   { id: 'language', label: t('user.settings.nav.language'), icon: GlobeIcon },
+  { id: 'appearance', label: t('user.settings.nav.appearance'), icon: PaletteIcon },
   { id: 'dataPrivacy', label: t('user.settings.nav.dataPrivacy'), icon: ShieldIcon },
 ])
 

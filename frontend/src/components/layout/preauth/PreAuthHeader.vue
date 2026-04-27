@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
-import ThemeToggle from '@/components/layout/ThemeToggle.vue'
+import AppearanceMenu from '@/components/layout/AppearanceMenu.vue'
 import UserDashboardLink from '@/components/layout/preauth/UserDashboardLink.vue'
 import LanguageSwitch from '@/components/utils/LanguageSwitch.vue'
 
@@ -67,7 +67,7 @@ function mobileNavigate(name: string) {
       <!-- Desktop nav -->
       <nav class="hidden md:flex items-center space-x-2">
         <LanguageSwitch variant="ghost" size="sm" :show-text="false" />
-        <ThemeToggle />
+        <AppearanceMenu />
 
         <Button
           v-for="item in navItems"
@@ -93,7 +93,7 @@ function mobileNavigate(name: string) {
       <!-- Mobile nav -->
       <div class="flex md:hidden items-center gap-1">
         <LanguageSwitch variant="ghost" size="sm" :show-text="false" />
-        <ThemeToggle />
+        <AppearanceMenu />
 
         <Sheet v-model:open="mobileMenuOpen">
           <SheetTrigger as-child>

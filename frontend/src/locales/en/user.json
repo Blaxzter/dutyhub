@@ -1,5 +1,23 @@
 {
     "settings": {
+        "appearance": {
+            "description": "Choose a theme and color mode for the app. Changes apply instantly and are saved on this device.",
+            "mode": {
+                "dark": "Dark",
+                "light": "Light",
+                "system": "System",
+                "title": "Mode"
+            },
+            "theme": {
+                "classic": "Classic",
+                "classicDescription": "Original monochrome look",
+                "default": "Default",
+                "defaultDescription": "Warm, community-friendly palette",
+                "previewLabel": "Preview",
+                "title": "Theme"
+            },
+            "title": "Appearance"
+        },
         "calendarSync": {
             "addTo": {
                 "apple": "Apple Calendar",
@@ -69,6 +87,7 @@
             "title": "Language & Region"
         },
         "nav": {
+            "appearance": "Appearance",
             "calendar": "Calendar",
             "dataPrivacy": "Data & Privacy",
             "language": "Language",
@@ -149,7 +168,7 @@
                             "rotateRight": "Rotate right",
                             "title": "Adjust your profile picture"
                         },
-                        "description": "PNG, JPEG, WebP, or GIF (first frame) up to 5 MB. We resize and store a small WebP locally.",
+                        "description": "PNG, JPEG, WebP, or GIF (first frame) up to 20 MB. We resize and store a small WebP locally.",
                         "label": "Profile Picture",
                         "remove": "Remove",
                         "removeSuccess": "Profile picture removed.",
