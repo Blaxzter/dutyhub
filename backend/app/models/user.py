@@ -64,6 +64,12 @@ class User(Base, table=True):
         description="Display preference for times: 'locale' | 'h12' | 'h24'",
     )
 
+    theme: str = Field(
+        default="default",
+        sa_column=sa.Column(sa.String(20), nullable=False, server_default="default"),
+        description="Selected color palette: 'default' | 'classic'",
+    )
+
     selected_event_id: uuid.UUID | None = Field(
         default=None,
         sa_column=sa.Column(

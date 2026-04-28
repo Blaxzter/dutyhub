@@ -19,6 +19,7 @@ class UserCreate(BaseModel):
     time_format: str = Field(
         default="locale", description="Display preference for times"
     )
+    theme: str = Field(default="default", description="Selected color palette")
 
 
 class UserUpdate(BaseModel):
@@ -39,6 +40,7 @@ class UserUpdate(BaseModel):
     time_format: str | None = Field(
         default=None, description="Display preference for times"
     )
+    theme: str | None = Field(default=None, description="Selected color palette")
 
 
 class UserRead(BaseModel):
@@ -52,6 +54,7 @@ class UserRead(BaseModel):
     phone_number: str | None = None
     preferred_language: str = "en"
     time_format: str = "locale"
+    theme: str = "default"
     roles: list[str]
     is_active: bool
     rejection_reason: str | None = None

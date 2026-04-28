@@ -2696,6 +2696,12 @@ export type UserCreate = {
    * Display preference for times
    */
   time_format?: string
+  /**
+   * Theme
+   *
+   * Selected color palette
+   */
+  theme?: string
 }
 
 /**
@@ -2761,6 +2767,10 @@ export type UserProfile = {
    * Time Format
    */
   time_format?: 'locale' | 'h12' | 'h24'
+  /**
+   * Theme
+   */
+  theme?: 'default' | 'classic'
   /**
    * Email Verified
    */
@@ -2849,6 +2859,12 @@ export type UserProfileUpdate = {
    * Display preference for times
    */
   time_format?: 'locale' | 'h12' | 'h24' | null
+  /**
+   * Theme
+   *
+   * Selected color palette
+   */
+  theme?: 'default' | 'classic' | null
 }
 
 /**
@@ -2887,6 +2903,10 @@ export type UserRead = {
    * Time Format
    */
   time_format?: string
+  /**
+   * Theme
+   */
+  theme?: string
   /**
    * Roles
    */
@@ -2955,6 +2975,12 @@ export type UserUpdate = {
    * Display preference for times
    */
   time_format?: string | null
+  /**
+   * Theme
+   *
+   * Selected color palette
+   */
+  theme?: string | null
 }
 
 export type ValidationErrorItem = {

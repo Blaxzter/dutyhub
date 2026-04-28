@@ -1286,6 +1286,13 @@ export const zUserCreate = z.object({
     })
     .optional()
     .default('locale'),
+  theme: z
+    .string()
+    .register(z.globalRegistry, {
+      description: 'Selected color palette',
+    })
+    .optional()
+    .default('default'),
 })
 
 /**
@@ -1302,6 +1309,7 @@ export const zUserProfile = z.object({
   phone_number: z.string().nullish(),
   preferred_language: z.string().optional().default('en'),
   time_format: z.enum(['locale', 'h12', 'h24']).optional().default('locale'),
+  theme: z.enum(['default', 'classic']).optional().default('default'),
   email_verified: z.boolean().optional().default(false),
   roles: z
     .array(z.string())
@@ -1353,6 +1361,7 @@ export const zUserProfileUpdate = z.object({
     .regex(/^(en|de)$/)
     .nullish(),
   time_format: z.enum(['locale', 'h12', 'h24']).nullish(),
+  theme: z.enum(['default', 'classic']).nullish(),
 })
 
 /**
@@ -1367,6 +1376,7 @@ export const zUserRead = z.object({
   phone_number: z.string().nullish(),
   preferred_language: z.string().optional().default('en'),
   time_format: z.string().optional().default('locale'),
+  theme: z.string().optional().default('default'),
   roles: z.array(z.string()),
   is_active: z.boolean(),
   rejection_reason: z.string().nullish(),
@@ -1395,6 +1405,7 @@ export const zUserUpdate = z.object({
   rejection_reason: z.string().nullish(),
   preferred_language: z.string().nullish(),
   time_format: z.string().nullish(),
+  theme: z.string().nullish(),
 })
 
 export const zValidationErrorItem = z.object({

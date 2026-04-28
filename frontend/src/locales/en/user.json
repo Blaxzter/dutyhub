@@ -13,6 +13,7 @@
                 "classicDescription": "Original monochrome look",
                 "default": "Default",
                 "defaultDescription": "Warm, community-friendly palette",
+                "error": "Could not save theme. Please try again.",
                 "previewLabel": "Preview",
                 "title": "Theme"
             },

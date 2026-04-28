@@ -146,6 +146,9 @@ async def update_user_profile(
     if user_update.time_format is not None:
         current_user.time_format = user_update.time_format
 
+    if user_update.theme is not None:
+        current_user.theme = user_update.theme
+
     profile = await _build_user_profile(current_user, session)
     return profile.model_copy(
         update={

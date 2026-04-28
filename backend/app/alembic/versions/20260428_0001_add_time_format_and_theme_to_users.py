@@ -1,4 +1,4 @@
-"""Add time_format to users
+"""Add time_format and theme to users
 
 Revision ID: 20260428_0001
 Revises: 20260426_0001
@@ -27,7 +27,17 @@ def upgrade():
             server_default="locale",
         ),
     )
+    op.add_column(
+        "users",
+        sa.Column(
+            "theme",
+            sa.String(20),
+            nullable=False,
+            server_default="default",
+        ),
+    )
 
 
 def downgrade():
+    op.drop_column("users", "theme")
     op.drop_column("users", "time_format")

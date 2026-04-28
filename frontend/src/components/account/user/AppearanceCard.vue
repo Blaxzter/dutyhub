@@ -3,8 +3,12 @@ import { computed } from 'vue'
 
 import { useColorMode } from '@vueuse/core'
 import { Monitor, Moon, Palette as PaletteIcon, Sun } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 
+import { useAuthStore } from '@/stores/auth'
+
+import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { type Palette, usePalette } from '@/composables/usePalette'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,6 +18,21 @@ import ThemePreview from '@/components/layout/ThemePreview.vue'
 const { t } = useI18n()
 const mode = useColorMode()
 const palette = usePalette()
+const authStore = useAuthStore()
+const { patch } = useAuthenticatedClient()
+
+async function selectPalette(next: Palette) {
+  const previous = palette.value
+  palette.value = next
+  if (!authStore.isAuthenticated || !authStore.profile) return
+  try {
+    await patch({ url: '/users/me', body: { theme: next } })
+    authStore.profile.theme = next
+  } catch {
+    palette.value = previous
+    toast.error(t('user.settings.appearance.theme.error'))
+  }
+}
 
 const palettes: { id: Palette; label: string; description: string }[] = [
   {
@@ -68,7 +87,7 @@ const previewMode = computed<'light' | 'dark'>(() => {
             :class="palette === p.id ? 'border-ring bg-accent/50' : 'border-border'"
             :data-testid="`appearance-theme-${p.id}`"
             :aria-pressed="palette === p.id"
-            @click="palette = p.id"
+            @click="selectPalette(p.id)"
           >
             <ThemePreview
               :palette="p.id"

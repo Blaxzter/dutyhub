@@ -8,6 +8,7 @@ import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
+import { type Palette, usePalette } from '@/composables/usePalette'
 
 import ActionToast from '@/components/ui/sonner/ActionToast.vue'
 
@@ -127,6 +128,11 @@ export const useAuthStore = defineStore('auth', () => {
       if (response.data.preferred_language) {
         i18n.global.locale.value = response.data.preferred_language as 'en' | 'de'
         localStorage.setItem('locale', response.data.preferred_language)
+      }
+
+      // Apply server-side theme preference
+      if (response.data.theme) {
+        usePalette().value = response.data.theme as Palette
       }
 
       // Check for pending users once per session (admin only)
