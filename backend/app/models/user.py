@@ -58,6 +58,12 @@ class User(Base, table=True):
         description="User's preferred language for notifications (e.g., 'en', 'de')",
     )
 
+    time_format: str = Field(
+        default="locale",
+        sa_column=sa.Column(sa.String(10), nullable=False, server_default="locale"),
+        description="Display preference for times: 'locale' | 'h12' | 'h24'",
+    )
+
     selected_event_id: uuid.UUID | None = Field(
         default=None,
         sa_column=sa.Column(

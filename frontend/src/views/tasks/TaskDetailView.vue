@@ -52,6 +52,7 @@ import {
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import Separator from '@/components/ui/separator/Separator.vue'
+import { TimePicker } from '@/components/ui/time-picker'
 
 import DeleteConfirmationDialog from '@/components/tasks/DeleteConfirmationDialog.vue'
 import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
@@ -1002,11 +1003,11 @@ onMounted(async () => {
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
               <Label>{{ t('duties.shifts.fields.startTime') }}</Label>
-              <Input v-model="slotForm.start_time" type="time" />
+              <TimePicker v-model="slotForm.start_time" />
             </div>
             <div class="space-y-2">
               <Label>{{ t('duties.shifts.fields.endTime') }}</Label>
-              <Input v-model="slotForm.end_time" type="time" />
+              <TimePicker v-model="slotForm.end_time" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">

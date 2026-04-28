@@ -84,6 +84,15 @@
             "currentDescription": "Wählen Sie Ihre bevorzugte Sprache für die Anwendungsoberfläche.",
             "description": "Wählen Sie Ihre bevorzugte Sprache für die Benutzeroberfläche.",
             "notificationHint": "Diese Einstellung gilt auch für E-Mail-Benachrichtigungen und andere Mitteilungen, die Sie erhalten.",
+            "timeFormat": {
+                "description": "Legen Sie fest, wie Uhrzeiten in der App angezeigt werden.",
+                "error": "Zeitformat konnte nicht gespeichert werden. Bitte erneut versuchen.",
+                "h12": "12-Stunden",
+                "h24": "24-Stunden",
+                "locale": "Automatisch",
+                "preview": "Beispiel: {time}",
+                "title": "Zeitformat"
+            },
             "title": "Sprache & Region"
         },
         "nav": {

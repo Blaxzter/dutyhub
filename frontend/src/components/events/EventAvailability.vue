@@ -6,10 +6,11 @@ import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
+import { useFormatters } from '@/composables/useFormatters'
+
 import AvailabilityDisplay from '@/components/tasks/AvailabilityDisplay.vue'
 
 import type { UserAvailabilityRead, UserAvailabilityWithUser } from '@/client/types.gen'
-import { formatDateWithTime } from '@/lib/format'
 
 defineProps<{
   myAvailability: UserAvailabilityRead | null
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { formatDateWithTime } = useFormatters()
 </script>
 
 <template>

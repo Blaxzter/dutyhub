@@ -1,6 +1,9 @@
 import uuid
+from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field
+
+TimeFormat = Literal["locale", "h12", "h24"]
 
 
 class ProfileInit(BaseModel):
@@ -24,6 +27,9 @@ class UserProfileUpdate(BaseModel):
     preferred_language: str | None = Field(
         None, pattern="^(en|de)$", description="Preferred language for notifications"
     )
+    time_format: TimeFormat | None = Field(
+        None, description="Display preference for times"
+    )
 
 
 class UserProfile(BaseModel):
@@ -38,6 +44,7 @@ class UserProfile(BaseModel):
     bio: str | None = None
     phone_number: str | None = None
     preferred_language: str = "en"
+    time_format: TimeFormat = "locale"
     email_verified: bool = False
     roles: list[str] = Field(default_factory=list, description="User's roles")
     is_admin: bool = Field(default=False, description="Whether user has admin role")

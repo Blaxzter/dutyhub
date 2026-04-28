@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 
 import { avatarUrlFor } from '@/composables/useAvatarUrl'
+import { useFormatters } from '@/composables/useFormatters'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -22,8 +23,9 @@ defineProps<{
   loading?: boolean
 }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const authStore = useAuthStore()
+const { formatDateTime } = useFormatters()
 
 const initials = (name: string | null | undefined, email: string | null | undefined): string => {
   if (name) {
@@ -41,14 +43,6 @@ const initials = (name: string | null | undefined, email: string | null | undefi
 const entryAvatarUrl = (entry: ShiftBookingEntry): string | null =>
   avatarUrlFor({ id: entry.user_id, avatar_etag: entry.user_avatar_etag ?? null })
 
-const formatDateTime = (isoStr: string) => {
-  return new Date(isoStr).toLocaleDateString(locale.value, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 </script>
 
 <template>

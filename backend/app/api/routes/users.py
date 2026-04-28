@@ -143,6 +143,9 @@ async def update_user_profile(
     if user_update.preferred_language is not None:
         current_user.preferred_language = user_update.preferred_language
 
+    if user_update.time_format is not None:
+        current_user.time_format = user_update.time_format
+
     profile = await _build_user_profile(current_user, session)
     return profile.model_copy(
         update={

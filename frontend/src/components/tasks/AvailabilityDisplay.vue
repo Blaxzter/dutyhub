@@ -4,24 +4,26 @@ import { computed } from 'vue'
 import { Clock } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
+import { useFormatters } from '@/composables/useFormatters'
+
 import Badge from '@/components/ui/badge/Badge.vue'
 
 import type { UserAvailabilityRead } from '@/client/types.gen'
-import { formatDateWithTime } from '@/lib/format'
 
 const props = defineProps<{
   availability: UserAvailabilityRead
 }>()
 
 const { t } = useI18n()
+const { formatTime, formatDateWithTime } = useFormatters()
 
 const defaultTimeLabel = computed(() => {
   const s = props.availability.default_start_time
   const e = props.availability.default_end_time
   if (!s && !e) return null
-  if (s && e) return `${s} – ${e}`
-  if (s) return t('duties.availability.fields.afterTime', { time: s })
-  return t('duties.availability.fields.beforeTime', { time: e })
+  if (s && e) return `${formatTime(s)} – ${formatTime(e)}`
+  if (s) return t('duties.availability.fields.afterTime', { time: formatTime(s) })
+  return t('duties.availability.fields.beforeTime', { time: formatTime(e) })
 })
 </script>
 

@@ -2,10 +2,14 @@
 import { Clock } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
+import { useFormatters } from '@/composables/useFormatters'
+
 import Badge from '@/components/ui/badge/Badge.vue'
 
 import type { BookingCalendarItem, CalendarDay, CalendarTask, CalendarEvent } from './types'
-import { formatTimeRange, statusVariant } from './types'
+import { statusVariant } from './types'
+
+const { formatTimeRange } = useFormatters()
 
 defineProps<{
   day: CalendarDay

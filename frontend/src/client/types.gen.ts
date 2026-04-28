@@ -2690,6 +2690,12 @@ export type UserCreate = {
    * Preferred language
    */
   preferred_language?: string
+  /**
+   * Time Format
+   *
+   * Display preference for times
+   */
+  time_format?: string
 }
 
 /**
@@ -2751,6 +2757,10 @@ export type UserProfile = {
    * Preferred Language
    */
   preferred_language?: string
+  /**
+   * Time Format
+   */
+  time_format?: 'locale' | 'h12' | 'h24'
   /**
    * Email Verified
    */
@@ -2833,6 +2843,12 @@ export type UserProfileUpdate = {
    * Preferred language for notifications
    */
   preferred_language?: string | null
+  /**
+   * Time Format
+   *
+   * Display preference for times
+   */
+  time_format?: 'locale' | 'h12' | 'h24' | null
 }
 
 /**
@@ -2867,6 +2883,10 @@ export type UserRead = {
    * Preferred Language
    */
   preferred_language?: string
+  /**
+   * Time Format
+   */
+  time_format?: string
   /**
    * Roles
    */
@@ -2929,6 +2949,12 @@ export type UserUpdate = {
    * Preferred language
    */
   preferred_language?: string | null
+  /**
+   * Time Format
+   *
+   * Display preference for times
+   */
+  time_format?: string | null
 }
 
 export type ValidationErrorItem = {

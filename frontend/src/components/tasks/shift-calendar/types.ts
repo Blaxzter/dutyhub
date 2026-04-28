@@ -161,24 +161,6 @@ export function isToday(date: Date | null): boolean {
   return dateToStr(date) === dateToStr(new Date())
 }
 
-function stripSeconds(time: string): string {
-  // "HH:MM:SS" → "HH:MM"
-  const parts = time.split(':')
-  return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : time
-}
-
-export function formatTimeRange(
-  start: string | null | undefined,
-  end: string | null | undefined,
-): string {
-  const s = start ? stripSeconds(start) : null
-  const e = end ? stripSeconds(end) : null
-  if (s && e) return `${s} – ${e}`
-  if (s) return s
-  if (e) return `– ${e}`
-  return ''
-}
-
 export function statusVariant(status?: string) {
   switch (status) {
     case 'published':
