@@ -21,6 +21,7 @@
 
       <template v-if="id === 'language'">
         <LanguageSettingsCard />
+        <TimeFormatCard />
       </template>
 
       <template v-if="id === 'appearance'">
@@ -125,6 +126,7 @@ import EditProfileForm from '@/components/account/user/EditProfileForm.vue'
 import LanguageSettingsCard from '@/components/account/user/LanguageSettingsCard.vue'
 import NotificationSettingsCard from '@/components/account/user/NotificationSettingsCard.vue'
 import PasswordResetCard from '@/components/account/user/PasswordResetCard.vue'
+import TimeFormatCard from '@/components/account/user/TimeFormatCard.vue'
 import { useAuthProvider } from '@/components/account/user/useAuthProvider.ts'
 import ChipNav from '@/components/utils/ChipNav.vue'
 

@@ -992,6 +992,10 @@ export type NotificationRead = {
    */
   notification_type_code: string
   /**
+   * Classification
+   */
+  classification: 'reminder' | 'change' | 'match' | 'announcement'
+  /**
    * Title
    */
   title: string
@@ -1157,6 +1161,10 @@ export type NotificationTypeRead = {
    * Category
    */
   category: string
+  /**
+   * Classification
+   */
+  classification: 'reminder' | 'change' | 'match' | 'announcement'
   /**
    * Is Admin Only
    */

@@ -11,3 +11,4 @@ __pycache__
 .env.production
 e2e/.auth/user.json
 e2e-logs/
+design/

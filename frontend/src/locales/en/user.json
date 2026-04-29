@@ -85,15 +85,6 @@
             "currentDescription": "Select your preferred language for the application interface.",
             "description": "Choose your preferred language for the interface.",
             "notificationHint": "This setting also applies to email notifications and other messages you receive.",
-            "timeFormat": {
-                "description": "Choose how times are displayed throughout the app.",
-                "error": "Could not save time format. Please try again.",
-                "h12": "12-hour",
-                "h24": "24-hour",
-                "locale": "Auto",
-                "preview": "Example: {time}",
-                "title": "Time format"
-            },
             "title": "Language & Region"
         },
         "nav": {
@@ -193,6 +184,16 @@
             }
         },
         "subtitle": "Manage your account settings and profile information.",
+        "timeFormat": {
+            "description": "Choose how times are displayed throughout the app.",
+            "error": "Could not save time format. Please try again.",
+            "h12": "12-hour",
+            "h24": "24-hour",
+            "label": "Display style",
+            "locale": "Auto",
+            "preview": "Example: {time}",
+            "title": "Time Format"
+        },
         "title": "User Settings"
     }
 }

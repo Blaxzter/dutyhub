@@ -11,11 +11,31 @@ from app.core.db import async_session
 from app.core.errors import raise_problem
 from app.core.sse import sse_manager
 from app.crud.notification import notification as crud_notification
+from app.logic.notifications.registry import classification_for_code
+from app.models.notification import Notification
 from app.schemas.notification import (
     NotificationListResponse,
     NotificationRead,
     UnreadCountResponse,
 )
+
+
+def _to_read(notif: Notification) -> NotificationRead:
+    return NotificationRead(
+        id=notif.id,
+        recipient_id=notif.recipient_id,
+        notification_type_code=notif.notification_type_code,
+        classification=classification_for_code(notif.notification_type_code),
+        title=notif.title,
+        body=notif.body,
+        data=notif.data,
+        is_read=notif.is_read,
+        read_at=notif.read_at,
+        channels_sent=notif.channels_sent,
+        channels_failed=notif.channels_failed,
+        created_at=notif.created_at,
+    )
+
 
 router = APIRouter()
 
@@ -131,7 +151,7 @@ async def list_notifications(
         session, user_id=current_user.id
     )
     return NotificationListResponse(
-        items=[NotificationRead.model_validate(n) for n in items],
+        items=[_to_read(n) for n in items],
         total=total,
         unread_count=unread_count,
         skip=skip,
@@ -173,7 +193,7 @@ async def mark_notification_read(
         current_user.id, "unread_count", {"unread_count": new_count}
     )
 
-    return NotificationRead.model_validate(notif)
+    return _to_read(notif)
 
 
 @router.post("/mark-all-read", response_model=dict[str, int])

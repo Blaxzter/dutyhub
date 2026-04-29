@@ -16,11 +16,27 @@
         "sectionTitle": "Zustellkanaele",
         "telegram": "Telegram"
     },
+    "classifications": {
+        "all": "Alle",
+        "announcement": "Mitteilung",
+        "announcements": "Mitteilungen",
+        "change": "Änderung",
+        "changes": "Änderungen",
+        "match": "Treffer",
+        "matches": "Treffer",
+        "reminder": "Erinnerung",
+        "reminders": "Erinnerungen"
+    },
     "deleteAll": "Alle löschen",
     "deleteAllConfirm": "Dadurch werden alle deine Benachrichtigungen dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
     "deleteAllFailed": "Benachrichtigungen konnten nicht gelöscht werden",
     "deleteAllTitle": "Alle Benachrichtigungen löschen?",
     "deletedAll": "Alle Benachrichtigungen gelöscht",
+    "detail": {
+        "close": "Schließen",
+        "open": "Details öffnen",
+        "title": "Benachrichtigung"
+    },
     "dismiss": "Verwerfen",
     "email": {
         "description": "Benachrichtigungen per E-Mail erhalten.",

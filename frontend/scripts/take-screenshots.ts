@@ -98,7 +98,11 @@ function isOnAuth0(page: import('@playwright/test').Page) {
 }
 
 async function settleNavigation(page: import('@playwright/test').Page) {
-  // Wait until the URL stops changing (Auth0 redirect chain has resolved).
+  // Wait until the URL reaches a terminal route. `waitForURL` resolves
+  // immediately if the predicate already matches, so this is fast on the
+  // common path and only waits for in-flight SPA redirects (e.g. Auth0).
+  // We deliberately avoid `networkidle` — Vite's HMR WebSocket keeps the
+  // network busy and would always burn the full timeout.
   await page
     .waitForURL(
       (url) =>
@@ -107,10 +111,10 @@ async function settleNavigation(page: import('@playwright/test').Page) {
         url.pathname.startsWith('/app/') ||
         url.pathname === '/' ||
         url.pathname.startsWith('/pending-approval'),
-      { timeout: 30_000 },
+      { timeout: 8_000 },
     )
     .catch(() => {})
-  await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {})
+  await page.waitForLoadState('domcontentloaded', { timeout: 5_000 }).catch(() => {})
 }
 
 async function login(page: import('@playwright/test').Page) {
@@ -129,7 +133,7 @@ async function login(page: import('@playwright/test').Page) {
   // If we landed on the dashboard, we're already authenticated
   if (page.url().includes('/app/home')) {
     const heading = page.getByRole('heading', { name: /Dashboard/i }).first()
-    if (await heading.isVisible({ timeout: 10_000 }).catch(() => false)) {
+    if (await heading.isVisible({ timeout: 3_000 }).catch(() => false)) {
       console.log('  Already authenticated, skipping login.')
       return
     }
@@ -249,6 +253,10 @@ test(`Take landing page screenshots [${LANG}]`, async ({ page }) => {
     if (isOnAuth0(page)) {
       throw new Error(`Still on Auth0 after re-login when navigating to ${path}`)
     }
+
+    // Brief settle so client-side data fetches & Vue hydration finish.
+    // (Replaces the old `networkidle` wait, which always timed out under Vite HMR.)
+    await page.waitForTimeout(800)
 
     if (action) {
       await action(page)

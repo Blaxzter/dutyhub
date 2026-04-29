@@ -8,6 +8,7 @@ import { useRouter } from 'vue-router'
 import { useNotificationStore } from '@/stores/notification'
 
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const emit = defineEmits<{
   navigate: []
@@ -105,7 +106,27 @@ function getNotificationIcon(typeCode: string): string {
 
 <template>
   <div>
-    <div v-if="notifications.length === 0 && !loading" class="px-4 py-8 text-center">
+    <!-- Initial load skeletons -->
+    <div
+      v-if="loading && notifications.length === 0"
+      aria-busy="true"
+      :aria-label="t('notifications.title')"
+    >
+      <div
+        v-for="i in 3"
+        :key="i"
+        class="flex gap-3 px-4 py-3"
+      >
+        <Skeleton class="mt-0.5 h-5 w-5 rounded-full" />
+        <div class="min-w-0 flex-1">
+          <Skeleton class="mb-1.5 h-4 w-2/3" />
+          <Skeleton class="mb-1.5 h-3 w-full" />
+          <Skeleton class="h-2.5 w-12" />
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="notifications.length === 0" class="px-4 py-8 text-center">
       <Bell class="text-muted-foreground mx-auto mb-2 h-8 w-8" />
       <p class="text-muted-foreground text-sm">
         {{ t('notifications.empty') }}
