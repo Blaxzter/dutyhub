@@ -11,6 +11,10 @@
         <PasswordResetCard />
       </template>
 
+      <template v-if="id === 'event'">
+        <ActiveEventCard />
+      </template>
+
       <template v-if="id === 'notifications'">
         <NotificationSettingsCard />
       </template>
@@ -100,6 +104,7 @@ import { type Component, computed, ref, watch } from 'vue'
 import {
   Bell,
   CalendarDays,
+  CalendarRange,
   GlobeIcon,
   KeyRound,
   Palette as PaletteIcon,
@@ -117,6 +122,7 @@ import { useAdaptiveCarouselHeight } from '@/composables/useAdaptiveCarouselHeig
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
 import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
 
+import ActiveEventCard from '@/components/account/user/ActiveEventCard.vue'
 import AppearanceCard from '@/components/account/user/AppearanceCard.vue'
 import CalendarSyncCard from '@/components/account/user/CalendarSyncCard.vue'
 import CurrentProfileCard from '@/components/account/user/CurrentProfileCard.vue'
@@ -157,6 +163,7 @@ const authProvider = useAuthProvider(user.value)
 const navItems = computed<NavItem[]>(() => [
   { id: 'profile', label: t('user.settings.nav.profile'), icon: UserIcon },
   { id: 'security', label: t('user.settings.nav.security'), icon: KeyRound, auth0Only: true },
+  { id: 'event', label: t('user.settings.nav.event'), icon: CalendarRange },
   { id: 'notifications', label: t('user.settings.nav.notifications'), icon: Bell },
   { id: 'calendar', label: t('user.settings.nav.calendar'), icon: CalendarDays },
   { id: 'language', label: t('user.settings.nav.language'), icon: GlobeIcon },

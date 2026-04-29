@@ -1,5 +1,17 @@
 {
     "settings": {
+        "activeEvent": {
+            "change": "Change",
+            "currentLabel": "Current event",
+            "description": "Tasks, shifts, and bookings are scoped to the event you have selected.",
+            "none": "No event selected",
+            "sidebarToggle": {
+                "description": "Add a quick switcher to the sidebar so you can change events from anywhere.",
+                "label": "Show event switcher in sidebar"
+            },
+            "title": "Active Event",
+            "toggleError": "Could not save preference. Please try again."
+        },
         "appearance": {
             "description": "Choose a theme and color mode for the app. Changes apply instantly and are saved on this device.",
             "mode": {
@@ -91,6 +103,7 @@
             "appearance": "Appearance",
             "calendar": "Calendar",
             "dataPrivacy": "Data & Privacy",
+            "event": "Active Event",
             "language": "Language",
             "notifications": "Notifications",
             "profile": "Profile",

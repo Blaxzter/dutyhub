@@ -47,14 +47,13 @@ test.describe('Member – RBAC', () => {
 // ── Event picker: member can change selected event ───────────────────────────
 
 test.describe('Member – event picker', () => {
-  test('picker lists the selected worker event and header pill opens picker', async ({
+  test('settings change action lists the selected worker event in the switcher', async ({
     memberPage: member,
     workerEvent,
   }) => {
-    await member.goto('/app/home')
-    await member.getByTestId('header-event-pill').click()
-    await expect(member).toHaveURL(/\/app\/select-event\?mode=switch/)
-    await expect(member.getByText(workerEvent.name).first()).toBeVisible()
+    await member.goto('/app/settings/event')
+    await member.getByTestId('settings-active-event-change').click()
+    await expect(member.getByTestId(`event-switcher-option-${workerEvent.id}`)).toBeVisible()
   })
 })
 

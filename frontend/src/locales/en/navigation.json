@@ -3,6 +3,11 @@
         "home": "Home",
         "settings": "Settings"
     },
+    "eventSwitcher": {
+        "description": "Tap an event to switch.",
+        "empty": "No upcoming events available.",
+        "title": "Switch event"
+    },
     "mobileBottomNav": {
         "bookings": "Bookings",
         "inbox": "Inbox",
@@ -12,6 +17,10 @@
         "badges": {
             "managersOnly": "Only visible to managers",
             "openShifts": "{count} open shift | {count} open shifts"
+        },
+        "eventSwitcher": {
+            "empty": "No event selected",
+            "hint": "Tap to switch event"
         },
         "items": {
             "availability": {

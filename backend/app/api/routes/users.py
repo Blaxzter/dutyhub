@@ -149,6 +149,9 @@ async def update_user_profile(
     if user_update.theme is not None:
         current_user.theme = user_update.theme
 
+    if user_update.show_event_switcher_in_nav is not None:
+        current_user.show_event_switcher_in_nav = user_update.show_event_switcher_in_nav
+
     profile = await _build_user_profile(current_user, session)
     return profile.model_copy(
         update={

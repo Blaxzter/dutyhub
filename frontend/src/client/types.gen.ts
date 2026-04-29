@@ -2780,6 +2780,10 @@ export type UserProfile = {
    */
   theme?: 'default' | 'classic'
   /**
+   * Show Event Switcher In Nav
+   */
+  show_event_switcher_in_nav?: boolean
+  /**
    * Email Verified
    */
   email_verified?: boolean
@@ -2873,6 +2877,12 @@ export type UserProfileUpdate = {
    * Selected color palette
    */
   theme?: 'default' | 'classic' | null
+  /**
+   * Show Event Switcher In Nav
+   *
+   * Show a quick event switcher in the sidebar nav
+   */
+  show_event_switcher_in_nav?: boolean | null
 }
 
 /**

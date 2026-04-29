@@ -32,6 +32,9 @@ class UserProfileUpdate(BaseModel):
         None, description="Display preference for times"
     )
     theme: Theme | None = Field(None, description="Selected color palette")
+    show_event_switcher_in_nav: bool | None = Field(
+        None, description="Show a quick event switcher in the sidebar nav"
+    )
 
 
 class UserProfile(BaseModel):
@@ -48,6 +51,7 @@ class UserProfile(BaseModel):
     preferred_language: str = "en"
     time_format: TimeFormat = "locale"
     theme: Theme = "default"
+    show_event_switcher_in_nav: bool = False
     email_verified: bool = False
     roles: list[str] = Field(default_factory=list, description="User's roles")
     is_admin: bool = Field(default=False, description="Whether user has admin role")

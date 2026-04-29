@@ -1312,6 +1312,7 @@ export const zUserProfile = z.object({
   preferred_language: z.string().optional().default('en'),
   time_format: z.enum(['locale', 'h12', 'h24']).optional().default('locale'),
   theme: z.enum(['default', 'classic']).optional().default('default'),
+  show_event_switcher_in_nav: z.boolean().optional().default(false),
   email_verified: z.boolean().optional().default(false),
   roles: z
     .array(z.string())
@@ -1364,6 +1365,7 @@ export const zUserProfileUpdate = z.object({
     .nullish(),
   time_format: z.enum(['locale', 'h12', 'h24']).nullish(),
   theme: z.enum(['default', 'classic']).nullish(),
+  show_event_switcher_in_nav: z.boolean().nullish(),
 })
 
 /**

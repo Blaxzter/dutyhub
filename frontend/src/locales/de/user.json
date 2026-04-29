@@ -1,5 +1,17 @@
 {
     "settings": {
+        "activeEvent": {
+            "change": "Wechseln",
+            "currentLabel": "Aktuelle Veranstaltung",
+            "description": "Aufgaben, Schichten und Buchungen beziehen sich auf die ausgewählte Veranstaltung.",
+            "none": "Keine Veranstaltung gewählt",
+            "sidebarToggle": {
+                "description": "Zeige in der Seitenleiste einen schnellen Wechsler, um die Veranstaltung von überall zu ändern.",
+                "label": "Veranstaltungswechsler in der Seitenleiste anzeigen"
+            },
+            "title": "Aktive Veranstaltung",
+            "toggleError": "Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen."
+        },
         "appearance": {
             "description": "Wähle ein Design und einen Farbmodus für die App. Änderungen gelten sofort und werden auf diesem Gerät gespeichert.",
             "mode": {
@@ -91,6 +103,7 @@
             "appearance": "Erscheinungsbild",
             "calendar": "Kalender",
             "dataPrivacy": "Daten & Datenschutz",
+            "event": "Aktive Veranstaltung",
             "language": "Sprache",
             "notifications": "Benachrichtigungen",
             "profile": "Profil",

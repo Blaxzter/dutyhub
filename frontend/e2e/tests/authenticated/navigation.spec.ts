@@ -108,18 +108,20 @@ test.describe('Breadcrumbs', () => {
   })
 })
 
-// ── header event pill ───────────────────────────────────────────────────────
+// ── settings event switcher ─────────────────────────────────────────────────
 
-test.describe('Header – current event pill', () => {
-  test('pill is visible when an event is selected', async ({ adminPage: page }) => {
-    await page.goto('/app/home')
-    await expect(page.getByTestId('header-event-pill')).toBeVisible()
+test.describe('Settings – active event', () => {
+  test('current event is shown on the active-event settings page', async ({
+    adminPage: page,
+  }) => {
+    await page.goto('/app/settings/event')
+    await expect(page.getByTestId('settings-active-event-name')).toBeVisible()
   })
 
-  test('clicking the pill opens the event picker in switch mode', async ({ adminPage: page }) => {
-    await page.goto('/app/home')
-    await page.getByTestId('header-event-pill').click()
-    await expect(page).toHaveURL(/\/app\/select-event\?mode=switch/)
+  test('change button opens the event switcher menu', async ({ adminPage: page }) => {
+    await page.goto('/app/settings/event')
+    await page.getByTestId('settings-active-event-change').click()
+    await expect(page.locator('[data-testid^="event-switcher-option-"]').first()).toBeVisible()
   })
 })
 
