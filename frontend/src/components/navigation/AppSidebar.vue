@@ -145,8 +145,8 @@ const navMain = computed(() => {
 
   const bookingItems: NavSubItem[] = sidebarStore.bookings.map((b) => ({
     title: b.slot_title,
-    routeName: 'task-detail',
-    routeParams: { eventId: b.task_id },
+    routeName: 'booking-detail',
+    routeParams: { bookingId: b.id },
     badge: {
       text: formatBookingDate(b.slot_date),
       variant: 'secondary',

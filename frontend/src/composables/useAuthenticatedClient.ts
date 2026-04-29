@@ -2,8 +2,13 @@ import { useAuth0 } from '@auth0/auth0-vue'
 
 import { client } from '@/client/client.gen'
 import type { Auth } from '@/client/core/auth.gen'
+import { useSidebarStore } from '@/stores/sidebar'
 
 type HttpVerb = 'get' | 'post' | 'put' | 'delete' | 'patch'
+
+// Mutations on these resource paths change what the sidebar shows
+// (tasks, my bookings, open-shift counts, event list).
+const SIDEBAR_AFFECTING_PATH = /\/(bookings|tasks|shifts|events)(\/|$|\?)/
 
 /**
  * Composable for making authenticated API calls
@@ -54,7 +59,16 @@ export function useAuthenticatedClient() {
         ? ({ url: options, security: [bearerAuth], auth: authCallback } as ClientMethodOptions)
         : ({ ...options, security: [bearerAuth], auth: authCallback } as ClientMethodOptions)
 
-    return await clientMethod(requestOptions)
+    const result = await clientMethod(requestOptions)
+
+    if (method !== 'get') {
+      const url = typeof options === 'string' ? options : (options as { url?: string }).url
+      if (url && SIDEBAR_AFFECTING_PATH.test(url)) {
+        useSidebarStore().refresh()
+      }
+    }
+
+    return result
   }
 
   /**

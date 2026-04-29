@@ -263,6 +263,13 @@ const openShiftDetail = (shift: ShiftRead) => {
   showShiftDetail.value = true
 }
 
+const openBookedShift = (shift: ShiftRead) => {
+  const booking = getBookingForShift(shift.id)
+  if (booking) {
+    router.push({ name: 'booking-detail', params: { bookingId: booking.id } })
+  }
+}
+
 // --- Delete confirmation dialog with optional reason ---
 const showDeleteDialog = ref(false)
 const deleteReason = ref('')
@@ -698,7 +705,7 @@ onMounted(async () => {
                 :key="shift.id"
                 variant="secondary"
                 class="cursor-pointer px-3 py-1.5 text-sm hover:bg-secondary/80 hover:ring-1 hover:ring-primary/30 transition-colors"
-                @click="openShiftDetail(shift)"
+                @click="openBookedShift(shift)"
               >
                 {{ formatDateLabel(shift.date) }}
                 <template v-if="shift.start_time">
