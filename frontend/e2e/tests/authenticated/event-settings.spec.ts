@@ -30,18 +30,18 @@ test.describe('Event Settings – details tab', () => {
   })
 
   test('details tab is the default view', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-settings?eventId=${event.id}`)
+    await page.goto(`/app/event-settings/${event.id}`)
     await expect(page.getByTestId('tab-details')).toBeVisible()
     await expect(page.getByRole('textbox').first()).toBeVisible()
   })
 
   test('edit form is pre-filled with the target event data', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-settings?eventId=${event.id}`)
+    await page.goto(`/app/event-settings/${event.id}`)
     await expect(page.locator('input').first()).toHaveValue(event.name)
   })
 
   test('can update event name via edit form', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-settings?eventId=${event.id}`)
+    await page.goto(`/app/event-settings/${event.id}`)
 
     const newName = uniqueName('E2E Renamed')
     await page.locator('input').first().fill(newName)
@@ -52,7 +52,7 @@ test.describe('Event Settings – details tab', () => {
   })
 
   test('can update event description', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-settings?eventId=${event.id}`)
+    await page.goto(`/app/event-settings/${event.id}`)
     await page.locator('textarea').first().fill('Updated via E2E test')
     await page.getByRole('button', { name: /save|speichern/i }).click()
 
@@ -97,18 +97,18 @@ test.describe('Event Settings – date constraints', () => {
   })
 
   test('shows calendar legend when tasks exist', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-settings?eventId=${event.id}`)
+    await page.goto(`/app/event-settings/${event.id}`)
     // Legend labels use the "task" noun (Task start / Task end / Task day)
     await expect(page.getByText(/task.?start|veranstaltungs.?beginn/i)).toBeVisible()
   })
 
   test('shows task boundary hints', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-settings?eventId=${event.id}`)
+    await page.goto(`/app/event-settings/${event.id}`)
     await expect(page.getByText(/earliest|früheste/i)).toBeVisible()
   })
 
   test('shows shift-dates card when tasks exist', async ({ adminPage: page }) => {
-    await page.goto(`/app/event-settings?eventId=${event.id}`)
+    await page.goto(`/app/event-settings/${event.id}`)
     await expect(
       page.getByRole('heading', { name: /shift dates|termine verschieben/i }),
     ).toBeVisible()
@@ -181,7 +181,7 @@ test.describe('Event Settings – shift dates', () => {
   test('shift-dates card is hidden when the event has no tasks', async ({ adminPage: page }) => {
     const emptyEvent = await createEvent(page, uniqueName('E2E Empty Shift'))
     try {
-      await page.goto(`/app/event-settings?eventId=${emptyEvent.id}`)
+      await page.goto(`/app/event-settings/${emptyEvent.id}`)
       await expect(page.getByText(/shift dates|termine verschieben/i)).toBeHidden()
     } finally {
       await deleteEvent(page, emptyEvent.id)
@@ -203,7 +203,7 @@ test.describe('Event Settings – member restrictions', () => {
   })
 
   test('member is redirected home from /app/event-settings', async ({ memberPage: member }) => {
-    await member.goto(`/app/event-settings?eventId=${event.id}`)
+    await member.goto(`/app/event-settings/${event.id}`)
     // Route requires admin/task_manager role — router redirects to /app/home
     await expect(member).toHaveURL(/\/app\/home/)
   })

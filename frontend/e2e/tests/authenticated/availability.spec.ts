@@ -124,19 +124,24 @@ test.describe('Availability – specific dates', () => {
     adminPage: page,
     workerEvent,
   }) => {
-    // Use a date inside the worker event window (day+1 to day+60)
-    const d = new Date()
-    d.setDate(d.getDate() + 10)
-    const date1 = d.toISOString().slice(0, 10)
+    // Use full-day dates inside the worker event window (day+1 to day+60).
+    // The view interprets uniform-time entries as time_range mode (which uses
+    // a slider, not the paint grid), so we send full-day dates to keep the
+    // payload in specific_dates mode.
+    const d1 = new Date()
+    d1.setDate(d1.getDate() + 10)
+    const date1 = d1.toISOString().slice(0, 10)
+    const d2 = new Date()
+    d2.setDate(d2.getDate() + 11)
+    const date2 = d2.toISOString().slice(0, 10)
 
     await api(page, 'POST', `/events/${workerEvent.id}/availability`, {
       availability_type: 'specific_dates',
-      dates: [{ date: date1, start_time: '10:00:00', end_time: '12:00:00' }],
+      dates: [date1, date2],
     })
 
     await page.goto('/app/availability')
-    // Mode card should reflect the saved specific_dates state and the paint
-    // grid should be rendered.
+    // Paint grid renders cells with [data-cell] attributes when in specific_dates mode.
     await expect(
       page.getByTestId('section-my-availability').locator('[data-cell]').first(),
     ).toBeVisible()
