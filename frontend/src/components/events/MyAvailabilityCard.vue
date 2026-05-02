@@ -127,15 +127,15 @@ const daysWord = computed(() => t('duties.availability.days'))
           {{ t('duties.availability.yourSummary') }}
         </div>
         <div class="mt-1 flex items-baseline gap-1.5">
-          <span class="text-primary font-serif text-[26px] font-medium leading-none">
+          <span class="text-primary text-2xl font-bold leading-none tracking-tight">
             {{ totalHours }}
           </span>
-          <span class="text-primary text-[12px] font-medium">
+          <span class="text-primary text-xs font-medium">
             {{ t('duties.availability.hours') }}
           </span>
           <span class="text-primary opacity-50">·</span>
-          <span class="text-primary font-serif text-[18px] font-medium">{{ totalDays }}</span>
-          <span class="text-primary text-[12px] font-medium">
+          <span class="text-primary text-lg font-bold tracking-tight">{{ totalDays }}</span>
+          <span class="text-primary text-xs font-medium">
             {{ daysWord }}
           </span>
         </div>
@@ -170,7 +170,7 @@ const daysWord = computed(() => t('duties.availability.days'))
           <div class="text-primary text-[11px] font-semibold uppercase tracking-wider">
             {{ t('duties.availability.summary') }}
           </div>
-          <div class="text-primary font-serif text-[18px] font-medium leading-tight">
+          <div class="text-primary text-lg font-bold tracking-tight leading-tight">
             {{ totalHours }}h · {{ totalDays }} {{ daysWord }}
           </div>
         </div>
@@ -182,7 +182,7 @@ const daysWord = computed(() => t('duties.availability.days'))
       <div
         class="bg-primary/10 border-primary rounded-lg border-[1.5px] border-dashed p-6 text-center"
       >
-        <div class="text-primary font-serif text-[18px] font-medium">
+        <div class="text-primary text-lg font-semibold tracking-tight">
           {{ t('duties.availability.fullyAvailableDays', { count: days.length }) }}
         </div>
         <div class="text-primary/80 mt-1 text-[12px]">

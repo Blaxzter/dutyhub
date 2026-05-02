@@ -469,6 +469,8 @@ onMounted(loadTask)
             :has-remainder="hasRemainder"
             :available-dates="availableDates"
             :show-overrides="dateMode !== 'single'"
+            :event-start-time="event?.default_start_time ?? null"
+            :event-end-time="event?.default_end_time ?? null"
           />
         </CardContent>
       </Card>

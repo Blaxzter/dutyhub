@@ -1,5 +1,5 @@
 import uuid
-from datetime import date
+from datetime import date, time
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
@@ -21,6 +21,12 @@ class Event(Base, table=True):
     )
     start_date: date = Field(sa_column=sa.Column(sa.Date, nullable=False))
     end_date: date = Field(sa_column=sa.Column(sa.Date, nullable=False))
+    default_start_time: time | None = Field(
+        default=None, sa_column=sa.Column(sa.Time, nullable=True)
+    )
+    default_end_time: time | None = Field(
+        default=None, sa_column=sa.Column(sa.Time, nullable=True)
+    )
     status: str = Field(
         default="draft", sa_column=sa.Column(sa.String, nullable=False, index=True)
     )

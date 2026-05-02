@@ -2,16 +2,19 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
-import { Pencil, Plus, Search, Trash2 } from 'lucide-vue-next'
+import { ChevronDown, ChevronRight, Plus, Search } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+
+import { useAuthStore } from '@/stores/auth'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { useDialog } from '@/composables/useDialog'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { DatePicker } from '@/components/ui/date-picker'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import {
@@ -24,26 +27,63 @@ import {
 } from '@/components/ui/dialog'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationFirst,
+  PaginationItem,
+  PaginationLast,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import Textarea from '@/components/ui/textarea/Textarea.vue'
+
+import AdminEventRow from '@/components/admin/AdminEventRow.vue'
+import AdminEventRowSkeleton from '@/components/admin/AdminEventRowSkeleton.vue'
 
 import type { EventListResponse, EventRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
-import { formatDate } from '@/lib/format'
-import { statusVariant } from '@/lib/status'
+
+const PAGE_SIZE = 4
+const SEARCH_DEBOUNCE_MS = 300
 
 const { t } = useI18n()
 const router = useRouter()
+const authStore = useAuthStore()
 const { get, post, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 
-const events = ref<EventRead[]>([])
-const loading = ref(false)
-const searchQuery = ref('')
-const showCreateDialog = ref(false)
+const selectedEventId = computed(() => authStore.selectedEventId)
 
+// === Filters ===
+const searchInput = ref('')
+const searchQuery = ref('')
 const dateFrom = ref<string | null>(null)
 const dateTo = ref<string | null>(null)
 const markedDays = ref<Set<string>>(new Set())
+
+// === Active section state ===
+const activeItems = ref<EventRead[]>([])
+const activeTotal = ref(0)
+const activePage = ref(1)
+const loadingActive = ref(false)
+const activePages = computed(() => Math.max(1, Math.ceil(activeTotal.value / PAGE_SIZE)))
+
+// === Expired section state (lazy-loaded on first expand) ===
+const expiredItems = ref<EventRead[]>([])
+const expiredTotal = ref(0)
+const expiredPage = ref(1)
+const loadingExpired = ref(false)
+const expiredOpen = ref(false)
+const expiredLoaded = ref(false)
+const expiredPages = computed(() => Math.max(1, Math.ceil(expiredTotal.value / PAGE_SIZE)))
+
+// === Create dialog state ===
+const showCreateDialog = ref(false)
+const createForm = ref({ name: '', description: '' })
+const startDate = ref<DateValue>()
+const endDate = ref<DateValue>()
 
 async function handleVisibleMonth(range: { from: string; to: string }) {
   try {
@@ -57,38 +97,86 @@ async function handleVisibleMonth(range: { from: string; to: string }) {
   }
 }
 
-const createForm = ref({ name: '', description: '' })
-const startDate = ref<DateValue>()
-const endDate = ref<DateValue>()
+function buildBaseQuery(): Record<string, unknown> {
+  const q: Record<string, unknown> = { limit: PAGE_SIZE }
+  if (searchQuery.value) q.search = searchQuery.value
+  if (dateFrom.value) q.date_from = dateFrom.value
+  if (dateTo.value) q.date_to = dateTo.value
+  return q
+}
 
-const filteredEvents = computed(() => {
-  if (!searchQuery.value) return events.value
-  const query = searchQuery.value.toLowerCase()
-  return events.value.filter(
-    (g) => g.name.toLowerCase().includes(query) || g.description?.toLowerCase().includes(query),
-  )
-})
-
-const loadEvents = async () => {
-  loading.value = true
+async function loadActive() {
+  loadingActive.value = true
   try {
-    const query: Record<string, unknown> = { limit: 200 }
-    if (dateFrom.value) query.date_from = dateFrom.value
-    if (dateTo.value) query.date_to = dateTo.value
-
     const response = await get<{ data: EventListResponse }>({
       url: '/events/',
-      query,
+      query: {
+        ...buildBaseQuery(),
+        skip: (activePage.value - 1) * PAGE_SIZE,
+        is_expired: false,
+      },
     })
-    events.value = response.data.items
+    activeItems.value = response.data.items
+    activeTotal.value = response.data.total
   } catch (error) {
     toastApiError(error)
   } finally {
-    loading.value = false
+    loadingActive.value = false
   }
 }
 
-watch([dateFrom, dateTo], () => loadEvents())
+async function loadExpired() {
+  loadingExpired.value = true
+  try {
+    const response = await get<{ data: EventListResponse }>({
+      url: '/events/',
+      query: {
+        ...buildBaseQuery(),
+        skip: (expiredPage.value - 1) * PAGE_SIZE,
+        is_expired: true,
+      },
+    })
+    expiredItems.value = response.data.items
+    expiredTotal.value = response.data.total
+    expiredLoaded.value = true
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    loadingExpired.value = false
+  }
+}
+
+// Debounced search
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+watch(searchInput, (value) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    searchQuery.value = value.trim()
+  }, SEARCH_DEBOUNCE_MS)
+})
+
+// On filter change, reset paging and reload (expired only when section is open)
+watch([searchQuery, dateFrom, dateTo], () => {
+  activePage.value = 1
+  loadActive()
+  expiredPage.value = 1
+  if (expiredOpen.value) {
+    loadExpired()
+  } else {
+    // Mark stale so a subsequent open re-fetches with new filters
+    expiredLoaded.value = false
+  }
+})
+
+// Lazy-load expired the first time the section is expanded (or after filters change)
+watch(expiredOpen, (open) => {
+  if (open && !expiredLoaded.value) loadExpired()
+})
+
+watch(activePage, loadActive)
+watch(expiredPage, () => {
+  if (expiredOpen.value) loadExpired()
+})
 
 const handleCreate = async () => {
   if (!startDate.value || !endDate.value) return
@@ -107,7 +195,8 @@ const handleCreate = async () => {
     startDate.value = undefined
     endDate.value = undefined
     toast.success(t('duties.events.create'))
-    await loadEvents()
+    activePage.value = 1
+    await loadActive()
   } catch (error) {
     toastApiError(error)
   }
@@ -119,17 +208,23 @@ const handleDelete = async (event: EventRead) => {
   try {
     await del({ url: `/events/${event.id}` })
     toast.success(t('duties.events.delete'))
-    await loadEvents()
+    // Reload whichever section the deleted item belonged to
+    if (event.is_expired) {
+      if (expiredOpen.value) await loadExpired()
+      else expiredLoaded.value = false
+    } else {
+      await loadActive()
+    }
   } catch (error) {
     toastApiError(error)
   }
 }
 
 const handleEdit = (event: EventRead) => {
-  router.push({ name: 'event-settings', query: { eventId: event.id } })
+  router.push({ name: 'event-settings', params: { eventId: event.id } })
 }
 
-onMounted(loadEvents)
+onMounted(loadActive)
 </script>
 
 <template>
@@ -151,7 +246,7 @@ onMounted(loadEvents)
       <div class="relative flex-1">
         <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          v-model="searchQuery"
+          v-model="searchInput"
           data-testid="input-search"
           :placeholder="t('common.actions.search')"
           class="pl-10"
@@ -161,80 +256,184 @@ onMounted(loadEvents)
         :date-from="dateFrom"
         :date-to="dateTo"
         :marked-days="markedDays"
+        :default-label="t('admin.events.filters.allDates')"
+        :reset-label="t('admin.events.filters.showAll')"
         @update:date-from="dateFrom = $event"
         @update:date-to="dateTo = $event"
         @update:visible-month="handleVisibleMonth"
       />
     </div>
 
-    <div v-if="loading" class="py-12 text-center text-muted-foreground">
-      {{ t('common.states.loading') }}
+    <!-- Active / upcoming events -->
+    <div
+      v-if="!loadingActive && activeItems.length === 0"
+      class="py-12 text-center text-muted-foreground"
+    >
+      {{ t('duties.events.empty') }}
+    </div>
+    <div v-else class="overflow-hidden rounded-lg border bg-card">
+      <table class="w-full text-sm">
+        <thead class="bg-muted/50">
+          <tr>
+            <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.name') }}</th>
+            <th class="px-4 py-2 text-left font-medium">
+              {{ t('duties.events.fields.startDate') }}
+            </th>
+            <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.endDate') }}</th>
+            <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.status') }}</th>
+            <th class="px-4 py-2 text-right font-medium"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          <template v-if="loadingActive && activeItems.length === 0">
+            <AdminEventRowSkeleton v-for="i in 5" :key="`skeleton-active-${i}`" />
+          </template>
+          <AdminEventRow
+            v-for="event in activeItems"
+            v-else
+            :key="event.id"
+            :event="event"
+            :selected-event-id="selectedEventId"
+            @edit="handleEdit"
+            @delete="handleDelete"
+          />
+        </tbody>
+      </table>
     </div>
 
-    <template v-else>
-      <div v-if="filteredEvents.length === 0" class="py-12 text-center text-muted-foreground">
-        {{ t('duties.events.empty') }}
-      </div>
-
-      <div v-else class="overflow-hidden rounded-lg border bg-card">
-        <table class="w-full text-sm">
-          <thead class="bg-muted/50">
-            <tr>
-              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.name') }}</th>
-              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.startDate') }}</th>
-              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.endDate') }}</th>
-              <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.status') }}</th>
-              <th class="px-4 py-2 text-right font-medium"></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y">
-            <tr
-              v-for="event in filteredEvents"
-              :key="event.id"
-              data-testid="admin-event-row"
-              class="hover:bg-muted/30"
+    <div v-if="activePages > 1" class="flex justify-center">
+      <Pagination
+        v-model:page="activePage"
+        :total="activeTotal"
+        :items-per-page="PAGE_SIZE"
+        :sibling-count="1"
+      >
+        <PaginationContent>
+          <PaginationFirst />
+          <PaginationPrevious />
+          <template v-for="(item, index) in activePages" :key="index">
+            <PaginationItem
+              v-if="Math.abs(item - activePage) <= 1 || item === 1 || item === activePages"
+              :value="item"
+              :is-active="activePage === item"
+              as-child
             >
-              <td class="px-4 py-2">
-                <div class="font-medium">{{ event.name }}</div>
-                <div v-if="event.description" class="truncate text-xs text-muted-foreground">
-                  {{ event.description }}
-                </div>
-              </td>
-              <td class="px-4 py-2">{{ formatDate(event.start_date) }}</td>
-              <td class="px-4 py-2">{{ formatDate(event.end_date) }}</td>
-              <td class="px-4 py-2">
-                <Badge :variant="statusVariant(event.status)">
-                  {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
-                </Badge>
-                <Badge v-if="event.is_expired" variant="outline" class="ml-1">
-                  {{ t('duties.events.expired') }}
-                </Badge>
-              </td>
-              <td class="px-4 py-2 text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8"
-                  data-testid="btn-edit-event"
-                  @click="handleEdit(event)"
-                >
-                  <Pencil class="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8"
-                  data-testid="btn-delete-event"
-                  @click="handleDelete(event)"
-                >
-                  <Trash2 class="h-4 w-4 text-destructive" />
-                </Button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </template>
+              <Button
+                variant="outline"
+                size="icon"
+                class="h-9 w-9"
+                :class="
+                  activePage === item ? '!bg-primary !text-primary-foreground !border-primary' : ''
+                "
+              >
+                {{ item }}
+              </Button>
+            </PaginationItem>
+            <PaginationEllipsis v-else-if="Math.abs(item - activePage) === 2" />
+          </template>
+          <PaginationNext />
+          <PaginationLast />
+        </PaginationContent>
+      </Pagination>
+    </div>
+
+    <!-- Expired events (collapsible, lazy-loaded on first expand) -->
+    <Collapsible v-model:open="expiredOpen">
+      <CollapsibleTrigger
+        class="flex w-full items-center gap-2 rounded-md border bg-muted/30 px-3 py-2 text-left text-sm font-medium hover:bg-muted/50"
+        data-testid="btn-toggle-expired"
+      >
+        <component :is="expiredOpen ? ChevronDown : ChevronRight" class="size-4" />
+        <span>{{ t('admin.events.expiredSection') }}</span>
+        <Badge v-if="expiredLoaded" variant="outline" class="ml-1">
+          {{ expiredTotal }}
+        </Badge>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div
+          v-if="expiredLoaded && expiredItems.length === 0 && !loadingExpired"
+          class="py-8 text-center text-muted-foreground text-sm"
+        >
+          {{ t('admin.events.noExpired') }}
+        </div>
+        <template v-else>
+          <div class="mt-2 overflow-hidden rounded-lg border bg-card">
+            <table class="w-full text-sm">
+              <thead class="bg-muted/50">
+                <tr>
+                  <th class="px-4 py-2 text-left font-medium">
+                    {{ t('duties.events.fields.name') }}
+                  </th>
+                  <th class="px-4 py-2 text-left font-medium">
+                    {{ t('duties.events.fields.startDate') }}
+                  </th>
+                  <th class="px-4 py-2 text-left font-medium">
+                    {{ t('duties.events.fields.endDate') }}
+                  </th>
+                  <th class="px-4 py-2 text-left font-medium">
+                    {{ t('duties.events.fields.status') }}
+                  </th>
+                  <th class="px-4 py-2 text-right font-medium"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y">
+                <template v-if="loadingExpired && expiredItems.length === 0">
+                  <AdminEventRowSkeleton v-for="i in 3" :key="`skeleton-expired-${i}`" />
+                </template>
+                <AdminEventRow
+                  v-for="event in expiredItems"
+                  v-else
+                  :key="event.id"
+                  :event="event"
+                  :selected-event-id="selectedEventId"
+                  muted
+                  @edit="handleEdit"
+                  @delete="handleDelete"
+                />
+              </tbody>
+            </table>
+          </div>
+
+          <div v-if="expiredPages > 1" class="mt-3 flex justify-center">
+            <Pagination
+              v-model:page="expiredPage"
+              :total="expiredTotal"
+              :items-per-page="PAGE_SIZE"
+              :sibling-count="1"
+            >
+              <PaginationContent>
+                <PaginationFirst />
+                <PaginationPrevious />
+                <template v-for="(item, index) in expiredPages" :key="index">
+                  <PaginationItem
+                    v-if="Math.abs(item - expiredPage) <= 1 || item === 1 || item === expiredPages"
+                    :value="item"
+                    :is-active="expiredPage === item"
+                    as-child
+                  >
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      class="h-9 w-9"
+                      :class="
+                        expiredPage === item
+                          ? '!bg-primary !text-primary-foreground !border-primary'
+                          : ''
+                      "
+                    >
+                      {{ item }}
+                    </Button>
+                  </PaginationItem>
+                  <PaginationEllipsis v-else-if="Math.abs(item - expiredPage) === 2" />
+                </template>
+                <PaginationNext />
+                <PaginationLast />
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </template>
+      </CollapsibleContent>
+    </Collapsible>
 
     <Dialog v-model:open="showCreateDialog">
       <DialogContent>

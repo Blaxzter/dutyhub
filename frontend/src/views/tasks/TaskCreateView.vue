@@ -672,6 +672,8 @@ const handleSubmit = async () => {
               :has-remainder="hasRemainder"
               :available-dates="availableDates"
               :show-overrides="dateMode !== 'single'"
+              :event-start-time="selectedEvent?.default_start_time ?? null"
+              :event-end-time="selectedEvent?.default_end_time ?? null"
             />
 
             <div class="flex justify-end pt-2">

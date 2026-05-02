@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { Check, Trash2, Users, X } from 'lucide-vue-next'
+import { Check, ChevronsLeftRight, ChevronsRightLeft, Trash2, Users, X } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 
@@ -45,6 +45,7 @@ const dailyExcluded = ref<Set<number>>(new Set())
 const avail = ref<Set<string>>(new Set())
 const tab = ref<'me' | 'team'>('me')
 const loading = ref(false)
+const showFullDay = ref(false)
 
 const myAvailability = ref<UserAvailabilityRead | null>(null)
 const allAvailabilities = ref<UserAvailabilityWithUser[]>([])
@@ -63,8 +64,30 @@ const days = computed<Date[]>(() => {
   return out
 })
 
-// 07..20 = 14 hour slots — same as design
-const hours = computed(() => Array.from({ length: 14 }, (_, i) => i + 7))
+// Event-defined window (HH:MM:SS or null). When unset, treated as full-day 0–24.
+const eventStartHour = computed(() => {
+  const t = event.value?.default_start_time
+  return t ? parseInt(t.slice(0, 2), 10) : 0
+})
+const eventEndHour = computed(() => {
+  const t = event.value?.default_end_time
+  return t ? parseInt(t.slice(0, 2), 10) : 24
+})
+const hasEventWindow = computed(
+  () => !!event.value?.default_start_time && !!event.value?.default_end_time,
+)
+
+// Hour slots shown in the grid. When the event has a window, default to that
+// window; otherwise show the full day. The "Show full day" toggle expands
+// a windowed grid to all 24 hours (still allows painting outside the window).
+const hours = computed(() => {
+  if (!hasEventWindow.value || showFullDay.value) {
+    return Array.from({ length: 24 }, (_, i) => i)
+  }
+  const start = eventStartHour.value
+  const end = eventEndHour.value
+  return Array.from({ length: Math.max(0, end - start) }, (_, i) => i + start)
+})
 
 const subtitle = computed(() => {
   if (!event.value) return t('duties.availability.subtitle')
@@ -112,8 +135,10 @@ function hydrateFromServer(server: UserAvailabilityRead | null) {
     mode.value = 'specific_dates'
     avail.value = new Set()
     dailyExcluded.value = new Set()
-    dailyFrom.value = 9
-    dailyTo.value = 17
+    // Seed the daily-window slider from the event window when available so
+    // the user starts inside the window the organizer set.
+    dailyFrom.value = hasEventWindow.value ? eventStartHour.value : 9
+    dailyTo.value = hasEventWindow.value ? eventEndHour.value : 17
     return
   }
 
@@ -344,19 +369,15 @@ const teamMembers = computed<UserAvailabilityWithUser[]>(() => {
 <template>
   <div data-testid="availability-view" class="mx-auto w-full max-w-6xl space-y-4">
     <!-- Title + actions -->
-    <div class="flex flex-wrap items-end justify-between gap-3">
-      <div class="min-w-0">
-        <div
-          class="text-muted-foreground text-[11px] font-semibold uppercase tracking-wider"
-        >
-          {{ subtitle }}
-        </div>
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="min-w-0 space-y-2">
         <h1
           data-testid="page-heading"
-          class="mt-0.5 font-serif text-2xl font-medium tracking-tight sm:text-3xl"
+          class="text-2xl sm:text-3xl font-bold tracking-tight"
         >
           {{ t('duties.availability.title') }}
         </h1>
+        <p class="text-muted-foreground">{{ subtitle }}</p>
       </div>
       <div class="flex shrink-0 gap-2">
         <Button
@@ -427,6 +448,29 @@ const teamMembers = computed<UserAvailabilityWithUser[]>(() => {
       :class="canManage && tab === 'team' ? 'hidden md:block' : ''"
     >
       <CardContent class="p-4 sm:p-5">
+        <div
+          v-if="hasEventWindow && mode === 'specific_dates'"
+          class="mb-3 flex justify-end"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            data-testid="btn-toggle-full-day"
+            @click="showFullDay = !showFullDay"
+          >
+            <component
+              :is="showFullDay ? ChevronsRightLeft : ChevronsLeftRight"
+              class="size-4 sm:mr-1.5"
+            />
+            <span class="hidden sm:inline">
+              {{
+                showFullDay
+                  ? t('duties.availability.collapseToEventHours')
+                  : t('duties.availability.showOutsideEventHours')
+              }}
+            </span>
+          </Button>
+        </div>
         <MyAvailabilityCard
           v-model:mode="mode"
           v-model:avail="avail"
@@ -449,7 +493,7 @@ const teamMembers = computed<UserAvailabilityWithUser[]>(() => {
         <div class="space-y-3">
           <div class="flex items-center gap-2.5">
             <Users class="text-muted-foreground size-5" />
-            <h2 class="font-serif text-[17px] font-medium tracking-tight">
+            <h2 class="text-base font-semibold tracking-tight">
               {{ t('duties.availability.teamTitle') }}
             </h2>
             <Badge variant="outline">

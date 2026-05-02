@@ -3,6 +3,7 @@
         "adminEmpty": "No members have registered availability yet.",
         "adminTitle": "Member Availabilities",
         "clearAll": "Clear all",
+        "collapseToEventHours": "Collapse to event hours",
         "dailyHint": "Same hours each day",
         "dailyTotalHours": "{count} hours total",
         "days": "days",
@@ -49,6 +50,7 @@
         "remove": "Remove Availability",
         "removeConfirm": "Are you sure you want to remove your availability?",
         "saveChanges": "Save changes",
+        "showOutsideEventHours": "Show hours outside event window",
         "subtitle": "Register your availability for this programme",
         "summary": "Summary",
         "summaryHint": "Visible to coordinators",
@@ -170,11 +172,17 @@
         "empty": "No events found.",
         "expired": "Expired",
         "fields": {
+            "defaultTimes": "Default time window",
+            "defaultTimesHint": "Optional. Bounds the availability grid to these hours by default. Tasks may still be scheduled outside the window.",
+            "defaultTimesInvalid": "End time must be after start time. Overnight windows aren't supported yet — leave both empty for events that span midnight.",
             "description": "Description",
             "endDate": "End Date",
+            "endTime": "End time",
             "name": "Name",
             "startDate": "Start Date",
-            "status": "Status"
+            "startTime": "Start time",
+            "status": "Status",
+            "timeOptional": "Optional"
         },
         "pickDate": "Pick a date",
         "statuses": {
@@ -202,6 +210,8 @@
             "title": "Notification preferences"
         },
         "pick": {
+            "back": "Back",
+            "cancel": "Cancel",
             "continue": "Continue",
             "createNew": "Create new event",
             "current": "Current",
@@ -221,6 +231,7 @@
                 "scopedTitle": "Focused on one event"
             },
             "footer": "One community, one focus — pick the event and WirkSam handles the rest.",
+            "mobileContinue": "Pick your event",
             "onboardingHeadline": "Welcome. Pick the event you're here for.",
             "step2": {
                 "features": {
@@ -232,6 +243,7 @@
                     "updatesTitle": "Schedule updates"
                 },
                 "headline": "Choose how you want to hear from us.",
+                "mobileContinue": "Set up notifications",
                 "subhead": "Notifications keep you on top of your shifts and let organizers reach you when it matters. Pick any combination — email, push, Telegram, or phone."
             },
             "subhead": "WirkSam centers your experience around a single event so you don't have to hunt for the right list.",
@@ -332,6 +344,7 @@
                 "defaultEndTime": "Default End Time",
                 "defaultStartTime": "Default Start Time",
                 "minutes": "{n} minutes",
+                "outsideEventWindow": "Outside the event's default hours ({range}). The task will still be created.",
                 "overrides": "Date Exceptions",
                 "overridesDesc": "Override times for specific dates",
                 "peoplePerShift": "People per Shift",

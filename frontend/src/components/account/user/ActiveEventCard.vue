@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
 
 import { CalendarRange } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
@@ -12,8 +13,6 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Switch from '@/components/ui/switch/Switch.vue'
-
-import EventSwitcherMenu from '@/components/navigation/EventSwitcherMenu.vue'
 
 const { t } = useI18n()
 const authStore = useAuthStore()
@@ -63,13 +62,14 @@ async function toggleSidebarSwitcher(value: boolean) {
             {{ t('user.settings.activeEvent.none') }}
           </p>
         </div>
-        <EventSwitcherMenu>
-          <template #default>
-            <Button variant="outline" size="sm" data-testid="settings-active-event-change">
-              {{ t('user.settings.activeEvent.change') }}
-            </Button>
-          </template>
-        </EventSwitcherMenu>
+        <Button as-child variant="outline" size="sm">
+          <RouterLink
+            :to="{ name: 'select-event', query: { mode: 'switch' } }"
+            data-testid="settings-active-event-change"
+          >
+            {{ t('user.settings.activeEvent.change') }}
+          </RouterLink>
+        </Button>
       </div>
 
       <div class="flex items-start justify-between gap-4 rounded-md border bg-muted/30 p-3">
