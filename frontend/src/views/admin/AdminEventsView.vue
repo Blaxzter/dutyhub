@@ -45,7 +45,7 @@ import AdminEventRowSkeleton from '@/components/admin/AdminEventRowSkeleton.vue'
 import type { EventListResponse, EventRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
-const PAGE_SIZE = 4
+const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 
 const { t } = useI18n()
