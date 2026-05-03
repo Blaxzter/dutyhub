@@ -88,11 +88,11 @@ test.describe('Member – availability', () => {
     await expect(member.getByTestId('btn-remove-availability')).toBeVisible()
   })
 
-  test('can switch to specific dates and save', async ({ memberPage: member }) => {
+  test('switching availability type enables Save', async ({ memberPage: member }) => {
     await member.goto('/app/availability')
-    await member.getByTestId('availability-type-specific_dates').first().click()
-    // Picking specific_dates from the default "no availability" state is a
-    // no-op until we paint cells, but switching mode itself dirties the form.
+    // The default mode for an unregistered user is specific_dates, so picking
+    // a different mode is what actually dirties the form.
+    await member.getByTestId('availability-type-fully_available').first().click()
     await expect(member.getByTestId('btn-save')).toBeEnabled()
   })
 
