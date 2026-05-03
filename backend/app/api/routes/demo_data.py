@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlmodel import col
 
 from app.api.deps import CurrentSuperuser, DBDep
+from app.crud.user_availability import user_availability as crud_user_availability
 from app.models.booking import Booking
 from app.models.event import Event
 from app.models.shift import Shift
@@ -23,6 +24,10 @@ from app.schemas.demo_data import (
     DemoDataCreatedResponse,
     DemoDataDeletedResponse,
     DemoDataParams,
+)
+from app.schemas.user_availability import (
+    UserAvailabilityCreate,
+    UserAvailabilityDateInput,
 )
 
 router = APIRouter(prefix="/demo-data", tags=["demo-data"])
@@ -240,6 +245,74 @@ async def create_demo_data(
     if created_users or created_shifts:
         await db.flush()
 
+    # --- User availabilities per (user, event) — drives the team heatmap ---
+    # Distribution chosen for a varied team view in the UI:
+    #   ~10% unregistered → renders as level 0 (grey) in the heatmap
+    #   ~25% fully_available → all level 3 (full forest)
+    #   ~30% time_range → uniform medium tint across days
+    #   ~35% specific_dates → mixed levels with realistic gaps
+    avail_count = 0
+    daily_windows = [(9, 17), (10, 18), (8, 16), (14, 22), (12, 20)]
+    for user in created_users:
+        for group in created_groups:
+            roll = rng.random()
+            if roll < 0.10:
+                continue  # leave unregistered
+
+            event_days = [
+                group.start_date + dt.timedelta(days=d)
+                for d in range((group.end_date - group.start_date).days + 1)
+            ]
+            avail_type: str = "fully_available"
+            default_start: dt.time | None = None
+            default_end: dt.time | None = None
+            dates: list[dt.date | UserAvailabilityDateInput] = []
+
+            if roll < 0.35:
+                avail_type = "fully_available"
+            elif roll < 0.65:
+                window = rng.choice(daily_windows)
+                avail_type = "time_range"
+                default_start = dt.time(hour=window[0])
+                default_end = dt.time(hour=window[1])
+            else:
+                avail_type = "specific_dates"
+                keep_ratio = rng.uniform(0.5, 0.9)
+                picked_days = rng.sample(
+                    event_days,
+                    max(1, int(round(len(event_days) * keep_ratio))),
+                )
+                for d in picked_days:
+                    if rng.random() < 0.5:
+                        # Full-day entry (no times)
+                        dates.append(d)
+                    else:
+                        # Partial window — start 7-12, 3-8h duration capped at 20:00
+                        s_hour = rng.randint(7, 12)
+                        duration = rng.choice([3, 4, 5, 6, 8])
+                        e_hour = min(20, s_hour + duration)
+                        dates.append(
+                            UserAvailabilityDateInput(
+                                date=d,
+                                start_time=dt.time(hour=s_hour),
+                                end_time=dt.time(hour=e_hour),
+                            )
+                        )
+
+            avail_in = UserAvailabilityCreate(
+                availability_type=avail_type,  # type: ignore[arg-type]
+                default_start_time=default_start,
+                default_end_time=default_end,
+                dates=dates,
+            )
+            await crud_user_availability.upsert_for_user(
+                db,
+                user_id=user.id,
+                event_id=group.id,
+                obj_in=avail_in,
+            )
+            avail_count += 1
+
     # --- Bookings: each demo user books a random subset of shifts ---
     if created_users and created_shifts:
         # Track confirmed bookings per shift to respect max_bookings
@@ -277,6 +350,7 @@ async def create_demo_data(
         users_created=len(created_users),
         shifts_created=len(created_shifts),
         bookings_created=total_bookings,
+        availabilities_created=avail_count,
     )
 
 

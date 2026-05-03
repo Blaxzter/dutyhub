@@ -553,6 +553,10 @@ export type DemoDataCreatedResponse = {
    * Bookings Created
    */
   bookings_created: number
+  /**
+   * Availabilities Created
+   */
+  availabilities_created: number
 }
 
 /**
@@ -628,6 +632,14 @@ export type EventCreate = {
    */
   end_date: string
   /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
+  /**
    * Status
    */
   status?: 'draft' | 'published' | 'archived'
@@ -680,6 +692,14 @@ export type EventRead = {
    */
   end_date: string
   /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
+  /**
    * Status
    */
   status?: 'draft' | 'published' | 'archived'
@@ -725,6 +745,14 @@ export type EventUpdate = {
    * End Date
    */
   end_date?: string | null
+  /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
   /**
    * Status
    */
@@ -3059,6 +3087,14 @@ export type EventReadWritable = {
    * End Date
    */
   end_date: string
+  /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
   /**
    * Status
    */
@@ -6485,6 +6521,10 @@ export type EventsListEventsData = {
      * Date To
      */
     date_to?: string | null
+    /**
+     * Is Expired
+     */
+    is_expired?: boolean | null
   }
   url: '/api/v1/events/'
 }

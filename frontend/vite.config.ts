@@ -39,6 +39,7 @@ export default defineConfig(async ({ mode }) => {
     },
     server: {
       port: 5555,
+      allowedHosts: true,
     },
     plugins: [
       changelogPlugin(),

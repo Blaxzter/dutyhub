@@ -98,7 +98,7 @@ const router = createRouter({
           },
         },
         {
-          path: 'event-settings',
+          path: 'event-settings/:eventId?',
           name: 'event-settings',
           component: () => import('@/views/events/EventSettingsView.vue'),
           meta: {

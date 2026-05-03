@@ -5,6 +5,9 @@
  * removed /app/events/:id/availability route. Under the new scoped-UI model
  * the worker fixture points both users' selected_event_id at the same
  * `workerEvent`, so these tests exercise that shared event.
+ *
+ * Availability is now an inline editor and the admin team view renders a
+ * heatmap with one row per member (commit 649a9f5).
  */
 import { expect, test } from '../../fixtures.js'
 import {
@@ -56,27 +59,29 @@ test.describe('Cross-user – availability flow', () => {
     await clearAvailability(memberPage, workerEvent.id).catch(() => {})
   })
 
-  test('member availability appears in admin member table', async ({ adminPage, memberPage }) => {
+  test('member availability appears in admin team heatmap', async ({
+    adminPage,
+    memberPage,
+    memberUser,
+  }) => {
     await memberPage.goto('/app/availability')
-    const memberSection = memberPage.getByTestId('section-my-availability')
-    await memberSection.getByTestId('btn-availability').click()
-    await memberPage.getByTestId('availability-type-fully_available').click()
+    await memberPage.getByTestId('availability-type-fully_available').first().click()
     await memberPage.getByTestId('btn-save').click()
-    await expect(memberSection.getByTestId('btn-availability')).toBeVisible()
+    await expect(memberPage.getByTestId('btn-remove-availability')).toBeVisible()
 
     // The admin page fetches the availabilities list once on mount; under
     // parallel worker load the backend write is occasionally not yet visible
     // to the follow-up GET. Re-navigate until the row surfaces.
     await expect(async () => {
       await adminPage.goto('/app/availability')
-      const adminTable = adminPage.getByTestId('section-admin-availabilities')
-      await expect(
-        adminTable.getByText(/fully.?available|open to be requested/i),
-      ).toBeVisible({ timeout: 2_000 })
+      const adminSection = adminPage.getByTestId('section-admin-availabilities')
+      await expect(adminSection.getByText(memberUser.name).first()).toBeVisible({
+        timeout: 2_000,
+      })
     }).toPass({ timeout: 15_000 })
   })
 
-  test('member removing availability is reflected in admin table', async ({
+  test('member removing availability is reflected in admin team view', async ({
     adminPage,
     memberPage,
     workerEvent,
@@ -87,26 +92,30 @@ test.describe('Cross-user – availability flow', () => {
     })
 
     await memberPage.goto('/app/availability')
-    const memberSection = memberPage.getByTestId('section-my-availability')
-    await memberSection.getByTestId('btn-remove-availability').click()
+    await memberPage.getByTestId('btn-remove-availability').click()
 
     // App-level confirm-destructive dialog
-    await memberPage.getByTestId('btn-dialog-confirm').click()
-    await expect(memberSection.getByTestId('btn-availability')).toBeVisible()
+    const confirmBtn = memberPage.getByRole('button', { name: /confirm|bestätigen/i })
+    if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await confirmBtn.click()
+    }
+    await expect(memberPage.getByTestId('btn-remove-availability')).toBeHidden()
 
     await expect(async () => {
       await adminPage.goto('/app/availability')
-      const adminTable = adminPage.getByTestId('section-admin-availabilities')
+      const adminSection = adminPage.getByTestId('section-admin-availabilities')
       await expect(
-        adminTable.getByText(/no.*(members|registrations|availability)/i),
+        adminSection.getByText(/no teammates have registered|noch keine teammitglieder/i),
       ).toBeVisible({ timeout: 2_000 })
     }).toPass({ timeout: 15_000 })
   })
 
-  test('admin sees multiple members in the availability table', async ({
+  test('admin sees multiple members in the team heatmap', async ({
     adminPage,
     memberPage,
     workerEvent,
+    adminUser,
+    memberUser,
   }) => {
     await api(adminPage, 'POST', `/events/${workerEvent.id}/availability`, {
       availability_type: 'fully_available',
@@ -119,9 +128,13 @@ test.describe('Cross-user – availability flow', () => {
 
     await expect(async () => {
       await adminPage.goto('/app/availability')
-      const adminTable = adminPage.getByTestId('section-admin-availabilities')
-      const rows = adminTable.getByText(/fully.?available|specific.?dates/i)
-      await expect(rows).toHaveCount(2, { timeout: 2_000 })
+      const adminSection = adminPage.getByTestId('section-admin-availabilities')
+      await expect(adminSection.getByText(adminUser.name).first()).toBeVisible({
+        timeout: 2_000,
+      })
+      await expect(adminSection.getByText(memberUser.name).first()).toBeVisible({
+        timeout: 2_000,
+      })
     }).toPass({ timeout: 15_000 })
   })
 })

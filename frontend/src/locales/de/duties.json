@@ -2,6 +2,12 @@
     "availability": {
         "adminEmpty": "Noch keine Mitglieder haben Verfügbarkeit registriert.",
         "adminTitle": "Verfügbarkeiten der Mitglieder",
+        "clearAll": "Zurücksetzen",
+        "collapseToEventHours": "Auf Veranstaltungszeit reduzieren",
+        "dailyHint": "Gleiche Stunden täglich",
+        "dailyTotalHours": "{count} Stunden gesamt",
+        "days": "Tage",
+        "daysSummary": "{count} Tage",
         "fields": {
             "afterTime": "ab {time}",
             "beforeTime": "vor {time}",
@@ -16,18 +22,53 @@
             "timeRangeHint": "Tägliches Zeitfenster festlegen. Leer lassen für offen (z.B. nur 'Von' = ab dieser Uhrzeit).",
             "type": "Verfügbarkeitstyp"
         },
+        "fullyAvailableDays": "Voll verfügbar — alle {count} Tage",
+        "fullyAvailableHint": "Du wirst für jede passende Schicht in Betracht gezogen.",
+        "fullyAvailableShort": "Alle Programmtage",
+        "heatLegendFull": "voll",
+        "heatLegendLow": "wenig",
+        "hours": "Stunden",
+        "hoursSummary": "{count} Std.",
+        "meTab": "Ich",
+        "modeFull": "Voll verfügbar",
+        "modeFullSub": "Ganzes Programm",
+        "modeShort": {
+            "full": "Voll",
+            "specific": "Termine",
+            "time_range": "Täglich"
+        },
+        "modeSpecific": "Bestimmte Zeiten",
+        "modeSpecificSub": "Pro Tag malen",
+        "modeTimeRange": "Tägliches Fenster",
+        "modeTimeRangeSub": "Gleiche Stunden täglich",
         "notRegistered": "Sie haben noch keine Verfügbarkeit registriert.",
+        "paintHint": "Klicken & ziehen, um zu malen. Tag-Header tippt für ganzen Tag.",
+        "people": "Personen",
+        "presetWeekday": "Vorlage: 9–17",
+        "presetWeekend": "Wochenenden",
         "register": "Verfügbarkeit registrieren",
         "remove": "Verfügbarkeit entfernen",
         "removeConfirm": "Möchten Sie Ihre Verfügbarkeit wirklich entfernen?",
+        "saveChanges": "Speichern",
+        "showOutsideEventHours": "Stunden außerhalb des Veranstaltungsfensters anzeigen",
         "subtitle": "Verfügbarkeit für dieses Programm registrieren",
+        "summary": "Zusammenfassung",
+        "summaryHint": "Sichtbar für Koordinator",
+        "teamEmpty": "Noch keine Teammitglieder haben Verfügbarkeit registriert.",
+        "teamHint": "Wer ist wann da. Tippe zum Anzeigen.",
+        "teamTab": "Team ({count})",
+        "teamTitle": "Verfügbarkeiten der Mitglieder",
         "title": "Meine Verfügbarkeit",
+        "typeLabel": "Verfügbarkeitstyp",
         "types": {
             "fully_available": "Voll verfügbar",
             "specific_dates": "Bestimmte Termine",
             "time_range": "Täglicher Zeitraum"
         },
-        "update": "Verfügbarkeit aktualisieren"
+        "unsavedHint": "Ungespeicherte Änderungen",
+        "update": "Verfügbarkeit aktualisieren",
+        "youSuffix": "(du)",
+        "yourSummary": "Deine Zusammenfassung"
     },
     "bookings": {
         "bookConfirm": "Möchten Sie diese Schicht buchen?",
@@ -131,11 +172,17 @@
         "empty": "Keine Veranstaltungsgruppen gefunden.",
         "expired": "Abgelaufen",
         "fields": {
+            "defaultTimes": "Standard-Zeitfenster",
+            "defaultTimesHint": "Optional. Begrenzt das Verfügbarkeitsraster standardmäßig auf diese Stunden. Aufgaben können trotzdem außerhalb dieses Fensters geplant werden.",
+            "defaultTimesInvalid": "Die Endzeit muss nach der Startzeit liegen. Über-Nacht-Fenster werden noch nicht unterstützt — lassen Sie beide Felder leer für Veranstaltungen über Mitternacht.",
             "description": "Beschreibung",
             "endDate": "Enddatum",
+            "endTime": "Endzeit",
             "name": "Name",
             "startDate": "Startdatum",
-            "status": "Status"
+            "startTime": "Startzeit",
+            "status": "Status",
+            "timeOptional": "Optional"
         },
         "pickDate": "Datum auswählen",
         "statuses": {
@@ -163,6 +210,8 @@
             "title": "Benachrichtigungseinstellungen"
         },
         "pick": {
+            "back": "Zurück",
+            "cancel": "Abbrechen",
             "continue": "Weiter",
             "createNew": "Neue Veranstaltung erstellen",
             "current": "Aktuell",
@@ -182,6 +231,7 @@
                 "scopedTitle": "Fokus auf eine Veranstaltung"
             },
             "footer": "Eine Gemeinschaft, ein Fokus — wählen Sie die Veranstaltung, WirkSam erledigt den Rest.",
+            "mobileContinue": "Veranstaltung wählen",
             "onboardingHeadline": "Willkommen. Wählen Sie die Veranstaltung, für die Sie hier sind.",
             "step2": {
                 "features": {
@@ -193,6 +243,7 @@
                     "updatesTitle": "Planungs-Updates"
                 },
                 "headline": "Wählen Sie, wie wir Sie erreichen.",
+                "mobileContinue": "Benachrichtigungen einrichten",
                 "subhead": "Benachrichtigungen halten Sie über Ihre Schichten auf dem Laufenden und ermöglichen es Organisatoren, Sie im Zweifel zu erreichen. Wählen Sie beliebige Kombinationen — E-Mail, Push, Telegram oder Telefon."
             },
             "subhead": "WirkSam richtet Ihre Ansicht auf eine einzelne Veranstaltung aus, damit Sie nicht die richtige Liste suchen müssen.",
@@ -293,6 +344,7 @@
                 "defaultEndTime": "Standard-Endzeit",
                 "defaultStartTime": "Standard-Startzeit",
                 "minutes": "{n} Minuten",
+                "outsideEventWindow": "Außerhalb der Standardzeit der Veranstaltung ({range}). Die Aufgabe wird trotzdem erstellt.",
                 "overrides": "Datumsausnahmen",
                 "overridesDesc": "Zeiten für bestimmte Tage anpassen",
                 "peoplePerShift": "Personen pro Schicht",

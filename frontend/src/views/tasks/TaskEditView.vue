@@ -39,7 +39,7 @@ import Textarea from '@/components/ui/textarea/Textarea.vue'
 import ScheduleConfigForm from '@/components/tasks/ScheduleConfigForm.vue'
 import ShiftPreviewGrid from '@/components/tasks/ShiftPreviewGrid.vue'
 
-import type { ShiftRead, TaskRead, ShiftBatchRead } from '@/client/types.gen'
+import type { EventRead, ShiftRead, TaskRead, ShiftBatchRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -57,6 +57,7 @@ const loading = ref(true)
 const submitting = ref(false)
 const task = ref<TaskRead | null>(null)
 const batch = ref<ShiftBatchRead | null>(null)
+const parentEvent = ref<EventRead | null>(null)
 
 // --- Form state ---
 const name = ref('')
@@ -235,6 +236,16 @@ const loadTask = async () => {
     if (!authStore.canManageEvent(ev.event_id)) {
       router.replace({ name: 'task-detail', params: { eventId: eventId.value } })
       return
+    }
+
+    // Load parent event for default-window context (non-critical)
+    if (ev.event_id) {
+      try {
+        const eventRes = await get<{ data: EventRead }>({ url: `/events/${ev.event_id}` })
+        parentEvent.value = eventRes.data
+      } catch {
+        parentEvent.value = null
+      }
     }
 
     // Populate form — use batch config if in batch mode
@@ -599,6 +610,8 @@ onMounted(loadTask)
             v-model:overrides="overrides"
             :has-remainder="hasRemainder"
             :available-dates="availableDates"
+            :event-start-time="parentEvent?.default_start_time ?? null"
+            :event-end-time="parentEvent?.default_end_time ?? null"
             show-overrides
           />
         </CardContent>

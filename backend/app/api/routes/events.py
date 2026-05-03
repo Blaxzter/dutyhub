@@ -50,6 +50,7 @@ async def list_events(
     status: EventStatus | None = None,
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
+    is_expired: bool | None = None,
 ) -> EventListResponse:
     """List published events (all users) or all groups (admin/manager).
 
@@ -81,6 +82,7 @@ async def list_events(
         "status": effective_status,
         "date_from": date_from,
         "date_to": date_to,
+        "is_expired": is_expired,
         "also_include_ids": also_include_ids,
     }
 
@@ -152,6 +154,35 @@ async def update_event(
             422,
             code="event.invalid_dates",
             detail="End date must be on or after start date",
+        )
+
+    # Validate default time window after merging with the DB record (PATCH may
+    # carry only one of the two fields, but the resulting pair must satisfy
+    # end > start).
+    update_fields = group_in.model_fields_set
+    new_start_time = (
+        group_in.default_start_time
+        if "default_start_time" in update_fields
+        else db_group.default_start_time
+    )
+    new_end_time = (
+        group_in.default_end_time
+        if "default_end_time" in update_fields
+        else db_group.default_end_time
+    )
+    if (
+        new_start_time is not None
+        and new_end_time is not None
+        and new_end_time <= new_start_time
+    ):
+        raise_problem(
+            422,
+            code="event.invalid_default_times",
+            detail=(
+                "Default end time must be after default start time. "
+                "Overnight windows are not yet supported — leave both empty for "
+                "events that span midnight."
+            ),
         )
     if group_in.start_date is not None or group_in.end_date is not None:
         result = await session.execute(

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, ref, watch, type HTMLAttributes } from 'vue'
 
 import { Clock } from 'lucide-vue-next'
 
@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 const props = defineProps<{
   modelValue: string
   placeholder?: string
+  class?: HTMLAttributes['class']
 }>()
 
 const emit = defineEmits<{
@@ -80,6 +81,7 @@ function onInteractOutside(e: Event) {
           cn(
             'flex h-8 w-[5.5rem] items-center gap-1.5 rounded-md border border-input bg-transparent px-2 text-sm shadow-xs transition-[color,box-shadow]',
             'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
+            props.class,
           )
         "
         @click.prevent
@@ -97,7 +99,7 @@ function onInteractOutside(e: Event) {
       </div>
     </PopoverTrigger>
     <PopoverContent
-      class="w-28 p-1"
+      class="w-[var(--reka-popover-trigger-width)] min-w-28 p-1"
       align="start"
       @open-auto-focus.prevent
       @close-auto-focus.prevent

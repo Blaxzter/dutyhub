@@ -118,10 +118,11 @@ test.describe('Settings – active event', () => {
     await expect(page.getByTestId('settings-active-event-name')).toBeVisible()
   })
 
-  test('change button opens the event switcher menu', async ({ adminPage: page }) => {
+  test('change button navigates to the event picker', async ({ adminPage: page }) => {
     await page.goto('/app/settings/event')
     await page.getByTestId('settings-active-event-change').click()
-    await expect(page.locator('[data-testid^="event-switcher-option-"]').first()).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/select-event/)
+    await expect(page.getByTestId('page-heading')).toBeVisible()
   })
 })
 

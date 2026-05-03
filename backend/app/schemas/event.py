@@ -12,6 +12,8 @@ class EventBase(BaseModel):
     description: str | None = None
     start_date: dt.date
     end_date: dt.date
+    default_start_time: dt.time | None = None
+    default_end_time: dt.time | None = None
     status: EventStatus = "draft"
 
     @field_validator("end_date")
@@ -20,6 +22,21 @@ class EventBase(BaseModel):
         start = info.data.get("start_date")
         if start and v < start:
             msg = "end_date must be on or after start_date"
+            raise ValueError(msg)
+        return v
+
+    @field_validator("default_end_time")
+    @classmethod
+    def default_end_time_after_start(
+        cls, v: dt.time | None, info: Any
+    ) -> dt.time | None:
+        start = info.data.get("default_start_time")
+        if start is not None and v is not None and v <= start:
+            msg = (
+                "default_end_time must be after default_start_time. "
+                "Overnight windows are not yet supported — leave both empty for "
+                "events that span midnight."
+            )
             raise ValueError(msg)
         return v
 
@@ -33,6 +50,8 @@ class EventUpdate(BaseModel):
     description: str | None = None
     start_date: dt.date | None = None
     end_date: dt.date | None = None
+    default_start_time: dt.time | None = None
+    default_end_time: dt.time | None = None
     status: EventStatus | None = None
 
 

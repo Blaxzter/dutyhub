@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent } from '@/components/ui/card'
 
+import type { SelectEventMode } from '@/components/select-event/SelectEventHeroPane.vue'
 import SelectableEventCard, {
   type EventStats,
 } from '@/components/select-event/SelectableEventCard.vue'
@@ -19,11 +20,14 @@ const props = defineProps<{
   currentSelectedId: string | null
   canCreateEvents: boolean
   submitting: boolean
+  mode: SelectEventMode
 }>()
 
 defineEmits<{
   stage: [event: EventRead]
   commit: []
+  cancel: []
+  back: []
   openCreate: []
 }>()
 
@@ -60,9 +64,7 @@ const { t } = useI18n()
         class="cursor-pointer border-dashed transition-colors hover:border-primary"
         @click="$emit('openCreate')"
       >
-        <CardContent
-          class="flex items-center justify-center gap-2 p-5 text-muted-foreground"
-        >
+        <CardContent class="flex items-center justify-center gap-2 p-5 text-muted-foreground">
           <Plus class="h-5 w-5" />
           <span class="text-sm font-medium">
             {{ t('duties.selectEvent.pick.createNew') }}
@@ -70,8 +72,28 @@ const { t } = useI18n()
         </CardContent>
       </Card>
 
-      <div class="flex justify-end pt-2">
+      <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:items-center sm:justify-end">
         <Button
+          v-if="props.mode === 'onboarding'"
+          variant="ghost"
+          class="w-full sm:mr-auto sm:w-auto lg:hidden"
+          data-testid="btn-back-select-event"
+          @click="$emit('back')"
+        >
+          {{ t('duties.selectEvent.pick.back') }}
+        </Button>
+        <Button
+          v-if="props.mode === 'switch'"
+          variant="ghost"
+          class="w-full sm:w-auto"
+          data-testid="btn-cancel-select-event"
+          :disabled="props.submitting"
+          @click="$emit('cancel')"
+        >
+          {{ t('duties.selectEvent.pick.cancel') }}
+        </Button>
+        <Button
+          class="w-full sm:w-auto"
           data-testid="btn-continue-select-event"
           :disabled="!props.pendingSelectionId || props.submitting"
           @click="$emit('commit')"

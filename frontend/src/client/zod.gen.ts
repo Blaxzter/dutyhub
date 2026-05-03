@@ -236,6 +236,7 @@ export const zDemoDataCreatedResponse = z.object({
   users_created: z.int(),
   shifts_created: z.int(),
   bookings_created: z.int(),
+  availabilities_created: z.int(),
 })
 
 /**
@@ -268,6 +269,8 @@ export const zEventCreate = z.object({
   description: z.string().nullish(),
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
   created_by_id: z.uuid().nullish(),
 })
@@ -280,6 +283,8 @@ export const zEventRead = z.object({
   description: z.string().nullish(),
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
   id: z.uuid(),
   created_by_id: z.uuid().nullish(),
@@ -306,6 +311,8 @@ export const zEventUpdate = z.object({
   description: z.string().nullish(),
   start_date: z.iso.date().nullish(),
   end_date: z.iso.date().nullish(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).nullish(),
 })
 
@@ -1436,6 +1443,8 @@ export const zEventReadWritable = z.object({
   description: z.string().nullish(),
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
   id: z.uuid(),
   created_by_id: z.uuid().nullish(),
@@ -2015,6 +2024,7 @@ export const zEventsListEventsQuery = z.object({
   status: z.enum(['draft', 'published', 'archived']).nullish(),
   date_from: z.iso.date().nullish(),
   date_to: z.iso.date().nullish(),
+  is_expired: z.boolean().nullish(),
 })
 
 /**

@@ -136,7 +136,7 @@ function routeFor(n: NotificationItem) {
   if (!data) return null
   if (data.task_id) return { name: 'task-detail', params: { eventId: data.task_id as string } }
   if (data.event_id)
-    return { name: 'event-settings', query: { eventId: data.event_id as string } }
+    return { name: 'event-settings', params: { eventId: data.event_id as string } }
   if (data.booking_id) return { name: 'my-bookings' }
   return null
 }

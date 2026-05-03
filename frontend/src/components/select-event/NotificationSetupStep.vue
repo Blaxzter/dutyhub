@@ -107,11 +107,12 @@ onMounted(() => {
     </Card>
   </div>
 
-  <div class="flex justify-between gap-2">
-    <Button variant="outline" @click="$emit('back')">
+  <div class="flex flex-col gap-2 sm:flex-row sm:justify-between">
+    <Button variant="ghost" class="w-full sm:w-auto" @click="$emit('back')">
       {{ t('common.actions.back') }}
     </Button>
     <Button
+      class="w-full sm:w-auto"
       data-testid="btn-finish-onboarding"
       :disabled="props.savingPhone"
       @click="$emit('finish')"
