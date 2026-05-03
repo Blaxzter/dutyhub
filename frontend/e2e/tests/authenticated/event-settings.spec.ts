@@ -54,7 +54,19 @@ test.describe('Event Settings – details tab', () => {
   test('can update event description', async ({ adminPage: page }) => {
     await page.goto(`/app/event-settings/${event.id}`)
     await page.locator('textarea').first().fill('Updated via E2E test')
-    await page.getByRole('button', { name: /save|speichern/i }).click()
+
+    // Wait for the PATCH to settle before reading back — clicking save and
+    // GETing immediately races the request and intermittently sees the old
+    // (null) description.
+    await Promise.all([
+      page.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/events/${event.id}`) &&
+          resp.request().method() === 'PATCH' &&
+          resp.ok(),
+      ),
+      page.getByRole('button', { name: /save|speichern/i }).click(),
+    ])
 
     const updated = await api<EventRead>(page, 'GET', `/events/${event.id}`)
     expect(updated.description).toBe('Updated via E2E test')
