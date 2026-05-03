@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { computed, watch } from 'vue'
 
-import { Plus, Trash2 } from 'lucide-vue-next'
+import { CircleAlert, Plus, Trash2 } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'
@@ -25,6 +25,10 @@ const props = defineProps<{
   hasRemainder: boolean
   availableDates: string[]
   showOverrides?: boolean
+  // HH:MM:SS — when both set, a soft reminder appears if the configured task
+  // schedule falls outside the event's default window.
+  eventStartTime?: string | null
+  eventEndTime?: string | null
 }>()
 
 const defaultStartTime = defineModel<string>('defaultStartTime', { required: true })
@@ -60,6 +64,31 @@ watch(
     if (!val) remainderMode.value = 'drop'
   },
 )
+
+function toMinutes(hhmm: string): number | null {
+  const [h, m] = hhmm.split(':')
+  const hi = parseInt(h, 10)
+  const mi = parseInt(m, 10)
+  if (Number.isNaN(hi) || Number.isNaN(mi)) return null
+  return hi * 60 + mi
+}
+
+const eventWindow = computed(() => {
+  if (!props.eventStartTime || !props.eventEndTime) return null
+  const start = toMinutes(props.eventStartTime.slice(0, 5))
+  const end = toMinutes(props.eventEndTime.slice(0, 5))
+  if (start === null || end === null) return null
+  return { start, end, label: `${props.eventStartTime.slice(0, 5)}–${props.eventEndTime.slice(0, 5)}` }
+})
+
+const outsideEventWindow = computed(() => {
+  const w = eventWindow.value
+  if (!w) return false
+  const start = toMinutes(defaultStartTime.value)
+  const end = toMinutes(defaultEndTime.value)
+  if (start === null || end === null) return false
+  return start < w.start || end > w.end
+})
 </script>
 
 <template>
@@ -73,6 +102,14 @@ watch(
       <TimePicker v-model="defaultEndTime" />
     </div>
   </div>
+  <p
+    v-if="outsideEventWindow && eventWindow"
+    class="text-muted-foreground -mt-2 flex items-start gap-1.5 text-xs"
+    data-testid="task-outside-event-window"
+  >
+    <CircleAlert class="text-amber-500 mt-0.5 size-3.5 shrink-0" />
+    <span>{{ t('duties.tasks.createView.schedule.outsideEventWindow', { range: eventWindow.label }) }}</span>
+  </p>
   <div class="grid grid-cols-2 gap-4">
     <div class="space-y-2">
       <Label>{{ t('duties.tasks.createView.schedule.slotDuration') }}</Label>

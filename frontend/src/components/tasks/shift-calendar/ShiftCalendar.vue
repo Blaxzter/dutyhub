@@ -12,6 +12,7 @@ import {
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 import ShiftCalendarDay from './ShiftCalendarDay.vue'
 import ShiftCalendarMonth from './ShiftCalendarMonth.vue'
@@ -299,35 +300,22 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
   <!-- Header: view mode + navigation -->
   <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
     <!-- View mode switcher -->
-    <div class="flex overflow-hidden rounded-md border">
-      <Button
-        :variant="viewMode === 'month' ? 'default' : 'ghost'"
-        size="sm"
-        class="flex-1 rounded-none border-0 sm:flex-none"
-        @click="viewMode = 'month'"
-      >
-        <CalendarDays class="mr-1.5 h-4 w-4" />
-        {{ t('duties.tasks.calendar.views.month') }}
-      </Button>
-      <Button
-        :variant="viewMode === 'week' ? 'default' : 'ghost'"
-        size="sm"
-        class="flex-1 rounded-none border-0 border-l sm:flex-none"
-        @click="viewMode = 'week'"
-      >
-        <List class="mr-1.5 h-4 w-4" />
-        {{ t('duties.tasks.calendar.views.week') }}
-      </Button>
-      <Button
-        :variant="viewMode === 'day' ? 'default' : 'ghost'"
-        size="sm"
-        class="flex-1 rounded-none border-0 border-l sm:flex-none"
-        @click="viewMode = 'day'"
-      >
-        <Clock class="mr-1.5 h-4 w-4" />
-        {{ t('duties.tasks.calendar.views.day') }}
-      </Button>
-    </div>
+    <Tabs v-model="viewMode" class="w-full sm:w-auto">
+      <TabsList class="grid w-full grid-cols-3 sm:w-auto sm:inline-flex">
+        <TabsTrigger value="month">
+          <CalendarDays class="h-4 w-4" />
+          {{ t('duties.tasks.calendar.views.month') }}
+        </TabsTrigger>
+        <TabsTrigger value="week">
+          <List class="h-4 w-4" />
+          {{ t('duties.tasks.calendar.views.week') }}
+        </TabsTrigger>
+        <TabsTrigger value="day">
+          <Clock class="h-4 w-4" />
+          {{ t('duties.tasks.calendar.views.day') }}
+        </TabsTrigger>
+      </TabsList>
+    </Tabs>
 
     <!-- Date navigation -->
     <div class="flex items-center gap-2">

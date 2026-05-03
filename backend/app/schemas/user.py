@@ -16,6 +16,10 @@ class UserCreate(BaseModel):
     )
     is_active: bool = Field(default=True, description="Whether the user is active")
     preferred_language: str = Field(default="en", description="Preferred language")
+    time_format: str = Field(
+        default="locale", description="Display preference for times"
+    )
+    theme: str = Field(default="default", description="Selected color palette")
 
 
 class UserUpdate(BaseModel):
@@ -33,6 +37,10 @@ class UserUpdate(BaseModel):
     preferred_language: str | None = Field(
         default=None, description="Preferred language"
     )
+    time_format: str | None = Field(
+        default=None, description="Display preference for times"
+    )
+    theme: str | None = Field(default=None, description="Selected color palette")
 
 
 class UserRead(BaseModel):
@@ -45,6 +53,8 @@ class UserRead(BaseModel):
     avatar_etag: str | None = None
     phone_number: str | None = None
     preferred_language: str = "en"
+    time_format: str = "locale"
+    theme: str = "default"
     roles: list[str]
     is_active: bool
     rejection_reason: str | None = None

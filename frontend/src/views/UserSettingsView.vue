@@ -11,6 +11,10 @@
         <PasswordResetCard />
       </template>
 
+      <template v-if="id === 'event'">
+        <ActiveEventCard />
+      </template>
+
       <template v-if="id === 'notifications'">
         <NotificationSettingsCard />
       </template>
@@ -21,6 +25,11 @@
 
       <template v-if="id === 'language'">
         <LanguageSettingsCard />
+        <TimeFormatCard />
+      </template>
+
+      <template v-if="id === 'appearance'">
+        <AppearanceCard />
       </template>
 
       <template v-if="id === 'dataPrivacy'">
@@ -92,7 +101,16 @@
 <script setup lang="ts">
 import { type Component, computed, ref, watch } from 'vue'
 
-import { Bell, CalendarDays, GlobeIcon, KeyRound, ShieldIcon, UserIcon } from 'lucide-vue-next'
+import {
+  Bell,
+  CalendarDays,
+  CalendarRange,
+  GlobeIcon,
+  KeyRound,
+  Palette as PaletteIcon,
+  ShieldIcon,
+  UserIcon,
+} from 'lucide-vue-next'
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -104,6 +122,8 @@ import { useAdaptiveCarouselHeight } from '@/composables/useAdaptiveCarouselHeig
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
 import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
 
+import ActiveEventCard from '@/components/account/user/ActiveEventCard.vue'
+import AppearanceCard from '@/components/account/user/AppearanceCard.vue'
 import CalendarSyncCard from '@/components/account/user/CalendarSyncCard.vue'
 import CurrentProfileCard from '@/components/account/user/CurrentProfileCard.vue'
 import DataExportCard from '@/components/account/user/DataExportCard.vue'
@@ -112,6 +132,7 @@ import EditProfileForm from '@/components/account/user/EditProfileForm.vue'
 import LanguageSettingsCard from '@/components/account/user/LanguageSettingsCard.vue'
 import NotificationSettingsCard from '@/components/account/user/NotificationSettingsCard.vue'
 import PasswordResetCard from '@/components/account/user/PasswordResetCard.vue'
+import TimeFormatCard from '@/components/account/user/TimeFormatCard.vue'
 import { useAuthProvider } from '@/components/account/user/useAuthProvider.ts'
 import ChipNav from '@/components/utils/ChipNav.vue'
 
@@ -142,9 +163,11 @@ const authProvider = useAuthProvider(user.value)
 const navItems = computed<NavItem[]>(() => [
   { id: 'profile', label: t('user.settings.nav.profile'), icon: UserIcon },
   { id: 'security', label: t('user.settings.nav.security'), icon: KeyRound, auth0Only: true },
+  { id: 'event', label: t('user.settings.nav.event'), icon: CalendarRange },
   { id: 'notifications', label: t('user.settings.nav.notifications'), icon: Bell },
   { id: 'calendar', label: t('user.settings.nav.calendar'), icon: CalendarDays },
   { id: 'language', label: t('user.settings.nav.language'), icon: GlobeIcon },
+  { id: 'appearance', label: t('user.settings.nav.appearance'), icon: PaletteIcon },
   { id: 'dataPrivacy', label: t('user.settings.nav.dataPrivacy'), icon: ShieldIcon },
 ])
 

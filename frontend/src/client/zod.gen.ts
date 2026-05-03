@@ -236,6 +236,7 @@ export const zDemoDataCreatedResponse = z.object({
   users_created: z.int(),
   shifts_created: z.int(),
   bookings_created: z.int(),
+  availabilities_created: z.int(),
 })
 
 /**
@@ -268,6 +269,8 @@ export const zEventCreate = z.object({
   description: z.string().nullish(),
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
   created_by_id: z.uuid().nullish(),
 })
@@ -280,6 +283,8 @@ export const zEventRead = z.object({
   description: z.string().nullish(),
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
   id: z.uuid(),
   created_by_id: z.uuid().nullish(),
@@ -306,6 +311,8 @@ export const zEventUpdate = z.object({
   description: z.string().nullish(),
   start_date: z.iso.date().nullish(),
   end_date: z.iso.date().nullish(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).nullish(),
 })
 
@@ -395,6 +402,7 @@ export const zNotificationRead = z.object({
   id: z.uuid(),
   recipient_id: z.uuid(),
   notification_type_code: z.string(),
+  classification: z.enum(['reminder', 'change', 'match', 'announcement']),
   title: z.string(),
   body: z.string(),
   data: z.record(z.string(), z.union([z.string(), z.int()]).nullable()).nullish(),
@@ -478,6 +486,7 @@ export const zNotificationTypeRead = z.object({
   name: z.string(),
   description: z.string().nullish(),
   category: z.string(),
+  classification: z.enum(['reminder', 'change', 'match', 'announcement']),
   is_admin_only: z.boolean(),
   default_channels: z.array(z.string()),
   is_active: z.boolean(),
@@ -1279,6 +1288,20 @@ export const zUserCreate = z.object({
     })
     .optional()
     .default('en'),
+  time_format: z
+    .string()
+    .register(z.globalRegistry, {
+      description: 'Display preference for times',
+    })
+    .optional()
+    .default('locale'),
+  theme: z
+    .string()
+    .register(z.globalRegistry, {
+      description: 'Selected color palette',
+    })
+    .optional()
+    .default('default'),
 })
 
 /**
@@ -1294,6 +1317,9 @@ export const zUserProfile = z.object({
   bio: z.string().nullish(),
   phone_number: z.string().nullish(),
   preferred_language: z.string().optional().default('en'),
+  time_format: z.enum(['locale', 'h12', 'h24']).optional().default('locale'),
+  theme: z.enum(['default', 'classic']).optional().default('default'),
+  show_event_switcher_in_nav: z.boolean().optional().default(false),
   email_verified: z.boolean().optional().default(false),
   roles: z
     .array(z.string())
@@ -1344,6 +1370,9 @@ export const zUserProfileUpdate = z.object({
     .string()
     .regex(/^(en|de)$/)
     .nullish(),
+  time_format: z.enum(['locale', 'h12', 'h24']).nullish(),
+  theme: z.enum(['default', 'classic']).nullish(),
+  show_event_switcher_in_nav: z.boolean().nullish(),
 })
 
 /**
@@ -1357,6 +1386,8 @@ export const zUserRead = z.object({
   avatar_etag: z.string().nullish(),
   phone_number: z.string().nullish(),
   preferred_language: z.string().optional().default('en'),
+  time_format: z.string().optional().default('locale'),
+  theme: z.string().optional().default('default'),
   roles: z.array(z.string()),
   is_active: z.boolean(),
   rejection_reason: z.string().nullish(),
@@ -1384,6 +1415,8 @@ export const zUserUpdate = z.object({
   is_active: z.boolean().nullish(),
   rejection_reason: z.string().nullish(),
   preferred_language: z.string().nullish(),
+  time_format: z.string().nullish(),
+  theme: z.string().nullish(),
 })
 
 export const zValidationErrorItem = z.object({
@@ -1410,6 +1443,8 @@ export const zEventReadWritable = z.object({
   description: z.string().nullish(),
   start_date: z.iso.date(),
   end_date: z.iso.date(),
+  default_start_time: z.iso.time().nullish(),
+  default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
   id: z.uuid(),
   created_by_id: z.uuid().nullish(),
@@ -1989,6 +2024,7 @@ export const zEventsListEventsQuery = z.object({
   status: z.enum(['draft', 'published', 'archived']).nullish(),
   date_from: z.iso.date().nullish(),
   date_to: z.iso.date().nullish(),
+  is_expired: z.boolean().nullish(),
 })
 
 /**

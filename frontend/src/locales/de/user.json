@@ -1,5 +1,36 @@
 {
     "settings": {
+        "activeEvent": {
+            "change": "Wechseln",
+            "currentLabel": "Aktuelle Veranstaltung",
+            "description": "Aufgaben, Schichten und Buchungen beziehen sich auf die ausgewählte Veranstaltung.",
+            "none": "Keine Veranstaltung gewählt",
+            "sidebarToggle": {
+                "description": "Zeige in der Seitenleiste einen schnellen Wechsler, um die Veranstaltung von überall zu ändern.",
+                "label": "Veranstaltungswechsler in der Seitenleiste anzeigen"
+            },
+            "title": "Aktive Veranstaltung",
+            "toggleError": "Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen."
+        },
+        "appearance": {
+            "description": "Wähle ein Design und einen Farbmodus für die App. Änderungen gelten sofort und werden auf diesem Gerät gespeichert.",
+            "mode": {
+                "dark": "Dunkel",
+                "light": "Hell",
+                "system": "System",
+                "title": "Modus"
+            },
+            "theme": {
+                "classic": "Klassisch",
+                "classicDescription": "Originaler Schwarz-Weiß-Look",
+                "default": "Standard",
+                "defaultDescription": "Warme, einladende Farbpalette",
+                "error": "Design konnte nicht gespeichert werden. Bitte erneut versuchen.",
+                "previewLabel": "Vorschau",
+                "title": "Design"
+            },
+            "title": "Erscheinungsbild"
+        },
         "calendarSync": {
             "addTo": {
                 "apple": "Apple Kalender",
@@ -69,8 +100,10 @@
             "title": "Sprache & Region"
         },
         "nav": {
+            "appearance": "Erscheinungsbild",
             "calendar": "Kalender",
             "dataPrivacy": "Daten & Datenschutz",
+            "event": "Aktive Veranstaltung",
             "language": "Sprache",
             "notifications": "Benachrichtigungen",
             "profile": "Profil",
@@ -149,7 +182,7 @@
                             "rotateRight": "Nach rechts drehen",
                             "title": "Profilbild anpassen"
                         },
-                        "description": "PNG, JPEG, WebP oder GIF (erstes Bild) bis 5 MB. Wir skalieren und speichern lokal ein kleines WebP.",
+                        "description": "PNG, JPEG, WebP oder GIF (erstes Bild) bis 20 MB. Wir skalieren und speichern lokal ein kleines WebP.",
                         "label": "Profilbild",
                         "remove": "Entfernen",
                         "removeSuccess": "Profilbild entfernt.",
@@ -164,6 +197,16 @@
             }
         },
         "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Profilinformationen.",
+        "timeFormat": {
+            "description": "Legen Sie fest, wie Uhrzeiten in der App angezeigt werden.",
+            "error": "Zeitformat konnte nicht gespeichert werden. Bitte erneut versuchen.",
+            "h12": "12-Stunden",
+            "h24": "24-Stunden",
+            "label": "Anzeigeformat",
+            "locale": "Automatisch",
+            "preview": "Beispiel: {time}",
+            "title": "Zeitformat"
+        },
         "title": "Benutzereinstellungen"
     }
 }

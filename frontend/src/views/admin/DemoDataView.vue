@@ -41,6 +41,7 @@ interface DemoDataCreatedResponse {
     users_created: number
     shifts_created: number
     bookings_created: number
+    availabilities_created: number
   }
 }
 
@@ -75,6 +76,7 @@ async function handleCreate() {
         users: d.users_created,
         shifts: d.shifts_created,
         bookings: d.bookings_created,
+        availabilities: d.availabilities_created,
       }),
     )
   } catch (error) {

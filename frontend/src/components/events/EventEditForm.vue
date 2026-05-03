@@ -17,6 +17,7 @@ import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import Separator from '@/components/ui/separator/Separator.vue'
 import Textarea from '@/components/ui/textarea/Textarea.vue'
+import { TimePicker } from '@/components/ui/time-picker'
 
 import type { EventRead, TaskRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
@@ -41,7 +42,19 @@ const name = ref(props.event.name)
 const description = ref(props.event.description ?? '')
 const startDate = ref<DateValue>()
 const endDate = ref<DateValue>()
+const startTime = ref(props.event.default_start_time?.slice(0, 5) ?? '')
+const endTime = ref(props.event.default_end_time?.slice(0, 5) ?? '')
 const saving = ref(false)
+
+// Default time window must satisfy end > start when both set (overnight wrap
+// is not supported — see issue #85).
+const defaultTimesError = computed<string | null>(() => {
+  if (!startTime.value || !endTime.value) return null
+  if (endTime.value <= startTime.value) {
+    return t('duties.events.fields.defaultTimesInvalid')
+  }
+  return null
+})
 
 // Task date bounds for constraining pickers
 const earliestTaskDate = ref<DateValue>()
@@ -99,6 +112,7 @@ async function loadTaskDateBounds() {
 
 async function handleSubmit() {
   if (!startDate.value || !endDate.value || !name.value.trim()) return
+  if (defaultTimesError.value) return
   saving.value = true
   try {
     const res = await patch<{ data: EventRead }>({
@@ -108,6 +122,8 @@ async function handleSubmit() {
         description: description.value.trim() || null,
         start_date: startDate.value.toString(),
         end_date: endDate.value.toString(),
+        default_start_time: startTime.value ? `${startTime.value}:00` : null,
+        default_end_time: endTime.value ? `${endTime.value}:00` : null,
       },
     })
     emit('updated', res.data)
@@ -207,6 +223,35 @@ onMounted(() => {
           </div>
           <p class="text-xs text-muted-foreground">
             {{ t('duties.events.detail.dateConstraintHint') }}
+          </p>
+        </div>
+        <div class="space-y-2">
+          <Label class="text-sm">{{ t('duties.events.fields.defaultTimes') }}</Label>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <Label class="text-muted-foreground text-xs">{{ t('duties.events.fields.startTime') }}</Label>
+              <TimePicker
+                v-model="startTime"
+                class="w-full"
+                :class="defaultTimesError ? 'border-destructive' : ''"
+                :placeholder="t('duties.events.fields.timeOptional')"
+              />
+            </div>
+            <div class="space-y-1">
+              <Label class="text-muted-foreground text-xs">{{ t('duties.events.fields.endTime') }}</Label>
+              <TimePicker
+                v-model="endTime"
+                class="w-full"
+                :class="defaultTimesError ? 'border-destructive' : ''"
+                :placeholder="t('duties.events.fields.timeOptional')"
+              />
+            </div>
+          </div>
+          <p v-if="defaultTimesError" class="text-destructive text-xs">
+            {{ defaultTimesError }}
+          </p>
+          <p class="text-muted-foreground text-xs">
+            {{ t('duties.events.fields.defaultTimesHint') }}
           </p>
         </div>
         <div class="flex items-center gap-2 pt-2">

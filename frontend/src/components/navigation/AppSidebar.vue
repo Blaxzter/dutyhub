@@ -9,6 +9,7 @@ import {
   CalendarCheck,
   CalendarDays,
   CalendarRange,
+  ChevronsUpDown,
   Database,
   House,
   Users,
@@ -39,6 +40,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 
+import EventSwitcherMenu from '@/components/navigation/EventSwitcherMenu.vue'
 import NavMain from '@/components/navigation/NavMain.vue'
 import type { NavSubItem } from '@/components/navigation/NavMain.vue'
 import NavUser from '@/components/navigation/NavUser.vue'
@@ -52,7 +54,7 @@ const props = withDefaults(defineProps<AppSidebarProps>(), {
   open: true,
 })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const authStore = useAuthStore()
 const sidebarStore = useSidebarStore()
 const notificationStore = useNotificationStore()
@@ -61,6 +63,11 @@ const notificationDisplayCount = computed(() => {
   if (notificationStore.unreadCount > 99) return '99+'
   return notificationStore.unreadCount.toString()
 })
+
+const showEventSwitcher = computed(
+  () => authStore.profile?.show_event_switcher_in_nav ?? false,
+)
+const selectedEventName = computed(() => authStore.selectedEvent?.name ?? '')
 const { isMobile, setOpenMobile, state } = useSidebar()
 const router = useRouter()
 const route = useRoute()
@@ -116,14 +123,13 @@ function eventBadge(
   return { text: label, tooltip, variant: 'outline' }
 }
 
-function formatBookingTitle(slotDate: string, slotTitle: string): string {
+function formatBookingDate(slotDate: string): string {
   const d = new Date(slotDate + 'T00:00:00')
-  const formatted = d.toLocaleDateString(undefined, {
+  return d.toLocaleDateString(locale.value, {
     weekday: 'short',
     day: '2-digit',
     month: '2-digit',
   })
-  return `${formatted} — ${slotTitle}`
 }
 
 const navMain = computed(() => {
@@ -138,9 +144,13 @@ const navMain = computed(() => {
   }))
 
   const bookingItems: NavSubItem[] = sidebarStore.bookings.map((b) => ({
-    title: formatBookingTitle(b.slot_date, b.slot_title),
-    routeName: 'task-detail',
-    routeParams: { eventId: b.task_id },
+    title: b.slot_title,
+    routeName: 'booking-detail',
+    routeParams: { bookingId: b.id },
+    badge: {
+      text: formatBookingDate(b.slot_date),
+      variant: 'secondary',
+    },
   }))
 
   return [
@@ -233,6 +243,34 @@ const navAdmin = computed(() => {
         <img v-if="state === 'collapsed'" :src="logoIcon" alt="WirkSam" class="size-8" />
         <img v-else :src="currentLogo" alt="WirkSam" class="w-auto" />
       </RouterLink>
+      <EventSwitcherMenu v-if="showEventSwitcher">
+        <template #default="{ open }">
+          <button
+            type="button"
+            data-testid="sidebar-event-switcher"
+            class="group flex items-center gap-2 rounded-md border bg-card px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            :class="[
+              state === 'collapsed' ? 'justify-center px-0 py-2' : '',
+              open ? 'bg-accent' : '',
+            ]"
+            :title="state === 'collapsed' ? selectedEventName : undefined"
+          >
+            <CalendarRange class="size-4 shrink-0 text-muted-foreground" />
+            <div v-if="state !== 'collapsed'" class="min-w-0 flex-1">
+              <p class="truncate font-medium leading-tight">
+                {{ selectedEventName || t('navigation.sidebar.eventSwitcher.empty') }}
+              </p>
+              <p class="text-xs text-muted-foreground leading-tight">
+                {{ t('navigation.sidebar.eventSwitcher.hint') }}
+              </p>
+            </div>
+            <ChevronsUpDown
+              v-if="state !== 'collapsed'"
+              class="size-3.5 shrink-0 text-muted-foreground"
+            />
+          </button>
+        </template>
+      </EventSwitcherMenu>
     </SidebarHeader>
     <SidebarContent>
       <!-- Home link above the Platform section -->

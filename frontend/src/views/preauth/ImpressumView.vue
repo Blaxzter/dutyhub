@@ -8,6 +8,7 @@ import { useRouter } from 'vue-router'
 import { useAppConfig } from '@/composables/useAppConfig'
 
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -57,17 +58,21 @@ const contactBlock = computed(() => {
       <!-- Responsible person -->
       <section class="space-y-3">
         <h2 class="text-2xl font-semibold">{{ $t('preauth.impressum.responsible.title') }}</h2>
-        <div class="p-4 border rounded-lg text-muted-foreground whitespace-pre-line">
-          {{ responsibleBlock }}
-        </div>
+        <Card>
+          <CardContent class="text-muted-foreground whitespace-pre-line">
+            {{ responsibleBlock }}
+          </CardContent>
+        </Card>
       </section>
 
       <!-- Contact -->
       <section class="space-y-3">
         <h2 class="text-2xl font-semibold">{{ $t('preauth.impressum.contact.title') }}</h2>
-        <div class="p-4 border rounded-lg text-muted-foreground whitespace-pre-line">
-          {{ contactBlock }}
-        </div>
+        <Card>
+          <CardContent class="text-muted-foreground whitespace-pre-line">
+            {{ contactBlock }}
+          </CardContent>
+        </Card>
       </section>
 
       <!-- Disclaimer -->

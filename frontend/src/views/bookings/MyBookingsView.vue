@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import Input from '@/components/ui/input/Input.vue'
 import Separator from '@/components/ui/separator/Separator.vue'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import type { BookingReadWithShift, MyBookingsListResponse } from '@/client/types.gen'
@@ -70,10 +71,6 @@ const STORAGE_KEY = 'wirksam:bookings:groupBy'
 const activeGrouping = ref<GroupMode>((localStorage.getItem(STORAGE_KEY) as GroupMode) || 'none')
 
 watch(activeGrouping, (v) => localStorage.setItem(STORAGE_KEY, v))
-
-const toggleGrouping = (mode: GroupMode) => {
-  activeGrouping.value = activeGrouping.value === mode ? 'none' : mode
-}
 
 const groupingOptions = computed(() => [
   { mode: 'date' as const, icon: CalendarDays, label: t('duties.bookings.groupBy.date') },
@@ -293,25 +290,25 @@ onMounted(loadBookings)
       <div class="flex flex-wrap items-center gap-2">
         <!-- Grouping icon tabs -->
         <TooltipProvider :delay-duration="300">
-          <div class="flex overflow-hidden rounded-md border">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            :model-value="activeGrouping === 'none' ? '' : activeGrouping"
+            @update:model-value="(v) => (activeGrouping = (v as GroupMode) || 'none')"
+          >
             <Tooltip v-for="opt in groupingOptions" :key="opt.mode">
               <TooltipTrigger as-child>
-                <Button
-                  :data-testid="`btn-event-${opt.mode}`"
-                  :variant="activeGrouping === opt.mode ? 'default' : 'ghost'"
-                  size="sm"
-                  class="rounded-none border-0"
-                  @click="toggleGrouping(opt.mode)"
-                >
+                <ToggleGroupItem :value="opt.mode" :data-testid="`btn-event-${opt.mode}`">
                   <component :is="opt.icon" class="h-4 w-4" />
                   <span class="hidden sm:inline">{{ opt.label }}</span>
-                </Button>
+                </ToggleGroupItem>
               </TooltipTrigger>
               <TooltipContent>
                 {{ opt.label }}
               </TooltipContent>
             </Tooltip>
-          </div>
+          </ToggleGroup>
         </TooltipProvider>
       </div>
     </div>

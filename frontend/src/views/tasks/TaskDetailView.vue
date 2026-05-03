@@ -52,6 +52,7 @@ import {
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import Separator from '@/components/ui/separator/Separator.vue'
+import { TimePicker } from '@/components/ui/time-picker'
 
 import DeleteConfirmationDialog from '@/components/tasks/DeleteConfirmationDialog.vue'
 import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
@@ -260,6 +261,13 @@ const selectedShift = ref<ShiftRead | null>(null)
 const openShiftDetail = (shift: ShiftRead) => {
   selectedShift.value = shift
   showShiftDetail.value = true
+}
+
+const openBookedShift = (shift: ShiftRead) => {
+  const booking = getBookingForShift(shift.id)
+  if (booking) {
+    router.push({ name: 'booking-detail', params: { bookingId: booking.id } })
+  }
 }
 
 // --- Delete confirmation dialog with optional reason ---
@@ -697,7 +705,7 @@ onMounted(async () => {
                 :key="shift.id"
                 variant="secondary"
                 class="cursor-pointer px-3 py-1.5 text-sm hover:bg-secondary/80 hover:ring-1 hover:ring-primary/30 transition-colors"
-                @click="openShiftDetail(shift)"
+                @click="openBookedShift(shift)"
               >
                 {{ formatDateLabel(shift.date) }}
                 <template v-if="shift.start_time">
@@ -1002,11 +1010,11 @@ onMounted(async () => {
           <div class="grid grid-cols-2 gap-4">
             <div class="space-y-2">
               <Label>{{ t('duties.shifts.fields.startTime') }}</Label>
-              <Input v-model="slotForm.start_time" type="time" />
+              <TimePicker v-model="slotForm.start_time" />
             </div>
             <div class="space-y-2">
               <Label>{{ t('duties.shifts.fields.endTime') }}</Label>
-              <Input v-model="slotForm.end_time" type="time" />
+              <TimePicker v-model="slotForm.end_time" />
             </div>
           </div>
           <div class="grid grid-cols-2 gap-4">

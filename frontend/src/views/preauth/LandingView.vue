@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/auth'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Carousel,
   CarouselContent,
@@ -138,30 +139,42 @@ const navigateToAbout = () => {
 
     <!-- Feature Cards -->
     <div data-testid="section-features" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="p-6 border rounded-lg">
-        <h3 class="text-lg font-semibold mb-2">
-          {{ $t('preauth.landing.features.fastSecure.title') }}
-        </h3>
-        <p class="text-muted-foreground">
-          {{ $t('preauth.landing.features.fastSecure.description') }}
-        </p>
-      </div>
-      <div class="p-6 border rounded-lg">
-        <h3 class="text-lg font-semibold mb-2">
-          {{ $t('preauth.landing.features.easyToUse.title') }}
-        </h3>
-        <p class="text-muted-foreground">
-          {{ $t('preauth.landing.features.easyToUse.description') }}
-        </p>
-      </div>
-      <div class="p-6 border rounded-lg">
-        <h3 class="text-lg font-semibold mb-2">
-          {{ $t('preauth.landing.features.scalable.title') }}
-        </h3>
-        <p class="text-muted-foreground">
-          {{ $t('preauth.landing.features.scalable.description') }}
-        </p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">
+            {{ $t('preauth.landing.features.fastSecure.title') }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p class="text-muted-foreground">
+            {{ $t('preauth.landing.features.fastSecure.description') }}
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">
+            {{ $t('preauth.landing.features.easyToUse.title') }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p class="text-muted-foreground">
+            {{ $t('preauth.landing.features.easyToUse.description') }}
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">
+            {{ $t('preauth.landing.features.scalable.title') }}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p class="text-muted-foreground">
+            {{ $t('preauth.landing.features.scalable.description') }}
+          </p>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Showcase Carousel Section -->

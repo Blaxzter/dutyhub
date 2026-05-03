@@ -492,7 +492,7 @@ const handleSubmit = async () => {
           </div>
 
           <!-- Create new event -->
-          <div v-if="eventMode === 'new'" class="mt-4 space-y-4 rounded-md border p-4">
+          <div v-if="eventMode === 'new'" class="mt-4 space-y-4 rounded-md border bg-card p-4">
             <div class="space-y-2">
               <Label>{{ t('duties.events.fields.name') }} *</Label>
               <Input v-model="newEventName" />
@@ -672,6 +672,8 @@ const handleSubmit = async () => {
               :has-remainder="hasRemainder"
               :available-dates="availableDates"
               :show-overrides="dateMode !== 'single'"
+              :event-start-time="selectedEvent?.default_start_time ?? null"
+              :event-end-time="selectedEvent?.default_end_time ?? null"
             />
 
             <div class="flex justify-end pt-2">

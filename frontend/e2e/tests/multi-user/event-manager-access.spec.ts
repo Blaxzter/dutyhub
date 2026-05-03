@@ -113,7 +113,7 @@ test.describe('Event Manager – unpublished visibility', () => {
   test('scoped manager can open the event settings page for their event', async ({
     memberPage,
   }) => {
-    await memberPage.goto(`/app/event-settings?eventId=${event.id}`)
+    await memberPage.goto(`/app/event-settings/${event.id}`)
     await expect(memberPage.getByTestId('page-heading')).toBeVisible()
   })
 

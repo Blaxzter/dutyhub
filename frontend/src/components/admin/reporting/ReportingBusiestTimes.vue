@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 
 import { useI18n } from 'vue-i18n'
 
+import { useFormatters } from '@/composables/useFormatters'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Select,
@@ -18,11 +20,11 @@ const props = defineProps<{
   hours: BookingsByHour[]
 }>()
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
+const { formatTime } = useFormatters()
 
 function formatHour(hour: number): string {
-  const d = new Date(2000, 0, 1, hour)
-  return d.toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' })
+  return formatTime(`${hour.toString().padStart(2, '0')}:00`)
 }
 
 const hourFrom = ref('6')

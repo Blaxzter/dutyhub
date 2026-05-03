@@ -6,6 +6,9 @@ from pydantic import BaseModel, ConfigDict
 
 ScopeType = Literal["global", "event", "task", "shift"]
 
+# User-facing grouping for the notifications inbox tabs.
+NotificationClassification = Literal["reminder", "change", "match", "announcement"]
+
 # Values in notification data are always stringified UUIDs, ints, or None.
 NotificationData = dict[str, str | int | None]
 
@@ -20,6 +23,7 @@ class NotificationTypeRead(BaseModel):
     name: str
     description: str | None = None
     category: str
+    classification: NotificationClassification
     is_admin_only: bool
     default_channels: list[str]
     is_active: bool
@@ -75,6 +79,7 @@ class NotificationRead(BaseModel):
     id: uuid.UUID
     recipient_id: uuid.UUID
     notification_type_code: str
+    classification: NotificationClassification
     title: str
     body: str
     data: NotificationData | None = None

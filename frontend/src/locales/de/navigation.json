@@ -3,6 +3,11 @@
         "home": "Startseite",
         "settings": "Einstellungen"
     },
+    "eventSwitcher": {
+        "description": "Tippe auf eine Veranstaltung, um zu wechseln.",
+        "empty": "Keine bevorstehenden Veranstaltungen verfügbar.",
+        "title": "Veranstaltung wechseln"
+    },
     "mobileBottomNav": {
         "bookings": "Buchungen",
         "inbox": "Posteingang",
@@ -12,6 +17,10 @@
         "badges": {
             "managersOnly": "Nur für Verwalter sichtbar",
             "openShifts": "{count} offener Platz | {count} offene Plätze"
+        },
+        "eventSwitcher": {
+            "empty": "Keine Veranstaltung gewählt",
+            "hint": "Tippen, um zu wechseln"
         },
         "items": {
             "availability": {

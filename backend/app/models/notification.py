@@ -33,6 +33,13 @@ class NotificationType(Base, table=True):
         sa_column=sa.Column(sa.String, nullable=False),
         description="Category: booking, shift, task, admin, user, etc.",
     )
+    classification: str = Field(
+        default="announcement",
+        sa_column=sa.Column(
+            sa.String, nullable=False, server_default="announcement", index=True
+        ),
+        description="User-facing group: reminder, change, match, announcement",
+    )
     is_admin_only: bool = Field(
         default=False,
         description="Only visible/configurable by admin users",

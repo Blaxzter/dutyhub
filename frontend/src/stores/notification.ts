@@ -4,12 +4,22 @@ import { defineStore } from 'pinia'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
+export type NotificationClassification = 'reminder' | 'change' | 'match' | 'announcement'
+
+export const NOTIFICATION_CLASSIFICATIONS: NotificationClassification[] = [
+  'reminder',
+  'change',
+  'match',
+  'announcement',
+]
+
 export interface NotificationType {
   id: string
   code: string
   name: string
   description: string | null
   category: string
+  classification: NotificationClassification
   is_admin_only: boolean
   default_channels: string[]
   is_active: boolean
@@ -20,6 +30,7 @@ export interface NotificationItem {
   id: string
   recipient_id: string
   notification_type_code: string
+  classification: NotificationClassification
   title: string
   body: string
   data: Record<string, unknown> | null

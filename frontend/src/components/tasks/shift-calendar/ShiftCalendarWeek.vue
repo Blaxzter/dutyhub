@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useFormatters } from '@/composables/useFormatters'
+
 import TaskBars from './TaskBars.vue'
 import EventBars from './EventBars.vue'
 import type {
@@ -8,7 +10,9 @@ import type {
   CalendarEvent,
   CalendarWeek,
 } from './types'
-import { formatTimeRange, isMultiDayTask, isToday } from './types'
+import { isMultiDayTask, isToday } from './types'
+
+const { formatTimeRange } = useFormatters()
 
 defineProps<{
   week: CalendarWeek

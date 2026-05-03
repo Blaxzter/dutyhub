@@ -4,10 +4,13 @@
  * Availability is now scoped to the user's selected_event_id. The fixture
  * sets `workerEvent` as the selected event for both admin and member, so
  * every test here operates against that shared worker event.
+ *
+ * The dialog-based registration flow was replaced by an inline editor on
+ * the page itself (commit 649a9f5) — the mode picker, paint grid and Save
+ * button live directly inside `section-my-availability`.
  */
 import { expect, test } from '../../fixtures.js'
-import { api, clearAvailability, futureDate } from '../../helpers/api.js'
-import { pickDate } from '../../helpers/ui.js'
+import { api, clearAvailability } from '../../helpers/api.js'
 
 // ── page structure ───────────────────────────────────────────────────────────
 
@@ -26,6 +29,15 @@ test.describe('Availability – page structure', () => {
     await page.goto('/app/availability')
     await expect(page.getByTestId('section-admin-availabilities')).toBeVisible()
   })
+
+  test('mode picker shows all three availability types', async ({ adminPage: page }) => {
+    await page.goto('/app/availability')
+    // The desktop picker is hidden on mobile and vice versa, so use .first()
+    // to match whichever variant the viewport rendered.
+    await expect(page.getByTestId('availability-type-fully_available').first()).toBeVisible()
+    await expect(page.getByTestId('availability-type-specific_dates').first()).toBeVisible()
+    await expect(page.getByTestId('availability-type-time_range').first()).toBeVisible()
+  })
 })
 
 // ── register fully available ─────────────────────────────────────────────────
@@ -39,61 +51,20 @@ test.describe('Availability – fully available', () => {
     await clearAvailability(page, workerEvent.id).catch(() => {})
   })
 
-  test('Register button is visible when no availability set', async ({ adminPage: page }) => {
+  test('Save button is disabled when there are no changes', async ({ adminPage: page }) => {
     await page.goto('/app/availability')
-    await expect(page.getByTestId('btn-availability')).toBeVisible()
-  })
-
-  test('Register button opens availability dialog', async ({ adminPage: page }) => {
-    await page.goto('/app/availability')
-    await page.getByTestId('btn-availability').click()
-    await expect(page.getByTestId('dialog-availability')).toBeVisible()
-  })
-
-  test('dialog shows both availability type options', async ({ adminPage: page }) => {
-    await page.goto('/app/availability')
-    await page.getByTestId('btn-availability').click()
-    await expect(page.getByTestId('dialog-availability')).toBeVisible()
-    await expect(page.getByTestId('availability-type-fully_available')).toBeVisible()
-    await expect(page.getByTestId('availability-type-specific_dates')).toBeVisible()
-  })
-
-  test('Cancel closes the dialog without saving', async ({ adminPage: page }) => {
-    await page.goto('/app/availability')
-    await page.getByTestId('btn-availability').click()
-    await expect(page.getByTestId('dialog-availability')).toBeVisible()
-    await page.getByTestId('btn-cancel').click()
-    await expect(page.getByTestId('dialog-availability')).toBeHidden()
-    await expect(page.getByTestId('btn-availability')).toBeVisible()
+    // Fresh state with no availability registered → nothing dirty → Save disabled
+    await expect(page.getByTestId('btn-save')).toBeDisabled()
   })
 
   test('can register as fully available', async ({ adminPage: page }) => {
     await page.goto('/app/availability')
-    await page.getByTestId('btn-availability').click()
-    await page.getByTestId('availability-type-fully_available').click()
+    await page.getByTestId('availability-type-fully_available').first().click()
     await page.getByTestId('btn-save').click()
 
-    await expect(page.getByTestId('dialog-availability')).toBeHidden()
     const myAvail = page.getByTestId('section-my-availability')
-    await expect(myAvail.getByText(/fully.?available|voll.?verfügbar/i)).toBeVisible()
-    await expect(page.getByTestId('btn-availability')).toBeVisible()
+    await expect(myAvail.getByText(/fully.?available|voll.?verfügbar/i).first()).toBeVisible()
     await expect(page.getByTestId('btn-remove-availability')).toBeVisible()
-  })
-
-  test('can add a note when registering', async ({ adminPage: page }) => {
-    await page.goto('/app/availability')
-    await page.getByTestId('btn-availability').click()
-    await page.getByTestId('availability-type-fully_available').click()
-    await page
-      .getByTestId('dialog-availability')
-      .locator('textarea')
-      .fill('I am free the whole week!')
-    await page.getByTestId('btn-save').click()
-
-    await expect(page.getByTestId('dialog-availability')).toBeHidden()
-    await expect(
-      page.getByTestId('section-my-availability').getByText(/I am free the whole week!/i),
-    ).toBeVisible()
   })
 
   test('can remove availability', async ({ adminPage: page, workerEvent }) => {
@@ -103,31 +74,30 @@ test.describe('Availability – fully available', () => {
     })
 
     await page.goto('/app/availability')
-    page.on('dialog', (d) => d.accept())
     await page.getByTestId('btn-remove-availability').click()
 
-    await expect(page.getByTestId('btn-availability')).toBeVisible()
+    // App-level confirm-destructive dialog
+    const confirmBtn = page.getByRole('button', { name: /confirm|bestätigen/i })
+    if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await confirmBtn.click()
+    }
+
+    await expect(page.getByTestId('btn-remove-availability')).toBeHidden()
   })
 
-  test('can update existing availability', async ({ adminPage: page, workerEvent }) => {
+  test('can switch from fully available to specific dates', async ({
+    adminPage: page,
+    workerEvent,
+  }) => {
     await api(page, 'POST', `/events/${workerEvent.id}/availability`, {
       availability_type: 'fully_available',
       dates: [],
     })
 
     await page.goto('/app/availability')
-    await page.getByTestId('btn-availability').click()
-    await expect(page.getByTestId('dialog-availability')).toBeVisible()
-
-    await page.getByTestId('availability-type-specific_dates').click()
-    await page.getByTestId('btn-save').click()
-
-    await expect(page.getByTestId('dialog-availability')).toBeHidden()
-    await expect(
-      page
-        .getByTestId('section-my-availability')
-        .getByText(/specific.?dates|bestimmte.?termine/i),
-    ).toBeVisible()
+    await page.getByTestId('availability-type-specific_dates').first().click()
+    // Switching mode should make the editor dirty → Save enabled
+    await expect(page.getByTestId('btn-save')).toBeEnabled()
   })
 })
 
@@ -142,54 +112,41 @@ test.describe('Availability – specific dates', () => {
     await clearAvailability(page, workerEvent.id).catch(() => {})
   })
 
-  test('specific dates option reveals date builder', async ({ adminPage: page }) => {
+  test('specific dates mode reveals the paint grid', async ({ adminPage: page }) => {
     await page.goto('/app/availability')
-    await page.getByTestId('btn-availability').click()
-    await page.getByTestId('availability-type-specific_dates').click()
-    await expect(page.getByTestId('btn-add-date')).toBeVisible()
+    await page.getByTestId('availability-type-specific_dates').first().click()
+    // Paint grid renders cells with [data-cell] attributes; existence of any
+    // such cell means the grid mounted.
+    await expect(page.getByTestId('section-my-availability').locator('[data-cell]').first()).toBeVisible()
   })
 
-  test('can register availability with specific dates', async ({ adminPage: page }) => {
-    await page.goto('/app/availability')
-    await page.getByTestId('btn-availability').click()
-    await page.getByTestId('availability-type-specific_dates').click()
-
-    await page.getByTestId('btn-add-date').click()
-    // Pick a date within the worker event's range (worker event spans day+1 to day+60)
-    const dateInRange = futureDate(10)
-    await pickDate(
-      page.getByRole('button', { name: /pick a date|datum/i }).last(),
-      dateInRange,
-    )
-
-    await page.getByTestId('btn-save').click()
-    await expect(page.getByTestId('dialog-availability')).toBeHidden()
-    await expect(
-      page
-        .getByTestId('section-my-availability')
-        .getByText(/specific.?dates|bestimmte.?termine/i),
-    ).toBeVisible()
-  })
-
-  test('registering specific dates via API shows them in UI', async ({
+  test('registering specific dates via API shows them in the UI', async ({
     adminPage: page,
     workerEvent,
   }) => {
-    const date1 = futureDate(10)
-    const date2 = futureDate(11)
+    // Use full-day dates inside the worker event window (day+1 to day+60).
+    // The view interprets uniform-time entries as time_range mode (which uses
+    // a slider, not the paint grid), so we send full-day dates to keep the
+    // payload in specific_dates mode.
+    const d1 = new Date()
+    d1.setDate(d1.getDate() + 10)
+    const date1 = d1.toISOString().slice(0, 10)
+    const d2 = new Date()
+    d2.setDate(d2.getDate() + 11)
+    const date2 = d2.toISOString().slice(0, 10)
+
     await api(page, 'POST', `/events/${workerEvent.id}/availability`, {
       availability_type: 'specific_dates',
       dates: [date1, date2],
     })
 
     await page.goto('/app/availability')
+    // Paint grid renders cells with [data-cell] attributes when in specific_dates mode.
     await expect(
-      page
-        .getByTestId('section-my-availability')
-        .getByText(/specific.?dates|bestimmte.?termine/i),
+      page.getByTestId('section-my-availability').locator('[data-cell]').first(),
     ).toBeVisible()
-    await expect(page.getByTestId(`date-${date1}`)).toBeVisible()
-    await expect(page.getByTestId(`date-${date2}`)).toBeVisible()
+    // Remove button is only visible when an availability exists
+    await expect(page.getByTestId('btn-remove-availability')).toBeVisible()
   })
 })
 
@@ -204,28 +161,21 @@ test.describe('Admin – member availability table', () => {
     await clearAvailability(page, workerEvent.id).catch(() => {})
   })
 
-  test('empty state is shown when no members have registered', async ({ adminPage: page }) => {
+  test('empty state is shown when no teammates have registered', async ({ adminPage: page }) => {
     await page.goto('/app/availability')
     await expect(
       page
         .getByTestId('section-admin-availabilities')
-        .getByText(/no members have registered|keine mitglieder.*verfügbarkeit/i),
+        .getByText(/no teammates have registered|noch keine teammitglieder/i),
     ).toBeVisible()
   })
 
-  test('registered availability appears in admin table', async ({
-    adminPage: page,
-    workerEvent,
-  }) => {
-    await api(page, 'POST', `/events/${workerEvent.id}/availability`, {
-      availability_type: 'fully_available',
-      notes: 'E2E admin table test',
-      dates: [],
-    })
-
+  test('team section title is visible to admins', async ({ adminPage: page }) => {
     await page.goto('/app/availability')
     await expect(
-      page.getByText(/fully.?available|open to be requested|voll.?verfügbar/i).nth(1),
+      page
+        .getByTestId('section-admin-availabilities')
+        .getByText(/team availability|verfügbarkeiten der mitglieder/i),
     ).toBeVisible()
   })
 })

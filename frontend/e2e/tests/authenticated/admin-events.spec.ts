@@ -92,7 +92,7 @@ test.describe('Admin Events – list view', () => {
     await page.goto('/app/admin/events')
     const row = page.getByTestId('admin-event-row').filter({ hasText: event.name })
     await row.getByTestId('btn-edit-event').click()
-    await expect(page).toHaveURL(new RegExp(`/app/event-settings\\?eventId=${event.id}`))
+    await expect(page).toHaveURL(new RegExp(`/app/event-settings/${event.id}`))
   })
 })
 
@@ -121,6 +121,8 @@ test.describe('Admin Events – create & delete', () => {
     const created = await createEvent(page, deleteName)
 
     await page.goto('/app/admin/events')
+    // Active list is paginated (PAGE_SIZE=4); search to scope reliably.
+    await page.getByTestId('input-search').fill(deleteName)
     const row = page.getByTestId('admin-event-row').filter({ hasText: deleteName })
     await expect(row).toBeVisible()
 

@@ -26,6 +26,7 @@ class TestNotificationTypeDef:
         assert d["is_admin_only"] is False
         assert d["default_channels"] == ["email"]
         assert d["is_user_configurable"] is True
+        assert d["classification"] == "announcement"
 
     def test_to_dict_with_custom_channels(self):
         """Test converting a NotificationTypeDef with custom channels."""
@@ -93,3 +94,11 @@ class TestRegistry:
         assert "task" in categories
         assert "admin" in categories
         assert "user" in categories
+
+    def test_every_type_has_valid_classification(self):
+        """All registered types must use one of the four inbox tab buckets."""
+        valid = {"reminder", "change", "match", "announcement"}
+        for t in ALL_NOTIFICATION_TYPES:
+            assert t.classification in valid, (
+                f"{t.code} has invalid classification {t.classification!r}"
+            )

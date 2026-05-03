@@ -24,8 +24,8 @@ const authStore = useAuthStore()
 const { get } = useAuthenticatedClient()
 
 const targetEventId = computed<string | null>(() => {
-  const q = route.query.eventId
-  if (typeof q === 'string' && q) return q
+  const p = route.params.eventId
+  if (typeof p === 'string' && p) return p
   return authStore.selectedEventId ?? null
 })
 

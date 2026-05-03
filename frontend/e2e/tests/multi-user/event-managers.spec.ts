@@ -38,7 +38,7 @@ function taskPayload(eventId: string, name: string) {
 }
 
 function settingsManagersUrl(eventId: string): string {
-  return `/app/event-settings?eventId=${eventId}&tab=managers`
+  return `/app/event-settings/${eventId}?tab=managers`
 }
 
 // ── Admin UI: manage event managers ──────────────────────────────────────────

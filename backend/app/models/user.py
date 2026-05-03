@@ -58,6 +58,26 @@ class User(Base, table=True):
         description="User's preferred language for notifications (e.g., 'en', 'de')",
     )
 
+    time_format: str = Field(
+        default="locale",
+        sa_column=sa.Column(sa.String(10), nullable=False, server_default="locale"),
+        description="Display preference for times: 'locale' | 'h12' | 'h24'",
+    )
+
+    theme: str = Field(
+        default="default",
+        sa_column=sa.Column(sa.String(20), nullable=False, server_default="default"),
+        description="Selected color palette: 'default' | 'classic'",
+    )
+
+    show_event_switcher_in_nav: bool = Field(
+        default=False,
+        sa_column=sa.Column(
+            sa.Boolean, nullable=False, server_default=sa.text("false")
+        ),
+        description="Show a quick event switcher in the sidebar nav",
+    )
+
     selected_event_id: uuid.UUID | None = Field(
         default=None,
         sa_column=sa.Column(

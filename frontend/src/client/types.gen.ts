@@ -553,6 +553,10 @@ export type DemoDataCreatedResponse = {
    * Bookings Created
    */
   bookings_created: number
+  /**
+   * Availabilities Created
+   */
+  availabilities_created: number
 }
 
 /**
@@ -628,6 +632,14 @@ export type EventCreate = {
    */
   end_date: string
   /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
+  /**
    * Status
    */
   status?: 'draft' | 'published' | 'archived'
@@ -680,6 +692,14 @@ export type EventRead = {
    */
   end_date: string
   /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
+  /**
    * Status
    */
   status?: 'draft' | 'published' | 'archived'
@@ -725,6 +745,14 @@ export type EventUpdate = {
    * End Date
    */
   end_date?: string | null
+  /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
   /**
    * Status
    */
@@ -992,6 +1020,10 @@ export type NotificationRead = {
    */
   notification_type_code: string
   /**
+   * Classification
+   */
+  classification: 'reminder' | 'change' | 'match' | 'announcement'
+  /**
    * Title
    */
   title: string
@@ -1157,6 +1189,10 @@ export type NotificationTypeRead = {
    * Category
    */
   category: string
+  /**
+   * Classification
+   */
+  classification: 'reminder' | 'change' | 'match' | 'announcement'
   /**
    * Is Admin Only
    */
@@ -2690,6 +2726,18 @@ export type UserCreate = {
    * Preferred language
    */
   preferred_language?: string
+  /**
+   * Time Format
+   *
+   * Display preference for times
+   */
+  time_format?: string
+  /**
+   * Theme
+   *
+   * Selected color palette
+   */
+  theme?: string
 }
 
 /**
@@ -2751,6 +2799,18 @@ export type UserProfile = {
    * Preferred Language
    */
   preferred_language?: string
+  /**
+   * Time Format
+   */
+  time_format?: 'locale' | 'h12' | 'h24'
+  /**
+   * Theme
+   */
+  theme?: 'default' | 'classic'
+  /**
+   * Show Event Switcher In Nav
+   */
+  show_event_switcher_in_nav?: boolean
   /**
    * Email Verified
    */
@@ -2833,6 +2893,24 @@ export type UserProfileUpdate = {
    * Preferred language for notifications
    */
   preferred_language?: string | null
+  /**
+   * Time Format
+   *
+   * Display preference for times
+   */
+  time_format?: 'locale' | 'h12' | 'h24' | null
+  /**
+   * Theme
+   *
+   * Selected color palette
+   */
+  theme?: 'default' | 'classic' | null
+  /**
+   * Show Event Switcher In Nav
+   *
+   * Show a quick event switcher in the sidebar nav
+   */
+  show_event_switcher_in_nav?: boolean | null
 }
 
 /**
@@ -2867,6 +2945,14 @@ export type UserRead = {
    * Preferred Language
    */
   preferred_language?: string
+  /**
+   * Time Format
+   */
+  time_format?: string
+  /**
+   * Theme
+   */
+  theme?: string
   /**
    * Roles
    */
@@ -2929,6 +3015,18 @@ export type UserUpdate = {
    * Preferred language
    */
   preferred_language?: string | null
+  /**
+   * Time Format
+   *
+   * Display preference for times
+   */
+  time_format?: string | null
+  /**
+   * Theme
+   *
+   * Selected color palette
+   */
+  theme?: string | null
 }
 
 export type ValidationErrorItem = {
@@ -2989,6 +3087,14 @@ export type EventReadWritable = {
    * End Date
    */
   end_date: string
+  /**
+   * Default Start Time
+   */
+  default_start_time?: string | null
+  /**
+   * Default End Time
+   */
+  default_end_time?: string | null
   /**
    * Status
    */
@@ -6415,6 +6521,10 @@ export type EventsListEventsData = {
      * Date To
      */
     date_to?: string | null
+    /**
+     * Is Expired
+     */
+    is_expired?: boolean | null
   }
   url: '/api/v1/events/'
 }

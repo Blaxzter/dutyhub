@@ -5,7 +5,7 @@
             "description": "Tasks, Veranstaltungen, Benutzer und Dienstshifts mit dem Präfix [DEMO] generieren.",
             "title": "Demodaten erstellen"
         },
-        "createSuccess": "{tasks} Tasks, {events} Gruppen, {users} Benutzer, {shifts} Shifts und {bookings} Buchungen erstellt.",
+        "createSuccess": "{tasks} Tasks, {events} Gruppen, {users} Benutzer, {shifts} Shifts, {bookings} Buchungen und {availabilities} Verfügbarkeiten erstellt.",
         "delete": {
             "button": "Alle Demodaten löschen",
             "description": "Alle Demodaten aus dem System entfernen.",
@@ -24,6 +24,12 @@
         "title": "Demodaten"
     },
     "events": {
+        "expiredSection": "Abgelaufene Veranstaltungen",
+        "filters": {
+            "allDates": "Alle Daten",
+            "showAll": "Alle anzeigen"
+        },
+        "noExpired": "Keine abgelaufenen Veranstaltungen.",
         "subtitle": "Veranstaltungen systemweit erstellen, bearbeiten und verwalten.",
         "title": "Veranstaltungen verwalten"
     },

@@ -10,6 +10,7 @@ from sqlmodel import col
 from app.api.deps import CurrentUser, DBDep
 from app.crud.event import event as crud_event
 from app.crud.task import task as crud_task
+from app.logic.event_scope import get_user_event_scope
 from app.models.booking import Booking
 from app.models.event import Event
 from app.models.event_manager import EventManager
@@ -223,11 +224,24 @@ async def dashboard_sidebar(
         session, current_user
     )
 
+    scoped_event_id = get_user_event_scope(current_user)
+
     groups = await _sidebar_events(session, today, effective_status, managed_group_ids)
     tasks = await _sidebar_tasks(
-        session, today, now_time, effective_status, managed_group_ids
+        session,
+        today,
+        now_time,
+        effective_status,
+        managed_group_ids,
+        event_id=scoped_event_id,
     )
-    bookings = await _sidebar_bookings(session, current_user.id, today, now_time)
+    bookings = await _sidebar_bookings(
+        session,
+        current_user.id,
+        today,
+        now_time,
+        event_id=scoped_event_id,
+    )
 
     return SidebarResponse(
         events=groups,
@@ -264,8 +278,13 @@ async def _sidebar_tasks(  # noqa: ANN001
     now_time: dt.time,
     status: str | None,
     managed_group_ids: list[uuid.UUID] | None = None,
+    event_id: uuid.UUID | None = None,
 ) -> list[SidebarTask]:
-    """Published tasks with open-shift count and next shift date, limit 10."""
+    """Published tasks with open-shift count and next shift date, limit 10.
+
+    Scoped to ``event_id`` when provided so the sidebar matches the user's
+    selected event.
+    """
     future_cond = _future_shift_condition(today, now_time)
 
     # Subquery: confirmed booking count per shift
@@ -346,6 +365,8 @@ async def _sidebar_tasks(  # noqa: ANN001
                 status_filter, col(Task.event_id).in_(managed_group_ids)
             )
         query = query.where(status_filter)
+    if event_id is not None:
+        query = query.where(col(Task.event_id) == event_id)
 
     result = await session.execute(query)
     return [
@@ -362,9 +383,17 @@ async def _sidebar_tasks(  # noqa: ANN001
 
 
 async def _sidebar_bookings(  # noqa: ANN001
-    session, user_id, today: dt.date, now_time: dt.time
+    session,
+    user_id,
+    today: dt.date,
+    now_time: dt.time,
+    event_id: uuid.UUID | None = None,
 ) -> list[SidebarBooking]:
-    """User's upcoming confirmed bookings, limit 5."""
+    """User's upcoming confirmed bookings, limit 5.
+
+    Scoped to ``event_id`` when provided so the sidebar matches the
+    event-scoped /bookings/me view.
+    """
     future_cond = _future_shift_condition(today, now_time)
     query = (
         select(
@@ -384,6 +413,12 @@ async def _sidebar_bookings(  # noqa: ANN001
         .order_by(col(Shift.date), col(Shift.start_time))
         .limit(5)
     )
+    if event_id is not None:
+        query = query.where(
+            col(Shift.task_id).in_(
+                select(col(Task.id)).where(col(Task.event_id) == event_id)
+            )
+        )
     result = await session.execute(query)
     return [
         SidebarBooking(

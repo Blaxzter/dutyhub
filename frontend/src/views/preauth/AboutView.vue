@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 import { getTranslationList } from '@/lib/utils'
 
@@ -47,71 +48,93 @@ const backendItems = computed(() =>
       <section class="space-y-4">
         <h2 class="text-2xl font-semibold">{{ $t('preauth.about.sections.techStack.title') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="p-6 border rounded-lg">
-            <h3 class="text-lg font-semibold mb-2">
-              {{ $t('preauth.about.sections.techStack.frontend.title') }}
-            </h3>
-            <ul class="space-y-1 text-muted-foreground">
-              <li v-for="item in frontendItems" :key="item">• {{ item }}</li>
-            </ul>
-          </div>
-          <div class="p-6 border rounded-lg">
-            <h3 class="text-lg font-semibold mb-2">
-              {{ $t('preauth.about.sections.techStack.backend.title') }}
-            </h3>
-            <ul class="space-y-1 text-muted-foreground">
-              <li v-for="item in backendItems" :key="item">• {{ item }}</li>
-            </ul>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-lg">
+                {{ $t('preauth.about.sections.techStack.frontend.title') }}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul class="space-y-1 text-muted-foreground">
+                <li v-for="item in frontendItems" :key="item">• {{ item }}</li>
+              </ul>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-lg">
+                {{ $t('preauth.about.sections.techStack.backend.title') }}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul class="space-y-1 text-muted-foreground">
+                <li v-for="item in backendItems" :key="item">• {{ item }}</li>
+              </ul>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
       <section class="space-y-4">
         <h2 class="text-2xl font-semibold">{{ $t('preauth.about.sections.features.title') }}</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="p-4 border rounded-lg">
-            <h3 class="font-semibold mb-2">
-              {{ $t('preauth.about.sections.features.authentication.title') }}
-            </h3>
-            <p class="text-sm text-muted-foreground">
-              {{ $t('preauth.about.sections.features.authentication.description') }}
-            </p>
-          </div>
-          <div class="p-4 border rounded-lg">
-            <h3 class="font-semibold mb-2">
-              {{ $t('preauth.about.sections.features.responsiveDesign.title') }}
-            </h3>
-            <p class="text-sm text-muted-foreground">
-              {{ $t('preauth.about.sections.features.responsiveDesign.description') }}
-            </p>
-          </div>
-          <div class="p-4 border rounded-lg">
-            <h3 class="font-semibold mb-2">
-              {{ $t('preauth.about.sections.features.apiIntegration.title') }}
-            </h3>
-            <p class="text-sm text-muted-foreground">
-              {{ $t('preauth.about.sections.features.apiIntegration.description') }}
-            </p>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {{ $t('preauth.about.sections.features.authentication.title') }}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="text-sm text-muted-foreground">
+                {{ $t('preauth.about.sections.features.authentication.description') }}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {{ $t('preauth.about.sections.features.responsiveDesign.title') }}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="text-sm text-muted-foreground">
+                {{ $t('preauth.about.sections.features.responsiveDesign.description') }}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {{ $t('preauth.about.sections.features.apiIntegration.title') }}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p class="text-sm text-muted-foreground">
+                {{ $t('preauth.about.sections.features.apiIntegration.description') }}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
       <section class="space-y-4">
         <h2 class="text-2xl font-semibold">{{ $t('preauth.about.sections.development.title') }}</h2>
-        <div class="p-6 border rounded-lg">
-          <p class="text-muted-foreground mb-4">
-            {{ $t('preauth.about.sections.development.description') }}
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
-              >TypeScript</span
-            >
-            <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">Vue 3</span>
-            <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">FastAPI</span>
-            <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">Docker</span>
-            <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">Auth0</span>
-          </div>
-        </div>
+        <Card>
+          <CardContent>
+            <p class="text-muted-foreground mb-4">
+              {{ $t('preauth.about.sections.development.description') }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
+                >TypeScript</span
+              >
+              <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">Vue 3</span>
+              <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">FastAPI</span>
+              <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">Docker</span>
+              <span class="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full">Auth0</span>
+            </div>
+          </CardContent>
+        </Card>
       </section>
     </div>
   </div>

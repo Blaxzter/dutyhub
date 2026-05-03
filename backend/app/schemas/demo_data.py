@@ -17,6 +17,7 @@ class DemoDataCreatedResponse(BaseModel):
     users_created: int
     shifts_created: int
     bookings_created: int
+    availabilities_created: int
 
 
 class DemoDataDeletedResponse(BaseModel):

@@ -6,6 +6,8 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import type { SidebarResponse } from '@/client/types.gen'
 
+const REFRESH_DEBOUNCE_MS = 250
+
 export const useSidebarStore = defineStore('sidebar', () => {
   const { get } = useAuthenticatedClient()
 
@@ -13,6 +15,7 @@ export const useSidebarStore = defineStore('sidebar', () => {
   const tasks = ref<SidebarResponse['tasks']>([])
   const bookings = ref<SidebarResponse['bookings']>([])
   const loaded = ref(false)
+  let refreshTimer: ReturnType<typeof setTimeout> | null = null
 
   async function fetch() {
     try {
@@ -26,5 +29,14 @@ export const useSidebarStore = defineStore('sidebar', () => {
     }
   }
 
-  return { events, tasks, bookings, loaded, fetch }
+  // Coalesce bursts of mutations (e.g. delete-then-refetch flows) into one fetch.
+  function refresh() {
+    if (refreshTimer) clearTimeout(refreshTimer)
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null
+      void fetch()
+    }, REFRESH_DEBOUNCE_MS)
+  }
+
+  return { events, tasks, bookings, loaded, fetch, refresh }
 })

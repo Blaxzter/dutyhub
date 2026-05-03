@@ -5,7 +5,7 @@
             "description": "Generate tasks, events, users, and duty shifts with a [DEMO] prefix.",
             "title": "Create Demo Data"
         },
-        "createSuccess": "Created {tasks} tasks, {events} groups, {users} users, {shifts} shifts, and {bookings} bookings.",
+        "createSuccess": "Created {tasks} tasks, {events} groups, {users} users, {shifts} shifts, {bookings} bookings, and {availabilities} availabilities.",
         "delete": {
             "button": "Delete All Demo Data",
             "description": "Remove all demo data from the system.",
@@ -24,6 +24,12 @@
         "title": "Demo Data"
     },
     "events": {
+        "expiredSection": "Expired events",
+        "filters": {
+            "allDates": "All dates",
+            "showAll": "Show all"
+        },
+        "noExpired": "No expired events.",
         "subtitle": "Create, edit, and manage all events across the system.",
         "title": "Manage Events"
     },

@@ -16,11 +16,27 @@
         "sectionTitle": "Delivery Channels",
         "telegram": "Telegram"
     },
+    "classifications": {
+        "all": "All",
+        "announcement": "Announcement",
+        "announcements": "Announcements",
+        "change": "Update",
+        "changes": "Updates",
+        "match": "Match",
+        "matches": "Matches",
+        "reminder": "Reminder",
+        "reminders": "Reminders"
+    },
     "deleteAll": "Delete all",
     "deleteAllConfirm": "This will permanently delete all your notifications. This cannot be undone.",
     "deleteAllFailed": "Failed to delete notifications",
     "deleteAllTitle": "Delete all notifications?",
     "deletedAll": "All notifications deleted",
+    "detail": {
+        "close": "Close",
+        "open": "Open detail",
+        "title": "Notification"
+    },
     "dismiss": "Dismiss",
     "email": {
         "description": "Receive notifications via email.",
