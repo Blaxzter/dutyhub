@@ -50,6 +50,16 @@ const showFullDay = ref(false)
 const myAvailability = ref<UserAvailabilityRead | null>(null)
 const allAvailabilities = ref<UserAvailabilityWithUser[]>([])
 
+// Pydantic dt.time can't represent 24:00:00, but the UI's exclusive end-of-day
+// is hour 24. Send 23:59:59 on the wire and round-trip it back to 24.
+const END_OF_DAY_WIRE = '23:59:59'
+function endHourToWire(endHour: number): string {
+  return endHour >= 24 ? END_OF_DAY_WIRE : `${String(endHour).padStart(2, '0')}:00:00`
+}
+function parseEndHour(timeStr: string): number {
+  return timeStr === END_OF_DAY_WIRE ? 24 : parseInt(timeStr.slice(0, 2), 10)
+}
+
 // === Date grid derivation ===
 const days = computed<Date[]>(() => {
   if (!event.value) return []
@@ -125,7 +135,7 @@ function trySpecificAsDaily(
   }
   return {
     from: parseInt(sample.start_time.slice(0, 2), 10),
-    to: parseInt(sample.end_time.slice(0, 2), 10),
+    to: parseEndHour(sample.end_time),
     excluded,
   }
 }
@@ -145,7 +155,7 @@ function hydrateFromServer(server: UserAvailabilityRead | null) {
   if (server.availability_type === 'time_range') {
     mode.value = 'time_range'
     if (server.default_start_time) dailyFrom.value = parseInt(server.default_start_time.slice(0, 2), 10)
-    if (server.default_end_time) dailyTo.value = parseInt(server.default_end_time.slice(0, 2), 10)
+    if (server.default_end_time) dailyTo.value = parseEndHour(server.default_end_time)
     dailyExcluded.value = new Set()
     avail.value = new Set()
     return
@@ -177,7 +187,7 @@ function hydrateFromServer(server: UserAvailabilityRead | null) {
     if (di < 0) continue
     const start = e.start_time ? parseInt(e.start_time.slice(0, 2), 10) : hours.value[0]
     const end = e.end_time
-      ? parseInt(e.end_time.slice(0, 2), 10)
+      ? parseEndHour(e.end_time)
       : hours.value[hours.value.length - 1] + 1
     for (let h = start; h < end; h += 1) {
       if (hours.value.includes(h)) newAvail.add(`${di}-${h}`)
@@ -236,7 +246,7 @@ function buildPayload() {
   // backend records exactly which days the user is unavailable.
   if (mode.value === 'time_range' && dailyExcluded.value.size > 0) {
     const startStr = `${String(dailyFrom.value).padStart(2, '0')}:00:00`
-    const endStr = `${String(dailyTo.value).padStart(2, '0')}:00:00`
+    const endStr = endHourToWire(dailyTo.value)
     for (let di = 0; di < days.value.length; di += 1) {
       if (dailyExcluded.value.has(di)) continue
       baseDates.push({
@@ -286,7 +296,7 @@ function buildPayload() {
           baseDates.push({
             date: dateStr,
             start_time: `${String(s).padStart(2, '0')}:00:00`,
-            end_time: `${String(e).padStart(2, '0')}:00:00`,
+            end_time: endHourToWire(e),
           })
         }
       }
@@ -300,9 +310,7 @@ function buildPayload() {
         ? `${String(dailyFrom.value).padStart(2, '0')}:00:00`
         : undefined,
     default_end_time:
-      mode.value === 'time_range'
-        ? `${String(dailyTo.value).padStart(2, '0')}:00:00`
-        : undefined,
+      mode.value === 'time_range' ? endHourToWire(dailyTo.value) : undefined,
     dates: baseDates,
   }
 }
