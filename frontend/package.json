@@ -49,7 +49,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "0.97.0",
+    "@hey-api/openapi-ts": "0.97.3",
     "@playwright/test": "^1.59.1",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@tsconfig/node22": "^22.0.5",
