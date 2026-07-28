@@ -292,6 +292,119 @@ class TestUpdateEventDateValidation:
         assert r.json()["name"] == "Renamed with tasks"
 
 
+# ── Default time window validation (issue #85) ─────────────────────
+
+
+@pytest.mark.asyncio
+class TestDefaultTimeWindowValidation:
+    """Default time window must satisfy end > start when both are set."""
+
+    async def test_create_accepts_valid_window(
+        self, async_client: AsyncClient, as_admin: None
+    ):
+        r = await async_client.post(
+            "/api/v1/events/",
+            json={
+                "name": "Sommerfest",
+                "start_date": "2026-08-01",
+                "end_date": "2026-08-02",
+                "default_start_time": "09:00:00",
+                "default_end_time": "17:00:00",
+            },
+        )
+        assert r.status_code == 201
+        assert r.json()["default_start_time"] == "09:00:00"
+        assert r.json()["default_end_time"] == "17:00:00"
+
+    async def test_create_rejects_overnight_window(
+        self, async_client: AsyncClient, as_admin: None
+    ):
+        """18:00 → 02:00 is rejected until wrap-around is supported."""
+        r = await async_client.post(
+            "/api/v1/events/",
+            json={
+                "name": "Nachtschicht",
+                "start_date": "2026-08-01",
+                "end_date": "2026-08-02",
+                "default_start_time": "18:00:00",
+                "default_end_time": "02:00:00",
+            },
+        )
+        assert r.status_code == 422
+
+    async def test_update_accepts_valid_window(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        as_admin: None,
+    ):
+        r = await async_client.patch(
+            f"/api/v1/events/{test_event.id}",
+            json={
+                "default_start_time": "09:00:00",
+                "default_end_time": "17:00:00",
+            },
+        )
+        assert r.status_code == 200
+        assert r.json()["default_start_time"] == "09:00:00"
+        assert r.json()["default_end_time"] == "17:00:00"
+
+    async def test_update_rejects_end_not_after_start(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        as_admin: None,
+    ):
+        r = await async_client.patch(
+            f"/api/v1/events/{test_event.id}",
+            json={
+                "default_start_time": "17:00:00",
+                "default_end_time": "17:00:00",
+            },
+        )
+        assert r.status_code == 422
+        assert r.json()["code"] == "event.invalid_default_times"
+
+    async def test_update_rejects_end_conflicting_with_stored_start(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        test_event: Event,
+        as_admin: None,
+    ):
+        """PATCHing only one field is validated against the stored other half."""
+        test_event.default_start_time = datetime.time(18, 0)
+        test_event.default_end_time = datetime.time(22, 0)
+        await db_session.flush()
+
+        r = await async_client.patch(
+            f"/api/v1/events/{test_event.id}",
+            json={"default_end_time": "10:00:00"},
+        )
+        assert r.status_code == 422
+        assert r.json()["code"] == "event.invalid_default_times"
+
+    async def test_update_can_clear_window(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        test_event: Event,
+        as_admin: None,
+    ):
+        """Clearing both fields is the supported way to allow overnight events."""
+        test_event.default_start_time = datetime.time(18, 0)
+        test_event.default_end_time = datetime.time(22, 0)
+        await db_session.flush()
+
+        r = await async_client.patch(
+            f"/api/v1/events/{test_event.id}",
+            json={"default_start_time": None, "default_end_time": None},
+        )
+        assert r.status_code == 200
+        assert r.json()["default_start_time"] is None
+        assert r.json()["default_end_time"] is None
+
+
 # ── POST /events/{id}/shift-dates ──────────────────────────────────
 
 
