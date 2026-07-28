@@ -494,6 +494,39 @@ export const zNotificationTypeRead = z.object({
 })
 
 /**
+ * OwnershipTransferRequest
+ *
+ * Request body for transferring a user's owned content to another user.
+ */
+export const zOwnershipTransferRequest = z
+  .object({
+    target_user_id: z.uuid().register(z.globalRegistry, {
+      description: 'User who takes over ownership of all events and tasks',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description: "Request body for transferring a user's owned content to another user.",
+  })
+
+/**
+ * OwnershipTransferResult
+ *
+ * Summary of a completed ownership transfer.
+ */
+export const zOwnershipTransferResult = z
+  .object({
+    events_transferred: z.int().register(z.globalRegistry, {
+      description: 'Number of events reassigned to the target user',
+    }),
+    tasks_transferred: z.int().register(z.globalRegistry, {
+      description: 'Number of tasks reassigned to the target user',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description: 'Summary of a completed ownership transfer.',
+  })
+
+/**
  * ProfileInit
  *
  * Profile data from Auth0 ID token for user initialization.
@@ -1305,6 +1338,27 @@ export const zUserCreate = z.object({
 })
 
 /**
+ * UserOwnedContent
+ *
+ * Counts of content created (owned) by a user.
+ */
+export const zUserOwnedContent = z
+  .object({
+    events: z.int().register(z.globalRegistry, {
+      description: 'Number of events created by the user',
+    }),
+    tasks: z.int().register(z.globalRegistry, {
+      description: 'Number of tasks created by the user',
+    }),
+    total: z.int().register(z.globalRegistry, {
+      description: 'Total number of owned items',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description: 'Counts of content created (owned) by a user.',
+  })
+
+/**
  * UserProfile
  */
 export const zUserProfile = z.object({
@@ -1554,6 +1608,10 @@ export const zUsersDeleteUserPath = z.object({
   user_id: z.uuid(),
 })
 
+export const zUsersDeleteUserQuery = z.object({
+  transfer_to_user_id: z.uuid().nullish(),
+})
+
 /**
  * Successful Response
  */
@@ -1589,6 +1647,26 @@ export const zUsersExportUserDataResponse = z
   .register(z.globalRegistry, {
     description: 'Successful Response',
   })
+
+export const zUsersGetUserOwnedContentPath = z.object({
+  user_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zUsersGetUserOwnedContentResponse = zUserOwnedContent
+
+export const zUsersTransferUserOwnershipBody = zOwnershipTransferRequest
+
+export const zUsersTransferUserOwnershipPath = z.object({
+  user_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zUsersTransferUserOwnershipResponse = zOwnershipTransferResult
 
 /**
  * Successful Response

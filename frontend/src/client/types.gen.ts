@@ -1212,6 +1212,40 @@ export type NotificationTypeRead = {
 }
 
 /**
+ * OwnershipTransferRequest
+ *
+ * Request body for transferring a user's owned content to another user.
+ */
+export type OwnershipTransferRequest = {
+  /**
+   * Target User Id
+   *
+   * User who takes over ownership of all events and tasks
+   */
+  target_user_id: string
+}
+
+/**
+ * OwnershipTransferResult
+ *
+ * Summary of a completed ownership transfer.
+ */
+export type OwnershipTransferResult = {
+  /**
+   * Events Transferred
+   *
+   * Number of events reassigned to the target user
+   */
+  events_transferred: number
+  /**
+   * Tasks Transferred
+   *
+   * Number of tasks reassigned to the target user
+   */
+  tasks_transferred: number
+}
+
+/**
  * ProfileInit
  *
  * Profile data from Auth0 ID token for user initialization.
@@ -2760,6 +2794,32 @@ export type UserListResponse = {
 }
 
 /**
+ * UserOwnedContent
+ *
+ * Counts of content created (owned) by a user.
+ */
+export type UserOwnedContent = {
+  /**
+   * Events
+   *
+   * Number of events created by the user
+   */
+  events: number
+  /**
+   * Tasks
+   *
+   * Number of tasks created by the user
+   */
+  tasks: number
+  /**
+   * Total
+   *
+   * Total number of owned items
+   */
+  total: number
+}
+
+/**
  * UserProfile
  */
 export type UserProfile = {
@@ -3756,7 +3816,12 @@ export type UsersDeleteUserData = {
      */
     user_id: string
   }
-  query?: never
+  query?: {
+    /**
+     * Transfer To User Id
+     */
+    transfer_to_user_id?: string | null
+  }
   url: '/api/v1/users/{user_id}'
 }
 
@@ -3979,6 +4044,126 @@ export type UsersExportUserDataResponses = {
 
 export type UsersExportUserDataResponse =
   UsersExportUserDataResponses[keyof UsersExportUserDataResponses]
+
+export type UsersGetUserOwnedContentData = {
+  body?: never
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string
+  }
+  query?: never
+  url: '/api/v1/users/{user_id}/owned-content'
+}
+
+export type UsersGetUserOwnedContentErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersGetUserOwnedContentError =
+  UsersGetUserOwnedContentErrors[keyof UsersGetUserOwnedContentErrors]
+
+export type UsersGetUserOwnedContentResponses = {
+  /**
+   * Successful Response
+   */
+  200: UserOwnedContent
+}
+
+export type UsersGetUserOwnedContentResponse =
+  UsersGetUserOwnedContentResponses[keyof UsersGetUserOwnedContentResponses]
+
+export type UsersTransferUserOwnershipData = {
+  body: OwnershipTransferRequest
+  path: {
+    /**
+     * User Id
+     */
+    user_id: string
+  }
+  query?: never
+  url: '/api/v1/users/{user_id}/transfer-ownership'
+}
+
+export type UsersTransferUserOwnershipErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersTransferUserOwnershipError =
+  UsersTransferUserOwnershipErrors[keyof UsersTransferUserOwnershipErrors]
+
+export type UsersTransferUserOwnershipResponses = {
+  /**
+   * Successful Response
+   */
+  200: OwnershipTransferResult
+}
+
+export type UsersTransferUserOwnershipResponse =
+  UsersTransferUserOwnershipResponses[keyof UsersTransferUserOwnershipResponses]
 
 export type UsersDeleteMyAvatarData = {
   body?: never

@@ -226,11 +226,14 @@ const openDeleteDialog = (user: UserRead) => {
   showDeleteDialog.value = true
 }
 
-const submitDelete = async () => {
+const submitDelete = async (transferToUserId?: string) => {
   if (!deletingUser.value) return
   isDeleting.value = true
   try {
-    await del({ url: `/users/${deletingUser.value.id}` })
+    await del({
+      url: `/users/${deletingUser.value.id}`,
+      query: transferToUserId ? { transfer_to_user_id: transferToUserId } : undefined,
+    })
     toast.success(
       t('admin.users.deletedToast', {
         name: deletingUser.value.name ?? deletingUser.value.email,

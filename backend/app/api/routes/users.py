@@ -5,6 +5,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
 from app.api.deps import (
@@ -15,10 +16,12 @@ from app.api.deps import (
     auth0,
 )
 from app.core.config import settings
+from app.core.errors import raise_problem
 from app.core.security import verify_password
 from app.crud.event import event as crud_event
 from app.crud.event_manager import event_manager as crud_egm
 from app.crud.site_settings import site_settings as crud_site_settings
+from app.crud.task import task as crud_task
 from app.crud.user import user as crud_user
 from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
 from app.models.booking import Booking
@@ -28,9 +31,12 @@ from app.models.user import User
 from app.models.user_availability import UserAvailability, UserAvailabilityDate
 from app.schemas.site_settings import SelfApproveRequest
 from app.schemas.user import (
+    OwnershipTransferRequest,
+    OwnershipTransferResult,
     UserCounts,
     UserCreate,
     UserListResponse,
+    UserOwnedContent,
     UserRead,
     UserUpdate,
 )
@@ -448,14 +454,137 @@ async def delete_current_user(
     logger.info("User account deleted: %s", user.auth0_sub)
 
 
+async def _get_valid_transfer_target(
+    session: AsyncSession,
+    *,
+    source_user_id: uuid.UUID,
+    target_user_id: uuid.UUID,
+) -> User:
+    """Validate that ``target_user_id`` may take over ownership from the source."""
+    if source_user_id == target_user_id:
+        raise_problem(
+            400,
+            code="user.transfer_same_user",
+            detail="Ownership cannot be transferred to the same user",
+        )
+    target = await crud_user.get(session, id=target_user_id)
+    if not target:
+        raise_problem(
+            404,
+            code="user.transfer_target_not_found",
+            detail="Transfer target user not found",
+        )
+    if not target.is_active:
+        raise_problem(
+            400,
+            code="user.transfer_target_inactive",
+            detail="Transfer target user is not active",
+        )
+    return target
+
+
+@router.get("/{user_id}/owned-content", response_model=UserOwnedContent)
+async def get_user_owned_content(
+    user_id: uuid.UUID,
+    session: DBDep,
+    _: CurrentSuperuser,
+) -> UserOwnedContent:
+    """Admin-only: counts of events and tasks created by this user.
+
+    Used before deleting a user to decide whether ownership must be
+    transferred first.
+    """
+    await crud_user.get(session, id=user_id, raise_404_error=True)
+    owned_events = await crud_event.count_owned_by(session, user_id=user_id)
+    owned_tasks = await crud_task.count_owned_by(session, user_id=user_id)
+    return UserOwnedContent(
+        events=owned_events,
+        tasks=owned_tasks,
+        total=owned_events + owned_tasks,
+    )
+
+
+@router.post("/{user_id}/transfer-ownership", response_model=OwnershipTransferResult)
+async def transfer_user_ownership(
+    user_id: uuid.UUID,
+    body: OwnershipTransferRequest,
+    session: DBDep,
+    _: CurrentSuperuser,
+) -> OwnershipTransferResult:
+    """Admin-only: reassign all events and tasks created by one user to another.
+
+    The target user must exist, be active, and differ from the source user.
+    """
+    await crud_user.get(session, id=user_id, raise_404_error=True)
+    await _get_valid_transfer_target(
+        session, source_user_id=user_id, target_user_id=body.target_user_id
+    )
+    events_transferred = await crud_event.reassign_owner(
+        session, from_user_id=user_id, to_user_id=body.target_user_id
+    )
+    tasks_transferred = await crud_task.reassign_owner(
+        session, from_user_id=user_id, to_user_id=body.target_user_id
+    )
+    logger.info(
+        "Transferred ownership from user %s to user %s (%d events, %d tasks)",
+        user_id,
+        body.target_user_id,
+        events_transferred,
+        tasks_transferred,
+    )
+    return OwnershipTransferResult(
+        events_transferred=events_transferred,
+        tasks_transferred=tasks_transferred,
+    )
+
+
 @router.delete("/{user_id}", response_model=UserRead)
 async def delete_user(
     user_id: uuid.UUID,
     session: DBDep,
     _: CurrentSuperuser,
+    transfer_to_user_id: uuid.UUID | None = None,
 ) -> User:
-    """Admin-only: delete a user by ID from the database."""
+    """Admin-only: delete a user by ID from the database.
+
+    If the user still owns events or tasks, deletion is refused with a 409
+    (code ``user.owns_content``) unless ``transfer_to_user_id`` is provided.
+    When a transfer target is given, all owned events and tasks are reassigned
+    to that user in the same transaction before the account is deleted.
+    """
     user = await crud_user.get(session, id=user_id, raise_404_error=True)
+
+    owned_events = await crud_event.count_owned_by(session, user_id=user_id)
+    owned_tasks = await crud_task.count_owned_by(session, user_id=user_id)
+    if owned_events or owned_tasks:
+        if transfer_to_user_id is None:
+            raise_problem(
+                409,
+                code="user.owns_content",
+                detail=(
+                    f"User still owns {owned_events} event(s) and "
+                    f"{owned_tasks} task(s). Provide transfer_to_user_id to "
+                    "reassign them before deletion."
+                ),
+            )
+        await _get_valid_transfer_target(
+            session, source_user_id=user_id, target_user_id=transfer_to_user_id
+        )
+        await crud_event.reassign_owner(
+            session, from_user_id=user_id, to_user_id=transfer_to_user_id
+        )
+        await crud_task.reassign_owner(
+            session, from_user_id=user_id, to_user_id=transfer_to_user_id
+        )
+        logger.info(
+            "Reassigned %d event(s) and %d task(s) from user %s to user %s "
+            "before deletion",
+            owned_events,
+            owned_tasks,
+            user_id,
+            transfer_to_user_id,
+        )
+
     # Also delete from Auth0
     await delete_auth0_user(user.auth0_sub)
     await session.delete(user)

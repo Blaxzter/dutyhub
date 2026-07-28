@@ -1,8 +1,8 @@
 import datetime as dt
 import uuid
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import CursorResult, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 from sqlmodel import col
@@ -104,6 +104,33 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         )
         result = await db.execute(query)
         return result.scalar_one()
+
+    async def count_owned_by(self, db: AsyncSession, *, user_id: uuid.UUID) -> int:
+        """Count events created by the given user."""
+        result = await db.execute(
+            select(func.count())
+            .select_from(Event)
+            .where(col(Event.created_by_id) == user_id)
+        )
+        return result.scalar_one()
+
+    async def reassign_owner(
+        self,
+        db: AsyncSession,
+        *,
+        from_user_id: uuid.UUID,
+        to_user_id: uuid.UUID,
+    ) -> int:
+        """Reassign all events created by one user to another. Returns row count."""
+        result = cast(
+            CursorResult[Any],
+            await db.execute(
+                update(Event)
+                .where(col(Event.created_by_id) == from_user_id)
+                .values(created_by_id=to_user_id)
+            ),
+        )
+        return result.rowcount if result.rowcount > 0 else 0
 
 
 event = CRUDEvent(Event)

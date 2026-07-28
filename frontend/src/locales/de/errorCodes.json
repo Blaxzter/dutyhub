@@ -15,6 +15,10 @@
         "not_found": "Die angeforderte Aufgabe wurde nicht gefunden"
     },
     "user": {
-        "not_found": "Der angeforderte Benutzer wurde nicht gefunden"
+        "not_found": "Der angeforderte Benutzer wurde nicht gefunden",
+        "owns_content": "Dieses Mitglied hat noch Veranstaltungsgruppen oder Veranstaltungen erstellt. Wählen Sie zuerst, wer diese übernehmen soll.",
+        "transfer_same_user": "Bitte wählen Sie ein anderes Mitglied für die Übernahme aus.",
+        "transfer_target_inactive": "Das Konto des ausgewählten Mitglieds ist nicht aktiv.",
+        "transfer_target_not_found": "Das ausgewählte Mitglied wurde nicht gefunden."
     }
 }
