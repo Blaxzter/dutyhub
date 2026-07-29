@@ -1,8 +1,8 @@
 import datetime as dt
 import uuid
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import CursorResult, and_, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 from sqlmodel import col
@@ -180,6 +180,33 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         )
         result = await db.execute(query)
         return result.scalar_one()
+
+    async def count_owned_by(self, db: AsyncSession, *, user_id: uuid.UUID) -> int:
+        """Count tasks created by the given user."""
+        result = await db.execute(
+            select(func.count())
+            .select_from(Task)
+            .where(col(Task.created_by_id) == user_id)
+        )
+        return result.scalar_one()
+
+    async def reassign_owner(
+        self,
+        db: AsyncSession,
+        *,
+        from_user_id: uuid.UUID,
+        to_user_id: uuid.UUID,
+    ) -> int:
+        """Reassign all tasks created by one user to another. Returns row count."""
+        result = cast(
+            CursorResult[Any],
+            await db.execute(
+                update(Task)
+                .where(col(Task.created_by_id) == from_user_id)
+                .values(created_by_id=to_user_id)
+            ),
+        )
+        return result.rowcount if result.rowcount > 0 else 0
 
 
 task = CRUDTask(Task)

@@ -130,6 +130,7 @@
         "delete": "Delete User",
         "deleteDialogDescription": "Are you sure you want to permanently delete {name}'s account? This action cannot be undone.",
         "deleteDialogTitle": "Delete User",
+        "deleteTransferDescription": "{name} still has events or tasks they created. Choose who should take them over — afterwards the account will be permanently deleted.",
         "deletedToast": "Deleted account for {name}.",
         "empty": "No users to show.",
         "filters": {
@@ -143,6 +144,8 @@
         "inactive": "Inactive",
         "makeAdmin": "Make Admin",
         "makeTaskManager": "Make Task Manager",
+        "ownedEvents": "Events: {count}",
+        "ownedTasks": "Tasks: {count}",
         "pending": "Pending",
         "reject": "Reject",
         "rejectDialogDescription": "Provide an optional reason for rejecting {name}'s account request. The user will see this message.",
@@ -163,6 +166,10 @@
         },
         "statsTotal": "Total Users",
         "subtitle": "View and manage platform users and their roles.",
-        "title": "User Management"
+        "title": "User Management",
+        "transferAndDelete": "Reassign and delete",
+        "transferNoResults": "No members found.",
+        "transferToMe": "Assign them to me",
+        "transferToOther": "Assign them to another member"
     }
 }
