@@ -1,6 +1,6 @@
 """Coverage gap tests for Booking Reminder endpoints (edge cases, limits, permissions)."""
 
-from datetime import date, time
+from datetime import date, time, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -86,21 +86,45 @@ class TestReminderCoverage:
     async def test_add_reminder_max_limit(
         self,
         async_client: AsyncClient,
-        test_booking: Booking,
+        db_session: AsyncSession,
+        test_task: Task,
+        test_user: User,
     ):
         """Test that exceeding max reminders per booking returns 422."""
+        # Use a shift in the future so the reminders stay "pending" — reminders
+        # whose remind_at is already in the past are created as "expired" and
+        # don't count towards the limit.
+        shift = Shift(
+            task_id=test_task.id,
+            title="Max Reminder Shift",
+            date=date.today() + timedelta(days=30),
+            start_time=time(9, 0),
+            end_time=time(13, 0),
+        )
+        db_session.add(shift)
+        await db_session.flush()
+
+        booking = Booking(
+            shift_id=shift.id,
+            user_id=test_user.id,
+            status="confirmed",
+        )
+        db_session.add(booking)
+        await db_session.flush()
+        await db_session.refresh(booking)
+
         # Add 5 reminders (MAX_REMINDERS_PER_BOOKING = 5)
         offsets = [15, 30, 60, 120, 180]
         for offset in offsets:
             r = await async_client.post(
-                f"/api/v1/bookings/{test_booking.id}/reminders",
+                f"/api/v1/bookings/{booking.id}/reminders",
                 json={"offset_minutes": offset},
             )
             assert r.status_code == 201
 
         # 6th should fail
         r = await async_client.post(
-            f"/api/v1/bookings/{test_booking.id}/reminders",
+            f"/api/v1/bookings/{booking.id}/reminders",
             json={"offset_minutes": 360},
         )
         assert r.status_code == 422
