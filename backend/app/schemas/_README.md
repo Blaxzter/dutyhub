@@ -14,8 +14,11 @@ Each schema file should follow this structure:
 
 ```python
 from pydantic import BaseModel, Field
+
+
 class YourSchema(BaseModel):
     """Description of your schema"""
+
     field_name: str = Field(..., description="Description of the field")
     another_field: int = Field(0, description="Another field with a default value")
 ```

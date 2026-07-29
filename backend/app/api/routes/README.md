@@ -19,6 +19,7 @@ from app.api.deps import DBDep, auth0
 
 router = APIRouter(prefix="/your-prefix", tags=["your-tag"])
 
+
 @router.get("/")
 async def your_endpoint(session: DBDep, claims: dict = Depends(auth0.require_auth())):
     """Your endpoint description"""
