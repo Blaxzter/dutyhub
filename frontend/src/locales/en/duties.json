@@ -173,8 +173,8 @@
         "expired": "Expired",
         "fields": {
             "defaultTimes": "Default time window",
-            "defaultTimesHint": "Optional. Bounds the availability grid to these hours by default. Tasks may still be scheduled outside the window.",
-            "defaultTimesInvalid": "End time must be after start time. Overnight windows aren't supported yet — leave both empty for events that span midnight.",
+            "defaultTimesHint": "Optional. Bounds the availability grid to these hours by default. Tasks may still be scheduled outside the window. For events running into the next morning, leave both fields empty and set the times on each task instead.",
+            "defaultTimesInvalid": "End time must be after start time. Time windows past midnight aren't supported yet — leave both fields empty for events that run overnight.",
             "description": "Description",
             "endDate": "End Date",
             "endTime": "End time",

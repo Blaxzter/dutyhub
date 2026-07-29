@@ -173,8 +173,8 @@
         "expired": "Abgelaufen",
         "fields": {
             "defaultTimes": "Standard-Zeitfenster",
-            "defaultTimesHint": "Optional. Begrenzt das Verfügbarkeitsraster standardmäßig auf diese Stunden. Aufgaben können trotzdem außerhalb dieses Fensters geplant werden.",
-            "defaultTimesInvalid": "Die Endzeit muss nach der Startzeit liegen. Über-Nacht-Fenster werden noch nicht unterstützt — lassen Sie beide Felder leer für Veranstaltungen über Mitternacht.",
+            "defaultTimesHint": "Optional. Begrenzt das Verfügbarkeitsraster standardmäßig auf diese Stunden. Aufgaben können trotzdem außerhalb dieses Fensters geplant werden. Bei Veranstaltungen, die bis in den nächsten Morgen gehen, lassen Sie beide Felder leer und legen Sie die Zeiten stattdessen bei den einzelnen Aufgaben fest.",
+            "defaultTimesInvalid": "Die Endzeit muss nach der Startzeit liegen. Zeitfenster über Mitternacht sind noch nicht möglich — lassen Sie für solche Veranstaltungen beide Felder leer.",
             "description": "Beschreibung",
             "endDate": "Enddatum",
             "endTime": "Endzeit",

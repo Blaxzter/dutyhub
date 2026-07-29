@@ -9,7 +9,7 @@ Covers:
 - ON DELETE SET NULL when the selected event is removed
 """
 
-from datetime import date, time
+from datetime import date, time, timedelta
 from typing import Any, get_args
 
 import pytest
@@ -217,8 +217,14 @@ class TestEventExpirationAndScopeHelper:
         )
         assert past.is_expired is True
 
-    async def test_is_expired_false_for_future_end_date(self, test_event: Event):
-        assert test_event.is_expired is False
+    async def test_is_expired_false_for_future_end_date(self):
+        future = Event(
+            name="Future",
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=1),
+            status="published",
+        )
+        assert future.is_expired is False
 
     async def test_get_user_event_scope_returns_selection(
         self, test_user: User, test_event: Event
