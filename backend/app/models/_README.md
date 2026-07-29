@@ -47,6 +47,7 @@ Inherit from `Base` for models with automatic timestamps:
 ```python
 from app.models.base import Base
 
+
 class MyModel(Base, table=True):
     __tablename__ = "my_model"
 
@@ -59,6 +60,7 @@ Inherit from `SoftDeleteBase` for models that need soft delete functionality:
 
 ```python
 from app.models.base import SoftDeleteBase
+
 
 class MyModel(SoftDeleteBase, table=True):
     __tablename__ = "my_model"
