@@ -19,6 +19,9 @@ upgrade:
                 - "backend/pyproject.toml"
                 - "backend/uv.lock"
                 - ".github/workflows/**"
+                # Base-image bumps (Dependabot `docker` ecosystem)
+                - "**/Dockerfile"
+                - "**/Dockerfile.*"
 
 internal:
     - all:

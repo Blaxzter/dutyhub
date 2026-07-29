@@ -221,7 +221,7 @@ class TestEventExpirationAndScopeHelper:
         future = Event(
             name="Future",
             start_date=date.today(),
-            end_date=date.today() + timedelta(days=30),
+            end_date=date.today() + timedelta(days=1),
             status="published",
         )
         assert future.is_expired is False

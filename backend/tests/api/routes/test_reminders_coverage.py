@@ -91,8 +91,9 @@ class TestReminderCoverage:
         test_user: User,
     ):
         """Test that exceeding max reminders per booking returns 422."""
-        # A future shift so created reminders stay pending and count
-        # against the limit
+        # Use a shift in the future so the reminders stay "pending" — reminders
+        # whose remind_at is already in the past are created as "expired" and
+        # don't count towards the limit.
         shift = Shift(
             task_id=test_task.id,
             title="Max Reminder Shift",
