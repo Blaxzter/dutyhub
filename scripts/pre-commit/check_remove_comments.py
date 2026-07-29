@@ -1,12 +1,14 @@
-import sys
 import subprocess
+import sys
 
 
 def main():
     # Search for TODO comments in staged Python files
     # Command to get list of staged files that are added or modified
     cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=AM"]
-    staged_files = subprocess.run(cmd, capture_output=True, text=True).stdout.split()
+    staged_files = subprocess.run(
+        cmd, capture_output=True, text=True, check=False
+    ).stdout.split()
 
     # Filter for Python files
     python_files = [
@@ -18,7 +20,7 @@ def main():
     # Run git grep on these Python files if any
     if python_files:
         grep_cmd = ["git", "grep", "--cached", "-n", "# RMPC", "--"] + python_files
-        result = subprocess.run(grep_cmd, capture_output=True, text=True)
+        result = subprocess.run(grep_cmd, capture_output=True, text=True, check=False)
 
         if result.stdout:
             print("Commit failed: RMPC comments found in the following files:")
