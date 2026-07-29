@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator, Callable, Coroutine, Iterable
+from contextlib import AsyncExitStack
 from typing import Annotated, Any, cast
 
 from fastapi import Depends, HTTPException, Query, Request, status
@@ -17,9 +18,32 @@ from app.schemas.user import UserCreate
 _CurrentUserDep = Callable[..., Coroutine[Any, Any, User]]
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with async_session.begin() as session:
-        yield session
+async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
+    """Yield a request-scoped session that COMMITs before the response is sent.
+
+    FastAPI finalises ``yield`` dependencies only *after* the response has gone
+    out to the client (``request_response`` in ``fastapi.routing`` awaits the
+    response, then unwinds its exit stack). Owning the transaction here meant
+    the COMMIT landed after the client already had its answer, so a client that
+    immediately issued a follow-up request could race it and read stale data —
+    a freshly created event 404ing, a just-granted permission still 403ing.
+
+    FastAPI keeps a second, per-endpoint exit stack that unwinds *before* the
+    response is sent. Registering the transaction there moves the COMMIT ahead
+    of the response, and it also means background tasks (which run while the
+    response is being sent) observe the data they were handed IDs for.
+    """
+    stack = request.scope.get("fastapi_function_astack")
+    if not isinstance(stack, AsyncExitStack):
+        # No per-endpoint stack (e.g. a future FastAPI that drops it) — fall
+        # back to the previous behaviour rather than failing the request.
+        async with async_session.begin() as session:
+            yield session
+        return
+    session: AsyncSession = await stack.enter_async_context(  # pyright: ignore[reportUnknownMemberType]
+        async_session.begin()
+    )
+    yield session
 
 
 DBDep = Annotated[AsyncSession, Depends(get_db)]
