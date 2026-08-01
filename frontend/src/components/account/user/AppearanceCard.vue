@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import { useColorMode } from '@vueuse/core'
-import { Monitor, Moon, Palette as PaletteIcon, Sun } from 'lucide-vue-next'
+import { Monitor, Moon, Palette as PaletteIcon, Sun } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 

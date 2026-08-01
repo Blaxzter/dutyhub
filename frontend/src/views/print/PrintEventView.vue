@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 
-import { CalendarDays, MapPin, Tag } from 'lucide-vue-next'
+import { CalendarDays, MapPin, Tag } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 

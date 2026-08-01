@@ -148,11 +148,11 @@ The project includes pre-configured components in `src/components/ui/`:
 
 ### Icons
 
-Icons are imported from [Lucide Vue Next](https://lucide.dev/guide/packages/lucide-vue-next):
+Icons are imported from [Lucide Vue](https://lucide.dev/guide/packages/lucide-vue):
 
 ```vue
 <script setup>
-import { SettingsIcon, UserIcon } from 'lucide-vue-next'
+import { SettingsIcon, UserIcon } from '@lucide/vue'
 </script>
 
 <template>

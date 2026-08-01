@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRight, type LucideIcon } from 'lucide-vue-next'
+import { ChevronRight, type LucideIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
 

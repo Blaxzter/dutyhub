@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 import { useMediaQuery } from '@vueuse/core'
-import { Search, X } from 'lucide-vue-next'
+import { Search, X } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 

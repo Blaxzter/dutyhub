@@ -80,7 +80,7 @@
 import { ref, watch } from 'vue'
 
 import { useResizeObserver } from '@vueuse/core'
-import { LoaderIcon, RotateCcwIcon, RotateCwIcon } from 'lucide-vue-next'
+import { LoaderIcon, RotateCcwIcon, RotateCwIcon } from '@lucide/vue'
 import { Cropper, RectangleStencil } from 'vue-advanced-cropper'
 
 import { Button } from '@/components/ui/button'

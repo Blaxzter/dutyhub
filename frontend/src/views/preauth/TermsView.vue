@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeftIcon } from 'lucide-vue-next'
+import { ArrowLeftIcon } from '@lucide/vue'
 import { useRouter } from 'vue-router'
 
 import { Button } from '@/components/ui/button'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ChevronDownIcon } from 'lucide-vue-next'
+import { ChevronDownIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'

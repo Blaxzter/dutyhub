@@ -13,7 +13,7 @@ import {
   Database,
   House,
   Users,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 

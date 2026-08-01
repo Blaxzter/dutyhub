@@ -7,7 +7,7 @@ import {
   getLocalTimeZone,
   today as todayDate,
 } from '@internationalized/date'
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, X } from '@lucide/vue'
 import {
   type DateRange,
   RangeCalendarCell,

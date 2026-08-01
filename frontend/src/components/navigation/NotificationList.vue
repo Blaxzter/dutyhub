@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { Bell, Check, Loader2, Trash2 } from 'lucide-vue-next'
+import { Bell, Check, Loader2, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 

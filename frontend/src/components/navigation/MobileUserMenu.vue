@@ -10,7 +10,7 @@ import {
   LogOut,
   Moon,
   Sun,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAvatarUrl } from '@/composables/useAvatarUrl'

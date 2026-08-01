@@ -107,7 +107,7 @@ import { onMounted, ref } from 'vue'
 
 import type { User } from '@auth0/auth0-vue'
 import { toTypedSchema } from '@vee-validate/zod'
-import { EditIcon, LoaderIcon, SaveIcon } from 'lucide-vue-next'
+import { EditIcon, LoaderIcon, SaveIcon } from '@lucide/vue'
 import { useForm } from 'vee-validate'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'

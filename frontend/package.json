@@ -20,6 +20,7 @@
     "@auth0/auth0-vue": "^2.9.0",
     "@hookform/resolvers": "^5.5.7",
     "@internationalized/date": "^3.12.2",
+    "@lucide/vue": "^1.28.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/vue-table": "^8.21.3",
     "@unovis/ts": "^1.6.7",
@@ -27,12 +28,11 @@
     "@vee-validate/zod": "^4.15.1",
     "@vue/devtools-api": "^8.2.1",
     "@vueuse/core": "^14.4.0",
-    "axios": "^1.18.1",
+    "axios": "^1.19.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-vue": "^8.6.0",
     "flag-icons": "^7.5.0",
-    "lucide-vue-next": "^1.0.0",
     "motion-v": "^2.3.0",
     "pinia": "^4.0.2",
     "qrcode": "^1.5.4",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.99.0",
-    "@playwright/test": "~1.61.1",
+    "@playwright/test": "~1.62.1",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
     "@tsconfig/node22": "^22.0.5",
     "@types/markdown-it": "^14.1.2",
@@ -74,7 +74,12 @@
     "vite": "^8.1.5",
     "vite-plugin-vue-devtools": "^8.2.1",
     "vite-svg-loader": "^5.1.1",
-    "vue-tsc": "^3.3.8"
+    "vue-tsc": "^3.3.9"
   },
-  "packageManager": "pnpm@10.30.3"
+  "packageManager": "pnpm@10.30.3",
+  "pnpm": {
+    "overrides": {
+      "js-yaml@4": "^4.3.0"
+    }
+  }
 }

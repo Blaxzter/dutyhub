@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SparklesIcon } from 'lucide-vue-next'
+import { SparklesIcon } from '@lucide/vue'
 
 import { formatDate } from '@/lib/format'
 

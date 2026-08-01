@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Clock } from 'lucide-vue-next'
+import { Clock } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 

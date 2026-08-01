@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, ChevronDown } from 'lucide-vue-next'
+import { Check, ChevronDown } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'

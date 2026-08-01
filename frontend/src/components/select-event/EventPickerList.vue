@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, Plus } from 'lucide-vue-next'
+import { ArrowRight, Plus } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'

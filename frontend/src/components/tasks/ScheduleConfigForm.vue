@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 
-import { CircleAlert, Plus, Trash2 } from 'lucide-vue-next'
+import { CircleAlert, Plus, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'

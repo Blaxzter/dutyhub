@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
 
-import { ExternalLink, TriangleAlert } from 'lucide-vue-next'
+import { ExternalLink, TriangleAlert } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 

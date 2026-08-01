@@ -178,7 +178,7 @@ import {
   CopyIcon,
   LoaderIcon,
   RefreshCwIcon,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { storeToRefs } from 'pinia'
 import { siApple, siGoogle } from 'simple-icons'
 import { useI18n } from 'vue-i18n'

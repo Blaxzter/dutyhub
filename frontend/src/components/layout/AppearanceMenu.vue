@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import { useColorMode } from '@vueuse/core'
-import { Monitor, Moon, Sun } from 'lucide-vue-next'
+import { Monitor, Moon, Sun } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { type Palette, usePalette } from '@/composables/usePalette'

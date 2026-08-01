@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import { CalendarRange } from 'lucide-vue-next'
+import { CalendarRange } from '@lucide/vue'
 import { toast } from 'vue-sonner'
 import { useI18n } from 'vue-i18n'
 

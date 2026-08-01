@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { GlobeIcon, InfoIcon } from 'lucide-vue-next'
+import { GlobeIcon, InfoIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import { useColorMode } from '@vueuse/core'
-import { LogOut, Moon, Sun } from 'lucide-vue-next'
+import { LogOut, Moon, Sun } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import wirksamDarkLogo from '@/assets/logo/wirksam-dark.svg'

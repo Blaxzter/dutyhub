@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ArrowLeftIcon } from 'lucide-vue-next'
+import { ArrowLeftIcon } from '@lucide/vue'
 import { useRouter } from 'vue-router'
 
 import { useAppConfig } from '@/composables/useAppConfig'

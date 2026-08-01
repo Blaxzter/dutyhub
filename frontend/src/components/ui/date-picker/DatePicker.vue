@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { DateFormatter, getLocalTimeZone } from '@internationalized/date'
-import { CalendarIcon } from 'lucide-vue-next'
+import { CalendarIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'

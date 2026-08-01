@@ -44,7 +44,7 @@
 import { computed, ref } from 'vue'
 
 import axios from 'axios'
-import { KeyIcon, MailIcon } from 'lucide-vue-next'
+import { KeyIcon, MailIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'

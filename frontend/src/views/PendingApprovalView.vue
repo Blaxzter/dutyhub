@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { Ban, Clock, Eye, EyeOff, KeyRound, LogOut } from 'lucide-vue-next'
+import { Ban, Clock, Eye, EyeOff, KeyRound, LogOut } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'

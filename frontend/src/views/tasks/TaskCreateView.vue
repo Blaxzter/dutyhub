@@ -3,7 +3,7 @@ import { computed, onMounted, ref, toRaw, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { ArrowLeft, CalendarDays, CalendarPlus, Clock, Plus, Users, X } from 'lucide-vue-next'
+import { ArrowLeft, CalendarDays, CalendarPlus, Clock, Plus, Users, X } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'

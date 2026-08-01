@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { watch } from 'vue'
 
-import { ShieldCheck, UserPlus, X } from 'lucide-vue-next'
+import { ShieldCheck, UserPlus, X } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
-import { Bell, CheckCheck, Settings, Trash2 } from 'lucide-vue-next'
+import { Bell, CheckCheck, Settings, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'

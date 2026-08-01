@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Bell, ChevronRight } from 'lucide-vue-next'
+import { Bell, ChevronRight } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 

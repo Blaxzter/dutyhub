@@ -78,7 +78,7 @@
 import { computed } from 'vue'
 
 import type { User } from '@auth0/auth0-vue'
-import { UserIcon } from 'lucide-vue-next'
+import { UserIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAvatarUrl } from '@/composables/useAvatarUrl'

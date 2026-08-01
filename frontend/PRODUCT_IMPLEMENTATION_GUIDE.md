@@ -338,7 +338,7 @@ const router = createRouter({
 **Location**: `src/components/navigation/NavMain.vue`
 
 ```typescript
-import { HomeIcon, SettingsIcon, UserIcon, UsersIcon } from 'lucide-vue-next'
+import { HomeIcon, SettingsIcon, UserIcon, UsersIcon } from '@lucide/vue'
 
 // Properly typed navigation items
 interface NavItem {
