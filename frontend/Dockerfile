@@ -6,7 +6,11 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN npm install -g pnpm && pnpm install
+# Pin pnpm to package.json's `packageManager` so the lockfile is resolved by the
+# same major that generated it.
+RUN npm install -g \
+    "pnpm@$(node -p "require('./package.json').packageManager.replace(/^pnpm@/, '').split('+')[0]")" \
+    && pnpm install
 
 COPY . .
 

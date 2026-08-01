@@ -5,8 +5,10 @@ WORKDIR /app
 # Copy package.json and pnpm-lock.yaml
 COPY package.json pnpm-lock.yaml ./
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install the pnpm version pinned in package.json's `packageManager`, so the
+# image resolves the lockfile with the same major that generated it.
+RUN npm install -g \
+    "pnpm@$(node -p "require('./package.json').packageManager.replace(/^pnpm@/, '').split('+')[0]")"
 
 # Install dependencies
 RUN pnpm install
