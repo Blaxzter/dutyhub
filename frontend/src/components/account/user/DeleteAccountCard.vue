@@ -73,7 +73,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { Trash2Icon } from 'lucide-vue-next'
+import { Trash2Icon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Calendar, CircleDot, Clock } from 'lucide-vue-next'
+import { Calendar, CircleDot, Clock } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import AvailabilityPaintGrid from '@/components/events/AvailabilityPaintGrid.vue'

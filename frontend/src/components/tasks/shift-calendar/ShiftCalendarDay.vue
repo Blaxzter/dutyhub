@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Clock } from 'lucide-vue-next'
+import { Clock } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'

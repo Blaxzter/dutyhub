@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Users } from 'lucide-vue-next'
+import { Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'

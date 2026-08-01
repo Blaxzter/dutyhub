@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import { XIcon } from 'lucide-vue-next'
+import { XIcon } from '@lucide/vue'
 
 import { Button } from '@/components/ui/button'
 

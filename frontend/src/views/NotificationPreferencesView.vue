@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { useDebounceFn } from '@vueuse/core'
-import { Check, LoaderCircle } from 'lucide-vue-next'
+import { Check, LoaderCircle } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 

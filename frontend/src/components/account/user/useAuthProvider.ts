@@ -1,6 +1,6 @@
 import { computed } from 'vue'
 
-import { ShieldIcon } from 'lucide-vue-next'
+import { ShieldIcon } from '@lucide/vue'
 import { siAuth0, siFacebook, siGithub, siGoogle } from 'simple-icons'
 
 export interface AuthProvider {

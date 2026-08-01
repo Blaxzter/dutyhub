@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { Printer, Settings, X } from 'lucide-vue-next'
+import { Printer, Settings, X } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'

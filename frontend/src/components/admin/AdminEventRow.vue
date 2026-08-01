@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle2, Pencil, Trash2 } from 'lucide-vue-next'
+import { CheckCircle2, Pencil, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'

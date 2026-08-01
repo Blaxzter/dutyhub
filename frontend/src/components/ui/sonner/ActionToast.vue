@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { TriangleAlert, X } from 'lucide-vue-next'
+import { TriangleAlert, X } from '@lucide/vue'
 
 import { Button } from '@/components/ui/button'
 

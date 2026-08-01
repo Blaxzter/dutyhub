@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { nextTick, ref, watch, type HTMLAttributes } from 'vue'
 
-import { Clock } from 'lucide-vue-next'
+import { Clock } from '@lucide/vue'
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 

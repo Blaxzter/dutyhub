@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { InfoIcon, MenuIcon, WorkflowIcon } from 'lucide-vue-next'
+import { InfoIcon, MenuIcon, WorkflowIcon } from '@lucide/vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import logo from '@/assets/logo/logo.svg'

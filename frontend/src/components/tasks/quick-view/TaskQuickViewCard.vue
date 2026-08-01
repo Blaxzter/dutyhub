@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { MapPin, ShieldCheck, Tag, Trash2 } from 'lucide-vue-next'
+import { MapPin, ShieldCheck, Tag, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'

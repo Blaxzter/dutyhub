@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { Ban, UserCheck } from 'lucide-vue-next'
+import { Ban, UserCheck } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { avatarUrlFor } from '@/composables/useAvatarUrl'

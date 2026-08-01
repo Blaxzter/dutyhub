@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UserCheck, UserRoundX, UserX, Users } from 'lucide-vue-next'
+import { UserCheck, UserRoundX, UserX, Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

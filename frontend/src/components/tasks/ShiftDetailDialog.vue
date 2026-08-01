@@ -9,7 +9,7 @@ import {
   MapPin,
   Tag,
   Users,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'

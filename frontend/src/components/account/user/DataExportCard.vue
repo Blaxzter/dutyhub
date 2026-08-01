@@ -40,7 +40,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { DownloadIcon } from 'lucide-vue-next'
+import { DownloadIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'

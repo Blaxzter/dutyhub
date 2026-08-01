@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { CalendarClock, Check, MoveRight, X } from 'lucide-vue-next'
+import { CalendarClock, Check, MoveRight, X } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 

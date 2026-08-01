@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 
 import { useLocalStorage } from '@vueuse/core'
-import { BookCheck, CalendarDays, HelpCircle, SlidersHorizontal, Users } from 'lucide-vue-next'
+import { BookCheck, CalendarDays, HelpCircle, SlidersHorizontal, Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Mail, MessageCircle, Smartphone } from 'lucide-vue-next'
+import { Mail, MessageCircle, Smartphone } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import type { NotificationType } from '@/stores/notification'

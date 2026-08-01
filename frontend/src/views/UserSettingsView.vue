@@ -110,7 +110,7 @@ import {
   Palette as PaletteIcon,
   ShieldIcon,
   UserIcon,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { createReusableTemplate, useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'

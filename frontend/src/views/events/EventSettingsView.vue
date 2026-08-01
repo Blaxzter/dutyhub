@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { Pencil, ShieldCheck } from 'lucide-vue-next'
+import { Pencil, ShieldCheck } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 

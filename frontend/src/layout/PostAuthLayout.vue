@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import { Sparkles } from 'lucide-vue-next'
+import { Sparkles } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import {
   type RouteLocationNormalizedLoadedGeneric,

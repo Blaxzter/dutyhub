@@ -2,7 +2,7 @@
 import type { HTMLAttributes } from 'vue'
 
 import { reactiveOmit } from '@vueuse/core'
-import { MoreHorizontal } from 'lucide-vue-next'
+import { MoreHorizontal } from '@lucide/vue'
 import type { PaginationEllipsisProps } from 'reka-ui'
 import { PaginationEllipsis } from 'reka-ui'
 
