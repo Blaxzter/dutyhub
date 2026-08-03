@@ -46,6 +46,15 @@ jobs:
             - name: ESLint
               run: pnpm exec eslint .
               working-directory: frontend
+            # `src/changelog/generated/` is gitignored and produced by the
+            # `generate-changelog` Vite plugin at buildStart. `vue-tsc` does not
+            # go through Vite, so on a clean checkout the type-check fails with
+            # "Cannot find module '../changelog/generated/en.json'". Generate it
+            # explicitly first. (`build-only` below regenerates it via the plugin,
+            # which is harmless.)
+            - name: Generate changelog JSON
+              run: pnpm generate-changelog
+              working-directory: frontend
             # `src/client/` is committed, so a plain checkout is enough here;
             # generate-client.yml separately guards it against going stale.
             - name: Type check
