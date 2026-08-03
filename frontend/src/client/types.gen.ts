@@ -7609,426 +7609,6 @@ export type NotificationsListNotificationTypesResponses = {
 export type NotificationsListNotificationTypesResponse =
   NotificationsListNotificationTypesResponses[keyof NotificationsListNotificationTypesResponses]
 
-export type NotificationsNotificationStreamData = {
-  body?: never
-  path?: never
-  query: {
-    /**
-     * Token
-     *
-     * Bearer token for auth
-     */
-    token: string
-  }
-  url: '/api/v1/notifications/stream'
-}
-
-export type NotificationsNotificationStreamErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type NotificationsNotificationStreamError =
-  NotificationsNotificationStreamErrors[keyof NotificationsNotificationStreamErrors]
-
-export type NotificationsNotificationStreamResponses = {
-  /**
-   * Successful Response
-   */
-  200: unknown
-}
-
-export type NotificationsListNotificationsData = {
-  body?: never
-  path?: never
-  query?: {
-    /**
-     * Skip
-     */
-    skip?: number
-    /**
-     * Limit
-     */
-    limit?: number
-    /**
-     * Unread Only
-     */
-    unread_only?: boolean
-  }
-  url: '/api/v1/notifications/'
-}
-
-export type NotificationsListNotificationsErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type NotificationsListNotificationsError =
-  NotificationsListNotificationsErrors[keyof NotificationsListNotificationsErrors]
-
-export type NotificationsListNotificationsResponses = {
-  /**
-   * Successful Response
-   */
-  200: NotificationListResponse
-}
-
-export type NotificationsListNotificationsResponse =
-  NotificationsListNotificationsResponses[keyof NotificationsListNotificationsResponses]
-
-export type NotificationsGetUnreadCountData = {
-  body?: never
-  path?: never
-  query?: never
-  url: '/api/v1/notifications/unread-count'
-}
-
-export type NotificationsGetUnreadCountErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type NotificationsGetUnreadCountError =
-  NotificationsGetUnreadCountErrors[keyof NotificationsGetUnreadCountErrors]
-
-export type NotificationsGetUnreadCountResponses = {
-  /**
-   * Successful Response
-   */
-  200: UnreadCountResponse
-}
-
-export type NotificationsGetUnreadCountResponse =
-  NotificationsGetUnreadCountResponses[keyof NotificationsGetUnreadCountResponses]
-
-export type NotificationsMarkNotificationReadData = {
-  body?: never
-  path: {
-    /**
-     * Notification Id
-     */
-    notification_id: string
-  }
-  query?: never
-  url: '/api/v1/notifications/{notification_id}/read'
-}
-
-export type NotificationsMarkNotificationReadErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type NotificationsMarkNotificationReadError =
-  NotificationsMarkNotificationReadErrors[keyof NotificationsMarkNotificationReadErrors]
-
-export type NotificationsMarkNotificationReadResponses = {
-  /**
-   * Successful Response
-   */
-  200: NotificationRead
-}
-
-export type NotificationsMarkNotificationReadResponse =
-  NotificationsMarkNotificationReadResponses[keyof NotificationsMarkNotificationReadResponses]
-
-export type NotificationsMarkAllNotificationsReadData = {
-  body?: never
-  path?: never
-  query?: never
-  url: '/api/v1/notifications/mark-all-read'
-}
-
-export type NotificationsMarkAllNotificationsReadErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type NotificationsMarkAllNotificationsReadError =
-  NotificationsMarkAllNotificationsReadErrors[keyof NotificationsMarkAllNotificationsReadErrors]
-
-export type NotificationsMarkAllNotificationsReadResponses = {
-  /**
-   * Response Notifications-Mark All Notifications Read
-   *
-   * Successful Response
-   */
-  200: {
-    [key: string]: number
-  }
-}
-
-export type NotificationsMarkAllNotificationsReadResponse =
-  NotificationsMarkAllNotificationsReadResponses[keyof NotificationsMarkAllNotificationsReadResponses]
-
-export type NotificationsDismissAllNotificationsData = {
-  body?: never
-  path?: never
-  query?: never
-  url: '/api/v1/notifications/dismiss-all'
-}
-
-export type NotificationsDismissAllNotificationsErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type NotificationsDismissAllNotificationsError =
-  NotificationsDismissAllNotificationsErrors[keyof NotificationsDismissAllNotificationsErrors]
-
-export type NotificationsDismissAllNotificationsResponses = {
-  /**
-   * Response Notifications-Dismiss All Notifications
-   *
-   * Successful Response
-   */
-  200: {
-    [key: string]: number
-  }
-}
-
-export type NotificationsDismissAllNotificationsResponse =
-  NotificationsDismissAllNotificationsResponses[keyof NotificationsDismissAllNotificationsResponses]
-
-export type NotificationsDismissNotificationData = {
-  body?: never
-  path: {
-    /**
-     * Notification Id
-     */
-    notification_id: string
-  }
-  query?: never
-  url: '/api/v1/notifications/{notification_id}'
-}
-
-export type NotificationsDismissNotificationErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type NotificationsDismissNotificationError =
-  NotificationsDismissNotificationErrors[keyof NotificationsDismissNotificationErrors]
-
-export type NotificationsDismissNotificationResponses = {
-  /**
-   * Successful Response
-   */
-  204: void
-}
-
-export type NotificationsDismissNotificationResponse =
-  NotificationsDismissNotificationResponses[keyof NotificationsDismissNotificationResponses]
-
 export type NotificationsListPreferencesData = {
   body?: never
   path?: never
@@ -9108,6 +8688,426 @@ export type NotificationsTelegramWebhookResponses = {
 
 export type NotificationsTelegramWebhookResponse =
   NotificationsTelegramWebhookResponses[keyof NotificationsTelegramWebhookResponses]
+
+export type NotificationsNotificationStreamData = {
+  body?: never
+  path?: never
+  query: {
+    /**
+     * Token
+     *
+     * Bearer token for auth
+     */
+    token: string
+  }
+  url: '/api/v1/notifications/stream'
+}
+
+export type NotificationsNotificationStreamErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsNotificationStreamError =
+  NotificationsNotificationStreamErrors[keyof NotificationsNotificationStreamErrors]
+
+export type NotificationsNotificationStreamResponses = {
+  /**
+   * Successful Response
+   */
+  200: unknown
+}
+
+export type NotificationsListNotificationsData = {
+  body?: never
+  path?: never
+  query?: {
+    /**
+     * Skip
+     */
+    skip?: number
+    /**
+     * Limit
+     */
+    limit?: number
+    /**
+     * Unread Only
+     */
+    unread_only?: boolean
+  }
+  url: '/api/v1/notifications/'
+}
+
+export type NotificationsListNotificationsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsListNotificationsError =
+  NotificationsListNotificationsErrors[keyof NotificationsListNotificationsErrors]
+
+export type NotificationsListNotificationsResponses = {
+  /**
+   * Successful Response
+   */
+  200: NotificationListResponse
+}
+
+export type NotificationsListNotificationsResponse =
+  NotificationsListNotificationsResponses[keyof NotificationsListNotificationsResponses]
+
+export type NotificationsGetUnreadCountData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/unread-count'
+}
+
+export type NotificationsGetUnreadCountErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsGetUnreadCountError =
+  NotificationsGetUnreadCountErrors[keyof NotificationsGetUnreadCountErrors]
+
+export type NotificationsGetUnreadCountResponses = {
+  /**
+   * Successful Response
+   */
+  200: UnreadCountResponse
+}
+
+export type NotificationsGetUnreadCountResponse =
+  NotificationsGetUnreadCountResponses[keyof NotificationsGetUnreadCountResponses]
+
+export type NotificationsMarkNotificationReadData = {
+  body?: never
+  path: {
+    /**
+     * Notification Id
+     */
+    notification_id: string
+  }
+  query?: never
+  url: '/api/v1/notifications/{notification_id}/read'
+}
+
+export type NotificationsMarkNotificationReadErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsMarkNotificationReadError =
+  NotificationsMarkNotificationReadErrors[keyof NotificationsMarkNotificationReadErrors]
+
+export type NotificationsMarkNotificationReadResponses = {
+  /**
+   * Successful Response
+   */
+  200: NotificationRead
+}
+
+export type NotificationsMarkNotificationReadResponse =
+  NotificationsMarkNotificationReadResponses[keyof NotificationsMarkNotificationReadResponses]
+
+export type NotificationsMarkAllNotificationsReadData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/mark-all-read'
+}
+
+export type NotificationsMarkAllNotificationsReadErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsMarkAllNotificationsReadError =
+  NotificationsMarkAllNotificationsReadErrors[keyof NotificationsMarkAllNotificationsReadErrors]
+
+export type NotificationsMarkAllNotificationsReadResponses = {
+  /**
+   * Response Notifications-Mark All Notifications Read
+   *
+   * Successful Response
+   */
+  200: {
+    [key: string]: number
+  }
+}
+
+export type NotificationsMarkAllNotificationsReadResponse =
+  NotificationsMarkAllNotificationsReadResponses[keyof NotificationsMarkAllNotificationsReadResponses]
+
+export type NotificationsDismissAllNotificationsData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/notifications/dismiss-all'
+}
+
+export type NotificationsDismissAllNotificationsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsDismissAllNotificationsError =
+  NotificationsDismissAllNotificationsErrors[keyof NotificationsDismissAllNotificationsErrors]
+
+export type NotificationsDismissAllNotificationsResponses = {
+  /**
+   * Response Notifications-Dismiss All Notifications
+   *
+   * Successful Response
+   */
+  200: {
+    [key: string]: number
+  }
+}
+
+export type NotificationsDismissAllNotificationsResponse =
+  NotificationsDismissAllNotificationsResponses[keyof NotificationsDismissAllNotificationsResponses]
+
+export type NotificationsDismissNotificationData = {
+  body?: never
+  path: {
+    /**
+     * Notification Id
+     */
+    notification_id: string
+  }
+  query?: never
+  url: '/api/v1/notifications/{notification_id}'
+}
+
+export type NotificationsDismissNotificationErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type NotificationsDismissNotificationError =
+  NotificationsDismissNotificationErrors[keyof NotificationsDismissNotificationErrors]
+
+export type NotificationsDismissNotificationResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type NotificationsDismissNotificationResponse =
+  NotificationsDismissNotificationResponses[keyof NotificationsDismissNotificationResponses]
 
 export type DashboardDashboardFeedData = {
   body?: never
