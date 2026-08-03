@@ -1,0 +1,56 @@
+name: Lint Frontend
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "frontend/**"
+            - ".github/workflows/lint-frontend.yml"
+    pull_request:
+        types:
+            - opened
+            - synchronize
+        branches:
+            - main
+            - dev
+        paths:
+            - "frontend/**"
+            - ".github/workflows/lint-frontend.yml"
+
+permissions:
+    contents: read
+
+jobs:
+    lint-frontend:
+        if: github.actor != 'dependabot[bot]'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            # Must precede setup-node: `cache: pnpm` shells out to `pnpm store path`,
+            # so pnpm has to be on PATH already.
+            - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+              with:
+                  package_json_file: frontend/package.json
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version: lts/*
+                  cache: pnpm
+                  cache-dependency-path: frontend/pnpm-lock.yaml
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              working-directory: frontend
+            # NOT `pnpm lint` — that script is `eslint . --fix`, which mutates files
+            # and would let CI silently repair violations instead of failing.
+            - name: ESLint
+              run: pnpm exec eslint .
+              working-directory: frontend
+            # `src/client/` is committed, so a plain checkout is enough here;
+            # generate-client.yml separately guards it against going stale.
+            - name: Type check
+              run: pnpm type-check
+              working-directory: frontend
+            - name: Build
+              run: pnpm build-only
+              working-directory: frontend

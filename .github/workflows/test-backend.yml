@@ -46,6 +46,12 @@ jobs:
             - name: Migrate DB
               run: uv run bash scripts/prestart.sh
               working-directory: backend
+            # Fails if the SQLModel models would produce a non-empty autogenerate
+            # diff against the migration history. Runs against the DB prestart.sh
+            # just migrated, so it needs no extra service.
+            - name: Check for migration drift
+              run: uv run alembic check
+              working-directory: backend
             - name: Run tests
               run: uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
               working-directory: backend

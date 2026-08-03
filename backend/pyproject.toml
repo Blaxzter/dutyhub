@@ -84,6 +84,12 @@ keep-runtime-typing = true
 
 [tool.coverage.run]
 source = ["app"]
+# Required: without greenlet tracking, coverage cannot follow execution across
+# SQLAlchemy's greenlet boundary and async route bodies read as uncovered
+# (understates the total by ~13 points). Set here rather than on a single
+# command line so every entry point — `just test-backend`, `scripts/test.sh`,
+# and CI — reports the same number.
+concurrency = ["greenlet"]
 omit = [
     "app/api/routes/demo_data.py",
     "app/api/routes/debug.py",
