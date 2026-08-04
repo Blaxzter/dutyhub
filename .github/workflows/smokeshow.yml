@@ -28,7 +28,11 @@ jobs:
             - run: smokeshow upload backend/htmlcov
               env:
                   SMOKESHOW_GITHUB_STATUS_DESCRIPTION: Coverage {coverage-percentage}
-                  SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 90
+                  # Kept in step with `fail_under` in backend/pyproject.toml,
+                  # which is the real gate — this job only publishes the
+                  # browsable HTML report and a commit status. Raise both
+                  # together, or this status contradicts the Test Backend job.
+                  SMOKESHOW_GITHUB_COVERAGE_THRESHOLD: 95
                   SMOKESHOW_GITHUB_CONTEXT: coverage
                   SMOKESHOW_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   SMOKESHOW_GITHUB_PR_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
