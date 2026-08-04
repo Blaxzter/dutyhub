@@ -59,7 +59,11 @@ alembic upgrade head
 # Or via just:
 just migration "Add <feature>"
 just migrate
+just check-migrations   # fails if models and migrations have diverged
 ```
+
+`alembic check` also runs in the *Test Backend* CI job, so a model change without
+a matching migration fails the PR rather than surfacing at deploy time.
 
 ### API Client Generation
 

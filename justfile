@@ -49,9 +49,10 @@ format: format-backend format-frontend
 
 # ── Testing ───────────────────────────────────────────────────
 
-# Run backend tests with coverage
+# Run backend tests with coverage (delegates to the same script CI runs, so the
+# reported total cannot diverge from the CI number)
 test-backend:
-    cd backend && uv run coverage run --source=app -m pytest && uv run coverage report --show-missing
+    cd backend && uv run bash scripts/test.sh
 
 # Run frontend type check
 type-check:
@@ -99,6 +100,11 @@ migrate:
 # Create a new Alembic migration (usage: just migration "add users table")
 migration message:
     cd backend && uv run alembic revision --autogenerate -m "{{message}}"
+
+# Fail if the SQLModel models and the migration history have diverged.
+# Requires a running DB (`just dev` or `docker compose up db -d`).
+check-migrations:
+    cd backend && uv run alembic upgrade head && uv run alembic check
 
 # Seed the database with demo data
 seed:
