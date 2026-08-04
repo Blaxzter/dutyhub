@@ -54,9 +54,22 @@ format: format-backend format-frontend
 test-backend:
     cd backend && uv run bash scripts/test.sh
 
-# Run frontend type check
+# Run frontend unit tests (Vitest)
+test-frontend:
+    cd frontend && pnpm test:unit
+
+# Run frontend unit tests with coverage
+test-frontend-coverage:
+    cd frontend && pnpm test:unit:coverage
+
+# Run frontend type check (app sources, then the unit tests)
 type-check:
-    cd frontend && pnpm type-check
+    cd frontend && pnpm type-check && pnpm type-check:unit
+
+# Regenerate the golden fixtures the useShiftPreview parity tests assert against.
+# Run this whenever app/logic/shift_generator.py changes.
+dump-shift-fixtures:
+    cd backend && uv run python scripts/dump_shift_generator_fixtures.py
 
 # Run Playwright e2e tests. Extra playwright flags are passed through.
 # e.g.: just test-e2e --headed --project=chromium
