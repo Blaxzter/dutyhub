@@ -103,5 +103,6 @@ async def check_upcoming_shifts() -> int:
     return sent
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover - cron entry point; the logic it
+    # calls is covered by tests/scripts/test_check_upcoming_shifts.py
     asyncio.run(check_upcoming_shifts())

@@ -2271,70 +2271,6 @@ export const zNotificationsListNotificationTypesResponse = z
     description: 'Successful Response',
   })
 
-export const zNotificationsNotificationStreamQuery = z.object({
-  token: z.string().register(z.globalRegistry, {
-    description: 'Bearer token for auth',
-  }),
-})
-
-export const zNotificationsListNotificationsQuery = z.object({
-  skip: z.int().gte(0).optional().default(0),
-  limit: z.int().gte(1).lte(200).optional().default(50),
-  unread_only: z.boolean().optional().default(false),
-})
-
-/**
- * Successful Response
- */
-export const zNotificationsListNotificationsResponse = zNotificationListResponse
-
-/**
- * Successful Response
- */
-export const zNotificationsGetUnreadCountResponse = zUnreadCountResponse
-
-export const zNotificationsMarkNotificationReadPath = z.object({
-  notification_id: z.string(),
-})
-
-/**
- * Successful Response
- */
-export const zNotificationsMarkNotificationReadResponse = zNotificationRead
-
-/**
- * Response Notifications-Mark All Notifications Read
- *
- * Successful Response
- */
-export const zNotificationsMarkAllNotificationsReadResponse = z
-  .record(z.string(), z.int())
-  .register(z.globalRegistry, {
-    description: 'Successful Response',
-  })
-
-/**
- * Response Notifications-Dismiss All Notifications
- *
- * Successful Response
- */
-export const zNotificationsDismissAllNotificationsResponse = z
-  .record(z.string(), z.int())
-  .register(z.globalRegistry, {
-    description: 'Successful Response',
-  })
-
-export const zNotificationsDismissNotificationPath = z.object({
-  notification_id: z.string(),
-})
-
-/**
- * Successful Response
- */
-export const zNotificationsDismissNotificationResponse = z.void().register(z.globalRegistry, {
-  description: 'Successful Response',
-})
-
 /**
  * Response Notifications-List Preferences
  *
@@ -2501,6 +2437,70 @@ export const zNotificationsTelegramWebhookResponse = z
   .register(z.globalRegistry, {
     description: 'Successful Response',
   })
+
+export const zNotificationsNotificationStreamQuery = z.object({
+  token: z.string().register(z.globalRegistry, {
+    description: 'Bearer token for auth',
+  }),
+})
+
+export const zNotificationsListNotificationsQuery = z.object({
+  skip: z.int().gte(0).optional().default(0),
+  limit: z.int().gte(1).lte(200).optional().default(50),
+  unread_only: z.boolean().optional().default(false),
+})
+
+/**
+ * Successful Response
+ */
+export const zNotificationsListNotificationsResponse = zNotificationListResponse
+
+/**
+ * Successful Response
+ */
+export const zNotificationsGetUnreadCountResponse = zUnreadCountResponse
+
+export const zNotificationsMarkNotificationReadPath = z.object({
+  notification_id: z.string(),
+})
+
+/**
+ * Successful Response
+ */
+export const zNotificationsMarkNotificationReadResponse = zNotificationRead
+
+/**
+ * Response Notifications-Mark All Notifications Read
+ *
+ * Successful Response
+ */
+export const zNotificationsMarkAllNotificationsReadResponse = z
+  .record(z.string(), z.int())
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
+
+/**
+ * Response Notifications-Dismiss All Notifications
+ *
+ * Successful Response
+ */
+export const zNotificationsDismissAllNotificationsResponse = z
+  .record(z.string(), z.int())
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
+
+export const zNotificationsDismissNotificationPath = z.object({
+  notification_id: z.string(),
+})
+
+/**
+ * Successful Response
+ */
+export const zNotificationsDismissNotificationResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
 
 /**
  * Successful Response

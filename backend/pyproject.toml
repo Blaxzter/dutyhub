@@ -90,18 +90,35 @@ source = ["app"]
 # command line so every entry point — `just test-backend`, `scripts/test.sh`,
 # and CI — reports the same number.
 concurrency = ["greenlet"]
+# Every entry below is a deliberate, justified exclusion (see #127). Nothing is
+# omitted merely because it is inconvenient to test — if a module contains
+# branching business logic it belongs in the measured denominator, even at a
+# low percentage, so the gap is visible rather than hidden.
 omit = [
-    "app/api/routes/demo_data.py",
-    "app/api/routes/debug.py",
-    "app/api/routes/testing.py",
-    "app/api/routes/notifications/telegram.py",
-    "app/crud/telegram_binding.py",
-    "app/logic/notifications/channels/telegram.py",
-    "app/logic/notifications/channels/email.py",
-    "app/logic/notifications/channels/push.py",
-    "app/logic/auth0/auth0_service.py",
+    # ASGI app assembly, middleware wiring and the lifespan hook. Has no branch
+    # logic of its own and is exercised end-to-end by the Playwright and
+    # test-docker-compose CI jobs on every PR.
     "app/main.py",
+    # Dev-only diagnostics router; not mounted outside local development.
+    "app/api/routes/debug.py",
+    # Demo/seed content used for sales walkthroughs, not a product code path.
+    "app/api/routes/demo_data.py",
+    # Exists only when TESTING=true, to support the E2E suite's Auth0 bypass.
+    # Testing the test harness with the test harness is circular; the E2E suite
+    # fails loudly if these break.
+    "app/api/routes/testing.py",
+    # Thin "retry until the database answers, then exit" CLI wrappers. No
+    # branching of their own, and both run on every CI job via
+    # scripts/prestart.sh and scripts/tests-start.sh — a unit test would assert
+    # less than CI already does.
+    "app/scripts/backend_pre_start.py",
+    "app/scripts/tests_pre_start.py",
+    "app/scripts/initial_data.py",
 ]
+# NOTE: `app/scripts/check_upcoming_shifts.py` is deliberately NOT omitted. It is
+# also a cron entry point, but unlike the three above it contains real selection
+# logic (lookahead window, full-shift skip, re-notification dedupe), so it is
+# measured and tested.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
