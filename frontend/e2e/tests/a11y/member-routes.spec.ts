@@ -1,0 +1,82 @@
+/**
+ * Accessibility scans for the member (non-admin) role.
+ *
+ * A member sees a different sidebar, no admin controls and read-only variants of
+ * several pages, so the admin scans do not cover this DOM. Admin-only routes are
+ * not scanned here because the router bounces a member off them.
+ */
+import { expect, test } from '../../fixtures.js'
+import { expectNoA11yViolations } from '../../helpers/a11y.js'
+import {
+  type TaskWithShifts,
+  createTaskWithShifts,
+  deleteTask,
+  uniqueName,
+} from '../../helpers/api.js'
+
+test.describe('a11y – member routes', () => {
+  test('dashboard', async ({ memberPage: member }) => {
+    await member.goto('/app/home')
+    await expect(member.getByTestId('page-heading')).toBeVisible()
+    await expectNoA11yViolations(member, { label: 'member dashboard (/app/home)' })
+  })
+
+  test('tasks list', async ({ memberPage: member }) => {
+    await member.goto('/app/tasks')
+    await expect(member.getByTestId('page-heading')).toBeVisible()
+    await expectNoA11yViolations(member, { label: 'member tasks list (/app/tasks)' })
+  })
+
+  test('event picker', async ({ memberPage: member }) => {
+    await member.goto('/app/select-event?mode=switch')
+    await expect(member.getByTestId('page-heading')).toBeVisible()
+    await expectNoA11yViolations(member, { label: 'member event picker (/app/select-event)' })
+  })
+
+  test('my bookings', async ({ memberPage: member }) => {
+    await member.goto('/app/bookings')
+    await expect(member.getByTestId('page-heading')).toBeVisible()
+    await expectNoA11yViolations(member, { label: 'member bookings (/app/bookings)' })
+  })
+
+  test('availability', async ({ memberPage: member }) => {
+    await member.goto('/app/availability')
+    await expect(member.getByTestId('section-my-availability')).toBeVisible()
+    await expectNoA11yViolations(member, { label: 'member availability (/app/availability)' })
+  })
+
+  test('settings', async ({ memberPage: member }) => {
+    await member.goto('/app/settings')
+    await expect(member.getByTestId('page-heading')).toBeVisible()
+    await expectNoA11yViolations(member, { label: 'member settings (/app/settings)' })
+  })
+})
+
+// ── Task detail as seen by a member (no edit/delete controls) ────────────────
+
+test.describe('a11y – member task detail', () => {
+  let created: TaskWithShifts
+
+  test.beforeEach(async ({ adminPage }) => {
+    await adminPage.goto('/app/tasks')
+    created = await createTaskWithShifts(adminPage, {
+      name: uniqueName('E2E A11y Member Task'),
+      description: 'Fixture for the member accessibility scan',
+      status: 'published',
+      startTime: '10:00',
+      endTime: '12:00',
+      slotDuration: 60,
+      peoplePerShift: 5,
+    })
+  })
+
+  test.afterEach(async ({ adminPage }) => {
+    await deleteTask(adminPage, created.task.id).catch(() => {})
+  })
+
+  test('task detail', async ({ memberPage: member }) => {
+    await member.goto(`/app/tasks/${created.task.id}`)
+    await expect(member.getByRole('heading', { name: created.task.name })).toBeVisible()
+    await expectNoA11yViolations(member, { label: 'member task detail (/app/tasks/:id)' })
+  })
+})

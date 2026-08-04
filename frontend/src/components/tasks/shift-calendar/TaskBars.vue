@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 import type { CalendarTask, TaskBar } from './types'
 
 defineProps<{
@@ -11,6 +13,8 @@ const emit = defineEmits<{
   navigateTask: [task: CalendarTask]
   hover: [eventId: string | null]
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -55,6 +59,7 @@ const emit = defineEmits<{
                 ? 'calc(100% + 4px)'
                 : undefined,
       }"
+      :aria-label="t('duties.tasks.calendar.openTask', { name: bar.task.name })"
       @mouseenter="emit('hover', bar.task.id)"
       @mouseleave="emit('hover', null)"
       @click="emit('navigateTask', bar.task)"

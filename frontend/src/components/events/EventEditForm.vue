@@ -169,12 +169,12 @@ onMounted(() => {
     <CardContent>
       <form class="space-y-4" @submit.prevent="handleSubmit">
         <div class="space-y-2">
-          <Label>{{ t('duties.events.fields.name') }}</Label>
-          <Input v-model="name" required />
+          <Label for="event-name">{{ t('duties.events.fields.name') }}</Label>
+          <Input id="event-name" v-model="name" required />
         </div>
         <div class="space-y-2">
-          <Label>{{ t('duties.events.fields.description') }}</Label>
-          <Textarea v-model="description" rows="2" />
+          <Label for="event-description">{{ t('duties.events.fields.description') }}</Label>
+          <Textarea id="event-description" v-model="description" rows="2" />
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="space-y-1.5">

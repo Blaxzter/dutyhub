@@ -133,6 +133,9 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
                 <CollapsibleTrigger as-child>
                   <button
                     class="flex shrink-0 items-center justify-center rounded-r-md px-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors group-data-[collapsible=icon]:hidden"
+                    :aria-label="
+                      t('navigation.sidebar.toggleSubmenu', { title: resolveTitle(item) })
+                    "
                     @click="handleSidebarToggle(item)"
                   >
                     <ChevronRight

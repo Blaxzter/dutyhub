@@ -29,6 +29,7 @@ function handleAction(onAction: () => void) {
       <p class="flex-1 text-sm">{{ message }}</p>
       <button
         class="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+        :aria-label="dismissLabel"
         @click="emit('closeToast')"
       >
         <X class="h-4 w-4" />

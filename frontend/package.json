@@ -18,7 +18,8 @@
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
     "generate-client": "openapi-ts -s",
-    "generate-changelog": "tsx scripts/generate-changelog.ts"
+    "generate-changelog": "tsx scripts/generate-changelog.ts",
+    "generate-e2e-coverage": "tsx scripts/generate-e2e-coverage.ts"
   },
   "dependencies": {
     "@auth0/auth0-vue": "^2.9.0",
@@ -54,6 +55,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@hey-api/openapi-ts": "0.99.0",
     "@playwright/test": "~1.62.1",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",

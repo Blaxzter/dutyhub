@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 import type { CalendarEvent, EventBar } from './types'
 
 defineProps<{
@@ -11,6 +13,8 @@ const emit = defineEmits<{
   navigateGroup: [event: CalendarEvent]
   hover: [eventId: string | null]
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -49,6 +53,7 @@ const emit = defineEmits<{
                 ? 'calc(100% + 4px)'
                 : undefined,
       }"
+      :aria-label="t('duties.tasks.calendar.openEvent', { name: bar.event.name })"
       @mouseenter="emit('hover', bar.event.id)"
       @mouseleave="emit('hover', null)"
       @click="emit('navigateGroup', bar.event)"

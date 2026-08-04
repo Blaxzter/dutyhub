@@ -435,6 +435,11 @@ onMounted(loadTask)
                 {{ formatDateLabel(date.toString()) }}
                 <button
                   class="ml-1 rounded-full p-0.5 hover:bg-muted"
+                  :aria-label="
+                    t('duties.tasks.createView.removeDate', {
+                      date: formatDateLabel(date.toString()),
+                    })
+                  "
                   @click="removeSpecificDate(index)"
                 >
                   <X class="h-3 w-3" />

@@ -133,6 +133,11 @@ seed:
 generate-changelog:
     cd frontend && pnpm generate-changelog
 
+# Regenerate frontend/e2e/COVERAGE.md from `playwright test --list`.
+# Collection only — starts no stack and no browser, so it is safe to run anytime.
+generate-e2e-coverage:
+    cd frontend && pnpm generate-e2e-coverage
+
 # Regenerate the frontend API client from backend OpenAPI spec
 generate-client:
     cd backend && uv run python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../frontend/openapi.json

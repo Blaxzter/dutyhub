@@ -140,6 +140,9 @@ onMounted(loadApprovalPasswordStatus)
             <button
               type="button"
               class="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground"
+              :aria-label="
+                showPassword ? t('common.actions.hidePassword') : t('common.actions.showPassword')
+              "
               @click="showPassword = !showPassword"
             >
               <EyeOff v-if="showPassword" class="h-4 w-4" />

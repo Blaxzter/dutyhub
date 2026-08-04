@@ -9,6 +9,8 @@ import {
   UserCheck,
   UserX,
 } from '@lucide/vue'
+import { computed } from 'vue'
+
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -36,12 +38,21 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+/** Name the row's action menu after its user, so the menus aren't 20 identical "button"s. */
+const displayName = computed(() => props.user.name || props.user.email || '')
 </script>
 
 <template>
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
-      <Button variant="ghost" size="icon" class="h-8 w-8" :disabled="disabled">
+      <Button
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8"
+        :disabled="disabled"
+        :aria-label="t('admin.users.userActions', { name: displayName })"
+      >
         <EllipsisVertical class="h-4 w-4" />
       </Button>
     </DropdownMenuTrigger>

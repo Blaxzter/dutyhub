@@ -133,6 +133,7 @@ onMounted(loadApprovalPassword)
             size="icon"
             variant="outline"
             :disabled="approvalPasswordLoading || !approvalPasswordDirty"
+            :aria-label="t('admin.users.approvalPassword.save')"
             @click="saveApprovalPassword"
           >
             <Check class="h-4 w-4" />
@@ -144,6 +145,7 @@ onMounted(loadApprovalPassword)
                   size="icon"
                   variant="outline"
                   :disabled="approvalPasswordLoading"
+                  :aria-label="t('admin.users.approvalPassword.clear')"
                   @click="showClearPasswordDialog = true"
                 >
                   <Trash2 class="h-4 w-4" />

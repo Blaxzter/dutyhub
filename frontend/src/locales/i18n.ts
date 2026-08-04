@@ -1,3 +1,4 @@
+import { watch } from 'vue'
 import { createI18n } from 'vue-i18n'
 
 // Define types for the module structure
@@ -56,5 +57,25 @@ const i18n = createI18n({
     de: deMessages,
   },
 })
+
+/**
+ * Keep `<html lang>` in step with the active locale.
+ *
+ * `index.html` ships `lang="en"` so the first paint is never unlabelled, but the
+ * locale is resolved at runtime from localStorage / navigator.language and can
+ * be changed later from LanguageSwitch.vue or from the user's stored
+ * `preferred_language` in stores/auth.ts. Doing it here rather than at each of
+ * those call sites means a future third caller cannot forget.
+ *
+ * Without this, axe reports a serious `html-has-lang` violation and screen
+ * readers announce German copy with an English voice (and vice versa).
+ */
+watch(
+  i18n.global.locale,
+  (locale) => {
+    document.documentElement.lang = locale
+  },
+  { immediate: true },
+)
 
 export default i18n

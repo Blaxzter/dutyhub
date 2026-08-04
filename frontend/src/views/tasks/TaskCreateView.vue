@@ -418,21 +418,21 @@ const handleSubmit = async () => {
         <AccordionContent class="px-6 pb-6">
           <div class="space-y-4">
             <div class="space-y-2">
-              <Label>{{ t('duties.tasks.fields.name') }} *</Label>
-              <Input v-model="name" data-testid="input-task-name" />
+              <Label for="task-name">{{ t('duties.tasks.fields.name') }} *</Label>
+              <Input id="task-name" v-model="name" data-testid="input-task-name" />
             </div>
             <div class="space-y-2">
-              <Label>{{ t('duties.tasks.fields.description') }}</Label>
-              <Textarea v-model="description" :rows="3" />
+              <Label for="task-description">{{ t('duties.tasks.fields.description') }}</Label>
+              <Textarea id="task-description" v-model="description" :rows="3" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                <Label>{{ t('duties.tasks.fields.location') }}</Label>
-                <Input v-model="location" />
+                <Label for="task-location">{{ t('duties.tasks.fields.location') }}</Label>
+                <Input id="task-location" v-model="location" />
               </div>
               <div class="space-y-2">
-                <Label>{{ t('duties.tasks.fields.category') }}</Label>
-                <Input v-model="category" />
+                <Label for="task-category">{{ t('duties.tasks.fields.category') }}</Label>
+                <Input id="task-category" v-model="category" />
               </div>
             </div>
             <div class="flex justify-end pt-2">
@@ -494,12 +494,14 @@ const handleSubmit = async () => {
           <!-- Create new event -->
           <div v-if="eventMode === 'new'" class="mt-4 space-y-4 rounded-md border bg-card p-4">
             <div class="space-y-2">
-              <Label>{{ t('duties.events.fields.name') }} *</Label>
-              <Input v-model="newEventName" />
+              <Label for="new-event-name">{{ t('duties.events.fields.name') }} *</Label>
+              <Input id="new-event-name" v-model="newEventName" />
             </div>
             <div class="space-y-2">
-              <Label>{{ t('duties.events.fields.description') }}</Label>
-              <Input v-model="newEventDescription" />
+              <Label for="new-event-description">{{
+                t('duties.events.fields.description')
+              }}</Label>
+              <Input id="new-event-description" v-model="newEventDescription" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
@@ -630,6 +632,11 @@ const handleSubmit = async () => {
                   {{ formatDateLabel(date.toString()) }}
                   <button
                     class="ml-1 rounded-full p-0.5 hover:bg-muted"
+                    :aria-label="
+                      t('duties.tasks.createView.removeDate', {
+                        date: formatDateLabel(date.toString()),
+                      })
+                    "
                     @click="removeSpecificDate(index)"
                   >
                     <X class="h-3 w-3" />

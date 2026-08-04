@@ -229,7 +229,12 @@ const outsideEventWindow = computed(() => {
           <Label>{{ t('duties.shifts.fields.endTime') }}</Label>
           <TimePicker v-model="override.endTime" />
         </div>
-        <Button variant="ghost" size="icon" @click="removeOverride(index)">
+        <Button
+          variant="ghost"
+          size="icon"
+          :aria-label="t('duties.tasks.createView.schedule.removeExceptionLabel')"
+          @click="removeOverride(index)"
+        >
           <Trash2 class="h-4 w-4 text-destructive" />
         </Button>
       </div>

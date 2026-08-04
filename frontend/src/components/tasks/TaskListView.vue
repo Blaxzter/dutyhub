@@ -56,6 +56,7 @@ const authStore = useAuthStore()
             variant="ghost"
             size="icon"
             class="h-8 w-8"
+            :aria-label="t('duties.tasks.delete')"
             @click.stop="emit('delete', task)"
           >
             <Trash2 class="h-4 w-4 text-destructive" />

@@ -43,7 +43,13 @@ const dismiss = () => {
         <Button variant="outline" size="sm" @click="dismiss">
           {{ $t('preauth.cookieNotice.dismiss') }}
         </Button>
-        <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" @click="dismiss">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8 shrink-0"
+          :aria-label="$t('common.actions.close')"
+          @click="dismiss"
+        >
           <XIcon class="h-4 w-4" />
         </Button>
       </div>

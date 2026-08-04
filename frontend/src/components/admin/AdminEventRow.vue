@@ -66,6 +66,7 @@ const { t } = useI18n()
         size="icon"
         class="h-8 w-8"
         data-testid="btn-edit-event"
+        :aria-label="t('admin.events.editEvent', { name: event.name })"
         @click="$emit('edit', event)"
       >
         <Pencil class="h-4 w-4" />
@@ -75,6 +76,7 @@ const { t } = useI18n()
         size="icon"
         class="h-8 w-8"
         data-testid="btn-delete-event"
+        :aria-label="t('admin.events.deleteEvent', { name: event.name })"
         @click="$emit('delete', event)"
       >
         <Trash2 class="h-4 w-4 text-destructive" />

@@ -149,6 +149,7 @@ function onConfirmRemove() {
         <button
           :disabled="loading"
           class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-tasks-none"
+          :aria-label="t('common.actions.moreActions')"
         >
           <Loader2 v-if="loading" :size="16" class="animate-spin" />
           <EllipsisVertical v-else :size="16" />

@@ -153,6 +153,7 @@
                 "tasks": "Veranstaltungen"
             },
             "printDescription": "Druckbare Übersichtsblätter oder vollständige Veranstaltungsdetails für diese Gruppe erstellen.",
+            "removeManager": "{name} als Manager entfernen",
             "roleTaskManager": "Veranstaltungsverwalter",
             "shiftApply": "Alle Termine verschieben",
             "shiftBackward": "zurück",
@@ -310,7 +311,11 @@
         "calendar": {
             "allDay": "Ganztägig",
             "more": "weitere",
+            "next": "Nächster Zeitraum",
             "noItems": "Keine Termine für diesen Tag.",
+            "openEvent": "Event {name} öffnen",
+            "openTask": "Aufgabe {name} öffnen",
+            "previous": "Vorheriger Zeitraum",
             "today": "Heute",
             "views": {
                 "day": "Tag",
@@ -339,6 +344,7 @@
                 "shiftsOnDate": "{count} Schichten",
                 "summary": "{shifts} Schichten über {days} Tage"
             },
+            "removeDate": "{date} entfernen",
             "schedule": {
                 "addException": "Ausnahme hinzufügen",
                 "defaultEndTime": "Standard-Endzeit",
@@ -356,6 +362,7 @@
                     "short": "Kürzere letzte Schicht erstellen"
                 },
                 "removeException": "Entfernen",
+                "removeExceptionLabel": "Datumsausnahme entfernen",
                 "slotDuration": "Schichtdauer"
             },
             "sections": {
@@ -385,6 +392,7 @@
             "allCategories": "Alle Kategorien",
             "allLocations": "Alle Orte",
             "booked": "Gebucht",
+            "deleteBatch": "Schichtserie löschen",
             "deleteBatchConfirm": "Sind Sie sicher, dass Sie diesen Batch löschen möchten? Alle zugehörigen Schichten und Buchungen werden entfernt.",
             "deleteBatchSuccess": "Batch erfolgreich gelöscht.",
             "hiddenShifts": "{count} Schichten durch Filter ausgeblendet",
@@ -448,7 +456,9 @@
         "pickDate": "Datum auswählen",
         "quickView": {
             "availableShifts": "{count} verfügbar",
+            "nextDays": "Nächste Tage",
             "noMore": "Keine weiteren Veranstaltungen",
+            "previousDays": "Vorherige Tage",
             "showLess": "Weniger anzeigen",
             "showMore": "{count} weitere anzeigen"
         },

@@ -1,3 +1,6 @@
 {
+    "dateRangePicker": {
+        "clear": "Zeitraum zurücksetzen"
+    },
     "loading": "Laden..."
 }
