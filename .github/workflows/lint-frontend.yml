@@ -60,6 +60,14 @@ jobs:
             - name: Type check
               run: pnpm type-check
               working-directory: frontend
+            # Separate project: tsconfig.app.json excludes src/**/__tests__/*,
+            # so the unit tests need their own vue-tsc pass to be type-checked.
+            - name: Type check unit tests
+              run: pnpm type-check:unit
+              working-directory: frontend
+            - name: Unit tests
+              run: pnpm test:unit
+              working-directory: frontend
             - name: Build
               run: pnpm build-only
               working-directory: frontend
