@@ -28,6 +28,10 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  # diff-cover diffs against the merge base, so it needs history
+                  # rather than the default depth-1 checkout.
+                  fetch-depth: 0
             - name: Set up Python
               uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
               with:
@@ -52,8 +56,24 @@ jobs:
             - name: Check for migration drift
               run: uv run alembic check
               working-directory: backend
+            # scripts/test.sh ends with `coverage report`, and fail_under = 95 in
+            # [tool.coverage.report] makes that exit non-zero below the floor —
+            # so the aggregate gate fails THIS job rather than arriving later as
+            # a separate smokeshow status.
             - name: Run tests
               run: uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+              working-directory: backend
+            # Aggregate coverage alone lets a large PR add hundreds of uncovered
+            # lines and still pass. This gates the lines the PR actually touched,
+            # at a higher bar than the aggregate floor. Pull requests only —
+            # there is no meaningful diff for a push to main.
+            - name: Diff coverage on changed lines
+              if: github.event_name == 'pull_request'
+              run: |
+                  git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+                  uv run diff-cover coverage.xml \
+                    --compare-branch="origin/${{ github.base_ref }}" \
+                    --fail-under=90
               working-directory: backend
             - run: docker compose down -v --remove-orphans
             - name: Store coverage files

@@ -44,6 +44,11 @@ dev-dependencies = [
     "pre-commit>=4.6.1,<5.0.0",
     "coverage>=7.15.2,<8.0.0",
     "pytest-testmon>=2.2.0",
+    # Gates coverage of *changed* lines against the merge base in CI. An
+    # aggregate floor alone lets a large PR add hundreds of uncovered lines and
+    # still pass, which is how a codebase drifts down without any single PR
+    # looking bad.
+    "diff-cover>=9.6.0",
 ]
 
 [build-system]
@@ -119,6 +124,21 @@ omit = [
 # also a cron entry point, but unlike the three above it contains real selection
 # logic (lookahead window, full-shift skip, re-notification dedupe), so it is
 # measured and tested.
+
+[tool.coverage.report]
+# The aggregate floor. Measured total when this landed was 96.03%
+# (5297 statements, 210 missed) against the honest post-#127 denominator — no
+# curated `omit` list propping it up.
+#
+# Set to 95 rather than a literal round-down of 96, deliberately. #135's own
+# complaint about the old smokeshow gate was that "the project sits at exactly
+# the threshold — one uncovered branch away from flipping"; setting 96 against
+# 96.03 would recreate exactly that. One point of slack keeps an honest
+# refactor from red-lining `dev`, and the real anti-erosion mechanism is the
+# diff-cover gate on *changed* lines in test-backend.yml, which is stricter.
+#
+# Ratchet this up as coverage rises. It should never go down.
+fail_under = 95
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
