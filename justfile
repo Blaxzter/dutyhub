@@ -41,8 +41,12 @@ lint-frontend:
 format-frontend:
     cd frontend && pnpm format
 
+# Fail if the en/de locale trees have drifted apart
+check-locales:
+    node scripts/pre-commit/check_locale_parity.js
+
 # Lint everything
-lint: lint-backend lint-frontend
+lint: lint-backend lint-frontend check-locales
 
 # Format everything
 format: format-backend format-frontend
