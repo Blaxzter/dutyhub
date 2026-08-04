@@ -29,6 +29,16 @@ repos:
             files: ^frontend/src/locales/.*/.*\.json$
             pass_filenames: false
 
+          # Runs after sort-locales so the diff it reports is against sorted
+          # files. This hook is bypassable with --no-verify and does not run on
+          # PRs at all, so the same script is also a step in lint-frontend.yml.
+          - id: check-locale-parity
+            name: Check en/de locale parity
+            entry: node scripts/pre-commit/check_locale_parity.js
+            language: node
+            files: ^frontend/src/locales/.*/.*\.json$
+            pass_filenames: false
+
           - id: check-RMPC-comments
             name: Check for RMPC comments
             entry: python scripts/pre-commit/check_remove_comments.py

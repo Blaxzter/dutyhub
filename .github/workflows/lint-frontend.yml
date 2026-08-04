@@ -6,6 +6,7 @@ on:
             - main
         paths:
             - "frontend/**"
+            - "scripts/pre-commit/check_locale_parity.js"
             - ".github/workflows/lint-frontend.yml"
     pull_request:
         types:
@@ -16,6 +17,7 @@ on:
             - dev
         paths:
             - "frontend/**"
+            - "scripts/pre-commit/check_locale_parity.js"
             - ".github/workflows/lint-frontend.yml"
 
 permissions:
@@ -46,6 +48,11 @@ jobs:
             - name: ESLint
               run: pnpm exec eslint .
               working-directory: frontend
+            # Dependency-free Node, so it needs no install and runs from the
+            # repo root. The pre-commit hook alone is bypassable with
+            # --no-verify and never runs on PRs.
+            - name: Check en/de locale parity
+              run: node scripts/pre-commit/check_locale_parity.js
             # `src/changelog/generated/` is gitignored and produced by the
             # `generate-changelog` Vite plugin at buildStart. `vue-tsc` does not
             # go through Vite, so on a clean checkout the type-check fails with
