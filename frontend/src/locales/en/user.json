@@ -40,6 +40,7 @@
             },
             "copied": "URL copied to clipboard",
             "copyFailed": "Could not copy URL",
+            "copyUrl": "Copy calendar URL",
             "description": "Subscribe to your duty bookings in your favourite calendar app.",
             "disabled": "Calendar sync disabled",
             "disabledMessage": "Calendar sync is currently paused. Turn it on to subscribe to your bookings in your calendar app.",

@@ -1,3 +1,6 @@
 {
+    "dateRangePicker": {
+        "clear": "Clear date range"
+    },
     "loading": "Loading..."
 }

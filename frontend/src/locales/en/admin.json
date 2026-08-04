@@ -24,6 +24,8 @@
         "title": "Demo Data"
     },
     "events": {
+        "deleteEvent": "Delete event {name}",
+        "editEvent": "Edit event {name}",
         "expiredSection": "Expired events",
         "filters": {
             "allDates": "All dates",
@@ -112,6 +114,7 @@
             "cleared": "Approval password cleared.",
             "description": "Set an optional password that pending users can enter to approve themselves.",
             "placeholder": "Enter approval password",
+            "save": "Save approval password",
             "saved": "Approval password saved.",
             "savedAndCopied": "Approval password saved and copied to clipboard.",
             "title": "Approval Password"
@@ -170,6 +173,7 @@
         "transferAndDelete": "Reassign and delete",
         "transferNoResults": "No members found.",
         "transferToMe": "Assign them to me",
-        "transferToOther": "Assign them to another member"
+        "transferToOther": "Assign them to another member",
+        "userActions": "Actions for {name}"
     }
 }

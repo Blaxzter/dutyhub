@@ -188,7 +188,12 @@ onMounted(() => {
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <Button variant="outline" size="sm" class="sm:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              class="sm:hidden"
+              :aria-label="t('common.actions.moreActions')"
+            >
               <EllipsisVertical class="size-4" />
             </Button>
           </DropdownMenuTrigger>

@@ -237,7 +237,11 @@ onMounted(loadTasks)
           >
             <Tooltip>
               <TooltipTrigger as-child>
-                <ToggleGroupItem value="today" data-testid="btn-focus-today">
+                <ToggleGroupItem
+                  value="today"
+                  data-testid="btn-focus-today"
+                  :aria-label="t('duties.tasks.focusMode.today')"
+                >
                   <CalendarClock class="h-4 w-4" />
                 </ToggleGroupItem>
               </TooltipTrigger>
@@ -247,7 +251,11 @@ onMounted(loadTasks)
             </Tooltip>
             <Tooltip>
               <TooltipTrigger as-child>
-                <ToggleGroupItem value="first-available" data-testid="btn-focus-first-available">
+                <ToggleGroupItem
+                  value="first-available"
+                  data-testid="btn-focus-first-available"
+                  :aria-label="t('duties.tasks.focusMode.firstAvailable')"
+                >
                   <CalendarSearch class="h-4 w-4" />
                 </ToggleGroupItem>
               </TooltipTrigger>

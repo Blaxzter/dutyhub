@@ -215,6 +215,7 @@ watch(
             variant="ghost"
             size="icon"
             class="h-6 w-6"
+            :aria-label="t('duties.tasks.delete')"
             @click.stop="emit('delete', task)"
           >
             <Trash2 class="h-3.5 w-3.5 text-destructive" />

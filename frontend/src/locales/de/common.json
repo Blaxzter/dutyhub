@@ -8,6 +8,8 @@
         "delete": "Löschen",
         "edit": "Bearbeiten",
         "hide": "Verbergen",
+        "hidePassword": "Passwort verbergen",
+        "moreActions": "Weitere Aktionen",
         "next": "Weiter",
         "previous": "Vorherige",
         "publish": "Veröffentlichen",
@@ -15,6 +17,7 @@
         "save": "Speichern",
         "search": "Suchen...",
         "show": "Anzeigen",
+        "showPassword": "Passwort anzeigen",
         "submit": "Absenden"
     },
     "dialog": {

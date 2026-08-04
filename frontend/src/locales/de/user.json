@@ -40,6 +40,7 @@
             },
             "copied": "URL in die Zwischenablage kopiert",
             "copyFailed": "URL konnte nicht kopiert werden",
+            "copyUrl": "Kalender-URL kopieren",
             "description": "Abonniere deine Dienstbuchungen in deiner Kalender-App.",
             "disabled": "Kalender-Synchronisation deaktiviert",
             "disabledMessage": "Die Kalender-Synchronisation ist derzeit pausiert. Aktiviere sie, um deine Buchungen in deiner Kalender-App zu abonnieren.",

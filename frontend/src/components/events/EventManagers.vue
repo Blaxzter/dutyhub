@@ -160,6 +160,9 @@ const removeManager = async (userId: string) => {
               size="icon"
               class="size-7 text-muted-foreground hover:text-destructive"
               :disabled="removingManagerId === manager.id"
+              :aria-label="
+                t('duties.events.detail.removeManager', { name: manager.name ?? manager.email })
+              "
               @click="removeManager(manager.id)"
             >
               <X class="h-3.5 w-3.5" />

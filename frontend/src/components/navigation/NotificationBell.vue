@@ -79,7 +79,13 @@ onUnmounted(() => {
 <template>
   <Popover v-model:open="popoverOpen" @update:open="onOpen">
     <PopoverTrigger as-child>
-      <Button variant="ghost" size="icon" class="relative" data-testid="notification-bell">
+      <Button
+        variant="ghost"
+        size="icon"
+        class="relative"
+        data-testid="notification-bell"
+        :aria-label="t('notifications.openNotifications')"
+      >
         <Bell class="h-5 w-5" />
         <span
           v-if="hasUnread"
@@ -117,7 +123,13 @@ onUnmounted(() => {
           >
             <Trash2 class="h-3.5 w-3.5" />
           </Button>
-          <Button variant="ghost" size="icon" class="h-7 w-7" @click="goToPreferences">
+          <Button
+            variant="ghost"
+            size="icon"
+            class="h-7 w-7"
+            :aria-label="t('notifications.managePreferences')"
+            @click="goToPreferences"
+          >
             <Settings class="h-3.5 w-3.5" />
           </Button>
         </div>

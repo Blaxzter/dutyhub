@@ -44,7 +44,8 @@
             }
         },
         "platform": "Platform",
-        "sections": {}
+        "sections": {},
+        "toggleSubmenu": "Toggle {title} submenu"
     },
     "user": {
         "actions": {

@@ -164,6 +164,7 @@ const hasValue = computed(() => props.dateFrom !== null)
         <button
           v-if="hasValue"
           class="ml-auto rounded-sm p-0.5 hover:bg-accent"
+          :aria-label="resetLabel ?? t('utils.dateRangePicker.clear')"
           @click.stop="clearSelection"
         >
           <X class="h-3 w-3" />

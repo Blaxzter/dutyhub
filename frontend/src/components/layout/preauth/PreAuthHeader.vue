@@ -97,7 +97,9 @@ function mobileNavigate(name: string) {
 
         <Sheet v-model:open="mobileMenuOpen">
           <SheetTrigger as-child>
-            <Button variant="ghost" size="icon">
+            <!-- Icon-only: needs an explicit name or it is announced as
+                 just "button" (axe `button-name`). -->
+            <Button variant="ghost" size="icon" :aria-label="$t('preauth.layout.openMenu')">
               <MenuIcon class="h-5 w-5" />
             </Button>
           </SheetTrigger>

@@ -24,6 +24,8 @@
         "title": "Demodaten"
     },
     "events": {
+        "deleteEvent": "Event {name} löschen",
+        "editEvent": "Event {name} bearbeiten",
         "expiredSection": "Abgelaufene Veranstaltungen",
         "filters": {
             "allDates": "Alle Daten",
@@ -112,6 +114,7 @@
             "cleared": "Freigabe-Passwort gelöscht.",
             "description": "Legen Sie ein optionales Passwort fest, das wartende Benutzer eingeben können, um sich selbst freizugeben.",
             "placeholder": "Freigabe-Passwort eingeben",
+            "save": "Freigabe-Passwort speichern",
             "saved": "Freigabe-Passwort gespeichert.",
             "savedAndCopied": "Freigabe-Passwort gespeichert und in die Zwischenablage kopiert.",
             "title": "Freigabe-Passwort"
@@ -170,6 +173,7 @@
         "transferAndDelete": "Übertragen und löschen",
         "transferNoResults": "Keine Mitglieder gefunden.",
         "transferToMe": "Mir übertragen",
-        "transferToOther": "Einem anderen Mitglied übertragen"
+        "transferToOther": "Einem anderen Mitglied übertragen",
+        "userActions": "Aktionen für {name}"
     }
 }

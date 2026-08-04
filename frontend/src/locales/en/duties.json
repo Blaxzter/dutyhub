@@ -153,6 +153,7 @@
                 "tasks": "Tasks"
             },
             "printDescription": "Generate printable overview sheets or full task details for this group.",
+            "removeManager": "Remove {name} as manager",
             "roleTaskManager": "Task Manager",
             "shiftApply": "Shift all dates",
             "shiftBackward": "backward",
@@ -310,7 +311,11 @@
         "calendar": {
             "allDay": "All day",
             "more": "more",
+            "next": "Next period",
             "noItems": "Nothing scheduled for this day.",
+            "openEvent": "Open event {name}",
+            "openTask": "Open task {name}",
+            "previous": "Previous period",
             "today": "Today",
             "views": {
                 "day": "Day",
@@ -339,6 +344,7 @@
                 "shiftsOnDate": "{count} shifts",
                 "summary": "{shifts} shifts across {days} days"
             },
+            "removeDate": "Remove {date}",
             "schedule": {
                 "addException": "Add Exception",
                 "defaultEndTime": "Default End Time",
@@ -356,6 +362,7 @@
                     "short": "Create a shorter final shift"
                 },
                 "removeException": "Remove",
+                "removeExceptionLabel": "Remove date exception",
                 "slotDuration": "Shift Duration"
             },
             "sections": {
@@ -385,6 +392,7 @@
             "allCategories": "All categories",
             "allLocations": "All locations",
             "booked": "Booked",
+            "deleteBatch": "Delete shift series",
             "deleteBatchConfirm": "Are you sure you want to delete this batch? All its duty shifts and bookings will be removed.",
             "deleteBatchSuccess": "Batch deleted successfully.",
             "hiddenShifts": "{count} shifts hidden by filter",
@@ -448,7 +456,9 @@
         "pickDate": "Pick a date",
         "quickView": {
             "availableShifts": "{count} available",
+            "nextDays": "Next days",
             "noMore": "No more tasks",
+            "previousDays": "Previous days",
             "showLess": "Show less",
             "showMore": "Show {count} more"
         },

@@ -8,6 +8,8 @@
         "delete": "Delete",
         "edit": "Edit",
         "hide": "Hide",
+        "hidePassword": "Hide password",
+        "moreActions": "More actions",
         "next": "Next",
         "previous": "Previous",
         "publish": "Publish",
@@ -15,6 +17,7 @@
         "save": "Save",
         "search": "Search...",
         "show": "Show",
+        "showPassword": "Show password",
         "submit": "Submit"
     },
     "dialog": {

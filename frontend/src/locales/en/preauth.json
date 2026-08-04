@@ -154,6 +154,7 @@
         "learnMore": "Learn More",
         "nameExplainer": "WirkSam — from German \"wirksam\" (effective) and \"zusammen\" (together). Because volunteering works best when we work together.",
         "showcase": {
+            "goToSlide": "Show slide: {title}",
             "slides": {
                 "bookings": {
                     "description": "All your confirmed duties in one place — filter by upcoming, this month, or view all.",
@@ -209,7 +210,8 @@
             "goToDashboard": "Go to Dashboard",
             "howItWorks": "How It Works",
             "signIn": "Sign In"
-        }
+        },
+        "openMenu": "Open menu"
     },
     "privacy": {
         "backToHome": "Back to Home",

@@ -87,6 +87,16 @@ export default defineConfig({
           dependencies: ['test-reset'],
           testMatch: '**/tests/multi-user/**/*.spec.ts',
         },
+
+        // Accessibility tests (axe-core scans + keyboard/focus behaviour).
+        // Own project so it can be run and sharded independently:
+        //   pnpm exec playwright test --project=a11y
+        {
+          name: 'a11y',
+          use: { ...devices['Desktop Chrome'] },
+          dependencies: ['test-reset'],
+          testMatch: '**/tests/a11y/**/*.spec.ts',
+        },
       ]
     : [
         // ── Auth0 mode (default): real Auth0 login ───────────────────────
@@ -119,6 +129,15 @@ export default defineConfig({
           use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/user.json' },
           dependencies: ['auth-admin', 'auth-member'],
           testMatch: '**/tests/multi-user/**/*.spec.ts',
+        },
+
+        // Accessibility tests — scan both roles, so both logins are required.
+        // The public-page scans clear storageState per file.
+        {
+          name: 'a11y',
+          use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/user.json' },
+          dependencies: ['auth-admin', 'auth-member'],
+          testMatch: '**/tests/a11y/**/*.spec.ts',
         },
       ],
 

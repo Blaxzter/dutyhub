@@ -116,6 +116,7 @@ defineExpose({ totalHidden, maxShiftCount })
     <div class="flex items-center">
       <button
         class="flex w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+        :aria-label="t('duties.tasks.quickView.previousDays')"
         @click="emit('previous')"
       >
         <ChevronLeft class="h-4 w-4" />
@@ -145,6 +146,7 @@ defineExpose({ totalHidden, maxShiftCount })
 
       <button
         class="flex w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+        :aria-label="t('duties.tasks.quickView.nextDays')"
         @click="emit('next')"
       >
         <ChevronRight class="h-4 w-4" />

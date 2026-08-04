@@ -81,12 +81,23 @@
             <div class="mt-3 space-y-4">
               <!-- Feed URL -->
               <div class="space-y-2">
-                <label class="text-sm font-medium">
+                <label for="calendar-feed-url" class="text-sm font-medium">
                   {{ t('user.settings.calendarSync.feedUrl') }}
                 </label>
                 <div class="flex gap-2">
-                  <Input :model-value="feedSettings.feed_url" readonly class="font-mono text-xs" />
-                  <Button variant="outline" size="icon" class="shrink-0" @click="copyUrl">
+                  <Input
+                    id="calendar-feed-url"
+                    :model-value="feedSettings.feed_url"
+                    readonly
+                    class="font-mono text-xs"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    class="shrink-0"
+                    :aria-label="t('user.settings.calendarSync.copyUrl')"
+                    @click="copyUrl"
+                  >
                     <CheckIcon v-if="copied" class="h-4 w-4 text-green-600" />
                     <CopyIcon v-else class="h-4 w-4" />
                   </Button>
