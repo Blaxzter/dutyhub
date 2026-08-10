@@ -1652,6 +1652,10 @@ export type ShiftGenerationConfig = {
    * Excluded Shifts
    */
   excluded_shifts?: Array<ExcludedShift>
+  /**
+   * Specific Dates
+   */
+  specific_dates?: Array<string> | null
 }
 
 /**

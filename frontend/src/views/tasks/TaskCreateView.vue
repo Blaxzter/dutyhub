@@ -15,6 +15,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import {
   type RemainderMode,
   type ScheduleConfig,
+  eachDateInRange,
   useShiftPreview,
 } from '@/composables/useShiftPreview'
 
@@ -295,18 +296,9 @@ const availableDates = computed(() => {
       .filter((dateStr) => !overrides.value.some((o) => o.date === dateStr))
   }
 
-  const dates: string[] = []
-  const start = new Date(startDate.value.toString())
-  const end = new Date(endDate.value.toString())
-  const current = new Date(start)
-  while (current <= end) {
-    const dateStr = current.toISOString().split('T')[0]
-    if (!overrides.value.some((o) => o.date === dateStr)) {
-      dates.push(dateStr)
-    }
-    current.setDate(current.getDate() + 1)
-  }
-  return dates
+  return eachDateInRange(startDate.value.toString(), endDate.value.toString()).filter(
+    (dateStr) => !overrides.value.some((o) => o.date === dateStr),
+  )
 })
 
 // --- Form validation ---
@@ -350,6 +342,11 @@ const handleSubmit = async () => {
           const [date, start_time, end_time] = key.split('|')
           return { date, start_time: start_time + ':00', end_time: end_time + ':00' }
         }),
+        // Without this the backend walks every day between start_date and
+        // end_date, so the gap days between hand-picked dates get shifts the
+        // preview never showed (#144).
+        specific_dates:
+          dateMode.value === 'specific' ? specificDates.value.map((d) => d.toString()) : null,
       },
     }
 

@@ -6,6 +6,7 @@ import {
   type PreviewShift,
   type RemainderMode,
   type ScheduleConfig,
+  eachDateInRange,
   slotKey,
   useShiftPreview,
 } from '@/composables/useShiftPreview'
@@ -37,6 +38,7 @@ interface FixtureCase {
     eventName: string
     startDate: string
     endDate: string
+    specificDates: string[] | null
     defaultStartTime: string
     defaultEndTime: string
     shiftDurationMinutes: number
@@ -60,7 +62,7 @@ const fromFixture = (fixtureConfig: FixtureCase['config']): ScheduleConfig => ({
   eventName: fixtureConfig.eventName,
   startDate: fixtureConfig.startDate,
   endDate: fixtureConfig.endDate,
-  specificDates: undefined,
+  specificDates: fixtureConfig.specificDates ?? undefined,
   defaultStartTime: fixtureConfig.defaultStartTime,
   defaultEndTime: fixtureConfig.defaultEndTime,
   shiftDurationMinutes: fixtureConfig.shiftDurationMinutes,
@@ -94,7 +96,7 @@ const uniqueDates = (shifts: readonly PreviewShift[]): string[] => [
 describe('useShiftPreview parity with the backend shift_generator', () => {
   it('runs against every golden fixture case', () => {
     // Guards against a truncated/empty fixture file silently producing 0 tests.
-    expect(fixtureCases.length).toBeGreaterThanOrEqual(12)
+    expect(fixtureCases.length).toBeGreaterThanOrEqual(16)
     expect(fixtureCases.map((c) => c.name)).toEqual(
       expect.arrayContaining([
         'single-day-exact',
@@ -109,6 +111,10 @@ describe('useShiftPreview parity with the backend shift_generator', () => {
         'range-end-before-start',
         'day-window-inverted',
         'specific-dates-as-submitted-span',
+        'specific-dates-honoured',
+        'specific-dates-empty-list-is-no-filter',
+        'specific-dates-outside-the-span-are-ignored',
+        'specific-dates-with-override-on-a-skipped-day',
       ]),
     )
   })
@@ -121,23 +127,20 @@ describe('useShiftPreview parity with the backend shift_generator', () => {
 })
 
 // ---------------------------------------------------------------------------
-// PART 2 — known divergence: "specific dates" mode
+// PART 2 — "specific dates" mode agrees with the backend
 // ---------------------------------------------------------------------------
 
-describe('specific-dates mode diverges from what the backend will create', () => {
+describe('specific-dates mode matches what the backend will create', () => {
   /**
-   * KNOWN BUG — this block characterises current (wrong) behaviour.
+   * This block used to characterise issue #144: the wizard previewed only the
+   * hand-picked days but submitted `start_date = min`, `end_date = max` and an
+   * `excluded_shifts` list holding only the user's manual toggles, so the
+   * backend created every gap day in between — shifts nobody was shown.
    *
-   * `TaskAddShiftsView.vue` previews only the hand-picked dates, but on submit
-   * it sends `start_date = min(specificDates)`, `end_date = max(specificDates)`
-   * and an `excluded_shifts` list containing ONLY the shifts the user manually
-   * toggled off. The backend's `generate_shifts()` then walks every day in
-   * [start_date, end_date], so every gap day between the picked dates is
-   * created too — shifts the user was never shown.
-   *
-   * When this is fixed (either the view must exclude the gap days, or the API
-   * must accept the date list), these assertions MUST be updated: the preview
-   * and the backend output are then expected to agree.
+   * `ShiftGenerationConfig.specific_dates` now carries the date list, so the
+   * two agree. The assertions below are the inverted form of the ones that
+   * pinned the divergence; `specific-dates-as-submitted-span` is retained as
+   * the counter-example (a span sent WITHOUT the list still means every day).
    */
   const specificDates = ['2026-03-02', '2026-03-05']
 
@@ -162,49 +165,71 @@ describe('specific-dates mode diverges from what the backend will create', () =>
     expect(previewShifts.value).toHaveLength(4)
   })
 
-  it('the backend generates every day of the submitted span, gaps included', () => {
+  it('the backend skips the gap days when it is given the date list', () => {
+    const backend = caseByName('specific-dates-honoured')
+
+    expect(backend.config.specificDates).toEqual(specificDates)
+    expect(uniqueDates(backend.expected)).toEqual(['2026-03-02', '2026-03-05'])
+    expect(backend.expected).toHaveLength(4)
+  })
+
+  it('preview shifts match the shifts the backend will create, exactly', () => {
+    const { previewShifts } = previewOnlyPicked()
+    const backend = caseByName('specific-dates-honoured')
+
+    // The inversion of the old `not.toEqual`: the user is now shown 2 days and
+    // gets 2 days, with the same slots and titles.
+    expect(previewShifts.value).toEqual(backend.expected)
+    expect(uniqueDates(previewShifts.value)).toEqual(uniqueDates(backend.expected))
+    expect(uniqueDates(backend.expected)).not.toContain('2026-03-03')
+    expect(uniqueDates(backend.expected)).not.toContain('2026-03-04')
+  })
+
+  it('the same span without the date list still fills in every day', () => {
+    // The counter-example, and what the old submit payload produced.
     const backend = caseByName('specific-dates-as-submitted-span')
 
+    expect(backend.config.specificDates).toBeNull()
     expect(uniqueDates(backend.expected)).toEqual([
       '2026-03-02',
       '2026-03-03',
       '2026-03-04',
       '2026-03-05',
     ])
-    expect(uniqueDates(backend.expected)).toHaveLength(4)
     expect(backend.expected).toHaveLength(8)
   })
 
-  it('preview dates do NOT match the dates the backend will create (encodes the bug)', () => {
-    const { previewShifts } = previewOnlyPicked()
-    const backend = caseByName('specific-dates-as-submitted-span')
-
-    const previewDates = uniqueDates(previewShifts.value)
-    const backendDates = uniqueDates(backend.expected)
-
-    // Deliberately asserting INEQUALITY: today the user is shown 2 days and
-    // gets 4. Flip these to `toEqual` once the divergence is fixed.
-    expect(previewDates).not.toEqual(backendDates)
-    expect(backendDates).toContain('2026-03-03')
-    expect(backendDates).toContain('2026-03-04')
-    expect(previewDates).not.toContain('2026-03-03')
-    expect(previewDates).not.toContain('2026-03-04')
-
-    const unpreviewed = backend.expected.filter((s) => !previewDates.includes(s.date))
-    expect(unpreviewed).toHaveLength(4)
-  })
-
-  it('manual exclusions are the only thing the view can subtract, and they never cover gap days', () => {
+  it('manual exclusions still subtract individual slots from the picked days', () => {
     const { previewShifts, toggleShiftExclusion, excludedShifts } = previewOnlyPicked()
 
-    // The view builds `excluded_shifts` from exactly this set.
+    // The view builds `excluded_shifts` from exactly this set. Gap days are no
+    // longer its problem — `specific_dates` covers those.
     toggleShiftExclusion(previewShifts.value[0])
 
     expect([...excludedShifts.value]).toEqual(['2026-03-02|09:00|10:00'])
-    // Nothing in the exclusion set refers to 2026-03-03 / 2026-03-04, so the
-    // backend has no way to learn those days were never wanted.
     expect([...excludedShifts.value].some((key) => key.startsWith('2026-03-03'))).toBe(false)
     expect([...excludedShifts.value].some((key) => key.startsWith('2026-03-04'))).toBe(false)
+  })
+
+  it('treats an empty list as "no restriction", like the backend', () => {
+    // The trap: if `[]` meant "no days", a client always sending the field
+    // would silently create nothing in range mode.
+    const { previewShifts } = useShiftPreview(
+      ref(
+        makeConfig({
+          startDate: '2026-03-02',
+          endDate: '2026-03-04',
+          specificDates: [],
+          defaultStartTime: '09:00',
+          defaultEndTime: '11:00',
+          shiftDurationMinutes: 60,
+        }),
+      ),
+    )
+
+    expect(previewShifts.value).toEqual(
+      caseByName('specific-dates-empty-list-is-no-filter').expected,
+    )
   })
 })
 
@@ -594,24 +619,25 @@ describe('hasRemainder', () => {
 })
 
 // ---------------------------------------------------------------------------
-// A second, latent parity break: timezones behind UTC
+// Parity holds in every timezone, not just UTC and east of it
 // ---------------------------------------------------------------------------
 
-describe('date parsing in a timezone behind UTC diverges from the backend', () => {
+describe('date parsing in a timezone behind UTC', () => {
   /**
-   * KNOWN BUG — this block characterises current (wrong) behaviour.
+   * This block used to characterise issue #145. `useShiftPreview` parsed
+   * 'YYYY-MM-DD' with `new Date(str)` — UTC midnight per spec — and then read it
+   * back through the LOCAL `getFullYear`/`getMonth`/`getDate`. Anywhere west of
+   * Greenwich that lands on the previous calendar day, so every previewed date
+   * slid one day earlier while the backend created the days the user picked; in
+   * specific-dates mode the shifted strings matched nothing in the set and the
+   * preview rendered empty.
    *
-   * `useShiftPreview` parses 'YYYY-MM-DD' with `new Date(str)`, which per spec
-   * is UTC midnight, and then formats it back through the LOCAL `getFullYear` /
-   * `getMonth` / `getDate` in `formatDate()`. Anywhere west of Greenwich that
-   * lands on the previous calendar day, so every previewed date is shifted one
-   * day earlier — while the backend receives the plain date strings and creates
-   * the days the user actually picked.
+   * Parsing and formatting now both work in UTC, so the assertions below are the
+   * inverted form: the whole golden-fixture set is replayed in a negative-offset
+   * zone and must produce byte-identical output.
    *
-   * The rest of this suite therefore only passes at UTC+0 or east of it (CI and
-   * this repo's dev machines). When the composable is fixed to parse calendar
-   * dates (e.g. splitting on '-' and using `new Date(y, m - 1, d)`), delete this
-   * block — the fixture parity cases will then hold in every timezone.
+   * `delete process.env.TZ` does not restore the zone in Node 24 — hence the
+   * captured `systemTimeZone`.
    */
   const systemTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
@@ -623,18 +649,20 @@ describe('date parsing in a timezone behind UTC diverges from the backend', () =
     process.env.TZ = systemTimeZone
   })
 
-  it('shifts every previewed date one day earlier than the backend will create', () => {
-    const backend = caseByName('range-three-days')
-    const { previewShifts } = useShiftPreview(ref(fromFixture(backend.config)))
-
-    expect(uniqueDates(backend.expected)).toEqual(['2026-03-02', '2026-03-03', '2026-03-04'])
-    expect(uniqueDates(previewShifts.value)).toEqual(['2026-03-01', '2026-03-02', '2026-03-03'])
-    expect(previewShifts.value).not.toEqual(backend.expected)
+  it('is actually running in a zone behind UTC', () => {
+    // Without this the rest of the block would pass vacuously if the runtime
+    // ever stopped honouring a mid-process TZ change.
+    expect(Intl.DateTimeFormat().resolvedOptions().timeZone).toBe('America/New_York')
+    expect(new Date('2026-03-02').getDate()).toBe(1)
   })
 
-  it('drops the hand-picked dates entirely in specific-dates mode', () => {
-    // The generated date strings no longer match the `specificDates` set, so
-    // the preview silently shows nothing at all.
+  it.each(fixtureCases)('$name still matches the backend exactly', ({ config, expected }) => {
+    const { previewShifts } = useShiftPreview(ref(fromFixture(config)))
+
+    expect(previewShifts.value).toEqual(expected)
+  })
+
+  it('keeps the hand-picked dates in specific-dates mode', () => {
     const { previewShifts } = useShiftPreview(
       ref(
         makeConfig({
@@ -648,6 +676,102 @@ describe('date parsing in a timezone behind UTC diverges from the backend', () =
       ),
     )
 
-    expect(previewShifts.value).toEqual([])
+    expect(uniqueDates(previewShifts.value)).toEqual(['2026-03-02'])
+    expect(previewShifts.value).toHaveLength(2)
   })
+
+  it('does not drop the last day of a range across a DST transition', () => {
+    // 2026-03-08 is the US spring-forward. Stepping a *local*-midnight Date by
+    // a day drifts past `end` in zones whose clocks change at midnight, which
+    // is why the iteration stays in UTC.
+    const { previewShifts } = useShiftPreview(
+      ref(
+        makeConfig({
+          startDate: '2026-03-06',
+          endDate: '2026-03-10',
+          defaultStartTime: '09:00',
+          defaultEndTime: '10:00',
+          shiftDurationMinutes: 60,
+        }),
+      ),
+    )
+
+    expect(uniqueDates(previewShifts.value)).toEqual([
+      '2026-03-06',
+      '2026-03-07',
+      '2026-03-08',
+      '2026-03-09',
+      '2026-03-10',
+    ])
+  })
+})
+
+describe('eachDateInRange', () => {
+  it('is inclusive of both ends', () => {
+    expect(eachDateInRange('2026-03-02', '2026-03-05')).toEqual([
+      '2026-03-02',
+      '2026-03-03',
+      '2026-03-04',
+      '2026-03-05',
+    ])
+  })
+
+  it('returns the single day when start and end are equal', () => {
+    expect(eachDateInRange('2026-03-02', '2026-03-02')).toEqual(['2026-03-02'])
+  })
+
+  it('returns nothing when end is before start', () => {
+    expect(eachDateInRange('2026-03-05', '2026-03-02')).toEqual([])
+  })
+
+  it('crosses month and year boundaries', () => {
+    expect(eachDateInRange('2026-12-30', '2027-01-02')).toEqual([
+      '2026-12-30',
+      '2026-12-31',
+      '2027-01-01',
+      '2027-01-02',
+    ])
+  })
+
+  it('includes the leap day', () => {
+    expect(eachDateInRange('2028-02-27', '2028-03-01')).toEqual([
+      '2028-02-27',
+      '2028-02-28',
+      '2028-02-29',
+      '2028-03-01',
+    ])
+  })
+
+  it.each([
+    ['both empty', '', ''],
+    ['empty start', '', '2026-03-02'],
+    ['empty end', '2026-03-02', ''],
+    ['unparseable', 'not-a-date', '2026-03-02'],
+  ])('returns nothing for %s', (_label, start, end) => {
+    expect(eachDateInRange(start, end)).toEqual([])
+  })
+
+  it.each(['UTC', 'America/New_York', 'America/Santiago', 'Asia/Beirut', 'Pacific/Auckland'])(
+    'produces the same days in %s',
+    (timeZone) => {
+      const systemTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+      process.env.TZ = timeZone
+      try {
+        // Santiago and Beirut change their clocks at midnight, which is what
+        // broke the previous `toISOString()` + local `setDate()` loop: it
+        // emitted a duplicate day and dropped the last one.
+        expect(eachDateInRange('2026-03-06', '2026-03-10')).toEqual([
+          '2026-03-06',
+          '2026-03-07',
+          '2026-03-08',
+          '2026-03-09',
+          '2026-03-10',
+        ])
+        expect(eachDateInRange('2026-09-04', '2026-09-08')).toHaveLength(5)
+        expect(eachDateInRange('2026-11-01', '2026-11-04')).toHaveLength(4)
+      } finally {
+        process.env.TZ = systemTimeZone
+      }
+    },
+  )
 })

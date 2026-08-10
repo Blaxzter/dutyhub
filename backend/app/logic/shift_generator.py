@@ -22,17 +22,25 @@ def generate_shifts(
     category: str | None = None,
     overrides: list[ScheduleOverride] | None = None,
     excluded_shifts: list[ExcludedShift] | None = None,
+    specific_dates: list[date] | None = None,
 ) -> list[ShiftCreate]:
     """Generate a list of ShiftCreate objects for each time shift.
 
     Iterates each date in [start_date, end_date], splits each day's time range
     into shifts of shift_duration_minutes, and returns the full list.
     Per-date overrides can specify different start/end times for specific dates.
+
+    When specific_dates is a non-empty list, only those dates produce shifts and
+    every other day in the span is skipped. An empty list or None means no
+    restriction, which mirrors the frontend preview in useShiftPreview.ts.
     """
     override_map: dict[date, ScheduleOverride] = {}
     if overrides:
         for o in overrides:
             override_map[o.date] = o
+
+    # Empty means "no filter", not "no days" — see ShiftGenerationConfig.
+    date_filter: set[date] | None = set(specific_dates) if specific_dates else None
 
     # Build exclusion set for fast lookup
     exclusion_set: set[tuple[date, time, time]] = set()
@@ -45,6 +53,10 @@ def generate_shifts(
     duration = timedelta(minutes=shift_duration_minutes)
 
     while current_date <= end_date:
+        if date_filter is not None and current_date not in date_filter:
+            current_date += timedelta(days=1)
+            continue
+
         override = override_map.get(current_date)
         day_start = override.start_time if override else default_start_time
         day_end = override.end_time if override else default_end_time
