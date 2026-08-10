@@ -103,8 +103,8 @@ function slotClasses(shift: DayShiftEntry): string {
 
 function slotCountClasses(shift: DayShiftEntry): string {
   if (shift.isBookedByMe) return 'text-green-600/70 dark:text-green-400/70'
-  if (slotHasCapacity(shift)) return 'text-primary/60'
-  return 'text-muted-foreground/60'
+  if (slotHasCapacity(shift)) return 'text-primary'
+  return 'text-muted-foreground'
 }
 
 defineExpose({ totalHidden, maxShiftCount })

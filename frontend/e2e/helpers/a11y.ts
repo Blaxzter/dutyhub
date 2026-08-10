@@ -108,6 +108,26 @@ function ruleIdsWithReasons(rules: DisabledRule[]): string[] {
   })
 }
 
+/**
+ * Let any fading-in overlay finish before axe measures colours.
+ *
+ * `color-contrast` reads *computed* colours, so an element caught mid-transition
+ * is measured at whatever opacity it happens to have: the cookie notice
+ * (`transition duration-300`) reported 3.94:1 and 4.45:1 on the about and
+ * how-it-works scans, which is `text-muted-foreground` on `bg-card` composited
+ * at ~0.75 and ~0.80 — the settled pair is 7.34:1 and passes comfortably. That
+ * is an intermittent failure, not a defect, and it only became visible once
+ * #148 turned the rule on.
+ *
+ * Waiting rather than dismissing the notice: it is part of what an anonymous
+ * visitor sees, so it belongs in the scan.
+ */
+async function settleOverlays(page: Page): Promise<void> {
+  const notice = page.getByTestId('cookie-notice')
+  if ((await notice.count()) === 0) return
+  await expect(notice).toHaveCSS('opacity', '1')
+}
+
 /** Only exclude dev-only overlays that are actually on the page. */
 async function presentDevOverlays(page: Page): Promise<string[]> {
   const present: string[] = []
@@ -175,22 +195,15 @@ export function formatViolations(label: string, violations: A11yViolation[]): st
  * Rules deferred repo-wide, with the reason recorded here rather than repeated
  * at ~25 call sites. This list should only ever shrink.
  *
- * Everything else at `serious` or `critical` is enforced at zero.
+ * Empty since #148: every serious/critical rule, `color-contrast` included, is
+ * now enforced at zero. Adding an entry back needs a written reason — see
+ * {@link DisabledRule}.
  */
-const DEFERRED_RULES: readonly DisabledRule[] = [
-  {
-    id: 'color-contrast',
-    reason:
-      'Tracked in #148. The light theme fails AA (worst pair 2.2:1 against a ' +
-      '4.5:1 requirement) via four *theme tokens*, not one-off styles — so the ' +
-      'fix means darkening --muted-foreground and two badge colours, which ' +
-      'changes the appearance of every screen. That is a design decision for ' +
-      'the maintainer, not something a testing PR should decide. Every other ' +
-      'serious/critical rule is enforced. Delete this entry once #148 lands.',
-  },
-]
+const DEFERRED_RULES: readonly DisabledRule[] = []
 
 export async function scanA11y(page: Page, options: A11yScanOptions = {}): Promise<AxeResults> {
+  await settleOverlays(page)
+
   let builder = new AxeBuilder({ page }).withTags([...(options.tags ?? DEFAULT_TAGS)])
 
   for (const selector of toArray(options.include)) {

@@ -31,7 +31,7 @@ const { t } = useI18n()
       <button
         v-for="event in day.events"
         :key="'dg-' + event.id"
-        class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium bg-amber-500/15 text-amber-700 dark:text-amber-400 hover:bg-amber-500/25 transition-colors"
+        class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium bg-amber-500/15 text-amber-800 dark:text-amber-400 hover:bg-amber-500/25 transition-colors"
         @click="emit('navigateGroup', event)"
       >
         {{ event.name }}
