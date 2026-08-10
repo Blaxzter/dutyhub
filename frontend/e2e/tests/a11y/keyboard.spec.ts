@@ -57,12 +57,11 @@ test.describe('a11y – task create wizard keyboard support', () => {
     await expect(next).toBeFocused()
   })
 
-  // FIXME(#149): this test is correct and currently fails for a real reason —
-  // pressing ArrowRight on a focused calendar day wedges the renderer, so the
-  // page stops responding entirely rather than merely failing an assertion.
-  // Confirmed at 30s and 90s timeouts and with a standalone probe. Remove the
-  // `fixme` once #149 is fixed and this will verify it.
-  test.fixme('the date picker is operable with the keyboard alone', async ({ adminPage: page }) => {
+  // Regression guard for #149: the calendar grid used to render its day cells
+  // as native <button>s, which made every adjacent-month day a tab stop and let
+  // ArrowRight page the calendar forever, wedging the renderer. `tabUntilFocused`
+  // below only reaches a day at all because the grid now has a single tab stop.
+  test('the date picker is operable with the keyboard alone', async ({ adminPage: page }) => {
     await page.goto('/app/tasks/create')
 
     const dates = page.getByTestId('section-task-dates')
