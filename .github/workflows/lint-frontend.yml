@@ -80,9 +80,25 @@ jobs:
             - name: Type check unit tests
               run: pnpm type-check:unit
               working-directory: frontend
-            - name: Unit tests
-              run: pnpm test:unit
+            # `--coverage` rather than a bare `test:unit`: the per-file
+            # thresholds in vitest.config.ts only run when coverage is
+            # collected, so without this the gate silently does nothing. It
+            # exits non-zero when any covered file drops below its floor, or
+            # when a new file lands under src/lib, src/composables or
+            # src/stores with no spec — the same "fail the job that owns it"
+            # shape as the backend's fail_under.
+            - name: Unit tests with coverage gate
+              run: pnpm test:unit:coverage
               working-directory: frontend
+            # `if: always()` because the report is most useful on the run that
+            # failed the threshold check — vitest writes it before checking.
+            - name: Store coverage report
+              if: always()
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+              with:
+                  name: frontend-coverage-html
+                  path: frontend/coverage
+                  include-hidden-files: true
             - name: Build
               run: pnpm build-only
               working-directory: frontend

@@ -42,6 +42,64 @@ export default defineConfig({
         // The tests themselves, and the golden fixtures they assert against.
         'src/**/__tests__/**',
       ],
+      /**
+       * Per-file, not aggregate — and deliberately not a number fitted to
+       * today's total (#135).
+       *
+       * The distribution here is bimodal, not a bell curve: every file that has
+       * a spec is at 100% (717/717 statements), and three have no spec at all.
+       * Averaging those into one aggregate number would describe an accident of
+       * history rather than any file, let a PR pay for deleting one store's
+       * tests by covering something else, and only move when someone remembers
+       * to raise it. A per-file floor answers the two questions a PR actually
+       * raises: did this file get worse, and is this new file tested?
+       *
+       * 90 rather than 100 because the covered set is at 100% today — ten points
+       * is headroom for a branch that is genuinely awkward to reach, not slack
+       * for shipping untested code. Raise it when that stops being true.
+       *
+       * ── Why the globs look like this ──────────────────────────────────────
+       * The three modules below have no spec yet. They cannot be given their
+       * own `0` threshold entry as an exception, because vitest checks a
+       * glob-matched file against the *global* thresholds as well ("Global
+       * threshold is for all files, even if they are included by glob
+       * patterns"). So there is no global entry at all; each covered area
+       * carries the floor and names its own exceptions with `!(…)`.
+       *
+       * The exceptions are subtractions from a rule, so they stay inside the
+       * coverage `include` and keep showing up at 0% in the report — the debt
+       * stays visible instead of being excluded into silence. And because the
+       * patterns are `**`-rooted, a *newly added* file anywhere under these
+       * directories is matched, reported at 0% and fails. Deleting a name from
+       * a `!(…)` list is the ratchet; the lists should only ever shrink.
+       */
+      thresholds: {
+        perFile: true,
+
+        'src/lib/**': { statements: 90, branches: 90, functions: 90, lines: 90 },
+
+        // Exceptions:
+        //  useAuthenticatedClient — wraps the generated client with token
+        //    injection; needs the axios client and the auth store faked together.
+        //  useAdaptiveCarouselHeight — measures real element heights through a
+        //    ResizeObserver, which means nothing in jsdom's zero-height layout.
+        'src/composables/**/!(useAuthenticatedClient|useAdaptiveCarouselHeight).ts': {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+
+        // Exception: auth — Auth0 session, roles and the /users/me upsert. The
+        // largest single gap at 109 statements; needs @auth0/auth0-vue stubbed
+        // end to end, which is a mocking decision rather than just a spec file.
+        'src/stores/**/!(auth).ts': {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+      },
     },
   },
 })
