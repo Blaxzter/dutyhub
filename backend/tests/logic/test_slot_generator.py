@@ -229,3 +229,152 @@ class TestShiftGenerator:
 
         assert len(shifts) == 3
         assert all(s.start_time != time(10, 30) for s in shifts)
+
+
+class TestSpecificDates:
+    """`specific_dates` restricts generation to hand-picked days (#144).
+
+    The task wizard's "specific dates" mode lets the user pick non-contiguous
+    days. Before this existed the request could only say start=min / end=max, so
+    every gap day silently got shifts the preview never showed.
+    """
+
+    def _task_id(self) -> uuid.UUID:
+        return uuid.uuid4()
+
+    def test_only_listed_dates_are_generated(self):
+        """Gap days between the picked dates produce nothing."""
+        shifts = generate_shifts(
+            task_id=self._task_id(),
+            task_name="Test",
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 5),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[date(2026, 3, 2), date(2026, 3, 5)],
+        )
+
+        assert {s.date for s in shifts} == {date(2026, 3, 2), date(2026, 3, 5)}
+        assert len(shifts) == 4
+
+    def test_none_generates_the_whole_span(self):
+        """Omitting the list keeps the previous behaviour."""
+        shifts = generate_shifts(
+            task_id=self._task_id(),
+            task_name="Test",
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 5),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=None,
+        )
+
+        assert len({s.date for s in shifts}) == 4
+
+    def test_empty_list_is_not_a_filter(self):
+        """`[]` means "no restriction", matching `specificDates?.length` in the preview.
+
+        Treating it as "no days" would make a client that always sends the field
+        create nothing in range mode.
+        """
+        shifts = generate_shifts(
+            task_id=self._task_id(),
+            task_name="Test",
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 4),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[],
+        )
+
+        assert len({s.date for s in shifts}) == 3
+
+    def test_dates_outside_the_span_are_ignored(self):
+        """Listing days beyond [start_date, end_date] cannot widen the range."""
+        shifts = generate_shifts(
+            task_id=self._task_id(),
+            task_name="Test",
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 4),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[date(2026, 2, 27), date(2026, 3, 3), date(2026, 3, 9)],
+        )
+
+        assert {s.date for s in shifts} == {date(2026, 3, 3)}
+
+    def test_duplicate_dates_do_not_duplicate_shifts(self):
+        """The list is a set of days, not a multiplier."""
+        shifts = generate_shifts(
+            task_id=self._task_id(),
+            task_name="Test",
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 3),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[date(2026, 3, 2), date(2026, 3, 2)],
+        )
+
+        assert len(shifts) == 2
+        assert {s.date for s in shifts} == {date(2026, 3, 2)}
+
+    def test_override_on_a_skipped_day_has_no_effect(self):
+        """An override only matters if its day survives the filter."""
+        shifts = generate_shifts(
+            task_id=self._task_id(),
+            task_name="Test",
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 4),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[date(2026, 3, 2), date(2026, 3, 4)],
+            overrides=[
+                ScheduleOverride(
+                    date=date(2026, 3, 3),
+                    start_time=time(14, 0),
+                    end_time=time(17, 0),
+                ),
+                ScheduleOverride(
+                    date=date(2026, 3, 4),
+                    start_time=time(14, 0),
+                    end_time=time(16, 0),
+                ),
+            ],
+        )
+
+        assert {s.date for s in shifts} == {date(2026, 3, 2), date(2026, 3, 4)}
+        assert [s.start_time for s in shifts if s.date == date(2026, 3, 4)] == [
+            time(14, 0),
+            time(15, 0),
+        ]
+
+    def test_combines_with_excluded_shifts(self):
+        """Manual per-slot exclusions still apply on the surviving days."""
+        shifts = generate_shifts(
+            task_id=self._task_id(),
+            task_name="Test",
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 5),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[date(2026, 3, 2), date(2026, 3, 5)],
+            excluded_shifts=[
+                ExcludedShift(
+                    date=date(2026, 3, 2),
+                    start_time=time(9, 0),
+                    end_time=time(10, 0),
+                )
+            ],
+        )
+
+        assert len(shifts) == 3
+        assert not any(
+            s.date == date(2026, 3, 2) and s.start_time == time(9, 0) for s in shifts
+        )

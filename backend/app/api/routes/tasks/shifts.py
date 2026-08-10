@@ -113,6 +113,7 @@ async def create_task_with_shifts(
         category=payload.category,
         overrides=payload.schedule.overrides,
         excluded_shifts=payload.schedule.excluded_shifts,
+        specific_dates=payload.schedule.specific_dates,
     )
 
     for slot_in in slot_creates:
@@ -189,6 +190,7 @@ async def add_shifts_to_task(
         category=payload.category,
         overrides=payload.schedule.overrides,
         excluded_shifts=payload.schedule.excluded_shifts,
+        specific_dates=payload.schedule.specific_dates,
     )
 
     for slot_in in slot_creates:
@@ -272,6 +274,7 @@ async def regenerate_task_shifts(
         category=effective_category,
         overrides=payload.schedule.overrides,
         excluded_shifts=payload.schedule.excluded_shifts,
+        specific_dates=payload.schedule.specific_dates,
     )
 
     # 2. Load existing shifts with their bookings (scoped to batch if provided)

@@ -97,6 +97,15 @@ class ShiftGenerationConfig(BaseModel):
     remainder_mode: RemainderMode = "drop"
     overrides: list[ScheduleOverride] = []
     excluded_shifts: list[ExcludedShift] = []
+    #: Restrict generation to these calendar dates. The "specific dates" mode in
+    #: the task wizard lets the user pick non-contiguous days; without this the
+    #: request can only say start_date=min, end_date=max, and every day in
+    #: between gets shifts the user was never shown (#144).
+    #:
+    #: `None` and `[]` both mean "no restriction", matching the frontend
+    #: preview's `specificDates?.length ? … : null`. Dates outside
+    #: [start_date, end_date] are simply never reached.
+    specific_dates: list[dt.date] | None = None
 
     @field_validator("shift_duration_minutes")
     @classmethod

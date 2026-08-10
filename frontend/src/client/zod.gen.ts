@@ -729,6 +729,7 @@ export const zShiftGenerationConfig = z.object({
   remainder_mode: z.enum(['drop', 'short', 'extend']).optional().default('drop'),
   overrides: z.array(zScheduleOverride).optional().default([]),
   excluded_shifts: z.array(zExcludedShift).optional().default([]),
+  specific_dates: z.array(z.iso.date()).nullish(),
 })
 
 /**

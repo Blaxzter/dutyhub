@@ -31,6 +31,36 @@ export function slotKey(shift: PreviewShift): string {
 }
 
 /**
+ * Every calendar date from `startDate` to `endDate` inclusive, as 'YYYY-MM-DD'.
+ *
+ * The backend counterpart is `while current_date <= end_date: … += timedelta(days=1)`
+ * over `datetime.date`, which has no timezone at all. The equivalent in JS is to
+ * stay in UTC end to end: `new Date('2026-03-02')` is UTC midnight per spec, so
+ * reading it back with the *local* getFullYear/getMonth/getDate slid every
+ * generated date one day earlier anywhere west of Greenwich (#145).
+ *
+ * UTC rather than local parsing, because local midnight is not DST-safe: in
+ * zones whose clocks change at midnight (America/Santiago, Asia/Beirut, …) a
+ * local-midnight Date stepped by `setDate` drifts to 01:00 and then compares
+ * past `end`, dropping the last day of the range. UTC has no such transitions.
+ *
+ * Exported because the per-date override pickers in the task create / edit /
+ * add-shifts views each had their own copy of this loop.
+ */
+export function eachDateInRange(startDate: string, endDate: string): string[] {
+  const current = parseCalendarDate(startDate)
+  const end = parseCalendarDate(endDate)
+  if (Number.isNaN(current.getTime()) || Number.isNaN(end.getTime())) return []
+
+  const dates: string[] = []
+  while (current <= end) {
+    dates.push(formatDate(current))
+    current.setUTCDate(current.getUTCDate() + 1)
+  }
+  return dates
+}
+
+/**
  * Composable that generates a client-side preview of duty shifts
  * from a schedule configuration. Mirrors the backend shift_generator logic.
  */
@@ -55,17 +85,9 @@ export function useShiftPreview(config: Ref<ScheduleConfig>) {
       ? new Set(config.value.specificDates)
       : null
 
-    const current = new Date(startDate)
-    const end = new Date(endDate)
-
-    while (current <= end) {
-      const dateStr = formatDate(current)
-
+    for (const dateStr of eachDateInRange(startDate, endDate)) {
       // If specific dates are set, skip dates not in the list
-      if (specificDatesSet && !specificDatesSet.has(dateStr)) {
-        current.setDate(current.getDate() + 1)
-        continue
-      }
+      if (specificDatesSet && !specificDatesSet.has(dateStr)) continue
 
       const override = overrideMap.get(dateStr)
       const dayStart = override ? override.startTime : defaultStartTime
@@ -80,8 +102,6 @@ export function useShiftPreview(config: Ref<ScheduleConfig>) {
         config.value.remainderMode,
       )
       shifts.push(...dayShifts)
-
-      current.setDate(current.getDate() + 1)
     }
 
     return shifts
@@ -147,15 +167,8 @@ export function useShiftPreview(config: Ref<ScheduleConfig>) {
       ? new Set(config.value.specificDates)
       : null
 
-    const current = new Date(startDate)
-    const end = new Date(endDate)
-
-    while (current <= end) {
-      const dateStr = formatDate(current)
-      if (specificDatesSet && !specificDatesSet.has(dateStr)) {
-        current.setDate(current.getDate() + 1)
-        continue
-      }
+    for (const dateStr of eachDateInRange(startDate, endDate)) {
+      if (specificDatesSet && !specificDatesSet.has(dateStr)) continue
 
       const override = overrideMap.get(dateStr)
       const dayStart = override ? override.startTime : defaultStartTime
@@ -164,7 +177,6 @@ export function useShiftPreview(config: Ref<ScheduleConfig>) {
       if (totalMinutes > 0 && totalMinutes % shiftDurationMinutes !== 0) {
         return true
       }
-      current.setDate(current.getDate() + 1)
     }
 
     return false
@@ -183,10 +195,16 @@ export function useShiftPreview(config: Ref<ScheduleConfig>) {
   }
 }
 
+/** 'YYYY-MM-DD' → a Date pinned to UTC midnight. See {@link eachDateInRange}. */
+function parseCalendarDate(value: string): Date {
+  return new Date(`${value}T00:00:00Z`)
+}
+
+/** The inverse of {@link parseCalendarDate}; the two must agree on UTC. */
 function formatDate(d: Date): string {
-  const year = d.getFullYear()
-  const month = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
+  const year = d.getUTCFullYear()
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 

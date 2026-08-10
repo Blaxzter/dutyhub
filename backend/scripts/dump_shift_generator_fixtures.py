@@ -49,6 +49,7 @@ def _case(
     shift_duration_minutes: int,
     remainder_mode: str = "drop",
     overrides: list[ScheduleOverride] | None = None,
+    specific_dates: list[date] | None = None,
 ) -> dict[str, Any]:
     shifts = generate_shifts(
         task_id=TASK_ID,
@@ -61,6 +62,7 @@ def _case(
         people_per_shift=1,
         remainder_mode=remainder_mode,
         overrides=overrides,
+        specific_dates=specific_dates,
     )
     return {
         "name": name,
@@ -73,6 +75,14 @@ def _case(
             "defaultEndTime": default_end_time.strftime("%H:%M"),
             "shiftDurationMinutes": shift_duration_minutes,
             "remainderMode": remainder_mode,
+            # None and [] are distinct in the JSON but mean the same thing to
+            # both generators ("no restriction"); the fixtures carry both so the
+            # frontend parity run exercises each.
+            "specificDates": (
+                None
+                if specific_dates is None
+                else [d.isoformat() for d in specific_dates]
+            ),
             "overrides": [
                 {
                     "date": o.date.isoformat(),
@@ -207,23 +217,91 @@ def build() -> list[dict[str, Any]]:
             default_end_time=time(10, 0),
             shift_duration_minutes=60,
         ),
-        # Specific-dates mode: the frontend previews ONLY the chosen dates, but the
-        # payload it submits carries start_date=min / end_date=max with no
-        # per-date exclusions, so the backend fills in the gap days too. This
-        # fixture captures what the backend ACTUALLY produces for such a payload
-        # — see the accompanying spec, which asserts the divergence rather than
-        # pretending the two agree.
+        # Specific-dates mode, before #144: the wizard previewed only the chosen
+        # days but submitted start=min / end=max with no per-date exclusions, so
+        # the backend filled in the gap days too. Kept as the counter-example —
+        # a span with no specific_dates still means "every day in it".
         _case(
             "specific-dates-as-submitted-span",
             description=(
-                "What the backend generates for a 'specific dates' submission "
-                "(2026-03-02, 03-05): start=min, end=max, no exclusions."
+                "A 'specific dates' span submitted WITHOUT specific_dates "
+                "(2026-03-02, 03-05): every day between them is generated."
             ),
             start_date=date(2026, 3, 2),
             end_date=date(2026, 3, 5),
             default_start_time=time(9, 0),
             default_end_time=time(11, 0),
             shift_duration_minutes=60,
+        ),
+        # …and the same span WITH the date list, which is what the wizard sends
+        # now. The preview and the generator must agree exactly on this one.
+        _case(
+            "specific-dates-honoured",
+            description=(
+                "The same span carrying specific_dates: only 2026-03-02 and "
+                "03-05 get shifts, the gap days are skipped."
+            ),
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 5),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[date(2026, 3, 2), date(2026, 3, 5)],
+        ),
+        # The trap this pair guards: an empty list must not mean "no days".
+        # The frontend checks `specificDates?.length`, so [] falls through to
+        # the unfiltered path; the generator has to agree or a client sending
+        # `specific_dates: []` in range mode would silently create nothing.
+        _case(
+            "specific-dates-empty-list-is-no-filter",
+            description="An empty specific_dates list generates the whole span.",
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 4),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[],
+        ),
+        # Dates outside [start_date, end_date] are simply never reached, so the
+        # generator must not produce them.
+        _case(
+            "specific-dates-outside-the-span-are-ignored",
+            description=(
+                "specific_dates listing days beyond the span only yields the "
+                "ones inside it."
+            ),
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 4),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[date(2026, 2, 27), date(2026, 3, 3), date(2026, 3, 9)],
+        ),
+        # A skipped day's override must have no effect at all.
+        _case(
+            "specific-dates-with-override-on-a-skipped-day",
+            description=(
+                "An override on a day outside specific_dates is ignored, and "
+                "one on a listed day still applies."
+            ),
+            start_date=date(2026, 3, 2),
+            end_date=date(2026, 3, 4),
+            default_start_time=time(9, 0),
+            default_end_time=time(11, 0),
+            shift_duration_minutes=60,
+            specific_dates=[date(2026, 3, 2), date(2026, 3, 4)],
+            overrides=[
+                ScheduleOverride(
+                    date=date(2026, 3, 3),
+                    start_time=time(14, 0),
+                    end_time=time(17, 0),
+                ),
+                ScheduleOverride(
+                    date=date(2026, 3, 4),
+                    start_time=time(14, 0),
+                    end_time=time(16, 0),
+                ),
+            ],
         ),
     ]
 

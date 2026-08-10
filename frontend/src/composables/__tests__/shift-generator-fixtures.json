@@ -13,6 +13,7 @@
         "defaultEndTime": "12:00",
         "shiftDurationMinutes": 30,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": []
       },
       "expected": [
@@ -53,6 +54,7 @@
         "defaultEndTime": "12:20",
         "shiftDurationMinutes": 60,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": []
       },
       "expected": [
@@ -81,6 +83,7 @@
         "defaultEndTime": "12:20",
         "shiftDurationMinutes": 60,
         "remainderMode": "short",
+        "specificDates": null,
         "overrides": []
       },
       "expected": [
@@ -115,6 +118,7 @@
         "defaultEndTime": "12:20",
         "shiftDurationMinutes": 60,
         "remainderMode": "extend",
+        "specificDates": null,
         "overrides": []
       },
       "expected": [
@@ -143,6 +147,7 @@
         "defaultEndTime": "10:20",
         "shiftDurationMinutes": 60,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": []
       },
       "expected": []
@@ -158,6 +163,7 @@
         "defaultEndTime": "10:20",
         "shiftDurationMinutes": 60,
         "remainderMode": "short",
+        "specificDates": null,
         "overrides": []
       },
       "expected": [
@@ -180,6 +186,7 @@
         "defaultEndTime": "11:00",
         "shiftDurationMinutes": 60,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": []
       },
       "expected": [
@@ -232,6 +239,7 @@
         "defaultEndTime": "10:00",
         "shiftDurationMinutes": 30,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": []
       },
       "expected": [
@@ -296,6 +304,7 @@
         "defaultEndTime": "11:00",
         "shiftDurationMinutes": 60,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": [
           {
             "date": "2026-03-03",
@@ -360,6 +369,7 @@
         "defaultEndTime": "11:00",
         "shiftDurationMinutes": 60,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": []
       },
       "expected": []
@@ -375,13 +385,14 @@
         "defaultEndTime": "10:00",
         "shiftDurationMinutes": 60,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": []
       },
       "expected": []
     },
     {
       "name": "specific-dates-as-submitted-span",
-      "description": "What the backend generates for a 'specific dates' submission (2026-03-02, 03-05): start=min, end=max, no exclusions.",
+      "description": "A 'specific dates' span submitted WITHOUT specific_dates (2026-03-02, 03-05): every day between them is generated.",
       "config": {
         "eventName": "Cleanup",
         "startDate": "2026-03-02",
@@ -390,6 +401,7 @@
         "defaultEndTime": "11:00",
         "shiftDurationMinutes": 60,
         "remainderMode": "drop",
+        "specificDates": null,
         "overrides": []
       },
       "expected": [
@@ -440,6 +452,191 @@
           "startTime": "10:00",
           "endTime": "11:00",
           "title": "Cleanup 10:00-11:00"
+        }
+      ]
+    },
+    {
+      "name": "specific-dates-honoured",
+      "description": "The same span carrying specific_dates: only 2026-03-02 and 03-05 get shifts, the gap days are skipped.",
+      "config": {
+        "eventName": "Cleanup",
+        "startDate": "2026-03-02",
+        "endDate": "2026-03-05",
+        "defaultStartTime": "09:00",
+        "defaultEndTime": "11:00",
+        "shiftDurationMinutes": 60,
+        "remainderMode": "drop",
+        "specificDates": [
+          "2026-03-02",
+          "2026-03-05"
+        ],
+        "overrides": []
+      },
+      "expected": [
+        {
+          "date": "2026-03-02",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "Cleanup 09:00-10:00"
+        },
+        {
+          "date": "2026-03-02",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "title": "Cleanup 10:00-11:00"
+        },
+        {
+          "date": "2026-03-05",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "Cleanup 09:00-10:00"
+        },
+        {
+          "date": "2026-03-05",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "title": "Cleanup 10:00-11:00"
+        }
+      ]
+    },
+    {
+      "name": "specific-dates-empty-list-is-no-filter",
+      "description": "An empty specific_dates list generates the whole span.",
+      "config": {
+        "eventName": "Cleanup",
+        "startDate": "2026-03-02",
+        "endDate": "2026-03-04",
+        "defaultStartTime": "09:00",
+        "defaultEndTime": "11:00",
+        "shiftDurationMinutes": 60,
+        "remainderMode": "drop",
+        "specificDates": [],
+        "overrides": []
+      },
+      "expected": [
+        {
+          "date": "2026-03-02",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "Cleanup 09:00-10:00"
+        },
+        {
+          "date": "2026-03-02",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "title": "Cleanup 10:00-11:00"
+        },
+        {
+          "date": "2026-03-03",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "Cleanup 09:00-10:00"
+        },
+        {
+          "date": "2026-03-03",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "title": "Cleanup 10:00-11:00"
+        },
+        {
+          "date": "2026-03-04",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "Cleanup 09:00-10:00"
+        },
+        {
+          "date": "2026-03-04",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "title": "Cleanup 10:00-11:00"
+        }
+      ]
+    },
+    {
+      "name": "specific-dates-outside-the-span-are-ignored",
+      "description": "specific_dates listing days beyond the span only yields the ones inside it.",
+      "config": {
+        "eventName": "Cleanup",
+        "startDate": "2026-03-02",
+        "endDate": "2026-03-04",
+        "defaultStartTime": "09:00",
+        "defaultEndTime": "11:00",
+        "shiftDurationMinutes": 60,
+        "remainderMode": "drop",
+        "specificDates": [
+          "2026-02-27",
+          "2026-03-03",
+          "2026-03-09"
+        ],
+        "overrides": []
+      },
+      "expected": [
+        {
+          "date": "2026-03-03",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "Cleanup 09:00-10:00"
+        },
+        {
+          "date": "2026-03-03",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "title": "Cleanup 10:00-11:00"
+        }
+      ]
+    },
+    {
+      "name": "specific-dates-with-override-on-a-skipped-day",
+      "description": "An override on a day outside specific_dates is ignored, and one on a listed day still applies.",
+      "config": {
+        "eventName": "Cleanup",
+        "startDate": "2026-03-02",
+        "endDate": "2026-03-04",
+        "defaultStartTime": "09:00",
+        "defaultEndTime": "11:00",
+        "shiftDurationMinutes": 60,
+        "remainderMode": "drop",
+        "specificDates": [
+          "2026-03-02",
+          "2026-03-04"
+        ],
+        "overrides": [
+          {
+            "date": "2026-03-03",
+            "startTime": "14:00",
+            "endTime": "17:00"
+          },
+          {
+            "date": "2026-03-04",
+            "startTime": "14:00",
+            "endTime": "16:00"
+          }
+        ]
+      },
+      "expected": [
+        {
+          "date": "2026-03-02",
+          "startTime": "09:00",
+          "endTime": "10:00",
+          "title": "Cleanup 09:00-10:00"
+        },
+        {
+          "date": "2026-03-02",
+          "startTime": "10:00",
+          "endTime": "11:00",
+          "title": "Cleanup 10:00-11:00"
+        },
+        {
+          "date": "2026-03-04",
+          "startTime": "14:00",
+          "endTime": "15:00",
+          "title": "Cleanup 14:00-15:00"
+        },
+        {
+          "date": "2026-03-04",
+          "startTime": "15:00",
+          "endTime": "16:00",
+          "title": "Cleanup 15:00-16:00"
         }
       ]
     }

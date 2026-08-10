@@ -100,6 +100,18 @@ class TestShiftGenerationConfig:
                 default_end_time=dt.time(17, 0),
             )
 
+    def test_specific_dates_defaults_to_none(self):
+        assert _schedule().specific_dates is None
+
+    def test_specific_dates_parses_iso_strings(self):
+        cfg = _schedule(specific_dates=["2026-03-02", "2026-03-05"])
+
+        assert cfg.specific_dates == [dt.date(2026, 3, 2), dt.date(2026, 3, 5)]
+
+    def test_specific_dates_rejects_a_non_date(self):
+        with pytest.raises(ValidationError, match="specific_dates"):
+            _schedule(specific_dates=["not-a-date"])
+
 
 class TestTaskCreateWithShifts:
     def test_valid(self):
