@@ -104,7 +104,7 @@ const navigateToAbout = () => {
         <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
           {{ $t('preauth.landing.subtitle') }}
         </p>
-        <p class="text-sm text-muted-foreground/70 italic max-w-xl mx-auto">
+        <p class="text-sm text-muted-foreground italic max-w-xl mx-auto">
           {{ $t('preauth.landing.nameExplainer') }}
         </p>
       </div>

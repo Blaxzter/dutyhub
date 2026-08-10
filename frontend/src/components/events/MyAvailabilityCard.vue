@@ -139,7 +139,7 @@ const daysWord = computed(() => t('duties.availability.days'))
             {{ daysWord }}
           </span>
         </div>
-        <div class="text-primary/70 mt-1 text-[11px]">
+        <div class="text-primary mt-1 text-[11px]">
           {{ t('duties.availability.summaryHint') }}
         </div>
       </div>
@@ -185,7 +185,7 @@ const daysWord = computed(() => t('duties.availability.days'))
         <div class="text-primary text-lg font-semibold tracking-tight">
           {{ t('duties.availability.fullyAvailableDays', { count: days.length }) }}
         </div>
-        <div class="text-primary/80 mt-1 text-[12px]">
+        <div class="text-primary mt-1 text-[12px]">
           {{ t('duties.availability.fullyAvailableHint') }}
         </div>
       </div>

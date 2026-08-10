@@ -30,7 +30,11 @@ const dismiss = () => {
     leave-active-class="transition duration-200 ease-in"
     leave-to-class="translate-y-full opacity-0"
   >
-    <div v-if="visible" class="fixed bottom-0 inset-x-0 z-50 p-4 pointer-tasks-none">
+    <div
+      v-if="visible"
+      data-testid="cookie-notice"
+      class="fixed bottom-0 inset-x-0 z-50 p-4 pointer-tasks-none"
+    >
       <div
         class="max-w-lg mx-auto bg-card border rounded-lg shadow-lg p-4 flex items-center gap-3 pointer-tasks-auto"
       >

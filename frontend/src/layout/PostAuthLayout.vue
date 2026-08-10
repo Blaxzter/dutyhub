@@ -78,7 +78,7 @@ function goToChangelog() {
 
       <footer
         data-testid="layout-footer"
-        class="flex items-center justify-center gap-3 px-4 py-1.5 text-xs text-muted-foreground/60"
+        class="flex items-center justify-center gap-3 px-4 py-1.5 text-xs text-muted-foreground"
       >
         <RouterLink :to="{ name: 'privacy' }" class="hover:text-muted-foreground transition-colors">
           {{ $t('preauth.layout.footer.privacy') }}

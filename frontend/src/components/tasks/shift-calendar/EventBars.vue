@@ -30,7 +30,7 @@ const { t } = useI18n()
     }"
   >
     <button
-      class="flex h-full w-full items-center truncate px-1.5 text-left text-xs font-medium text-amber-700 dark:text-amber-400 transition-colors"
+      class="flex h-full w-full items-center truncate px-1.5 text-left text-xs font-medium text-amber-800 dark:text-amber-400 transition-colors"
       :class="[
         bar.isStart && bar.isEnd
           ? 'rounded'
