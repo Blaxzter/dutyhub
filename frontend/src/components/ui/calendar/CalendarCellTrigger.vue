@@ -12,7 +12,21 @@ import { cn } from '@/lib/utils'
 const props = withDefaults(
   defineProps<CalendarCellTriggerProps & { class?: HTMLAttributes['class'] }>(),
   {
-    as: 'button',
+    // Keep reka-ui's own default of `div`. It renders `role="button"` and drives
+    // the grid with a roving tabindex: 0 on the focused day, -1 on the other
+    // days of the month, and *no tabindex attribute at all* on days that are
+    // disabled or belong to a neighbouring month. A native <button> is focusable
+    // without a tabindex, so rendering one — as the shadcn-vue port does — turned
+    // every adjacent-month and disabled day back into a tab stop (12 of them in a
+    // plain month view instead of 1).
+    //
+    // That is not just noisy: it wedges the tab. reka's arrow-key handler looks
+    // for the neighbouring day with `[data-value=…]:not([data-outside-view])`,
+    // and a day next to an adjacent-month day never matches — so it pages the
+    // calendar and retries through `nextTick` with the same origin day, forever,
+    // starving the microtask queue (#149). DateRangePicker's
+    // RangeCalendarCellTrigger already leaves this at `div` and is unaffected.
+    as: 'div',
   },
 )
 
