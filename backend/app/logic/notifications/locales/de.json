@@ -13,7 +13,7 @@
   },
   "booking.reminder": {
     "title": "Bevorstehende Buchung",
-    "body": "Ihre Buchung \u201e{slot_title}\u201c beginnt {time_until}.\n\n\ud83d\udcc5 {date} \u23f0 {start_time}\u2013{end_time}\n\ud83c\udfe0 {location}"
+    "body": "Ihre Buchung „{slot_title}“ beginnt {time_until}.\n\n📅 {date} ⏰ {start_time}–{end_time}\n🏠 {location}"
   },
   "booking.cancelled_by_admin": {
     "title": "Buchung durch Admin storniert",
@@ -31,21 +31,53 @@
     "title": "Neue Taskgruppe veröffentlicht",
     "body": "Die Taskgruppe „{event_name}“ wurde veröffentlicht."
   },
-  "user.registered": {
-    "title": "Neuer Benutzer registriert",
-    "body": "Ein neuer Benutzer „{name}“ hat sich registriert und wartet auf Freigabe."
-  },
-  "user.approved": {
-    "title": "Konto genehmigt",
-    "body": "Ihr Konto wurde genehmigt! Sie können jetzt alle Funktionen nutzen."
-  },
-  "user.rejected": {
-    "title": "Konto abgelehnt",
-    "body": "Ihre Kontoanfrage wurde abgelehnt.{detail}"
-  },
   "email": {
     "view_details": "Details anzeigen",
     "footer_text": "Sie haben diese Nachricht aufgrund Ihrer Benachrichtigungseinstellungen erhalten.",
     "manage_preferences": "Einstellungen verwalten"
+  },
+  "event.invitation": {
+    "title": "Einladung zu einem Event",
+    "body": "Du wurdest zu „{event_name}“ eingeladen."
+  },
+  "event.invitation_accepted": {
+    "title": "Einladung angenommen",
+    "body": "{name} ist „{event_name}“ beigetreten."
+  },
+  "event.join_requested": {
+    "title": "Beitrittsanfrage",
+    "body": "{name} möchte „{event_name}“ beitreten."
+  },
+  "event.join_approved": {
+    "title": "Du bist dabei",
+    "body": "Deine Anfrage für „{event_name}“ wurde angenommen."
+  },
+  "event.join_declined": {
+    "title": "Beitrittsanfrage abgelehnt",
+    "body": "Deine Anfrage für „{event_name}“ wurde abgelehnt."
+  },
+  "event.role_changed": {
+    "title": "Rolle geändert",
+    "body": "Du bist jetzt {role} in „{event_name}“."
+  },
+  "role.owner": {
+    "title": "Eigentümer:in",
+    "body": ""
+  },
+  "role.admin": {
+    "title": "Organisator:in",
+    "body": ""
+  },
+  "role.member": {
+    "title": "Mitglied",
+    "body": ""
+  },
+  "user.reinstated": {
+    "title": "Konto wiederhergestellt",
+    "body": "Dein Konto wurde wiederhergestellt. Willkommen zurück."
+  },
+  "user.suspended": {
+    "title": "Konto gesperrt",
+    "body": "Dein Konto wurde gesperrt.{detail}"
   }
 }

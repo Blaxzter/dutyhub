@@ -8,11 +8,31 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.event import event as crud_event
+from app.crud.event_membership import event_membership as crud_membership
 from app.crud.task import task as crud_task
 from app.crud.user import user as crud_user
 from app.models.event import Event
 from app.models.task import Task
 from app.models.user import User
+
+
+@pytest_asyncio.fixture
+async def owned_event(
+    db_session: AsyncSession, test_user: User, test_event: Event
+) -> Event:
+    """Make ``test_user`` the owner of ``test_event``.
+
+    Ownership is a membership row now, not just ``created_by_id``, so the
+    transfer flow has to move both — this fixture sets up the "before".
+    """
+    await crud_membership.upsert(
+        db_session, user_id=test_user.id, event_id=test_event.id, role="owner"
+    )
+    test_event.created_by_id = test_user.id
+    db_session.add(test_event)
+    await db_session.flush()
+    await db_session.refresh(test_event)
+    return test_event
 
 
 @pytest_asyncio.fixture
@@ -37,7 +57,7 @@ class TestOwnedContent:
         self,
         async_client: AsyncClient,
         test_user: User,
-        test_event: Event,
+        owned_event: Event,
         test_task: Task,
         as_admin: None,
     ):
@@ -81,7 +101,7 @@ class TestTransferOwnership:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        owned_event: Event,
         test_task: Task,
         transfer_target_user: User,
         as_admin: None,
@@ -95,9 +115,9 @@ class TestTransferOwnership:
         assert data["events_transferred"] == 1
         assert data["tasks_transferred"] == 1
 
-        await db_session.refresh(test_event)
+        await db_session.refresh(owned_event)
         await db_session.refresh(test_task)
-        assert test_event.created_by_id == transfer_target_user.id
+        assert owned_event.created_by_id == transfer_target_user.id
         assert test_task.created_by_id == transfer_target_user.id
 
     async def test_transfer_nothing_owned_is_noop(
@@ -185,7 +205,7 @@ class TestTransferOwnership:
         async_client: AsyncClient,
         test_user: User,
         transfer_target_user: User,
-        as_task_manager: None,
+        as_event_admin: None,
     ):
         response = await async_client.post(
             f"/api/v1/users/{test_user.id}/transfer-ownership",
@@ -201,7 +221,7 @@ class TestGuardedDelete:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        owned_event: Event,
         test_task: Task,
         as_admin: None,
     ):
@@ -217,7 +237,7 @@ class TestGuardedDelete:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        owned_event: Event,
         test_task: Task,
         transfer_target_user: User,
         as_admin: None,
@@ -233,7 +253,7 @@ class TestGuardedDelete:
         assert deleted is None
 
         # Owned content survived and now belongs to the target
-        event = await crud_event.get(db_session, id=test_event.id)
+        event = await crud_event.get(db_session, id=owned_event.id)
         task = await crud_task.get(db_session, id=test_task.id)
         assert event is not None
         assert task is not None
@@ -245,7 +265,7 @@ class TestGuardedDelete:
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
-        test_event: Event,
+        owned_event: Event,
         test_inactive_user: User,
         as_admin: None,
     ):

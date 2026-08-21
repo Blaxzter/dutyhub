@@ -15,13 +15,13 @@ import Badge from '@/components/ui/badge/Badge.vue'
 import CreateEventDialog, {
   type CreateEventPayload,
 } from '@/components/select-event/CreateEventDialog.vue'
-import EventPickerList from '@/components/select-event/EventPickerList.vue'
+import EventPickerList, { type PickerTab } from '@/components/select-event/EventPickerList.vue'
 import NotificationSetupStep from '@/components/select-event/NotificationSetupStep.vue'
-import type { EventStats } from '@/components/select-event/SelectableEventCard.vue'
 import SelectEventHeroPane, {
   type SelectEventMode,
 } from '@/components/select-event/SelectEventHeroPane.vue'
 import SelectEventTopBar from '@/components/select-event/SelectEventTopBar.vue'
+import type { EventStats } from '@/components/select-event/SelectableEventCard.vue'
 
 import type { EventListResponse, EventRead, TaskFeedResponse } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
@@ -54,24 +54,29 @@ const stripTranslateClass = computed(() => {
 })
 
 const events = ref<EventRead[]>([])
+const discoverEvents = ref<EventRead[]>([])
 const eventStats = ref<Record<string, EventStats>>({})
 const loading = ref(true)
+const discoverLoading = ref(false)
+const discoverLoaded = ref(false)
 const showCreateDialog = ref(false)
 const submitting = ref(false)
+const requestingId = ref<string | null>(null)
+const tab = ref<PickerTab>('mine')
 // Radio-style selection: clicking a card stages it; Continue commits it.
 const pendingSelectionId = ref<string | null>(authStore.selectedEventId ?? null)
 
 const phoneNumber = ref('')
 const savingPhone = ref(false)
 
-const isAdminOrManager = computed(() => authStore.isAdmin || authStore.isTaskManager)
+const today = () => new Date().toISOString().slice(0, 10)
 
 async function loadEvents() {
   loading.value = true
   try {
     const res = await get<{ data: EventListResponse }>({
       url: '/events/',
-      query: { limit: 100, date_from: new Date().toISOString().slice(0, 10), all_events: true },
+      query: { limit: 100, date_from: today(), scope: 'mine' },
     })
     events.value = res.data.items.filter((e) => !e.is_expired)
 
@@ -99,6 +104,43 @@ async function loadEvents() {
     toastApiError(error)
   } finally {
     loading.value = false
+  }
+}
+
+/** Public events the user is not in yet. Loaded lazily on first visit. */
+async function loadDiscover() {
+  discoverLoading.value = true
+  try {
+    const res = await get<{ data: EventListResponse }>({
+      url: '/events/',
+      query: { limit: 100, date_from: today(), scope: 'discover' },
+    })
+    discoverEvents.value = res.data.items.filter((e) => !e.is_expired)
+    discoverLoaded.value = true
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    discoverLoading.value = false
+  }
+}
+
+watch(tab, (next) => {
+  if (next === 'discover' && !discoverLoaded.value) void loadDiscover()
+})
+
+async function handleRequestJoin(event: EventRead) {
+  requestingId.value = event.id
+  try {
+    await post({ url: `/events/${event.id}/join-request`, body: {} })
+    // Reflect the pending state in place rather than refetching the list.
+    discoverEvents.value = discoverEvents.value.map((e) =>
+      e.id === event.id ? { ...e, join_request_status: 'pending' } : e,
+    )
+    toast.success(t('duties.events.join.requestSent'))
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    requestingId.value = null
   }
 }
 
@@ -149,9 +191,11 @@ async function handleCreate(payload: CreateEventPayload) {
       body: { ...payload, status: 'published' },
     })
     showCreateDialog.value = false
-    // Refresh the list and stage the new event; user still presses Continue.
+    // The creator owns what they just made, so land them back on "My events".
+    tab.value = 'mine'
     await loadEvents()
     pendingSelectionId.value = res.data.id
+    toast.success(t('duties.events.created'))
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -260,19 +304,23 @@ onMounted(loadEvents)
             </div>
 
             <EventPickerList
+              v-model:tab="tab"
               :events="events"
+              :discover-events="discoverEvents"
               :stats="eventStats"
               :loading="loading"
+              :discover-loading="discoverLoading"
               :pending-selection-id="pendingSelectionId"
               :current-selected-id="authStore.selectedEventId"
-              :can-create-events="isAdminOrManager"
               :submitting="submitting"
               :mode="selectMode"
+              :requesting-id="requestingId"
               @stage="handleStageSelection"
               @commit="handleCommitSelection"
               @cancel="handleCancel"
               @back="phase = 'intro'"
               @open-create="showCreateDialog = true"
+              @request-join="handleRequestJoin"
             />
           </div>
         </div>

@@ -11,7 +11,7 @@ from app.crud.event import event as crud_event
 from app.crud.shift import shift as crud_shift
 from app.crud.shift_batch import shift_batch as crud_shift_batch
 from app.crud.task import task as crud_task
-from app.logic.permissions import require_event_access
+from app.logic.permissions import require_event_role
 from app.logic.shift_generator import generate_shifts
 from app.models.shift import Shift
 from app.models.shift_batch import ShiftBatch
@@ -43,7 +43,7 @@ async def create_task_with_shifts(
 ) -> TaskCreateWithShiftsResponse:
     """Create a task with auto-generated duty shifts in a single transaction."""
     # Check access for the target event (if any)
-    await require_event_access(current_user, session, payload.event_id)
+    await require_event_role(current_user, session, payload.event_id)
     # 1. Optionally create a new event
     event_read: EventRead | None = None
     event_id = payload.event_id
@@ -139,7 +139,7 @@ async def add_shifts_to_task(
 ) -> AddShiftsResponse:
     """Add a new batch of duty shifts to an existing task without touching existing shifts."""
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_access(current_user, session, db_task.event_id)
+    await require_event_role(current_user, session, db_task.event_id)
 
     # Validate dates against event constraints
     if db_task.event_id:
@@ -225,7 +225,7 @@ async def regenerate_task_shifts(
     Shifts are matched by (date, start_time, end_time) — matched shifts keep their bookings.
     """
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_access(current_user, session, db_task.event_id)
+    await require_event_role(current_user, session, db_task.event_id)
 
     # If batch_id provided, load the batch for defaults
     db_batch: ShiftBatch | None = None

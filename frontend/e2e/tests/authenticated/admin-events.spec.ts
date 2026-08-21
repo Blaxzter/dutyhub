@@ -1,9 +1,9 @@
 /**
- * E2E tests for the admin Manage Events page (/app/admin/events).
+ * E2E tests for the admin Manage Events page (/app/events).
  *
  * The old /app/events page was replaced by a split:
  *   - /app/select-event (user-facing picker, covered in select-event.spec.ts)
- *   - /app/admin/events (this spec — table/CRUD view for admins)
+ *   - /app/events (this spec — table/CRUD view for admins)
  */
 import { expect, test } from '../../fixtures.js'
 import {
@@ -18,25 +18,26 @@ import {
 test.describe('Admin Events – navigation', () => {
   test('sidebar shows Manage Events link (admin)', async ({ adminPage: page }) => {
     await page.goto('/app/home')
-    await expect(page.getByTestId('sidebar-link-admin-events')).toBeVisible()
+    await expect(page.getByTestId('sidebar-link-my-events')).toBeVisible()
   })
 
-  test('clicking sidebar link navigates to /app/admin/events', async ({ adminPage: page }) => {
+  test('clicking sidebar link navigates to /app/events', async ({ adminPage: page }) => {
     await page.goto('/app/home')
-    await page.getByTestId('sidebar-link-admin-events').click()
-    await expect(page).toHaveURL(/\/app\/admin\/events$/)
+    await page.getByTestId('sidebar-link-my-events').click()
+    await expect(page).toHaveURL(/\/app\/events$/)
     await expect(page.getByTestId('page-heading')).toBeVisible()
   })
 
-  test('direct navigation to /app/admin/events works', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/events')
-    await expect(page).toHaveURL(/\/app\/admin\/events$/)
+  test('direct navigation to /app/events works', async ({ adminPage: page }) => {
+    await page.goto('/app/events')
+    await expect(page).toHaveURL(/\/app\/events$/)
     await expect(page.getByTestId('page-heading')).toBeVisible()
   })
 
-  test('member is redirected home from /app/admin/events', async ({ memberPage: member }) => {
-    await member.goto('/app/admin/events')
-    // Guard in router redirects unauthorized users to /app/home
+  test('member is redirected home from /app/events', async ({ memberPage: member }) => {
+    await member.goto('/app/events')
+    // The page is for people who run an event; a plain participant runs none,
+    // so the router sends them home.
     await expect(member).toHaveURL(/\/app\/home/)
   })
 })
@@ -56,26 +57,26 @@ test.describe('Admin Events – list view', () => {
   })
 
   test('shows heading and search input', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     await expect(page.getByTestId('page-heading')).toBeVisible()
     await expect(page.getByTestId('input-search')).toBeVisible()
   })
 
   test('created event appears as a table row', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     const row = page.getByTestId('admin-event-row').filter({ hasText: event.name })
     await expect(row).toBeVisible()
   })
 
   test('row exposes edit and delete actions', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     const row = page.getByTestId('admin-event-row').filter({ hasText: event.name })
     await expect(row.getByTestId('btn-edit-event')).toBeVisible()
     await expect(row.getByTestId('btn-delete-event')).toBeVisible()
   })
 
   test('search filters the list by name', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     const searchInput = page.getByTestId('input-search')
     const row = page.getByTestId('admin-event-row').filter({ hasText: event.name })
 
@@ -89,7 +90,7 @@ test.describe('Admin Events – list view', () => {
   test('clicking edit navigates to /app/event-settings with eventId', async ({
     adminPage: page,
   }) => {
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     const row = page.getByTestId('admin-event-row').filter({ hasText: event.name })
     await row.getByTestId('btn-edit-event').click()
     await expect(page).toHaveURL(new RegExp(`/app/event-settings/${event.id}`))
@@ -100,12 +101,12 @@ test.describe('Admin Events – list view', () => {
 
 test.describe('Admin Events – create & delete', () => {
   test('Create button is visible for admin', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     await expect(page.getByTestId('btn-create-event')).toBeVisible()
   })
 
   test('admin can open the create event dialog', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     await page.getByTestId('btn-create-event').click()
     const dialog = page.getByRole('dialog')
     await expect(dialog).toBeVisible()
@@ -120,7 +121,7 @@ test.describe('Admin Events – create & delete', () => {
     const deleteName = uniqueName('E2E Admin Delete')
     const created = await createEvent(page, deleteName)
 
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     // Active list is paginated (PAGE_SIZE=4); search to scope reliably.
     await page.getByTestId('input-search').fill(deleteName)
     const row = page.getByTestId('admin-event-row').filter({ hasText: deleteName })

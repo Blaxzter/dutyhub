@@ -34,9 +34,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
+from app.crud.event_invitation import event_invitation as crud_invitation
 from app.crud.notification_type import notification_type as crud_notification_type
 from app.logic.notifications import triggers
 from app.logic.notifications.seeder import seed_notification_types
+from app.models.event import Event
 from app.models.notification import Notification, NotificationSubscription
 from app.models.user import User
 
@@ -160,11 +162,20 @@ async def _single(db: AsyncSession, type_code: str, user_id: uuid.UUID) -> Notif
     return matches[0]
 
 
-def _all_invocations(user_id: uuid.UUID) -> list[tuple[str, TriggerCall]]:
-    """Every trigger, bound with the minimum arguments to reach its ``try``."""
+def _all_invocations(
+    user_id: uuid.UUID,
+    event_id: uuid.UUID,
+    invitation_id: uuid.UUID,
+) -> list[tuple[str, TriggerCall]]:
+    """Every trigger, bound with the minimum arguments to reach its ``try``.
+
+    The event-scoped triggers look up members or an invitation row *before*
+    they build a NotificationService, and return early when there are none —
+    so ``event_id`` and ``invitation_id`` must refer to real, populated rows
+    or the error-handling sweep would pass vacuously.
+    """
     slot_id = uuid.uuid4()
     task_id = uuid.uuid4()
-    event_id = uuid.uuid4()
     return [
         (
             "dispatch_booking_confirmed",
@@ -224,18 +235,40 @@ def _all_invocations(user_id: uuid.UUID) -> list[tuple[str, TriggerCall]]:
             ),
         ),
         (
-            "dispatch_user_registered",
-            lambda: triggers.dispatch_user_registered(
-                user_id=user_id, user_name="Alice", user_email="alice@example.com"
+            "dispatch_event_invitation",
+            lambda: triggers.dispatch_event_invitation(invitation_id=invitation_id),
+        ),
+        (
+            "dispatch_event_invitation_accepted",
+            lambda: triggers.dispatch_event_invitation_accepted(
+                event_id=event_id, user_id=user_id
             ),
         ),
         (
-            "dispatch_user_approved",
-            lambda: triggers.dispatch_user_approved(user_id=user_id),
+            "dispatch_event_join_requested",
+            lambda: triggers.dispatch_event_join_requested(
+                event_id=event_id, user_id=user_id
+            ),
         ),
         (
-            "dispatch_user_rejected",
-            lambda: triggers.dispatch_user_rejected(user_id=user_id, reason="Spam"),
+            "dispatch_event_join_decided",
+            lambda: triggers.dispatch_event_join_decided(
+                event_id=event_id, user_id=user_id, approved=True
+            ),
+        ),
+        (
+            "dispatch_event_role_changed",
+            lambda: triggers.dispatch_event_role_changed(
+                event_id=event_id, user_id=user_id, role="admin"
+            ),
+        ),
+        (
+            "dispatch_user_reinstated",
+            lambda: triggers.dispatch_user_reinstated(user_id=user_id),
+        ),
+        (
+            "dispatch_user_suspended",
+            lambda: triggers.dispatch_user_suspended(user_id=user_id, reason="Spam"),
         ),
     ]
 
@@ -946,197 +979,333 @@ class TestDispatchTaskPublished:
 
 @pytest.mark.asyncio
 class TestDispatchEventPublished:
-    """Test suite for dispatch_event_published."""
+    """``event.published`` is scoped to the event's own members."""
 
-    async def test_notifies_active_users_and_skips_inactive_and_muted(
+    async def test_notifies_members_and_skips_everyone_else(
         self,
         db_session: AsyncSession,
         seeded_types: None,
         test_user: User,
-        test_inactive_user: User,
+        test_event: Event,
     ) -> None:
-        """Test that inactive and opted-out users are both excluded."""
-        active = await _make_user(db_session, tag="eventpub-active")
-        muted = await _make_user(db_session, tag="eventpub-muted")
-        await _mute(db_session, user_id=muted.id, type_code="event.published")
-        event_id = uuid.uuid4()
+        """A bystander with no membership must not hear about the event.
+
+        This is the behaviour that changed with self-service: announcing to
+        every account would leak event names to people with no relationship
+        to the event at all.
+        """
+        outsider = await _make_user(db_session, tag="eventpub-outsider")
 
         with _dispatch_env(db_session):
             await triggers.dispatch_event_published(
-                event_id=event_id, event_name="Summer Fest"
+                event_id=test_event.id, event_name="Summer Fest"
             )
 
         recipients = await _recipients(db_session, "event.published")
-        assert recipients == {test_user.id, active.id}
-        assert test_inactive_user.id not in recipients
-        assert muted.id not in recipients
+        assert test_user.id in recipients
+        assert outsider.id not in recipients
 
         notif = await _single(db_session, "event.published", test_user.id)
-        assert notif.body == 'Task group "Summer Fest" has been published.'
-        assert notif.data == {"event_id": str(event_id)}
+        assert notif.data == {"event_id": str(test_event.id)}
+        assert "Summer Fest" in notif.body
+
+    async def test_muted_member_receives_nothing(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_user: User,
+        test_event: Event,
+    ) -> None:
+        """An opted-out member is excluded like anywhere else."""
+        await _mute(db_session, user_id=test_user.id, type_code="event.published")
+
+        with _dispatch_env(db_session):
+            await triggers.dispatch_event_published(
+                event_id=test_event.id, event_name="Summer Fest"
+            )
+
+        assert test_user.id not in await _recipients(db_session, "event.published")
 
     async def test_event_scoped_mute_is_honoured(
         self,
         db_session: AsyncSession,
         seeded_types: None,
         test_user: User,
+        test_event: Event,
     ) -> None:
         """Test that the ``[("event", event_id)]`` scope chain is applied."""
-        event_id = uuid.uuid4()
-        other = await _make_user(db_session, tag="eventpub-scoped-other")
         await _mute(
             db_session,
             user_id=test_user.id,
             type_code="event.published",
             scope_type="event",
-            scope_id=event_id,
+            scope_id=test_event.id,
         )
 
         with _dispatch_env(db_session):
             await triggers.dispatch_event_published(
-                event_id=event_id, event_name="Summer Fest"
+                event_id=test_event.id, event_name="Summer Fest"
             )
 
-        assert await _recipients(db_session, "event.published") == {other.id}
+        assert test_user.id not in await _recipients(db_session, "event.published")
 
-    async def test_no_active_users_creates_nothing(
+    async def test_event_without_members_creates_nothing(
         self,
         db_session: AsyncSession,
         seeded_types: None,
-        test_inactive_user: User,
     ) -> None:
-        """Test that the trigger short-circuits when no user is active."""
+        """Test that the trigger short-circuits when the event has no members."""
         with _dispatch_env(db_session):
             await triggers.dispatch_event_published(
                 event_id=uuid.uuid4(), event_name="Summer Fest"
             )
 
-        assert test_inactive_user.is_active is False
         assert await _rows(db_session) == []
 
 
-# ── user.registered ───────────────────────────────────────────────
+# -- event membership ----------------------------------------------
 
 
 @pytest.mark.asyncio
-class TestDispatchUserRegistered:
-    """Test suite for dispatch_user_registered."""
+class TestDispatchEventInvitation:
+    """``event.invitation`` reaches an invitee who already has an account."""
 
-    async def test_notifies_active_admins_only(
+    async def test_notifies_the_invited_account(
         self,
         db_session: AsyncSession,
         seeded_types: None,
-        test_user: User,
+        test_event: Event,
         test_admin_user: User,
     ) -> None:
-        """Test that non-admins and inactive admins are excluded."""
-        second_admin = await _make_user(
-            db_session, tag="registered-admin2", roles=["admin"]
-        )
-        inactive_admin = await _make_user(
+        """The invite lands on the user behind the invited address."""
+        invitee = await _make_user(db_session, tag="invitee")
+        invitation = await crud_invitation.create(
             db_session,
-            tag="registered-admin-off",
-            roles=["admin"],
-            is_active=False,
+            event_id=test_event.id,
+            email=invitee.email,
+            role="member",
+            invited_by_id=test_admin_user.id,
+            expires_in_days=14,
         )
-        new_user_id = uuid.uuid4()
 
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_registered(
-                user_id=new_user_id,
-                user_name="Alice",
-                user_email="alice@example.com",
-            )
+            await triggers.dispatch_event_invitation(invitation_id=invitation.id)
 
-        recipients = await _recipients(db_session, "user.registered")
-        assert recipients == {test_admin_user.id, second_admin.id}
-        assert test_user.id not in recipients
-        assert inactive_admin.id not in recipients
+        assert await _recipients(db_session, "event.invitation") == {invitee.id}
+        notif = await _single(db_session, "event.invitation", invitee.id)
+        assert notif.data == {
+            "event_id": str(test_event.id),
+            "token": invitation.token,
+        }
 
-        notif = await _single(db_session, "user.registered", test_admin_user.id)
-        assert notif.body == (
-            'A new user "Alice" has registered and is pending approval.'
-        )
-        assert notif.data == {"user_id": str(new_user_id)}
-
-    async def test_missing_name_falls_back_to_email(
+    async def test_address_without_an_account_creates_nothing(
         self,
         db_session: AsyncSession,
         seeded_types: None,
+        test_event: Event,
         test_admin_user: User,
     ) -> None:
-        """Test the ``user_name or user_email`` fallback."""
-        with _dispatch_env(db_session):
-            await triggers.dispatch_user_registered(
-                user_id=uuid.uuid4(),
-                user_name=None,
-                user_email="alice@example.com",
-            )
-
-        notif = await _single(db_session, "user.registered", test_admin_user.id)
-        assert "alice@example.com" in notif.body
-
-    async def test_missing_name_and_email_falls_back_to_unknown(
-        self,
-        db_session: AsyncSession,
-        seeded_types: None,
-        test_admin_user: User,
-    ) -> None:
-        """Test the final ``"Unknown"`` fallback."""
-        with _dispatch_env(db_session):
-            await triggers.dispatch_user_registered(
-                user_id=uuid.uuid4(), user_name=None, user_email=None
-            )
-
-        notif = await _single(db_session, "user.registered", test_admin_user.id)
-        assert '"Unknown"' in notif.body
-
-    async def test_opted_out_admin_receives_nothing(
-        self,
-        db_session: AsyncSession,
-        seeded_types: None,
-        test_admin_user: User,
-    ) -> None:
-        """Test that a muted admin is dropped from the admin broadcast."""
-        second_admin = await _make_user(
-            db_session, tag="registered-admin-muted-peer", roles=["admin"]
+        """Nobody to notify yet - the invite is picked up at first sign-in."""
+        invitation = await crud_invitation.create(
+            db_session,
+            event_id=test_event.id,
+            email="stranger@example.com",
+            role="member",
+            invited_by_id=test_admin_user.id,
+            expires_in_days=14,
         )
-        await _mute(db_session, user_id=test_admin_user.id, type_code="user.registered")
 
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_registered(
-                user_id=uuid.uuid4(), user_name="Alice", user_email=None
-            )
+            await triggers.dispatch_event_invitation(invitation_id=invitation.id)
 
-        assert await _recipients(db_session, "user.registered") == {second_admin.id}
+        assert await _rows(db_session, "event.invitation") == []
 
+    async def test_share_link_notifies_nobody(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_event: Event,
+        test_admin_user: User,
+    ) -> None:
+        """A link invite has no addressee, so there is no one to ping."""
+        invitation = await crud_invitation.create(
+            db_session,
+            event_id=test_event.id,
+            email=None,
+            role="member",
+            invited_by_id=test_admin_user.id,
+            expires_in_days=14,
+        )
 
-# ── user.approved ─────────────────────────────────────────────────
+        with _dispatch_env(db_session):
+            await triggers.dispatch_event_invitation(invitation_id=invitation.id)
+
+        assert await _rows(db_session, "event.invitation") == []
 
 
 @pytest.mark.asyncio
-class TestDispatchUserApproved:
-    """Test suite for dispatch_user_approved."""
+class TestDispatchEventJoinRequested:
+    """``event.join_requested`` goes to the people who can act on it."""
 
-    async def test_notifies_only_the_approved_user(
+    async def test_notifies_event_admins_only(
         self,
         db_session: AsyncSession,
         seeded_types: None,
+        test_event: Event,
+        test_user: User,
+        test_admin_user: User,
+        test_event_admin_user: User,
+    ) -> None:
+        """Owner and admin are notified; a plain member is not."""
+        applicant = await _make_user(db_session, tag="applicant")
+
+        with _dispatch_env(db_session):
+            await triggers.dispatch_event_join_requested(
+                event_id=test_event.id, user_id=applicant.id
+            )
+
+        recipients = await _recipients(db_session, "event.join_requested")
+        assert recipients == {test_admin_user.id, test_event_admin_user.id}
+        assert test_user.id not in recipients
+
+    async def test_body_names_the_applicant_and_event(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_event: Event,
+        test_event_admin_user: User,
+    ) -> None:
+        """The message has to say who wants in, and where."""
+        applicant = await _make_user(db_session, tag="applicant-named")
+
+        with _dispatch_env(db_session):
+            await triggers.dispatch_event_join_requested(
+                event_id=test_event.id, user_id=applicant.id
+            )
+
+        notif = await _single(
+            db_session, "event.join_requested", test_event_admin_user.id
+        )
+        assert "User applicant-named" in notif.body
+        assert test_event.name in notif.body
+
+
+@pytest.mark.asyncio
+class TestDispatchEventJoinDecided:
+    """``event.join_approved`` / ``event.join_declined`` go to the applicant."""
+
+    async def test_approval_notifies_only_the_applicant(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_event: Event,
+    ) -> None:
+        applicant = await _make_user(db_session, tag="approved-applicant")
+
+        with _dispatch_env(db_session):
+            await triggers.dispatch_event_join_decided(
+                event_id=test_event.id, user_id=applicant.id, approved=True
+            )
+
+        assert await _recipients(db_session, "event.join_approved") == {applicant.id}
+        assert await _rows(db_session, "event.join_declined") == []
+
+    async def test_decline_uses_the_declined_type(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_event: Event,
+    ) -> None:
+        applicant = await _make_user(db_session, tag="declined-applicant")
+
+        with _dispatch_env(db_session):
+            await triggers.dispatch_event_join_decided(
+                event_id=test_event.id, user_id=applicant.id, approved=False
+            )
+
+        assert await _recipients(db_session, "event.join_declined") == {applicant.id}
+        assert await _rows(db_session, "event.join_approved") == []
+
+
+@pytest.mark.asyncio
+class TestDispatchEventRoleChanged:
+    """``event.role_changed`` tells one member their new standing."""
+
+    async def test_notifies_only_the_member(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_event: Event,
         test_user: User,
         test_admin_user: User,
     ) -> None:
-        """Test that neither the approving admin nor bystanders are notified."""
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_approved(user_id=test_user.id)
+            await triggers.dispatch_event_role_changed(
+                event_id=test_event.id, user_id=test_user.id, role="admin"
+            )
 
-        recipients = await _recipients(db_session, "user.approved")
+        recipients = await _recipients(db_session, "event.role_changed")
         assert recipients == {test_user.id}
         assert test_admin_user.id not in recipients
 
-        notif = await _single(db_session, "user.approved", test_user.id)
-        assert notif.body == (
-            "Your account has been approved! You can now access all features."
-        )
+    async def test_body_localises_the_role_name(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_event: Event,
+    ) -> None:
+        """The role is rendered as a phrase, not the raw enum value."""
+        member = await _make_user(db_session, tag="role-en")
+
+        with _dispatch_env(db_session):
+            await triggers.dispatch_event_role_changed(
+                event_id=test_event.id, user_id=member.id, role="admin"
+            )
+
+        notif = await _single(db_session, "event.role_changed", member.id)
+        assert "an organiser" in notif.body
+
+    async def test_german_body_uses_german_role_name(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_event: Event,
+    ) -> None:
+        german = await _make_user(db_session, tag="role-de", language="de")
+
+        with _dispatch_env(db_session):
+            await triggers.dispatch_event_role_changed(
+                event_id=test_event.id, user_id=german.id, role="member"
+            )
+
+        notif = await _single(db_session, "event.role_changed", german.id)
+        assert "Mitglied" in notif.body
+
+
+# -- user.reinstated / user.suspended -------------------------------
+
+
+@pytest.mark.asyncio
+class TestDispatchUserReinstated:
+    """Test suite for dispatch_user_reinstated."""
+
+    async def test_notifies_only_the_reinstated_user(
+        self,
+        db_session: AsyncSession,
+        seeded_types: None,
+        test_user: User,
+        test_admin_user: User,
+    ) -> None:
+        """Neither the acting admin nor bystanders are notified."""
+        with _dispatch_env(db_session):
+            await triggers.dispatch_user_reinstated(user_id=test_user.id)
+
+        recipients = await _recipients(db_session, "user.reinstated")
+        assert recipients == {test_user.id}
+        assert test_admin_user.id not in recipients
+
+        notif = await _single(db_session, "user.reinstated", test_user.id)
+        assert notif.body == "Your account has been restored. Welcome back."
 
     async def test_opted_out_user_receives_nothing(
         self,
@@ -1145,20 +1314,17 @@ class TestDispatchUserApproved:
         test_user: User,
     ) -> None:
         """Test that a muted recipient produces no notification row."""
-        await _mute(db_session, user_id=test_user.id, type_code="user.approved")
+        await _mute(db_session, user_id=test_user.id, type_code="user.reinstated")
 
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_approved(user_id=test_user.id)
+            await triggers.dispatch_user_reinstated(user_id=test_user.id)
 
-        assert await _rows(db_session, "user.approved") == []
-
-
-# ── user.rejected ─────────────────────────────────────────────────
+        assert await _rows(db_session, "user.reinstated") == []
 
 
 @pytest.mark.asyncio
-class TestDispatchUserRejected:
-    """Test suite for dispatch_user_rejected."""
+class TestDispatchUserSuspended:
+    """Test suite for dispatch_user_suspended."""
 
     async def test_english_body_with_reason(
         self,
@@ -1169,17 +1335,17 @@ class TestDispatchUserRejected:
     ) -> None:
         """Test the English detail fragment and the exact recipient set."""
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_rejected(
+            await triggers.dispatch_user_suspended(
                 user_id=test_user.id, reason="Duplicate account"
             )
 
-        recipients = await _recipients(db_session, "user.rejected")
+        recipients = await _recipients(db_session, "user.suspended")
         assert recipients == {test_user.id}
         assert test_admin_user.id not in recipients
 
-        notif = await _single(db_session, "user.rejected", test_user.id)
+        notif = await _single(db_session, "user.suspended", test_user.id)
         assert notif.body == (
-            "Your account request has been rejected. Reason: Duplicate account"
+            "Your account has been suspended. Reason: Duplicate account"
         )
 
     async def test_english_body_without_reason(
@@ -1190,10 +1356,10 @@ class TestDispatchUserRejected:
     ) -> None:
         """Test that the English detail fragment collapses to empty."""
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_rejected(user_id=test_user.id)
+            await triggers.dispatch_user_suspended(user_id=test_user.id)
 
-        notif = await _single(db_session, "user.rejected", test_user.id)
-        assert notif.body == "Your account request has been rejected."
+        notif = await _single(db_session, "user.suspended", test_user.id)
+        assert notif.body == "Your account has been suspended."
 
     async def test_german_body_with_reason(
         self,
@@ -1201,17 +1367,15 @@ class TestDispatchUserRejected:
         seeded_types: None,
     ) -> None:
         """Test the German detail fragment."""
-        german = await _make_user(db_session, tag="de-rejected", language="de")
+        german = await _make_user(db_session, tag="de-suspended", language="de")
 
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_rejected(
+            await triggers.dispatch_user_suspended(
                 user_id=german.id, reason="Doppeltes Konto"
             )
 
-        notif = await _single(db_session, "user.rejected", german.id)
-        assert notif.body == (
-            "Ihre Kontoanfrage wurde abgelehnt. Grund: Doppeltes Konto"
-        )
+        notif = await _single(db_session, "user.suspended", german.id)
+        assert notif.body == "Dein Konto wurde gesperrt. Grund: Doppeltes Konto"
 
     async def test_german_body_without_reason(
         self,
@@ -1219,13 +1383,13 @@ class TestDispatchUserRejected:
         seeded_types: None,
     ) -> None:
         """Test that the German detail fragment collapses to empty."""
-        german = await _make_user(db_session, tag="de-rejected-bare", language="de")
+        german = await _make_user(db_session, tag="de-suspended-bare", language="de")
 
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_rejected(user_id=german.id)
+            await triggers.dispatch_user_suspended(user_id=german.id)
 
-        notif = await _single(db_session, "user.rejected", german.id)
-        assert notif.body == "Ihre Kontoanfrage wurde abgelehnt."
+        notif = await _single(db_session, "user.suspended", german.id)
+        assert notif.body == "Dein Konto wurde gesperrt."
 
     async def test_opted_out_user_receives_nothing(
         self,
@@ -1234,14 +1398,14 @@ class TestDispatchUserRejected:
         test_user: User,
     ) -> None:
         """Test that a muted recipient produces no notification row."""
-        await _mute(db_session, user_id=test_user.id, type_code="user.rejected")
+        await _mute(db_session, user_id=test_user.id, type_code="user.suspended")
 
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_rejected(
+            await triggers.dispatch_user_suspended(
                 user_id=test_user.id, reason="Duplicate account"
             )
 
-        assert await _rows(db_session, "user.rejected") == []
+        assert await _rows(db_session, "user.suspended") == []
 
 
 # ── error handling ────────────────────────────────────────────────
@@ -1256,9 +1420,21 @@ class TestTriggerErrorHandling:
         db_session: AsyncSession,
         seeded_types: None,
         test_user: User,
+        test_event: Event,
+        test_admin_user: User,
     ) -> None:
         """Test each trigger's except branch with a service that blows up."""
-        for name, invoke in _all_invocations(test_user.id):
+        invitation = await crud_invitation.create(
+            db_session,
+            event_id=test_event.id,
+            email=test_user.email,
+            role="member",
+            invited_by_id=test_admin_user.id,
+            expires_in_days=14,
+        )
+        for name, invoke in _all_invocations(
+            test_user.id, test_event.id, invitation.id
+        ):
             with (
                 _dispatch_env(db_session),
                 patch(
@@ -1279,6 +1455,6 @@ class TestTriggerErrorHandling:
     ) -> None:
         """Test that an unseeded type code is treated as muted, not an error."""
         with _dispatch_env(db_session):
-            await triggers.dispatch_user_approved(user_id=test_user.id)
+            await triggers.dispatch_user_reinstated(user_id=test_user.id)
 
         assert await _rows(db_session) == []

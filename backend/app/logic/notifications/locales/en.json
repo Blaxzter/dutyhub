@@ -31,21 +31,53 @@
     "title": "New Event Published",
     "body": "Task group \"{event_name}\" has been published."
   },
-  "user.registered": {
-    "title": "New User Registered",
-    "body": "A new user \"{name}\" has registered and is pending approval."
-  },
-  "user.approved": {
-    "title": "Account Approved",
-    "body": "Your account has been approved! You can now access all features."
-  },
-  "user.rejected": {
-    "title": "Account Rejected",
-    "body": "Your account request has been rejected.{detail}"
-  },
   "email": {
     "view_details": "View Details",
     "footer_text": "You received this because of your notification settings.",
     "manage_preferences": "Manage preferences"
+  },
+  "event.invitation": {
+    "title": "Event Invitation",
+    "body": "You have been invited to join “{event_name}”."
+  },
+  "event.invitation_accepted": {
+    "title": "Invitation Accepted",
+    "body": "{name} joined “{event_name}”."
+  },
+  "event.join_requested": {
+    "title": "Join Request",
+    "body": "{name} asked to join “{event_name}”."
+  },
+  "event.join_approved": {
+    "title": "You're In",
+    "body": "Your request to join “{event_name}” was approved."
+  },
+  "event.join_declined": {
+    "title": "Join Request Declined",
+    "body": "Your request to join “{event_name}” was declined."
+  },
+  "event.role_changed": {
+    "title": "Role Changed",
+    "body": "You are now {role} in “{event_name}”."
+  },
+  "role.owner": {
+    "title": "owner",
+    "body": ""
+  },
+  "role.admin": {
+    "title": "an organiser",
+    "body": ""
+  },
+  "role.member": {
+    "title": "a member",
+    "body": ""
+  },
+  "user.reinstated": {
+    "title": "Account Reinstated",
+    "body": "Your account has been restored. Welcome back."
+  },
+  "user.suspended": {
+    "title": "Account Suspended",
+    "body": "Your account has been suspended.{detail}"
   }
 }

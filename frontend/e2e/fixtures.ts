@@ -40,7 +40,7 @@ export interface SeededUser extends TestUser {
 export interface DisposableUserOptions {
   /** Roles to grant, e.g. `['admin']`. Defaults to a plain member. */
   roles?: string[]
-  /** `false` seeds a pending (inactive) account. Defaults to `true`. */
+  /** `false` seeds a suspended (inactive) account. Defaults to `true`. */
   isActive?: boolean
 }
 
@@ -114,6 +114,28 @@ export async function serverApi<T>(
   }
   if (res.status === 204) return null as T
   return res.body as T
+}
+
+/**
+ * Put a user into an event, through the real invitation endpoints.
+ *
+ * Membership is what grants access now, so nearly every fixture needs it.
+ * Deliberately uses the production API rather than a test-only shortcut, so
+ * the invite → accept path is exercised on every run.
+ */
+export async function joinEvent(
+  eventId: string,
+  inviterEmail: string,
+  inviteeEmail: string,
+  role: 'admin' | 'member' = 'member',
+): Promise<void> {
+  const invitation = await serverApi<{ token: string }>(
+    'POST',
+    `/events/${eventId}/invitations`,
+    inviterEmail,
+    { email: inviteeEmail, role },
+  )
+  await serverApi('POST', `/invitations/${invitation.token}/accept`, inviteeEmail)
 }
 
 /**
@@ -283,12 +305,16 @@ export const test = base.extend<
       await use({ id: '', name: '', start_date: '', end_date: '' })
       return
     }
+    // Public so the Discover tab has something to show, and so the event can
+    // be featured. Creating it makes adminUser its owner automatically.
     const event = await serverApi<WorkerEvent>('POST', '/events/', adminUser.email, {
       name: `E2E Worker Event ${workerInfo.workerIndex}`,
       status: 'published',
+      visibility: 'public',
       start_date: isoDateOffset(1),
       end_date: isoDateOffset(60),
     })
+    await joinEvent(event.id, adminUser.email, memberUser.email, 'member')
     await setSelectedEvent(adminUser.email, event.id)
     await setSelectedEvent(memberUser.email, event.id)
     await use(event)
@@ -366,8 +392,10 @@ export const test = base.extend<
       // Always seed active first: PUT /users/me/selected-event rejects inactive
       // users, and without a selection the router bounces every authenticated
       // page to /select-event. Re-seeding flips is_active without touching the
-      // selection, so pending users still land where the test expects.
+      // selection, so suspended users still land where the test expects.
       const seeded = await seedUser(email, name, roles, true)
+      // Selecting an event requires membership in it.
+      await joinEvent(workerEvent.id, adminUser.email, email, 'member')
       await setSelectedEvent(email, workerEvent.id)
       if (!isActive) {
         await seedUser(email, name, roles, false)
@@ -409,8 +437,6 @@ export const test = base.extend<
     const page = await context.newPage()
     if (IS_TESTING) {
       await setupApiInterception(page, disposableUser.email)
-      // A pending user is redirected to /pending-approval instead of the
-      // dashboard; both render a `page-heading`, so one warm-up covers either.
       await page.goto('/app/home')
       await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
     }

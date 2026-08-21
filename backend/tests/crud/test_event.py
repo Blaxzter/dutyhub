@@ -66,12 +66,16 @@ class TestCRUDEvent:
         test_event: Event,
         test_draft_event: Event,
     ):
-        """Test filtering events by status."""
-        published = await crud_event.get_multi_filtered(db_session, status="published")
+        """Test filtering events by status within the unrestricted scope."""
+        published = await crud_event.get_multi_filtered(
+            db_session, scope="all", status="published"
+        )
         assert any(g.id == test_event.id for g in published)
         assert all(g.status == "published" for g in published)
 
-        drafts = await crud_event.get_multi_filtered(db_session, status="draft")
+        drafts = await crud_event.get_multi_filtered(
+            db_session, scope="all", status="draft"
+        )
         assert any(g.id == test_draft_event.id for g in drafts)
         assert all(g.status == "draft" for g in drafts)
 
@@ -79,22 +83,92 @@ class TestCRUDEvent:
         self, db_session: AsyncSession, test_event: Event
     ):
         """Test searching events by name."""
-        results = await crud_event.get_multi_filtered(db_session, search="Kirchentags")
+        results = await crud_event.get_multi_filtered(
+            db_session, scope="all", search="Kirchentags"
+        )
         assert any(g.id == test_event.id for g in results)
 
     async def test_get_count_filtered(
         self, db_session: AsyncSession, test_event: Event
     ):
         """Test counting events with a filter."""
-        count = await crud_event.get_count_filtered(db_session, status="published")
+        count = await crud_event.get_count_filtered(
+            db_session, scope="all", status="published"
+        )
         assert count >= 1
 
     async def test_get_count_filtered_search(
         self, db_session: AsyncSession, test_event: Event
     ):
         """Test counting events by search term."""
-        count = await crud_event.get_count_filtered(db_session, search="Kirchentags")
+        count = await crud_event.get_count_filtered(
+            db_session, scope="all", search="Kirchentags"
+        )
         assert count >= 1
+
+    async def test_mine_scope_without_memberships_returns_nothing(
+        self, db_session: AsyncSession, test_event: Event
+    ):
+        """An empty membership list means nothing, never everything.
+
+        The distinction matters: collapsing "no memberships" into "no filter"
+        would hand a brand-new account every event in the database.
+        """
+        results = await crud_event.get_multi_filtered(
+            db_session, scope="mine", member_event_ids=[]
+        )
+        assert results == []
+        assert (
+            await crud_event.get_count_filtered(
+                db_session, scope="mine", member_event_ids=[]
+            )
+            == 0
+        )
+
+    async def test_mine_scope_returns_only_member_events(
+        self,
+        db_session: AsyncSession,
+        test_event: Event,
+        test_draft_event: Event,
+    ):
+        """The 'mine' scope is a hard whitelist of event ids."""
+        results = await crud_event.get_multi_filtered(
+            db_session, scope="mine", member_event_ids=[test_event.id]
+        )
+        ids = {g.id for g in results}
+        assert test_event.id in ids
+        assert test_draft_event.id not in ids
+
+    async def test_discover_scope_excludes_private_and_joined_events(
+        self,
+        db_session: AsyncSession,
+        test_event: Event,
+        test_draft_event: Event,
+        test_private_event: Event,
+    ):
+        """Discover shows public, published events you are not already in."""
+        results = await crud_event.get_multi_filtered(
+            db_session, scope="discover", member_event_ids=[test_event.id]
+        )
+        ids = {g.id for g in results}
+        assert test_event.id not in ids, "already a member"
+        assert test_private_event.id not in ids, "private events stay hidden"
+        assert test_draft_event.id not in ids, "drafts are not discoverable"
+
+    async def test_featured_scope_requires_the_flag(
+        self,
+        db_session: AsyncSession,
+        test_event: Event,
+    ):
+        """Featured is the superadmin's curated home selection."""
+        assert (await crud_event.get_count_filtered(db_session, scope="featured")) == 0
+
+        test_event.is_featured = True
+        db_session.add(test_event)
+        await db_session.flush()
+
+        results = await crud_event.get_multi_filtered(db_session, scope="featured")
+        assert [g.id for g in results] == [test_event.id]
 
 
 @pytest.mark.asyncio

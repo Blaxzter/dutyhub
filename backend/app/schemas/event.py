@@ -4,7 +4,10 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, computed_field, field_validator
 
+from app.schemas.event_membership import EventRole
+
 EventStatus = Literal["draft", "published", "archived"]
+EventVisibility = Literal["public", "private"]
 
 
 class EventBase(BaseModel):
@@ -15,6 +18,7 @@ class EventBase(BaseModel):
     default_start_time: dt.time | None = None
     default_end_time: dt.time | None = None
     status: EventStatus = "draft"
+    visibility: EventVisibility = "private"
 
     @field_validator("end_date")
     @classmethod
@@ -53,14 +57,29 @@ class EventUpdate(BaseModel):
     default_start_time: dt.time | None = None
     default_end_time: dt.time | None = None
     status: EventStatus | None = None
+    visibility: EventVisibility | None = None
 
 
 class EventRead(EventBase):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     created_by_id: uuid.UUID | None = None
+    is_featured: bool = False
     created_at: dt.datetime
     updated_at: dt.datetime
+
+    # Viewer-relative context. Populated by the route from the caller's
+    # membership, not stored on the row — the same event reads differently
+    # for an owner, a member and a stranger browsing Discover.
+    my_role: EventRole | None = None
+    member_count: int = 0
+    join_request_status: str | None = None
+    pending_request_count: int = 0
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def can_manage(self) -> bool:
+        return self.my_role in ("owner", "admin")
 
     @computed_field  # type: ignore[prop-decorator]
     @property

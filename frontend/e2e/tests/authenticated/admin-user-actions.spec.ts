@@ -1,28 +1,7 @@
 /**
- * E2E tests for Admin User Management actions (activate, reject, approval password).
+ * E2E tests for Admin User Management actions (activate, suspend).
  */
-
-import { test, expect } from '../../fixtures.js'
-
-test.describe('Admin Users – approval password', () => {
-  test('approval password section is visible', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/users')
-    await expect(page.getByTestId('section-approval-password')).toBeVisible()
-  })
-
-  test('approval password section has input and save button', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/users')
-    const section = page.getByTestId('section-approval-password')
-    // eslint-disable-next-line playwright/no-conditional-in-test
-    if (await section.isVisible({ timeout: 3000 }).catch(() => false)) {
-      // eslint-disable-next-line playwright/no-conditional-expect
-      await expect(
-        section.locator('input[type="password"], input[type="text"]').first()
-          .or(section.getByRole('button').first()),
-      ).toBeVisible()
-    }
-  })
-})
+import { expect, test } from '../../fixtures.js'
 
 test.describe('Admin Users – user table actions', () => {
   test('user table is visible with data', async ({ adminPage: page }) => {

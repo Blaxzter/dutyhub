@@ -11,9 +11,10 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
-from app.api.deps import CurrentManager, DBDep
+from app.api.deps import CurrentUser, DBDep
+from app.core.errors import raise_problem
+from app.logic.event_scope import get_manageable_event_ids
 from app.models.booking import Booking
-from app.models.event_manager import EventManager
 from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
@@ -33,11 +34,15 @@ router = APIRouter(prefix="/reporting", tags=["reporting"])
 @router.get("/overview", response_model=ReportingResponse)
 async def reporting_overview(
     session: DBDep,
-    current_user: CurrentManager,
+    current_user: CurrentUser,
     date_from: dt.date | None = Query(None, description="Start date filter"),
     date_to: dt.date | None = Query(None, description="End date filter"),
 ) -> ReportingResponse:
-    """Reporting dashboard data. Admins see all; task_managers see their own tasks."""
+    """Reporting for the events you run.
+
+    The platform superadmin sees everything; everyone else sees the tasks in
+    events where they hold owner or admin, plus tasks they created.
+    """
     task_ids_filter = await _get_managed_task_ids(current_user, session)
     overview = await _overview_stats(session, date_from, date_to, task_ids_filter)
     bookings_trend = await _bookings_trend(session, date_from, date_to, task_ids_filter)
@@ -65,11 +70,11 @@ async def reporting_overview(
 @router.get("/export")
 async def reporting_export(
     session: DBDep,
-    current_user: CurrentManager,
+    current_user: CurrentUser,
     date_from: dt.date | None = Query(None),
     date_to: dt.date | None = Query(None),
 ) -> StreamingResponse:
-    """Export booking data as CSV. Admins get all; task_managers get scoped to their tasks."""
+    """Export booking data as CSV, scoped the same way as the overview."""
     task_ids_filter = await _get_managed_task_ids(current_user, session)
     query = (
         select(
@@ -164,33 +169,27 @@ async def _get_managed_task_ids(
 ) -> list[uuid.UUID] | None:
     """Return list of task IDs the user may see in reporting.
 
-    Admins get None (= no filter, see everything).
-    task_managers see: tasks they created + tasks in groups they manage.
+    The platform superadmin gets None (= no filter, see everything). Everyone
+    else sees every task in an event where they hold owner or admin.
+
+    Raises 403 when the caller runs no event at all: reporting is a tool for
+    the people organising something, and there is nothing coherent to show
+    someone who only participates.
     """
-    if user.is_admin:
+    managed_group_ids = await get_manageable_event_ids(session, user)
+    if managed_group_ids is None:
         return None
-
-    # Tasks created by this user
-    created_result = await session.execute(
-        select(col(Task.id)).where(col(Task.created_by_id) == user.id)
-    )
-    created_ids: list[uuid.UUID] = list(created_result.scalars().all())
-
-    # Task groups where this user is an assigned manager
-    group_result = await session.execute(
-        select(col(EventManager.event_id)).where(col(EventManager.user_id) == user.id)
-    )
-    managed_group_ids = list(group_result.scalars().all())
-
-    if managed_group_ids:
-        group_tasks_result = await session.execute(
-            select(col(Task.id)).where(col(Task.event_id).in_(managed_group_ids))
+    if not managed_group_ids:
+        raise_problem(
+            403,
+            code="reporting.no_managed_events",
+            detail="Reporting is available to owners and admins of an event",
         )
-        group_task_ids: list[uuid.UUID] = list(group_tasks_result.scalars().all())
-    else:
-        group_task_ids = []
 
-    return list({*created_ids, *group_task_ids})
+    group_tasks_result = await session.execute(
+        select(col(Task.id)).where(col(Task.event_id).in_(managed_group_ids))
+    )
+    return list(group_tasks_result.scalars().all())
 
 
 async def _overview_stats(  # noqa: ANN001

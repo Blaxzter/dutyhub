@@ -14,6 +14,7 @@ import {
   type EventRead,
   type TaskRead,
   api,
+  apiStatus,
   createEvent,
   deleteEvent,
   deleteTask,
@@ -36,20 +37,28 @@ async function getMemberId(
   return member.id
 }
 
-/** Assign a user as event manager and reload their profile so the frontend picks it up. */
+/**
+ * Make a user an admin of an event, and reload their page so the store sees it.
+ *
+ * There is no "add this user" endpoint any more — you invite and they accept —
+ * so the setup goes through the real invitation flow.
+ */
 async function assignManager(
   adminPage: import('@playwright/test').Page,
   eventId: string,
   memberEmail: string,
-  memberPage?: import('@playwright/test').Page,
+  memberPage: import('@playwright/test').Page,
 ) {
-  const memberId = await getMemberId(adminPage, memberEmail)
-  await api(adminPage, 'POST', `/events/${eventId}/managers/${memberId}`)
+  const invitation = await api<{ token: string }>(
+    adminPage,
+    'POST',
+    `/events/${eventId}/invitations`,
+    { email: memberEmail, role: 'admin' },
+  )
+  await api(memberPage, 'POST', `/invitations/${invitation.token}/accept`)
   // Full page reload so Pinia stores are re-created and profile re-fetched from backend
-  if (memberPage) {
-    await memberPage.reload()
-    await memberPage.getByTestId('page-heading').waitFor()
-  }
+  await memberPage.reload()
+  await memberPage.getByTestId('page-heading').waitFor()
 }
 
 /** Create a task in an event via API. */
@@ -142,7 +151,7 @@ test.describe('Event Manager – unpublished visibility', () => {
   test('regular member cannot see unpublished event', async ({ adminPage, memberUser }) => {
     // Remove the manager assignment
     const memberId = await getMemberId(adminPage, memberUser.email)
-    await api(adminPage, 'DELETE', `/events/${event.id}/managers/${memberId}`)
+    await api(adminPage, 'DELETE', `/events/${event.id}/members/${memberId}`)
 
     // Reload member profile to clear cached managed IDs, then check API
     try {
@@ -261,12 +270,13 @@ test.describe('Event Manager – edit page access', () => {
     await expect(memberPage).toHaveURL(new RegExp(`/app/tasks/${managedTask.id}/edit`))
   })
 
-  test('scoped manager is redirected from edit page of unmanaged task', async ({
+  test('event admin is bounced off the edit page of a task outside their events', async ({
     memberPage,
   }) => {
     await memberPage.goto(`/app/tasks/${unmanagedTask.id}/edit`)
-    // Should redirect to the task detail page
-    await expect(memberPage).toHaveURL(new RegExp(`/app/tasks/${unmanagedTask.id}$`))
+    // The task belongs to an event they are not in, so it is 404 to them and
+    // the view falls back to the task list rather than the detail page.
+    await expect(memberPage).toHaveURL(/\/app\/tasks$/)
   })
 })
 
@@ -276,9 +286,9 @@ test.describe('Event Manager – CRUD operations', () => {
   let event: EventRead
   let task: { id: string }
 
-  test.beforeEach(async ({ adminPage, memberUser }) => {
+  test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
     event = await createEvent(adminPage, uniqueName('E2E CRUD'))
-    await assignManager(adminPage, event.id, memberUser.email)
+    await assignManager(adminPage, event.id, memberUser.email, memberPage)
 
     const result = await api<{ task: { id: string } }>(
       adminPage,
@@ -370,13 +380,19 @@ test.describe('Event Manager – CRUD operations', () => {
     expect(published.status).toBe('published')
   })
 
-  // eslint-disable-next-line playwright/expect-expect
-  test('scoped manager can delete managed event', async ({ memberPage }) => {
+  test('event admin cannot delete the event, but the owner can', async ({
+    adminPage,
+    memberPage,
+  }) => {
     // Delete the task first (cascade might handle it, but be explicit)
     await api(memberPage, 'DELETE', `/tasks/${task.id}`)
     task = { id: '' }
 
-    await api(memberPage, 'DELETE', `/events/${event.id}`)
+    // Deleting is owner-only — an admin brought in to help run the event
+    // must not be able to destroy it.
+    expect(await apiStatus(memberPage, 'DELETE', `/events/${event.id}`)).toBe(403)
+
+    expect(await apiStatus(adminPage, 'DELETE', `/events/${event.id}`)).toBe(204)
     // Prevent afterEach from trying to delete again
     event = { id: '' } as EventRead
   })
@@ -410,11 +426,11 @@ test.describe('Event Manager – cross-event isolation', () => {
   let groupA: EventRead
   let groupB: EventRead
 
-  test.beforeEach(async ({ adminPage, memberUser }) => {
+  test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
     groupA = await createEvent(adminPage, uniqueName('E2E Event A'))
     groupB = await createEvent(adminPage, uniqueName('E2E Event B'))
-    // Member manages event A only
-    await assignManager(adminPage, groupA.id, memberUser.email)
+    // Member administers event A only
+    await assignManager(adminPage, groupA.id, memberUser.email, memberPage)
   })
 
   test.afterEach(async ({ adminPage }) => {
@@ -440,28 +456,22 @@ test.describe('Event Manager – cross-event isolation', () => {
     }
   })
 
-  test('scoped manager cannot access availabilities of unmanaged event', async ({
+  test('event admin cannot read availabilities of an event they are not in', async ({
     memberPage,
   }) => {
-    try {
-      await api(memberPage, 'GET', `/events/${groupB.id}/availabilities`)
-      expect(true, 'Expected 403 but request succeeded').toBe(false)
-    } catch (e) {
-      // eslint-disable-next-line playwright/no-conditional-expect
-      expect(String(e)).toContain('403')
-    }
+    const status = await apiStatus(
+      memberPage,
+      'GET',
+      `/events/${groupB.id}/availabilities`,
+    )
+    expect([403, 404]).toContain(status)
   })
 
-  test('scoped manager cannot access managers list of unmanaged event', async ({
+  test('event admin cannot read the roster of an event they are not in', async ({
     memberPage,
   }) => {
-    try {
-      await api(memberPage, 'GET', `/events/${groupB.id}/managers`)
-      expect(true, 'Expected 403 but request succeeded').toBe(false)
-    } catch (e) {
-      // eslint-disable-next-line playwright/no-conditional-expect
-      expect(String(e)).toContain('403')
-    }
+    const status = await apiStatus(memberPage, 'GET', `/events/${groupB.id}/members`)
+    expect([403, 404]).toContain(status)
   })
 })
 
@@ -491,13 +501,13 @@ test.describe('Event Manager – reporting', () => {
   })
 })
 
-// ── Task event create restriction ──────────────────────────────────────────
+// ── Self-service event creation ────────────────────────────────────────────
 
-test.describe('Event Manager – create event restriction', () => {
+test.describe('Event Manager – self-service creation', () => {
   let event: EventRead
 
   test.beforeEach(async ({ adminPage, memberPage, memberUser }) => {
-    event = await createEvent(adminPage, uniqueName('E2E No Create'))
+    event = await createEvent(adminPage, uniqueName('E2E Self Service'))
     await assignManager(adminPage, event.id, memberUser.email, memberPage)
   })
 
@@ -505,28 +515,33 @@ test.describe('Event Manager – create event restriction', () => {
     await deleteEvent(adminPage, event?.id).catch(() => {})
   })
 
-  test('scoped manager cannot create new events via API', async ({
+  test('a non-admin can create their own event and owns it', async ({
+    adminPage,
     memberPage,
   }) => {
-    try {
-      await api(memberPage, 'POST', '/events/', {
-        name: 'Should Fail',
+    const created = await api<EventRead & { my_role: string }>(
+      memberPage,
+      'POST',
+      '/events/',
+      {
+        name: uniqueName('E2E Member Created'),
         start_date: futureDate(30),
         end_date: futureDate(34),
-      })
-      expect(true, 'Expected 403 but request succeeded').toBe(false)
-    } catch (e) {
-      // eslint-disable-next-line playwright/no-conditional-expect
-      expect(String(e)).toContain('403')
+      },
+    )
+    try {
+      expect(created.my_role).toBe('owner')
+    } finally {
+      await api(memberPage, 'DELETE', `/events/${created.id}`).catch(() => {})
+      void adminPage
     }
   })
 
-  test('scoped manager does not see Manage Events in the sidebar', async ({ memberPage }) => {
-    // The /app/admin/events route is technically accessible to scoped managers
-    // (the guard allows them through), but the sidebar entry is admin/task_manager
-    // only so regular scoped managers have no surfaced path to create events.
+  test('someone who runs an event sees My Events in the sidebar', async ({
+    memberPage,
+  }) => {
     await memberPage.goto('/app/home')
-    await expect(memberPage.getByTestId('sidebar-link-admin-events')).toBeHidden()
+    await expect(memberPage.getByTestId('sidebar-link-my-events')).toBeVisible()
   })
 })
 

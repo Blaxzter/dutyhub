@@ -106,19 +106,6 @@
         "activate": "Aktivieren",
         "activated": "Konto für {name} aktiviert.",
         "active": "Aktiv",
-        "approvalPassword": {
-            "changePlaceholder": "Neues Freigabe-Passwort eingeben",
-            "clear": "Freigabe-Passwort löschen",
-            "clearDialogDescription": "Sind Sie sicher, dass Sie das Freigabe-Passwort löschen möchten? Wartende Benutzer können sich dann nicht mehr selbst freigeben.",
-            "clearDialogTitle": "Freigabe-Passwort löschen",
-            "cleared": "Freigabe-Passwort gelöscht.",
-            "description": "Legen Sie ein optionales Passwort fest, das wartende Benutzer eingeben können, um sich selbst freizugeben.",
-            "placeholder": "Freigabe-Passwort eingeben",
-            "save": "Freigabe-Passwort speichern",
-            "saved": "Freigabe-Passwort gespeichert.",
-            "savedAndCopied": "Freigabe-Passwort gespeichert und in die Zwischenablage kopiert.",
-            "title": "Freigabe-Passwort"
-        },
         "approve": "Freigeben",
         "columns": {
             "actions": "Aktionen",

@@ -150,31 +150,77 @@ AVAILABILITY_REMINDER = NotificationTypeDef(
     default_channels=["email", "push"],
 )
 
-# ── User / admin notifications ────────────────────────────────────
+# ── Event membership notifications ────────────────────────────────
 
-USER_REGISTERED = NotificationTypeDef(
-    code="user.registered",
-    name="New User Registered",
-    description="Alert when a new user signs up and is pending approval",
-    category="admin",
-    classification="announcement",
-    is_admin_only=True,
+EVENT_INVITATION = NotificationTypeDef(
+    code="event.invitation",
+    name="Event Invitation",
+    description="Notification when someone invites you to an event",
+    category="event",
+    classification="match",
     default_channels=["email", "push"],
 )
 
-USER_APPROVED = NotificationTypeDef(
-    code="user.approved",
-    name="Account Approved",
-    description="Notification when your account is approved by an admin",
+EVENT_INVITATION_ACCEPTED = NotificationTypeDef(
+    code="event.invitation_accepted",
+    name="Invitation Accepted",
+    description="Notification when someone you invited joins your event",
+    category="event",
+    classification="announcement",
+    default_channels=["push"],
+)
+
+EVENT_JOIN_REQUESTED = NotificationTypeDef(
+    code="event.join_requested",
+    name="Join Request",
+    description="Notification when someone asks to join an event you manage",
+    category="event",
+    classification="announcement",
+    default_channels=["email", "push"],
+)
+
+EVENT_JOIN_APPROVED = NotificationTypeDef(
+    code="event.join_approved",
+    name="Join Request Approved",
+    description="Notification when your request to join an event is approved",
+    category="event",
+    classification="change",
+    default_channels=["email", "push"],
+)
+
+EVENT_JOIN_DECLINED = NotificationTypeDef(
+    code="event.join_declined",
+    name="Join Request Declined",
+    description="Notification when your request to join an event is declined",
+    category="event",
+    classification="change",
+    default_channels=["email"],
+)
+
+EVENT_ROLE_CHANGED = NotificationTypeDef(
+    code="event.role_changed",
+    name="Role Changed",
+    description="Notification when your role in an event changes",
+    category="event",
+    classification="change",
+    default_channels=["email", "push"],
+)
+
+# ── User / admin notifications ────────────────────────────────────
+
+USER_REINSTATED = NotificationTypeDef(
+    code="user.reinstated",
+    name="Account Reinstated",
+    description="Notification when a suspended account is restored",
     category="user",
     classification="change",
     default_channels=["email", "push"],
 )
 
-USER_REJECTED = NotificationTypeDef(
-    code="user.rejected",
-    name="Account Rejected",
-    description="Notification when your account is rejected by an admin",
+USER_SUSPENDED = NotificationTypeDef(
+    code="user.suspended",
+    name="Account Suspended",
+    description="Notification when your account is suspended by an administrator",
     category="user",
     classification="change",
     default_channels=["email"],
@@ -193,9 +239,14 @@ ALL_NOTIFICATION_TYPES: list[NotificationTypeDef] = [
     TASK_PUBLISHED,
     EVENT_PUBLISHED,
     AVAILABILITY_REMINDER,
-    USER_REGISTERED,
-    USER_APPROVED,
-    USER_REJECTED,
+    EVENT_INVITATION,
+    EVENT_INVITATION_ACCEPTED,
+    EVENT_JOIN_REQUESTED,
+    EVENT_JOIN_APPROVED,
+    EVENT_JOIN_DECLINED,
+    EVENT_ROLE_CHANGED,
+    USER_REINSTATED,
+    USER_SUSPENDED,
 ]
 
 

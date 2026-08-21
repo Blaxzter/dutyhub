@@ -493,7 +493,15 @@ class TestProcessReminder:
         test_shift: Shift,
         test_task: Task,
     ) -> None:
-        """A standalone task contributes no event scope."""
+        """A standalone task contributes no event scope.
+
+        Fixture tasks now live inside an event, so detach this one first —
+        the branch under test is the legacy ``event_id IS NULL`` case.
+        """
+        test_task.event_id = None
+        db_session.add(test_task)
+        await db_session.flush()
+
         reminder = await _create_reminder(
             db_session,
             booking=test_booking,

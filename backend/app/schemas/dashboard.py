@@ -48,4 +48,4 @@ class DashboardFeedResponse(BaseModel):
     events: list[DashboardEvent]
     bookings: list[DashboardBookingItem]
     booking_count: int
-    pending_user_count: int | None = None
+    pending_join_request_count: int = 0

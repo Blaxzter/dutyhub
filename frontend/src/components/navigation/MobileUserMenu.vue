@@ -120,9 +120,9 @@ const initials = computed(() => {
           {{ $t('duties.selectEvent.changeEvent') }}
         </DropdownMenuItem>
         <DropdownMenuItem
-          v-if="authStore.isAdmin || authStore.isTaskManager"
+          v-if="authStore.isManager"
           data-testid="mobile-user-manage-events"
-          @click="$router.push({ name: 'admin-events' })"
+          @click="$router.push({ name: 'my-events' })"
         >
           <CalendarRange />
           {{ $t('admin.events.title') }}

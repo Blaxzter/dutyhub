@@ -106,19 +106,6 @@
         "activate": "Activate",
         "activated": "Activated account for {name}.",
         "active": "Active",
-        "approvalPassword": {
-            "changePlaceholder": "Enter new approval password",
-            "clear": "Clear approval password",
-            "clearDialogDescription": "Are you sure you want to clear the approval password? Pending users will no longer be able to self-approve.",
-            "clearDialogTitle": "Clear Approval Password",
-            "cleared": "Approval password cleared.",
-            "description": "Set an optional password that pending users can enter to approve themselves.",
-            "placeholder": "Enter approval password",
-            "save": "Save approval password",
-            "saved": "Approval password saved.",
-            "savedAndCopied": "Approval password saved and copied to clipboard.",
-            "title": "Approval Password"
-        },
         "approve": "Approve",
         "columns": {
             "actions": "Actions",

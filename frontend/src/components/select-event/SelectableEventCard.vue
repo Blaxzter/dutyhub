@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { CalendarDays, Check } from '@lucide/vue'
+import { computed } from 'vue'
+
+import { CalendarDays, Check, Globe, Lock, Star, Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'
+import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent } from '@/components/ui/card'
 
 import type { EventRead } from '@/client/types.gen'
+import { roleLabelKey } from '@/lib/event-roles'
 import { formatDate } from '@/lib/format'
 
 export type EventStats = { taskCount: number; totalShifts: number; openShifts: number }
@@ -15,41 +19,94 @@ const props = defineProps<{
   stats: EventStats | undefined
   isCurrent: boolean
   isPending: boolean
+  /**
+   * "pick" — an event you already belong to, chosen with a radio-style tap.
+   * "discover" — a public event you could ask to join, with its own button.
+   */
+  variant?: 'pick' | 'discover'
+  requesting?: boolean
 }>()
 
-defineEmits<{ select: [event: EventRead] }>()
+const emit = defineEmits<{
+  select: [event: EventRead]
+  requestJoin: [event: EventRead]
+}>()
 
 const { t } = useI18n()
+
+const isDiscover = computed(() => props.variant === 'discover')
+const requestStatus = computed(() => props.event.join_request_status ?? null)
+const hasRequested = computed(() => requestStatus.value === 'pending')
+
+// Clicking the card body only stages a selection in "pick" mode; in Discover
+// the meaningful action is the explicit button, so the card is inert.
+function handleActivate() {
+  if (isDiscover.value) return
+  emit('select', props.event)
+}
 </script>
 
 <template>
   <Card
     data-testid="select-event-card"
+    :data-event-id="props.event.id"
     :data-selected="props.isPending ? 'true' : undefined"
-    role="radio"
-    :aria-checked="props.isPending"
-    tabindex="0"
-    class="cursor-pointer transition-colors hover:border-primary"
-    :class="{ 'border-primary ring-2 ring-primary/30': props.isPending }"
-    @click="$emit('select', props.event)"
-    @keydown.enter.prevent="$emit('select', props.event)"
-    @keydown.space.prevent="$emit('select', props.event)"
+    :role="isDiscover ? undefined : 'radio'"
+    :aria-checked="isDiscover ? undefined : props.isPending"
+    :tabindex="isDiscover ? undefined : 0"
+    class="transition-colors"
+    :class="[
+      isDiscover ? '' : 'cursor-pointer hover:border-primary',
+      props.isPending ? 'border-primary ring-2 ring-primary/30' : '',
+    ]"
+    @click="handleActivate"
+    @keydown.enter.prevent="handleActivate"
+    @keydown.space.prevent="handleActivate"
   >
     <CardContent class="flex items-center gap-4 p-5">
       <div class="min-w-0 flex-1 space-y-1.5">
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <h3 class="truncate text-lg font-semibold">{{ props.event.name }}</h3>
           <Badge v-if="props.isCurrent" variant="secondary">
             {{ t('duties.selectEvent.pick.current') }}
           </Badge>
+          <Badge v-if="props.event.my_role" variant="outline" data-testid="event-role-badge">
+            {{ t(roleLabelKey(props.event.my_role)) }}
+          </Badge>
+          <Badge v-if="props.event.is_featured" variant="secondary" class="gap-1">
+            <Star class="h-3 w-3" />
+            {{ t('duties.events.featured.badge') }}
+          </Badge>
+          <Badge v-if="props.event.status === 'draft'" variant="outline">
+            {{ t('duties.events.status.draft') }}
+          </Badge>
         </div>
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <CalendarDays class="h-4 w-4 shrink-0" />
-          <span>
+
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <span class="flex items-center gap-2">
+            <CalendarDays class="h-4 w-4 shrink-0" />
             {{ formatDate(props.event.start_date) }} – {{ formatDate(props.event.end_date) }}
           </span>
+          <span class="flex items-center gap-1.5">
+            <Users class="h-4 w-4 shrink-0" />
+            {{
+              t(
+                'duties.events.members.count',
+                { count: props.event.member_count ?? 0 },
+                props.event.member_count ?? 0,
+              )
+            }}
+          </span>
+          <span class="flex items-center gap-1.5">
+            <component
+              :is="props.event.visibility === 'public' ? Globe : Lock"
+              class="h-4 w-4 shrink-0"
+            />
+            {{ t(`duties.events.visibility.${props.event.visibility}.label`) }}
+          </span>
         </div>
-        <p class="text-sm font-medium">
+
+        <p v-if="!isDiscover" class="text-sm font-medium">
           {{
             t(
               'duties.selectEvent.pick.stats',
@@ -61,10 +118,30 @@ const { t } = useI18n()
             )
           }}
         </p>
+        <p v-else-if="props.event.description" class="line-clamp-2 text-sm text-muted-foreground">
+          {{ props.event.description }}
+        </p>
       </div>
 
-      <!-- Radio-style indicator -->
+      <!-- Discover: an explicit request-to-join action -->
+      <div v-if="isDiscover" class="shrink-0">
+        <Badge v-if="hasRequested" variant="secondary" data-testid="join-requested-badge">
+          {{ t('duties.events.join.requested') }}
+        </Badge>
+        <Button
+          v-else
+          size="sm"
+          data-testid="btn-request-join"
+          :disabled="props.requesting"
+          @click.stop="emit('requestJoin', props.event)"
+        >
+          {{ t('duties.events.join.request') }}
+        </Button>
+      </div>
+
+      <!-- Pick: radio-style indicator -->
       <div
+        v-else
         :class="[
           'flex size-11 shrink-0 items-center justify-center rounded-full transition-colors',
           props.isPending

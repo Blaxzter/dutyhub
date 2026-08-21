@@ -199,12 +199,12 @@ const navAdmin = computed(() => {
     icon: typeof Users
     routeName: string
   }[] = []
-  if (authStore.isAdmin || authStore.isTaskManager) {
+  if (authStore.isManager) {
     items.push({
       title: 'Manage Events',
       titleKey: 'admin.events.title',
       icon: CalendarRange,
-      routeName: 'admin-events',
+      routeName: 'my-events',
     })
   }
   if (authStore.isAdmin) {

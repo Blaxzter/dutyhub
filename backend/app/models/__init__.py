@@ -11,7 +11,9 @@ from .booking import Booking
 from .booking_reminder import BookingReminder
 from .calendar_feed import CalendarFeedToken
 from .event import Event
-from .event_manager import EventManager
+from .event_invitation import EventInvitation
+from .event_join_request import EventJoinRequest
+from .event_membership import EventMembership
 from .notification import (
     Notification,
     NotificationSubscription,
@@ -21,7 +23,6 @@ from .notification import (
 )
 from .shift import Shift
 from .shift_batch import ShiftBatch
-from .site_settings import SiteSettings
 from .task import Task
 from .user import User
 from .user_availability import UserAvailability, UserAvailabilityDate
@@ -36,12 +37,13 @@ __all__ = [
     "Shift",
     "Task",
     "Event",
-    "EventManager",
+    "EventInvitation",
+    "EventJoinRequest",
+    "EventMembership",
     "Notification",
     "NotificationSubscription",
     "NotificationType",
     "PushSubscription",
-    "SiteSettings",
     "ShiftBatch",
     "TelegramBinding",
     "User",

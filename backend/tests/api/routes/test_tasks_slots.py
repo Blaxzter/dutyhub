@@ -119,8 +119,8 @@ class TestTaskShiftsRoutes:
         r = await async_client.post(
             f"/api/v1/tasks/{test_task.id}/add-shifts",
             json={
-                "start_date": "2026-06-15",
-                "end_date": "2026-06-17",
+                "start_date": "2026-06-11",
+                "end_date": "2026-06-13",
                 "schedule": {
                     "default_start_time": "10:00:00",
                     "default_end_time": "14:00:00",
@@ -146,15 +146,15 @@ class TestTaskShiftsRoutes:
         r = await async_client.post(
             f"/api/v1/tasks/{test_task.id}/add-shifts",
             json={
-                "start_date": "2026-06-20",
-                "end_date": "2026-06-23",
+                "start_date": "2026-06-11",
+                "end_date": "2026-06-14",
                 "schedule": {
                     "default_start_time": "10:00:00",
                     "default_end_time": "12:00:00",
                     "shift_duration_minutes": 120,
                     "people_per_shift": 1,
                     "overrides": [],
-                    "specific_dates": ["2026-06-20", "2026-06-23"],
+                    "specific_dates": ["2026-06-11", "2026-06-14"],
                 },
             },
         )
@@ -167,10 +167,10 @@ class TestTaskShiftsRoutes:
         )
         assert shifts.status_code == 200
         dates = {s["date"] for s in shifts.json()["items"]}
-        assert "2026-06-20" in dates
-        assert "2026-06-23" in dates
-        assert "2026-06-21" not in dates
-        assert "2026-06-22" not in dates
+        assert "2026-06-11" in dates
+        assert "2026-06-14" in dates
+        assert "2026-06-12" not in dates
+        assert "2026-06-13" not in dates
 
     async def test_list_batches(self, async_client: AsyncClient, test_task: Task):
         """Test listing shift batches for a task."""

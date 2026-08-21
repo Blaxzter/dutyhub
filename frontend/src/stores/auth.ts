@@ -12,7 +12,8 @@ import { type Palette, usePalette } from '@/composables/usePalette'
 
 import ActionToast from '@/components/ui/sonner/ActionToast.vue'
 
-import type { EventRead, UserProfile, UserRead } from '@/client/types.gen'
+import type { EventRead, UserProfile } from '@/client/types.gen'
+import type { EventRole } from '@/lib/event-roles'
 import i18n from '@/locales/i18n'
 
 export type { User }
@@ -24,25 +25,51 @@ export const useAuthStore = defineStore('auth', () => {
   const router = useRouter()
   const loading = ref(false)
   const profileLoading = ref(false)
-  const pendingUserCount = ref(0)
+  const pendingJoinRequestCount = ref(0)
+  let joinRequestToastShown = false
 
   const isAuthenticated = computed(() => auth0.isAuthenticated.value)
   const user = computed(() => auth0.user.value)
   const profile = ref<UserProfile | null>(null)
   const roles = computed(() => profile.value?.roles ?? [])
+  /** Platform superadmin — the only global role left. */
   const isAdmin = computed(() => profile.value?.is_admin ?? false)
-  const isTaskManager = computed(() => profile.value?.is_task_manager ?? false)
-  const managedEventIds = computed(() => profile.value?.managed_event_ids ?? [])
+  /** This user's role in each event they belong to, keyed by event id. */
+  const eventRoles = computed<Record<string, EventRole>>(
+    () => (profile.value?.event_roles ?? {}) as Record<string, EventRole>,
+  )
+  const myEventIds = computed(() => Object.keys(eventRoles.value))
+  /** Events this user owns or administers — where they see management UI. */
+  const managedEventIds = computed(() =>
+    myEventIds.value.filter((id) => eventRoles.value[id] !== 'member'),
+  )
   const isEventManager = computed(() => managedEventIds.value.length > 0)
-  const isManager = computed(() => isAdmin.value || isTaskManager.value || isEventManager.value)
+  const isManager = computed(() => isAdmin.value || isEventManager.value)
   const isActive = computed(() => profile.value?.is_active ?? true)
   const selectedEventId = computed(() => profile.value?.selected_event_id ?? null)
   const selectedEvent = ref<EventRead | null>(null)
 
-  /** Check if current user can manage a task/event by its event_id. */
+  /** This user's role in one event, or null if they are not in it. */
+  function eventRole(eventId: string | null | undefined): EventRole | null {
+    if (isAdmin.value) return 'owner'
+    if (!eventId) return null
+    return eventRoles.value[eventId] ?? null
+  }
+
+  /** Whether the user may manage the event (owner or admin). */
   function canManageEvent(eventId: string | null | undefined): boolean {
-    if (isAdmin.value || isTaskManager.value) return true
-    return !!eventId && managedEventIds.value.includes(eventId)
+    const role = eventRole(eventId)
+    return role === 'owner' || role === 'admin'
+  }
+
+  /** Whether the user owns the event — required to delete it or hand it on. */
+  function isEventOwner(eventId: string | null | undefined): boolean {
+    return eventRole(eventId) === 'owner'
+  }
+
+  /** Whether the user belongs to the event at all. */
+  function isEventMember(eventId: string | null | undefined): boolean {
+    return eventRole(eventId) !== null
   }
 
   let profilePromise: Promise<UserProfile | null> | null = null
@@ -135,11 +162,6 @@ export const useAuthStore = defineStore('auth', () => {
         usePalette().value = response.data.theme as Palette
       }
 
-      // Check for pending users once per session (admin only)
-      if (response.data.is_admin) {
-        checkPendingUsers()
-      }
-
       // Resolve the selected event (best-effort, non-blocking)
       void loadSelectedEvent(response.data.selected_event_id ?? null)
 
@@ -178,29 +200,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  const checkPendingUsers = async () => {
-    try {
-      const usersRes = await get<{ data: { items: UserRead[] } }>({ url: '/users/' })
-      const pending = usersRes.data.items.filter((u) => !u.is_active && !u.rejection_reason)
-      pendingUserCount.value = pending.length
-      if (pending.length > 0) {
-        toast.custom(markRaw(ActionToast), {
-          duration: Infinity,
-          componentProps: {
-            message: t(
-              'dashboard.home.stats.users.pendingToast',
-              { count: pending.length },
-              pending.length,
-            ),
-            actionLabel: t('dashboard.home.stats.users.pendingAction'),
-            dismissLabel: t('dashboard.home.stats.users.pendingDismiss'),
-            onAction: () => router.push({ name: 'admin-users' }),
-          },
-        })
-      }
-    } catch {
-      // Non-critical, ignore
-    }
+  /**
+   * Nudge the user about join requests waiting on them.
+   *
+   * Replaces the old platform-wide "users pending approval" prompt: with open
+   * signup there is nothing to approve at the account level, only at the event
+   * level — and that lands on whoever runs the event, not on the superadmin.
+   */
+  const notifyPendingJoinRequests = (count: number) => {
+    pendingJoinRequestCount.value = count
+    if (count <= 0 || joinRequestToastShown) return
+    joinRequestToastShown = true
+    toast.custom(markRaw(ActionToast), {
+      duration: Infinity,
+      componentProps: {
+        message: t('dashboard.home.stats.joinRequests.pendingToast', { count }, count),
+        actionLabel: t('dashboard.home.stats.joinRequests.pendingAction'),
+        dismissLabel: t('dashboard.home.stats.joinRequests.pendingDismiss'),
+        onAction: () => router.push({ name: 'my-events', query: { tab: 'requests' } }),
+      },
+    })
   }
 
   watch(isAuthenticated, (next) => {
@@ -218,12 +237,17 @@ export const useAuthStore = defineStore('auth', () => {
     roles,
     isActive,
     isAdmin,
-    isTaskManager,
     isEventManager,
+    eventRoles,
+    myEventIds,
     managedEventIds,
     isManager,
+    eventRole,
     canManageEvent,
-    pendingUserCount,
+    isEventOwner,
+    isEventMember,
+    pendingJoinRequestCount,
+    notifyPendingJoinRequests,
     loading,
     profileLoading,
     selectedEventId,

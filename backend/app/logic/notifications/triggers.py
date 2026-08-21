@@ -7,6 +7,8 @@ the request session is closed.
 import datetime as dt
 import uuid
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.db import async_session
 from app.core.logger import get_logger
 from app.logic.notifications.messages import get_message
@@ -252,19 +254,17 @@ async def dispatch_event_published(
     event_id: uuid.UUID,
     event_name: str,
 ) -> None:
-    """Notify all active users that an event was published."""
-    try:
-        from sqlalchemy import select
-        from sqlmodel import col
+    """Notify the event's members that it was published.
 
-        from app.models.user import User
+    Deliberately not everyone on the platform: with open signup and private
+    events, a global announcement would leak event names to strangers and
+    spam accounts that have nothing to do with it.
+    """
+    try:
+        from app.crud.event_membership import event_membership as crud_membership
 
         async with async_session() as db:
-            result = await db.execute(
-                select(User).where(col(User.is_active) == True)  # noqa: E712
-            )
-            users = result.scalars().all()
-            user_ids = [u.id for u in users]
+            user_ids = await crud_membership.list_user_ids(db, event_id=event_id)
 
             if user_ids:
                 svc = NotificationService(db)
@@ -284,53 +284,30 @@ async def dispatch_event_published(
         logger.exception("Failed to dispatch event.published notification")
 
 
-async def dispatch_user_registered(
-    *,
-    user_id: uuid.UUID,
-    user_name: str | None,
-    user_email: str | None,
-) -> None:
-    """Notify admins that a new user registered."""
-    try:
-        async with async_session() as db:
-            svc = NotificationService(db)
-            name = user_name or user_email or "Unknown"
-            await svc.notify_admins(
-                type_code="user.registered",
-                message_factory=lambda lang, _name=name: get_message(
-                    "user.registered", lang, name=_name
-                ),
-                data={"user_id": str(user_id)},
-            )
-            await db.commit()
-    except Exception:
-        logger.exception("Failed to dispatch user.registered notification")
-
-
-async def dispatch_user_approved(
+async def dispatch_user_reinstated(
     *,
     user_id: uuid.UUID,
 ) -> None:
-    """Notify user that their account was approved."""
+    """Notify a user that their suspended account was restored."""
     try:
         async with async_session() as db:
             svc = NotificationService(db)
             await svc.notify(
                 recipient_ids=[user_id],
-                type_code="user.approved",
-                message_factory=lambda lang: get_message("user.approved", lang),
+                type_code="user.reinstated",
+                message_factory=lambda lang: get_message("user.reinstated", lang),
             )
             await db.commit()
     except Exception:
-        logger.exception("Failed to dispatch user.approved notification")
+        logger.exception("Failed to dispatch user.reinstated notification")
 
 
-async def dispatch_user_rejected(
+async def dispatch_user_suspended(
     *,
     user_id: uuid.UUID,
     reason: str | None = None,
 ) -> None:
-    """Notify user that their account was rejected."""
+    """Notify a user that their account was suspended."""
     try:
         async with async_session() as db:
             svc = NotificationService(db)
@@ -340,16 +317,205 @@ async def dispatch_user_rejected(
                     detail = f" Grund: {reason}" if reason else ""
                 else:
                     detail = f" Reason: {reason}" if reason else ""
-                return get_message("user.rejected", lang, detail=detail)
+                return get_message("user.suspended", lang, detail=detail)
 
             await svc.notify(
                 recipient_ids=[user_id],
-                type_code="user.rejected",
+                type_code="user.suspended",
                 message_factory=_factory,
             )
             await db.commit()
     except Exception:
-        logger.exception("Failed to dispatch user.rejected notification")
+        logger.exception("Failed to dispatch user.suspended notification")
+
+
+# ── Event membership ──────────────────────────────────────────────
+
+
+async def _event_name(db: AsyncSession, event_id: uuid.UUID) -> str:
+    from app.crud.event import event as crud_event
+
+    db_event = await crud_event.get(db, event_id)
+    return db_event.name if db_event else "an event"
+
+
+async def dispatch_event_invitation(
+    *,
+    invitation_id: uuid.UUID,
+) -> None:
+    """Tell an invitee they have been invited to an event.
+
+    Only fires for people who already have an account — an invitation to an
+    address with no user behind it is picked up at first sign-in instead.
+    """
+    try:
+        from app.crud.event_invitation import event_invitation as crud_invitation
+        from app.crud.user import user as crud_user
+
+        async with async_session() as db:
+            invitation = await crud_invitation.get(db, invitation_id=invitation_id)
+            if not invitation or not invitation.email:
+                return
+            invitee = await crud_user.get_by_email(db, email=invitation.email)
+            if not invitee:
+                return
+
+            name = await _event_name(db, invitation.event_id)
+            svc = NotificationService(db)
+            await svc.notify(
+                recipient_ids=[invitee.id],
+                type_code="event.invitation",
+                message_factory=lambda lang: get_message(
+                    "event.invitation", lang, event_name=name
+                ),
+                data={
+                    "event_id": str(invitation.event_id),
+                    "token": invitation.token,
+                },
+                scope_chain=[("event", invitation.event_id)],
+            )
+            await db.commit()
+    except Exception:
+        logger.exception("Failed to dispatch event.invitation notification")
+
+
+async def dispatch_event_invitation_accepted(
+    *,
+    event_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> None:
+    """Tell the event's admins that an invitee joined."""
+    try:
+        from app.crud.event_membership import event_membership as crud_membership
+        from app.crud.user import user as crud_user
+
+        async with async_session() as db:
+            admins = await crud_membership.list_user_ids(
+                db, event_id=event_id, minimum_role="admin"
+            )
+            recipients = [a for a in admins if a != user_id]
+            if not recipients:
+                return
+
+            joiner = await crud_user.get(db, id=user_id)
+            joiner_name = (
+                (joiner.name or joiner.email or "Someone") if joiner else "Someone"
+            )
+            name = await _event_name(db, event_id)
+
+            svc = NotificationService(db)
+            await svc.notify(
+                recipient_ids=recipients,
+                type_code="event.invitation_accepted",
+                message_factory=lambda lang: get_message(
+                    "event.invitation_accepted",
+                    lang,
+                    name=joiner_name,
+                    event_name=name,
+                ),
+                data={"event_id": str(event_id), "user_id": str(user_id)},
+                scope_chain=[("event", event_id)],
+            )
+            await db.commit()
+    except Exception:
+        logger.exception("Failed to dispatch event.invitation_accepted notification")
+
+
+async def dispatch_event_join_requested(
+    *,
+    event_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> None:
+    """Tell the event's admins that someone asked to join."""
+    try:
+        from app.crud.event_membership import event_membership as crud_membership
+        from app.crud.user import user as crud_user
+
+        async with async_session() as db:
+            recipients = await crud_membership.list_user_ids(
+                db, event_id=event_id, minimum_role="admin"
+            )
+            if not recipients:
+                return
+
+            applicant = await crud_user.get(db, id=user_id)
+            applicant_name = (
+                (applicant.name or applicant.email or "Someone")
+                if applicant
+                else "Someone"
+            )
+            name = await _event_name(db, event_id)
+
+            svc = NotificationService(db)
+            await svc.notify(
+                recipient_ids=recipients,
+                type_code="event.join_requested",
+                message_factory=lambda lang: get_message(
+                    "event.join_requested",
+                    lang,
+                    name=applicant_name,
+                    event_name=name,
+                ),
+                data={"event_id": str(event_id), "user_id": str(user_id)},
+                scope_chain=[("event", event_id)],
+            )
+            await db.commit()
+    except Exception:
+        logger.exception("Failed to dispatch event.join_requested notification")
+
+
+async def dispatch_event_join_decided(
+    *,
+    event_id: uuid.UUID,
+    user_id: uuid.UUID,
+    approved: bool,
+) -> None:
+    """Tell an applicant whether they were let in."""
+    type_code = "event.join_approved" if approved else "event.join_declined"
+    try:
+        async with async_session() as db:
+            name = await _event_name(db, event_id)
+            svc = NotificationService(db)
+            await svc.notify(
+                recipient_ids=[user_id],
+                type_code=type_code,
+                message_factory=lambda lang: get_message(
+                    type_code, lang, event_name=name
+                ),
+                data={"event_id": str(event_id)},
+                scope_chain=[("event", event_id)],
+            )
+            await db.commit()
+    except Exception:
+        logger.exception("Failed to dispatch %s notification", type_code)
+
+
+async def dispatch_event_role_changed(
+    *,
+    event_id: uuid.UUID,
+    user_id: uuid.UUID,
+    role: str,
+) -> None:
+    """Tell a member their role in an event changed."""
+    try:
+        async with async_session() as db:
+            name = await _event_name(db, event_id)
+            svc = NotificationService(db)
+            await svc.notify(
+                recipient_ids=[user_id],
+                type_code="event.role_changed",
+                message_factory=lambda lang: get_message(
+                    "event.role_changed",
+                    lang,
+                    event_name=name,
+                    role=get_message(f"role.{role}", lang)[0],
+                ),
+                data={"event_id": str(event_id), "role": role},
+                scope_chain=[("event", event_id)],
+            )
+            await db.commit()
+    except Exception:
+        logger.exception("Failed to dispatch event.role_changed notification")
 
 
 def _build_scope_chain(

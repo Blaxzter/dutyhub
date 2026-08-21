@@ -35,10 +35,10 @@ test.describe('a11y – admin routes', () => {
   })
 
   test('events list', async ({ adminPage: page }) => {
-    await page.goto('/app/admin/events')
+    await page.goto('/app/events')
     await expect(page.getByTestId('page-heading')).toBeVisible()
     await expect(page.getByTestId('input-search')).toBeVisible()
-    await expectNoA11yViolations(page, { label: 'admin events list (/app/admin/events)' })
+    await expectNoA11yViolations(page, { label: 'admin events list (/app/events)' })
   })
 
   test('event detail / settings', async ({ adminPage: page, workerEvent }) => {

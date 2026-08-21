@@ -54,17 +54,19 @@ class UserProfile(BaseModel):
     show_event_switcher_in_nav: bool = False
     email_verified: bool = False
     roles: list[str] = Field(default_factory=list, description="User's roles")
-    is_admin: bool = Field(default=False, description="Whether user has admin role")
-    is_task_manager: bool = Field(
-        default=False, description="Whether user has task_manager role"
+    is_admin: bool = Field(
+        default=False, description="Whether user is a platform superadmin"
     )
     is_active: bool = Field(default=True, description="Whether user is active")
     rejection_reason: str | None = Field(
-        default=None, description="Reason for account rejection"
+        default=None, description="Reason the account was suspended"
     )
-    managed_event_ids: list[uuid.UUID] = Field(
-        default_factory=list,
-        description="IDs of events this user manages (via event_managers)",
+    event_roles: dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "This user's role in each event they belong to, keyed by event id: "
+            "owner, admin or member"
+        ),
     )
     selected_event_id: uuid.UUID | None = Field(
         default=None,
