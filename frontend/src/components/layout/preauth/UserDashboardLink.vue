@@ -1,20 +1,11 @@
 <script setup lang="ts">
 import { UserIcon } from '@lucide/vue'
 
-import { useAvatarUrl } from '@/composables/useAvatarUrl'
-
 import { useAuthStore } from '@/stores/auth'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useAvatarUrl } from '@/composables/useAvatarUrl'
 
-withDefaults(
-  defineProps<{
-    direction?: 'horizontal' | 'vertical'
-  }>(),
-  {
-    direction: 'horizontal',
-  },
-)
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 defineEmits<{
   navigate: []
@@ -25,30 +16,30 @@ const avatarUrl = useAvatarUrl(() => authStore.profile)
 </script>
 
 <template>
-  <div
-    :class="[
-      'cursor-pointer hover:bg-muted rounded',
-      direction === 'horizontal'
-        ? 'flex items-center space-x-3 p-1'
-        : 'flex flex-col items-center gap-2 p-3',
-    ]"
+  <button
+    type="button"
+    class="flex cursor-pointer items-center gap-3 rounded p-1 hover:bg-muted"
     @click="$emit('navigate')"
   >
-    <Avatar class="h-8 w-8">
+    <Avatar class="size-8">
       <AvatarImage
         v-if="avatarUrl"
         :src="avatarUrl"
         :alt="authStore.user?.name || authStore.user?.email || 'User'"
       />
       <AvatarFallback>
-        <UserIcon class="h-4 w-4" />
+        <UserIcon class="size-4" />
       </AvatarFallback>
     </Avatar>
-    <div :class="direction === 'vertical' ? 'flex flex-col items-center' : 'flex flex-col'">
+
+    <!-- Avatar-only on small screens: the pre-auth header now carries the
+         language, theme and sign-in controls inline at every width, and the
+         name plus caption is more than the remaining room allows. -->
+    <span class="hidden flex-col text-left sm:flex">
       <span class="text-sm font-medium">{{ authStore.user?.name || authStore.user?.email }}</span>
       <span class="text-xs text-muted-foreground">
         {{ $t('preauth.layout.navigation.goToDashboard') }}
       </span>
-    </div>
-  </div>
+    </span>
+  </button>
 </template>

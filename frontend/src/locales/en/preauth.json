@@ -1,108 +1,8 @@
 {
-    "about": {
-        "backToHome": "Back to Home",
-        "sections": {
-            "development": {
-                "description": "WirkSam is a digital duty scheduling platform for churches and communities. Organizers create tasks with duty shifts, and volunteers book themselves in — simple, transparent, and reliable.",
-                "title": "How It Works"
-            },
-            "features": {
-                "apiIntegration": {
-                    "description": "Browse available duty shifts, book with one click, and manage your commitments from anywhere.",
-                    "title": "Easy Booking"
-                },
-                "authentication": {
-                    "description": "Your bookings are locked — only you or an admin can change them. No accidental overwrites.",
-                    "title": "Secure & Reliable"
-                },
-                "responsiveDesign": {
-                    "description": "Works on your phone, tablet, or desktop — manage duties on the go.",
-                    "title": "Works Everywhere"
-                },
-                "title": "Features"
-            },
-            "techStack": {
-                "backend": {
-                    "items": {
-                        "0": "Create tasks (e.g. Pfingsten, Kirchentag)",
-                        "1": "Define duty shifts with date, time, and location",
-                        "2": "Set how many volunteers each shift needs",
-                        "3": "Publish when ready for booking",
-                        "4": "See who's signed up at a glance",
-                        "5": "Manage bookings across all tasks"
-                    },
-                    "title": "For Organizers"
-                },
-                "frontend": {
-                    "items": {
-                        "0": "Browse published tasks and duty shifts",
-                        "1": "Book a shift with one click",
-                        "2": "See all your bookings in one place",
-                        "3": "Cancel if your plans change",
-                        "4": "Get a clear overview of availability"
-                    },
-                    "title": "For Volunteers"
-                },
-                "title": "How It Works"
-            }
-        },
-        "subtitle": "Learn more about WirkSam and how it helps organize duty schedules.",
-        "title": "About WirkSam"
-    },
     "cookieNotice": {
         "dismiss": "OK",
         "learnMore": "Learn more",
         "message": "This site uses only essential cookies for authentication and session management. No tracking or analytics cookies are used."
-    },
-    "howItWorks": {
-        "backToHome": "Back to Home",
-        "features": {
-            "batchShifts": {
-                "description": "Add multiple shift batches to the same task with different schedules, locations, or time ranges.",
-                "title": "Multi-Batch Shifts"
-            },
-            "dryRun": {
-                "description": "Before regenerating, see exactly which shifts will be added, removed, or kept — and which bookings would be affected.",
-                "title": "Dry-Run Preview"
-            },
-            "overrides": {
-                "description": "Need different hours on Saturday? Add schedule overrides for specific dates without changing the rest of the task.",
-                "title": "Per-Day Overrides"
-            },
-            "smartRegeneration": {
-                "description": "When you change a schedule, WirkSam matches existing shifts by date and time — preserving bookings on unchanged shifts.",
-                "title": "Smart Regeneration"
-            },
-            "title": "Advanced Capabilities"
-        },
-        "steps": {
-            "dates": {
-                "description": "Select a single date, a continuous date range, or pick specific individual dates. If linked to an event, dates are constrained to the event's timeframe.",
-                "title": "2. Choose Dates"
-            },
-            "details": {
-                "description": "Start by giving your task a name, description, location, and category. Optionally link it to an event like a conference or festival.",
-                "title": "1. Task Details"
-            },
-            "preview": {
-                "description": "See a real-time preview of all generated shifts. Click any shift to exclude it before creating. The preview updates live as you adjust settings.",
-                "title": "5. Preview & Exclude"
-            },
-            "publish": {
-                "description": "Created tasks start as drafts. Publish when ready so volunteers can see and book shifts. Add more shift batches later or regenerate shifts without losing existing bookings.",
-                "title": "6. Publish & Manage"
-            },
-            "remainder": {
-                "description": "If the day doesn't divide evenly into shifts, choose what to do with leftover time: drop it, create a shorter final shift, or extend the last shift to fill the gap.",
-                "title": "4. Handle Remainders"
-            },
-            "schedule": {
-                "description": "Set the daily start and end times, shift duration (15 min to 2 hours), and how many volunteers each shift needs. Add per-date overrides for days with different hours.",
-                "title": "3. Configure Schedule"
-            }
-        },
-        "subtitle": "A step-by-step look at how organizers create tasks and generate duty shifts in WirkSam.",
-        "title": "How Task Creation Works"
     },
     "impressum": {
         "backToHome": "Back to Home",
@@ -135,65 +35,233 @@
         "title": "Legal Notice"
     },
     "landing": {
-        "authNote": "Sign in to browse tasks and book your duties",
-        "features": {
-            "easyToUse": {
-                "description": "Browse tasks, pick a shift, and book — it's that simple. No spreadsheets, no confusion.",
-                "title": "Easy Booking"
-            },
-            "fastSecure": {
-                "description": "Your bookings are locked and can't be changed by others. Only you or an admin can cancel.",
-                "title": "Locked Bookings"
-            },
-            "scalable": {
-                "description": "Whether it's a small gathering or a large church congress — WirkSam scales with your needs.",
-                "title": "Any Task Size"
-            }
-        },
-        "getStarted": "Sign In",
-        "learnMore": "Learn More",
-        "nameExplainer": "WirkSam — from German \"wirksam\" (effective) and \"zusammen\" (together). Because volunteering works best when we work together.",
-        "showcase": {
-            "goToSlide": "Show slide: {title}",
-            "slides": {
-                "bookings": {
-                    "description": "All your confirmed duties in one place — filter by upcoming, this month, or view all.",
-                    "title": "My Bookings"
+        "about": {
+            "cards": {
+                "data": {
+                    "description": "Your name, email address, profile picture, and which shifts you booked. That's it. No tracking, no analytics, and only the cookies needed to keep you signed in.",
+                    "title": "We store very little"
                 },
-                "dashboard": {
-                    "description": "Get a bird's-eye view of your tasks, bookings, and an interactive calendar — all in one place.",
-                    "title": "Dashboard"
+                "free": {
+                    "description": "No paid tier, no ads, nothing to upsell. It's a private, non-commercial project provided as-is, without a guarantee of uninterrupted service.",
+                    "title": "Free, and honest about it"
                 },
-                "eventDetail": {
-                    "description": "See all available duty shifts by day, book with one click, and track availability.",
-                    "title": "Task Detail"
+                "gdpr": {
+                    "description": "Operated from Germany under German and EU law. Request a copy of your data, correct it, or delete your account — which removes your personal data for good.",
+                    "title": "GDPR, properly"
                 },
-                "events": {
-                    "description": "Organize related tasks into events like conferences or festivals for easy management.",
-                    "title": "Events"
-                },
-                "notificationPreferences": {
-                    "description": "Fine-tune how you receive notifications — via email, push, or Telegram — for each notification type.",
-                    "title": "Notification Settings"
-                },
-                "notifications": {
-                    "description": "Stay informed with real-time notifications for bookings, tasks, and shift changes — right in your dashboard.",
-                    "title": "Notifications"
-                },
-                "tasks": {
-                    "description": "Browse all duty tasks with inline shift previews, search, and smart filters.",
-                    "title": "Tasks & Shifts"
-                },
-                "userManagement": {
-                    "description": "Admins can manage users, roles, and approval workflows from a central dashboard.",
-                    "title": "User Management"
+                "private": {
+                    "description": "A new event is visible only to the people you invite. Making it public is a deliberate choice, and even then your organisers decide who actually gets in.",
+                    "title": "Private by default"
                 }
             },
-            "subtitle": "Explore the key features that make duty scheduling effortless.",
-            "title": "See WirkSam in Action"
+            "eyebrow": "About",
+            "lede": "WirkSam was built for church events and community service, where the roster is usually a spreadsheet passed around by email until nobody knows which copy is real.",
+            "legalIntro": "The full detail is in the small print:",
+            "nameExplainer": "The name is a German pun: “wirksam” means effective, and “zusammen” means together. Volunteering works best when we work together — hence WirkSam.",
+            "title": "A small project, run in the open"
         },
-        "subtitle": "The volunteer scheduling platform for church tasks and community service. Book your shifts for Pfingsten, Kirchentag, and more — effective together.",
-        "welcome": "Welcome to WirkSam"
+        "audience": {
+            "eyebrow": "Who it's for",
+            "lede": "Somebody has to build the plan, and somebody has to show up on the day. WirkSam is the one place where those two meet.",
+            "organiser": {
+                "description": "Everything you would otherwise keep in a spreadsheet and chase over email — who is covering what, and which slots are still empty.",
+                "label": "For organisers",
+                "points": {
+                    "0": "Set up an event yourself — nobody has to approve it.",
+                    "1": "Invite your team by email or with one share link.",
+                    "2": "Describe a task once; every shift is generated from it.",
+                    "3": "See at a glance which shifts are still short of people."
+                },
+                "title": "You run the event"
+            },
+            "title": "Two sides of the same roster",
+            "volunteer": {
+                "description": "No spreadsheet to decipher and no reply-all thread. Your shifts, in one list, with a reminder before each one.",
+                "label": "For volunteers",
+                "points": {
+                    "0": "Open the invitation, sign in, and you're in.",
+                    "1": "Say when you're free before the shifts are handed out.",
+                    "2": "Book what fits, cancel in good time if plans change.",
+                    "3": "A reminder before every shift, on the channel you use."
+                },
+                "title": "You lend a hand"
+            }
+        },
+        "features": {
+            "eyebrow": "Features",
+            "lede": "Generate the shifts, share one plan, keep track of who is coming, and remind them in time.",
+            "more": {
+                "items": {
+                    "availability": {
+                        "description": "Collect who can be there when, and see the whole team's availability as a heatmap before you start assigning.",
+                        "title": "Availability up front"
+                    },
+                    "calendarFeed": {
+                        "description": "A private feed URL puts your booked shifts into Google Calendar, Apple Calendar, or Outlook and keeps them up to date.",
+                        "title": "Calendar subscription"
+                    },
+                    "discover": {
+                        "description": "Leave an event private, or make it public so anyone signed in can ask to join — and your organisers decide who gets in.",
+                        "title": "Public events, if you want them"
+                    },
+                    "languages": {
+                        "description": "The whole app in both languages, in two colour palettes, on a phone as readily as a laptop.",
+                        "title": "German and English, light and dark"
+                    },
+                    "people": {
+                        "description": "Owner, organiser, and member per event. Promote someone, hand the event over, or step back — an event can never end up with nobody in charge.",
+                        "title": "Roles that match reality"
+                    },
+                    "reports": {
+                        "description": "See how the work is spread across your team, and print a clean roster per task or for the whole event.",
+                        "title": "Reports and printing"
+                    }
+                },
+                "title": "And the rest of it"
+            },
+            "rows": {
+                "bookings": {
+                    "description": "Everything you signed up for, soonest first. Only you or an organiser can cancel a booking.",
+                    "points": {
+                        "0": "Filter by what's coming up, this month, or everything.",
+                        "1": "Cancel in two clicks and the slot reopens for someone else.",
+                        "2": "Subscribe from your own calendar app and your shifts sit alongside the rest of your week."
+                    },
+                    "screenshotAlt": "The My Bookings page listing confirmed shifts with their dates, times, and locations.",
+                    "title": "Your commitments in one list"
+                },
+                "overview": {
+                    "description": "Your event's tasks as a list, as cards, or on a calendar — with the open places showing on every shift.",
+                    "points": {
+                        "0": "Search and filter by category, location, or date.",
+                        "1": "Hide the shifts that are already full to see what still needs covering.",
+                        "2": "The whole app works on one event at a time, so nobody reads the wrong roster."
+                    },
+                    "screenshotAlt": "The task list with a week of shifts beside each entry, showing booked and open places per slot.",
+                    "title": "One plan, and everyone sees the same one"
+                },
+                "reminders": {
+                    "description": "A roster only works if people remember. WirkSam nudges before each shift, on whichever channel you actually read.",
+                    "points": {
+                        "0": "Email, browser push, or Telegram — chosen per notification type.",
+                        "1": "Everything also lands in an inbox inside the app.",
+                        "2": "Turn any of it off. Reminders are an offer, not a nuisance."
+                    },
+                    "screenshotAlt": "Notification settings with a row per notification type and per-channel switches for email, push, and Telegram.",
+                    "title": "Reminders that actually reach people"
+                },
+                "shifts": {
+                    "description": "You give a task its shape — the days, the daily hours, how long a shift runs, how many people it needs — and the shifts are generated from it.",
+                    "points": {
+                        "0": "Uneven days handled on purpose: drop the remainder, shorten the last shift, or stretch it.",
+                        "1": "Different hours on one date? Add an override without touching the rest.",
+                        "2": "A live preview lists every shift before it exists — click one to leave it out."
+                    },
+                    "screenshotAlt": "The shift schedule form beside a live preview of every shift it would create.",
+                    "title": "Describe the pattern once"
+                }
+            },
+            "title": "Everything a roster needs"
+        },
+        "finalCta": {
+            "button": "Start an event",
+            "eyebrow": "Get started",
+            "lede": "Sign in, create your event, and invite your team. Nobody has to approve you first.",
+            "title": "Ready to plan your next event?"
+        },
+        "hero": {
+            "board": {
+                "days": {
+                    "0": "Fri",
+                    "1": "Sat",
+                    "2": "Sun"
+                },
+                "legend": {
+                    "full": "Covered",
+                    "open": "Nobody yet",
+                    "partial": "One more needed"
+                },
+                "openCount": "{count} place open | {count} places open",
+                "summary": "A roster board: three days across, four shifts down each day, each showing how many of its places are taken — most covered, a few still open, and one marked as yours.",
+                "taskName": "Welcome Desk",
+                "you": "You"
+            },
+            "ctaPrimary": "Start an event",
+            "ctaSecondary": "I have an invitation",
+            "eyebrow": "Free for volunteer teams",
+            "proof": {
+                "free": "Free and non-commercial",
+                "noInstall": "Nothing to install",
+                "privacy": "No tracking, no ads"
+            },
+            "subtitle": "Set up your event, invite your team, and describe the shifts once. Everyone books the slots that suit them — and gets a reminder before each one.",
+            "title": "Plan the roster for your next event — together."
+        },
+        "journey": {
+            "eyebrow": "How it works",
+            "lede": "Four steps, whichever side you are on.",
+            "organiser": {
+                "footnote": "Then print the roster, or pull a report on how the work is spread.",
+                "steps": {
+                    "create": {
+                        "description": "A name and the dates it runs. It's yours, and private until you say otherwise.",
+                        "title": "Create the event"
+                    },
+                    "generate": {
+                        "description": "Describe a task once — days, hours, length, headcount — and every shift is worked out for you.",
+                        "title": "Generate the shifts"
+                    },
+                    "invite": {
+                        "description": "Paste a list of addresses, or send one share link. You pick each person's role.",
+                        "title": "Invite your people"
+                    },
+                    "publish": {
+                        "description": "Your team books the slots that suit them. You see the gaps as they close.",
+                        "title": "Publish and watch it fill"
+                    }
+                },
+                "tab": "I'm organising"
+            },
+            "title": "From an empty calendar to a covered event",
+            "volunteer": {
+                "footnote": "Plans changed? Cancel from My Bookings and the place reopens for somebody else.",
+                "steps": {
+                    "accept": {
+                        "description": "See the event, who invited you, and your role — before you decide.",
+                        "title": "Accept the invitation"
+                    },
+                    "availability": {
+                        "description": "Whole days, a daily window, or exact hours painted into a grid.",
+                        "title": "Say when you're free"
+                    },
+                    "book": {
+                        "description": "Pick the slots that fit. Each one shows how many places are left.",
+                        "title": "Book your shifts"
+                    },
+                    "reminders": {
+                        "description": "A nudge before each shift by email, push, or Telegram — your choice.",
+                        "title": "Get reminded"
+                    }
+                },
+                "tab": "I'm helping out"
+            }
+        },
+        "lightbox": {
+            "close": "Close",
+            "counter": "{current} of {total}",
+            "hint": "Use the arrow keys to move between screenshots, or Escape to close.",
+            "next": "Next screenshot",
+            "open": "Enlarge screenshot: {title}",
+            "previous": "Previous screenshot",
+            "title": "Screenshot"
+        },
+        "nav": {
+            "about": "About",
+            "audience": "Who it's for",
+            "features": "Features",
+            "howItWorks": "How it works",
+            "label": "Page sections"
+        }
     },
     "layout": {
         "appName": "WirkSam",
@@ -207,9 +275,11 @@
         "navigation": {
             "about": "About",
             "appearance": "Appearance",
+            "features": "Features",
             "goToDashboard": "Go to Dashboard",
             "howItWorks": "How It Works",
-            "signIn": "Sign In"
+            "signIn": "Sign In",
+            "whoItsFor": "Who it's for"
         },
         "openMenu": "Open menu"
     },

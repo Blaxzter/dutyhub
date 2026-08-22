@@ -296,7 +296,7 @@ onMounted(loadStats)
           <BookCheck class="mr-2 h-4 w-4" />
           {{ t('dashboard.home.quickActions.myBookings') }}
         </Button>
-        <Button variant="outline" @click="router.push({ name: 'how-it-works' })">
+        <Button variant="outline" @click="router.push({ name: 'landing', hash: '#how-it-works' })">
           <HelpCircle class="mr-2 h-4 w-4" />
           {{ t('dashboard.home.quickActions.howItWorks') }}
         </Button>

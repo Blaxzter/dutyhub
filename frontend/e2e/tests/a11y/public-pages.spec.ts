@@ -18,15 +18,33 @@ test.describe('a11y – public pages', () => {
     await expectNoA11yViolations(page, { label: 'landing (/)' })
   })
 
-  test('about page has no serious or critical violations', async ({ page }) => {
-    await page.goto('/about')
+  test('landing page volunteer journey has no serious or critical violations', async ({ page }) => {
+    await page.goto('/')
     await expect(page.getByTestId('page-heading')).toBeVisible()
-    await expectNoA11yViolations(page, { label: 'about (/about)' })
+
+    // The second journey tab renders a whole panel that the default scan never
+    // sees, so it gets its own pass.
+    await page.locator('#how-it-works').getByRole('tab').nth(1).click()
+    await expectNoA11yViolations(page, { label: 'landing – volunteer journey (/)' })
   })
 
-  test('how-it-works page has no serious or critical violations', async ({ page }) => {
-    await page.goto('/how-it-works')
+  test('privacy page has no serious or critical violations', async ({ page }) => {
+    await page.goto('/privacy')
+    // Legal pages have no page-heading testid, so anchor on the h1 itself.
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    await expectNoA11yViolations(page, { label: 'privacy (/privacy)' })
+  })
+
+  test('the screenshot viewer has no serious or critical violations', async ({ page }) => {
+    await page.goto('/')
     await expect(page.getByTestId('page-heading')).toBeVisible()
-    await expectNoA11yViolations(page, { label: 'how it works (/how-it-works)' })
+
+    // The viewer is a portalled dialog the default scan never reaches.
+    const thumbnail = page.locator('#features button[aria-label]').first()
+    await thumbnail.scrollIntoViewIfNeeded()
+    await thumbnail.click()
+    await expect(page.getByRole('dialog')).toBeVisible()
+
+    await expectNoA11yViolations(page, { label: 'landing – screenshot viewer (/)' })
   })
 })

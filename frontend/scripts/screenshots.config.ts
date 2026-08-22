@@ -28,7 +28,8 @@ try {
 export default defineConfig({
   testDir: '.',
   testMatch: 'take-screenshots.ts',
-  timeout: 180_000,
+  // Two colour modes x seven pages, plus seeding, in a single test.
+  timeout: 600_000,
   use: {
     baseURL: 'http://localhost:5555',
     headless: !!process.env.CI,

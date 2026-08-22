@@ -1,108 +1,8 @@
 {
-    "about": {
-        "backToHome": "Zurück zur Startseite",
-        "sections": {
-            "development": {
-                "description": "WirkSam ist eine digitale Dienstplan-Plattform für Kirchen und Gemeinden. Organisatoren erstellen Veranstaltungen mit Dienstschichten, und Freiwillige buchen sich selbst ein — einfach, transparent und zuverlässig.",
-                "title": "So funktioniert's"
-            },
-            "features": {
-                "apiIntegration": {
-                    "description": "Verfügbare Dienstschichten durchsuchen, mit einem Klick buchen und Ihre Einsätze von überall verwalten.",
-                    "title": "Einfache Buchung"
-                },
-                "authentication": {
-                    "description": "Ihre Buchungen sind gesperrt — nur Sie oder ein Admin können sie ändern. Kein versehentliches Überschreiben.",
-                    "title": "Sicher & Zuverlässig"
-                },
-                "responsiveDesign": {
-                    "description": "Funktioniert auf Handy, Tablet oder Desktop — Dienste auch unterwegs verwalten.",
-                    "title": "Überall nutzbar"
-                },
-                "title": "Features"
-            },
-            "techStack": {
-                "backend": {
-                    "items": {
-                        "0": "Veranstaltungen erstellen (z.B. Pfingsten, Kirchentag)",
-                        "1": "Dienstschichten mit Datum, Uhrzeit und Ort definieren",
-                        "2": "Festlegen, wie viele Freiwillige pro Schicht benötigt werden",
-                        "3": "Veröffentlichen, wenn alles bereit ist",
-                        "4": "Auf einen Blick sehen, wer sich eingetragen hat",
-                        "5": "Buchungen über alle Veranstaltungen hinweg verwalten"
-                    },
-                    "title": "Für Organisatoren"
-                },
-                "frontend": {
-                    "items": {
-                        "0": "Veröffentlichte Veranstaltungen und Schichten durchsuchen",
-                        "1": "Mit einem Klick eine Schicht buchen",
-                        "2": "Alle Buchungen an einem Ort sehen",
-                        "3": "Stornieren, wenn sich Pläne ändern",
-                        "4": "Klare Übersicht über Verfügbarkeit"
-                    },
-                    "title": "Für Freiwillige"
-                },
-                "title": "So funktioniert's"
-            }
-        },
-        "subtitle": "Erfahren Sie mehr über WirkSam und wie es bei der Organisation von Dienstplänen hilft.",
-        "title": "Über WirkSam"
-    },
     "cookieNotice": {
         "dismiss": "OK",
         "learnMore": "Mehr erfahren",
         "message": "Diese Seite verwendet ausschließlich technisch notwendige Cookies für Authentifizierung und Sitzungsverwaltung. Es werden keine Tracking- oder Analyse-Cookies verwendet."
-    },
-    "howItWorks": {
-        "backToHome": "Zurück zur Startseite",
-        "features": {
-            "batchShifts": {
-                "description": "Fügen Sie mehrere Schicht-Batches zur selben Veranstaltung mit unterschiedlichen Zeitplänen, Orten oder Zeiträumen hinzu.",
-                "title": "Multi-Batch Schichten"
-            },
-            "dryRun": {
-                "description": "Vor der Regenerierung sehen Sie genau, welche Schichten hinzugefügt, entfernt oder beibehalten werden — und welche Buchungen betroffen wären.",
-                "title": "Trockenlauf-Vorschau"
-            },
-            "overrides": {
-                "description": "Andere Zeiten am Samstag nötig? Fügen Sie Zeitplan-Ausnahmen für bestimmte Tage hinzu, ohne den Rest der Veranstaltung zu ändern.",
-                "title": "Tagesweise Ausnahmen"
-            },
-            "smartRegeneration": {
-                "description": "Bei Zeitplanänderungen gleicht WirkSam bestehende Schichten nach Datum und Uhrzeit ab — Buchungen auf unveränderten Schichten bleiben erhalten.",
-                "title": "Intelligente Regenerierung"
-            },
-            "title": "Erweiterte Funktionen"
-        },
-        "steps": {
-            "dates": {
-                "description": "Wählen Sie ein einzelnes Datum, einen zusammenhängenden Zeitraum oder wählen Sie einzelne Tage aus. Bei Zuordnung zu einer Gruppe sind die Termine auf deren Zeitraum begrenzt.",
-                "title": "2. Termine wählen"
-            },
-            "details": {
-                "description": "Geben Sie Ihrer Veranstaltung einen Namen, eine Beschreibung, einen Ort und eine Kategorie. Optional können Sie sie einer Veranstaltungsgruppe wie einer Konferenz zuordnen.",
-                "title": "1. Veranstaltungsdetails"
-            },
-            "preview": {
-                "description": "Sehen Sie eine Echtzeit-Vorschau aller generierten Schichten. Klicken Sie auf eine Schicht, um sie auszuschließen. Die Vorschau aktualisiert sich live.",
-                "title": "5. Vorschau & Ausschließen"
-            },
-            "publish": {
-                "description": "Erstellte Veranstaltungen starten als Entwurf. Veröffentlichen Sie, wenn bereit. Fügen Sie später weitere Schicht-Batches hinzu oder regenerieren Sie Schichten ohne bestehende Buchungen zu verlieren.",
-                "title": "6. Veröffentlichen & Verwalten"
-            },
-            "remainder": {
-                "description": "Falls der Tag nicht gleichmäßig in Schichten teilbar ist: Restzeit verwerfen, eine kürzere letzte Schicht erstellen oder die letzte Schicht verlängern.",
-                "title": "4. Restzeit behandeln"
-            },
-            "schedule": {
-                "description": "Legen Sie tägliche Start- und Endzeiten, Schichtdauer (15 Min bis 2 Std) und die Anzahl der benötigten Freiwilligen pro Schicht fest. Fügen Sie Ausnahmen für bestimmte Tage hinzu.",
-                "title": "3. Zeitplan konfigurieren"
-            }
-        },
-        "subtitle": "Ein schrittweiser Blick darauf, wie Organisatoren in WirkSam Veranstaltungen erstellen und Dienstschichten generieren.",
-        "title": "So funktioniert die Veranstaltungserstellung"
     },
     "impressum": {
         "backToHome": "Zurück zur Startseite",
@@ -135,65 +35,233 @@
         "title": "Impressum"
     },
     "landing": {
-        "authNote": "Melden Sie sich an, um Veranstaltungen zu sehen und Dienste zu buchen",
-        "features": {
-            "easyToUse": {
-                "description": "Veranstaltung durchsuchen, Schicht auswählen und buchen — so einfach geht's. Keine Tabellen, kein Durcheinander.",
-                "title": "Einfache Buchung"
-            },
-            "fastSecure": {
-                "description": "Ihre Buchungen sind gesperrt und können von anderen nicht geändert werden. Nur Sie oder ein Admin können stornieren.",
-                "title": "Gesperrte Buchungen"
-            },
-            "scalable": {
-                "description": "Ob kleines Treffen oder großer Kirchentag — WirkSam wächst mit Ihren Anforderungen.",
-                "title": "Jede Veranstaltungsgröße"
-            }
-        },
-        "getStarted": "Anmelden",
-        "learnMore": "Mehr erfahren",
-        "nameExplainer": "WirkSam — von \"wirksam\" und \"zusammen\". Weil Ehrenamt am besten funktioniert, wenn wir gemeinsam anpacken.",
-        "showcase": {
-            "goToSlide": "Folie anzeigen: {title}",
-            "slides": {
-                "bookings": {
-                    "description": "Alle bestätigten Dienste an einem Ort — filtern nach bevorstehend, diesen Monat oder alle anzeigen.",
-                    "title": "Meine Buchungen"
+        "about": {
+            "cards": {
+                "data": {
+                    "description": "Deinen Namen, deine E-Mail-Adresse, dein Profilbild und die Schichten, die du gebucht hast. Mehr nicht. Kein Tracking, keine Analyse-Dienste und nur die Cookies, die dich angemeldet halten.",
+                    "title": "Wir speichern sehr wenig"
                 },
-                "dashboard": {
-                    "description": "Erhalten Sie einen Überblick über Ihre Veranstaltungen, Buchungen und einen interaktiven Kalender — alles an einem Ort.",
-                    "title": "Dashboard"
+                "free": {
+                    "description": "Keine kostenpflichtige Stufe, keine Werbung, nichts, was dir verkauft werden soll. Ein privates, nicht kommerzielles Projekt, bereitgestellt wie es ist — ohne Zusage auf durchgehende Verfügbarkeit.",
+                    "title": "Kostenlos, und ehrlich dabei"
                 },
-                "eventDetail": {
-                    "description": "Sehen Sie alle verfügbaren Schichten nach Tag, buchen Sie mit einem Klick und verfolgen Sie die Verfügbarkeit.",
-                    "title": "Veranstaltungsdetail"
+                "gdpr": {
+                    "description": "Betrieben aus Deutschland nach deutschem und europäischem Recht. Fordere eine Kopie deiner Daten an, lass sie berichtigen oder lösche dein Konto — damit sind deine persönlichen Daten endgültig weg.",
+                    "title": "Datenschutz, ernst gemeint"
                 },
-                "events": {
-                    "description": "Organisieren Sie zusammengehörige Veranstaltungen in Gruppen wie Konferenzen oder Festivals.",
-                    "title": "Veranstaltungsgruppen"
-                },
-                "notificationPreferences": {
-                    "description": "Passe an, wie du Benachrichtigungen erhältst — per E-Mail, Push oder Telegram — für jeden Benachrichtigungstyp.",
-                    "title": "Benachrichtigungseinstellungen"
-                },
-                "notifications": {
-                    "description": "Bleibe in Echtzeit über Buchungen, Veranstaltungen und Schichtänderungen informiert — direkt in deinem Dashboard.",
-                    "title": "Benachrichtigungen"
-                },
-                "tasks": {
-                    "description": "Durchsuchen Sie alle Dienst-Veranstaltungen mit Inline-Schichtvorschau, Suche und smarten Filtern.",
-                    "title": "Veranstaltungen & Schichten"
-                },
-                "userManagement": {
-                    "description": "Admins können Benutzer, Rollen und Genehmigungsabläufe von einem zentralen Dashboard aus verwalten.",
-                    "title": "Benutzerverwaltung"
+                "private": {
+                    "description": "Eine neue Veranstaltung sehen nur die Leute, die du einlädst. Sie öffentlich zu stellen ist eine bewusste Entscheidung — und auch dann entscheidet ihr, wer wirklich hineinkommt.",
+                    "title": "Standardmäßig privat"
                 }
             },
-            "subtitle": "Entdecken Sie die wichtigsten Funktionen, die Dienstplanung mühelos machen.",
-            "title": "WirkSam in Aktion"
+            "eyebrow": "Über WirkSam",
+            "lede": "WirkSam ist für kirchliche Veranstaltungen und Gemeindearbeit entstanden — dort, wo der Dienstplan meist eine Tabelle ist, die so lange per E-Mail herumgereicht wird, bis niemand mehr weiß, welche Fassung gilt.",
+            "legalIntro": "Alles Weitere steht im Kleingedruckten:",
+            "nameExplainer": "Der Name ist ein Wortspiel: „wirksam“ und „zusammen“. Ehrenamt funktioniert am besten, wenn wir gemeinsam anpacken — daher WirkSam.",
+            "title": "Ein kleines Projekt, offen gemacht"
         },
-        "subtitle": "Die Plattform für ehrenamtliche Dienstplanung bei kirchlichen Veranstaltungen und Gemeindearbeit. Buchen Sie Ihre Schichten für Pfingsten, Kirchentag und mehr — wirksam, gemeinsam.",
-        "welcome": "Willkommen bei WirkSam"
+        "audience": {
+            "eyebrow": "Für wen",
+            "lede": "Jemand muss den Plan bauen, und jemand muss am Tag selbst da sein. WirkSam ist der Ort, an dem sich beide treffen.",
+            "organiser": {
+                "description": "Alles, was sonst in einer Tabelle steht und per E-Mail hinterhergetragen wird — wer welchen Dienst übernimmt und welche Plätze noch frei sind.",
+                "label": "Für Organisierende",
+                "points": {
+                    "0": "Leg deine Veranstaltung selbst an — niemand muss sie freigeben.",
+                    "1": "Lade dein Team per E-Mail oder mit einem Link ein.",
+                    "2": "Beschreibe eine Aufgabe einmal; alle Schichten entstehen daraus.",
+                    "3": "Sieh auf einen Blick, wo noch Leute fehlen."
+                },
+                "title": "Du machst den Plan"
+            },
+            "title": "Zwei Seiten desselben Dienstplans",
+            "volunteer": {
+                "description": "Keine Tabelle zum Entziffern, kein Antwort-an-alle. Deine Schichten in einer Liste, mit einer Erinnerung vor jeder einzelnen.",
+                "label": "Für Helfende",
+                "points": {
+                    "0": "Einladung öffnen, anmelden, dabei.",
+                    "1": "Sag vorher, wann du kannst — bevor verteilt wird.",
+                    "2": "Buche, was passt, und sag rechtzeitig ab, wenn nötig.",
+                    "3": "Vor jeder Schicht eine Erinnerung, auf deinem Weg."
+                },
+                "title": "Du packst mit an"
+            }
+        },
+        "features": {
+            "eyebrow": "Funktionen",
+            "lede": "Schichten erzeugen, einen gemeinsamen Plan teilen, den Überblick behalten und rechtzeitig erinnern.",
+            "more": {
+                "items": {
+                    "availability": {
+                        "description": "Sammle ein, wer wann kann, und sieh die Verfügbarkeit des ganzen Teams als Heatmap, bevor du anfängst zu verteilen.",
+                        "title": "Verfügbarkeit vorab"
+                    },
+                    "calendarFeed": {
+                        "description": "Eine private Feed-Adresse bringt deine gebuchten Schichten in Google Kalender, Apple Kalender oder Outlook — und hält sie aktuell.",
+                        "title": "Kalender-Abo"
+                    },
+                    "discover": {
+                        "description": "Lass deine Veranstaltung privat oder stell sie öffentlich, damit Angemeldete anfragen können — wer hineinkommt, entscheidet weiterhin ihr.",
+                        "title": "Öffentlich, wenn du magst"
+                    },
+                    "languages": {
+                        "description": "Die ganze App in beiden Sprachen, in zwei Farbwelten, auf dem Handy genauso wie am Rechner.",
+                        "title": "Deutsch und Englisch, hell und dunkel"
+                    },
+                    "people": {
+                        "description": "Eigentümer:in, Organisator:in und Mitglied — pro Veranstaltung. Befördere jemanden, gib die Veranstaltung weiter oder tritt kürzer; ganz ohne Verantwortliche bleibt sie nie zurück.",
+                        "title": "Rollen, die zur Wirklichkeit passen"
+                    },
+                    "reports": {
+                        "description": "Sieh, wie sich die Arbeit auf dein Team verteilt, und drucke einen sauberen Dienstplan pro Aufgabe oder für die ganze Veranstaltung.",
+                        "title": "Auswertungen und Druck"
+                    }
+                },
+                "title": "Und der Rest"
+            },
+            "rows": {
+                "bookings": {
+                    "description": "Alles, wofür du dich eingetragen hast, das Nächste zuerst. Absagen können nur du oder die Organisation.",
+                    "points": {
+                        "0": "Filtere nach demnächst, diesem Monat oder allem.",
+                        "1": "Mit zwei Klicks absagen — der Platz wird wieder frei.",
+                        "2": "Im eigenen Kalender abonnieren, dann stehen die Schichten neben dem Rest der Woche."
+                    },
+                    "screenshotAlt": "Die Seite „Meine Buchungen“ mit den bestätigten Schichten samt Datum, Uhrzeit und Ort.",
+                    "title": "Deine Zusagen an einem Ort"
+                },
+                "overview": {
+                    "description": "Die Aufgaben deiner Veranstaltung als Liste, als Karten oder im Kalender — mit den freien Plätzen an jeder Schicht.",
+                    "points": {
+                        "0": "Suchen und filtern nach Kategorie, Ort oder Datum.",
+                        "1": "Volle Schichten ausblenden und nur sehen, was noch fehlt.",
+                        "2": "Die App arbeitet immer mit einer Veranstaltung — niemand liest im falschen Plan."
+                    },
+                    "screenshotAlt": "Die Aufgabenliste mit einer Wochenansicht der Schichten daneben, jeweils mit gebuchten und freien Plätzen.",
+                    "title": "Ein Plan, den alle gleich sehen"
+                },
+                "reminders": {
+                    "description": "Ein Dienstplan funktioniert nur, wenn Leute daran denken. WirkSam erinnert vor jeder Schicht — auf dem Weg, den du wirklich liest.",
+                    "points": {
+                        "0": "E-Mail, Browser-Push oder Telegram — pro Art einzeln wählbar.",
+                        "1": "Alles landet zusätzlich im Posteingang in der App.",
+                        "2": "Du kannst alles abschalten. Erinnerungen sind ein Angebot, keine Belästigung."
+                    },
+                    "screenshotAlt": "Die Benachrichtigungseinstellungen: pro Art eine Zeile, mit Schaltern für E-Mail, Push und Telegram.",
+                    "title": "Erinnerungen, die ankommen"
+                },
+                "shifts": {
+                    "description": "Du gibst einer Aufgabe ihre Form — die Tage, die täglichen Zeiten, die Schichtlänge, die Personenzahl — und die Schichten entstehen daraus.",
+                    "points": {
+                        "0": "Ungerade Tage bewusst geregelt: Restzeit weglassen, letzte Schicht kürzen oder verlängern.",
+                        "1": "An einem Tag andere Zeiten? Eine Ausnahme anlegen, ohne den Rest anzufassen.",
+                        "2": "Die Vorschau listet jede Schicht, bevor es sie gibt — einzelne wegklicken."
+                    },
+                    "screenshotAlt": "Das Formular für den Zeitplan neben einer Vorschau aller Schichten, die daraus entstünden.",
+                    "title": "Das Muster einmal beschreiben"
+                }
+            },
+            "title": "Alles, was ein Dienstplan braucht"
+        },
+        "finalCta": {
+            "button": "Veranstaltung starten",
+            "eyebrow": "Loslegen",
+            "lede": "Melde dich an, leg deine Veranstaltung an und lade dein Team ein. Niemand muss dich vorher freischalten.",
+            "title": "Bereit für eure nächste Veranstaltung?"
+        },
+        "hero": {
+            "board": {
+                "days": {
+                    "0": "Fr",
+                    "1": "Sa",
+                    "2": "So"
+                },
+                "legend": {
+                    "full": "Besetzt",
+                    "open": "Noch frei",
+                    "partial": "Eine Person fehlt"
+                },
+                "openCount": "{count} Platz frei | {count} Plätze frei",
+                "summary": "Ein Dienstplan: drei Tage nebeneinander, pro Tag vier Schichten, jede mit der Zahl der belegten Plätze — die meisten besetzt, einige noch frei, und eine als deine markiert.",
+                "taskName": "Empfang",
+                "you": "Du"
+            },
+            "ctaPrimary": "Veranstaltung starten",
+            "ctaSecondary": "Ich habe eine Einladung",
+            "eyebrow": "Kostenlos für ehrenamtliche Teams",
+            "proof": {
+                "free": "Kostenlos und nicht kommerziell",
+                "noInstall": "Nichts zu installieren",
+                "privacy": "Kein Tracking, keine Werbung"
+            },
+            "subtitle": "Leg deine Veranstaltung an, lade dein Team ein und beschreibe die Schichten einmal. Alle buchen, was ihnen passt — und werden vor jeder Schicht erinnert.",
+            "title": "Plant den Dienstplan für eure nächste Veranstaltung — gemeinsam."
+        },
+        "journey": {
+            "eyebrow": "Der Ablauf",
+            "lede": "Vier Schritte — auf welcher Seite du auch stehst.",
+            "organiser": {
+                "footnote": "Danach den Dienstplan drucken oder auswerten, wie sich die Arbeit verteilt.",
+                "steps": {
+                    "create": {
+                        "description": "Ein Name und die Tage. Sie gehört dir — und bleibt privat, bis du etwas anderes sagst.",
+                        "title": "Veranstaltung anlegen"
+                    },
+                    "generate": {
+                        "description": "Beschreibe eine Aufgabe einmal — Tage, Zeiten, Länge, Personenzahl — und alle Schichten entstehen daraus.",
+                        "title": "Schichten erzeugen"
+                    },
+                    "invite": {
+                        "description": "Eine Liste von Adressen einfügen oder einen Link teilen. Die Rolle bestimmst du.",
+                        "title": "Deine Leute einladen"
+                    },
+                    "publish": {
+                        "description": "Dein Team bucht, was passt. Du siehst, wie sich die Lücken schließen.",
+                        "title": "Veröffentlichen und füllen lassen"
+                    }
+                },
+                "tab": "Ich organisiere"
+            },
+            "title": "Vom leeren Kalender zur besetzten Veranstaltung",
+            "volunteer": {
+                "footnote": "Etwas dazwischengekommen? Unter „Meine Buchungen“ absagen — der Platz wird wieder frei.",
+                "steps": {
+                    "accept": {
+                        "description": "Du siehst die Veranstaltung, wer dich eingeladen hat und deine Rolle — und entscheidest dann.",
+                        "title": "Einladung annehmen"
+                    },
+                    "availability": {
+                        "description": "Ganze Tage, ein tägliches Zeitfenster oder genaue Stunden im Raster.",
+                        "title": "Sagen, wann du kannst"
+                    },
+                    "book": {
+                        "description": "Nimm die Zeiten, die passen. Bei jeder steht, wie viele Plätze frei sind.",
+                        "title": "Schichten buchen"
+                    },
+                    "reminders": {
+                        "description": "Vor jeder Schicht ein Hinweis per E-Mail, Push oder Telegram — wie du magst.",
+                        "title": "Erinnert werden"
+                    }
+                },
+                "tab": "Ich helfe mit"
+            }
+        },
+        "lightbox": {
+            "close": "Schließen",
+            "counter": "{current} von {total}",
+            "hint": "Mit den Pfeiltasten zwischen den Screenshots wechseln, mit Escape schließen.",
+            "next": "Nächster Screenshot",
+            "open": "Screenshot vergrößern: {title}",
+            "previous": "Vorheriger Screenshot",
+            "title": "Screenshot"
+        },
+        "nav": {
+            "about": "Über WirkSam",
+            "audience": "Für wen",
+            "features": "Funktionen",
+            "howItWorks": "Der Ablauf",
+            "label": "Abschnitte dieser Seite"
+        }
     },
     "layout": {
         "appName": "WirkSam",
@@ -207,9 +275,11 @@
         "navigation": {
             "about": "Über uns",
             "appearance": "Erscheinungsbild",
+            "features": "Funktionen",
             "goToDashboard": "Zum Dashboard",
-            "howItWorks": "So funktioniert's",
-            "signIn": "Anmelden"
+            "howItWorks": "Der Ablauf",
+            "signIn": "Anmelden",
+            "whoItsFor": "Für wen"
         },
         "openMenu": "Menü öffnen"
     },
