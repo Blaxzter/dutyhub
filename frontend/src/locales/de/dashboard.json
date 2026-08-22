@@ -24,7 +24,7 @@
                 "title": "Meine Buchungen"
             },
             "joinRequests": {
-                "description": "Personen, die bei deinen Events mitmachen möchten",
+                "description": "Personen, die bei deinen Veranstaltungen mitmachen möchten",
                 "pendingAction": "Ansehen",
                 "pendingDismiss": "Später",
                 "pendingToast": "1 Person möchte mitmachen | {count} Personen möchten mitmachen",

@@ -124,7 +124,7 @@
     },
     "events": {
         "create": "Veranstaltungsgruppe erstellen",
-        "created": "Event erstellt",
+        "created": "Veranstaltung erstellt",
         "delete": "Veranstaltungsgruppe löschen",
         "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",
         "detail": {
@@ -167,7 +167,7 @@
             "badge": "Empfohlen",
             "feature": "{name} auf der Startseite zeigen",
             "featured": "Zur Startseite hinzugefügt",
-            "requiresPublic": "Nur öffentliche Events können auf die Startseite",
+            "requiresPublic": "Nur öffentliche Veranstaltungen können auf die Startseite",
             "unfeature": "{name} von der Startseite nehmen",
             "unfeatured": "Von der Startseite entfernt"
         },
@@ -183,7 +183,7 @@
             "startTime": "Startzeit",
             "status": "Status",
             "timeOptional": "Optional",
-            "visibility": "Wer das Event sehen kann"
+            "visibility": "Wer die Veranstaltung sehen kann"
         },
         "invitations": {
             "copyLink": "Link kopieren",
@@ -208,7 +208,7 @@
         },
         "invite": {
             "accept": "Annehmen und mitmachen",
-            "alreadyMember": "Du machst bei diesem Event schon mit.",
+            "alreadyMember": "Du machst bei dieser Veranstaltung schon mit.",
             "asRole": "Du machst mit als",
             "decline": "Jetzt nicht",
             "from": "Du wurdest eingeladen mitzumachen.",
@@ -223,7 +223,7 @@
             "joined": "Willkommen bei {name}",
             "notFoundBody": "Die Einladung wurde vielleicht zurückgezogen oder der Link ist falsch.",
             "notFoundTitle": "Dieser Link funktioniert nicht",
-            "openEvent": "Event öffnen"
+            "openEvent": "Veranstaltung öffnen"
         },
         "join": {
             "request": "Mitmachen anfragen",
@@ -245,17 +245,17 @@
             "count": "keine Personen | 1 Person | {count} Personen",
             "empty": "Noch niemand dabei.",
             "leave": "Verlassen",
-            "left": "Du machst bei diesem Event nicht mehr mit",
-            "ownershipTransferred": "Das Event hat jetzt eine neue Eigentümerin bzw. einen neuen Eigentümer",
+            "left": "Du machst bei dieser Veranstaltung nicht mehr mit",
+            "ownershipTransferred": "Die Veranstaltung hat jetzt eine neue Eigentümerin bzw. einen neuen Eigentümer",
             "remove": "{name} entfernen",
-            "removed": "Aus dem Event entfernt",
+            "removed": "Aus der Veranstaltung entfernt",
             "roleChanged": "Rolle geändert",
             "subtitle": "Alle, die mitmachen — und was sie tun dürfen.",
             "title": "Personen",
             "transferAction": "Übergeben",
-            "transferHint": "Die neue Person übernimmt das Event. Du bleibst Organisator:in.",
+            "transferHint": "Die neue Person übernimmt die Veranstaltung. Du bleibst Organisator:in.",
             "transferPlaceholder": "Person auswählen…",
-            "transferTitle": "Event übergeben",
+            "transferTitle": "Veranstaltung übergeben",
             "you": "(du)"
         },
         "pickDate": "Datum auswählen",
@@ -276,11 +276,11 @@
         "title": "Veranstaltungsgruppen",
         "visibility": {
             "private": {
-                "hint": "Nur eingeladene Personen finden das Event und können mitmachen.",
+                "hint": "Nur eingeladene Personen finden die Veranstaltung und können mitmachen.",
                 "label": "Privat"
             },
             "public": {
-                "hint": "Alle Angemeldeten finden das Event und können anfragen.",
+                "hint": "Alle Angemeldeten finden die Veranstaltung und können anfragen.",
                 "label": "Öffentlich"
             }
         }
@@ -288,16 +288,16 @@
     "selectEvent": {
         "changeEvent": "Veranstaltung wechseln",
         "discover": {
-            "emptyBody": "Aktuell sind keine öffentlichen Events offen — du kannst dein eigenes starten.",
+            "emptyBody": "Aktuell sind keine öffentlichen Veranstaltungen offen — du kannst deine eigene starten.",
             "emptyTitle": "Gerade nichts zu entdecken",
             "featuredTitle": "Empfohlen",
-            "hint": "Öffentliche Events, bei denen du anfragen kannst. Die Organisation entscheidet.",
-            "moreTitle": "Weitere öffentliche Events"
+            "hint": "Öffentliche Veranstaltungen, bei denen du anfragen kannst. Die Organisation entscheidet.",
+            "moreTitle": "Weitere öffentliche Veranstaltungen"
         },
         "empty": "Keine anstehenden Veranstaltungen verfügbar. Bitte schauen Sie später wieder vorbei oder wenden Sie sich an eine organisierende Person.",
         "emptyMine": {
-            "body": "Starte dein eigenes oder suche eines zum Mitmachen.",
-            "title": "Du bist noch bei keinem Event dabei"
+            "body": "Starte deine eigene oder suche eine zum Mitmachen.",
+            "title": "Du bist noch bei keiner Veranstaltung dabei"
         },
         "expired": {
             "body": "Die Veranstaltung, mit der Sie zuletzt gearbeitet haben, ist beendet. Wählen Sie eine andere, um fortzufahren.",
@@ -327,7 +327,7 @@
         "success": "Ausgewählte Veranstaltung aktualisiert.",
         "tabs": {
             "discover": "Entdecken",
-            "mine": "Meine Events"
+            "mine": "Meine Veranstaltungen"
         },
         "visual": {
             "expiredHeadline": "Lassen Sie uns zur nächsten Veranstaltung übergehen.",
