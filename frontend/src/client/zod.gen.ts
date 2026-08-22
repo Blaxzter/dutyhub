@@ -1064,26 +1064,6 @@ export const zSidebarResponse = z.object({
 })
 
 /**
- * SiteSettingsRead
- */
-export const zSiteSettingsRead = z.object({
-  has_approval_password: z
-    .boolean()
-    .register(z.globalRegistry, {
-      description: 'Whether an approval password is currently configured',
-    })
-    .optional()
-    .default(false),
-})
-
-/**
- * SiteSettingsUpdate
- */
-export const zSiteSettingsUpdate = z.object({
-  approval_password: z.string().nullish(),
-})
-
-/**
  * TaskBookingEntry
  *
  * A confirmed booking with slot_id, for the bulk task bookings endpoint.
@@ -1829,18 +1809,6 @@ export const zUsersUploadMyAvatarResponse = zAvatarUploadResponse
 export const zUsersGetUserAvatarPath = z.object({
   user_id: z.uuid(),
 })
-
-/**
- * Successful Response
- */
-export const zSettingsGetSiteSettingsResponse = zSiteSettingsRead
-
-export const zSettingsUpdateSiteSettingsBody = zSiteSettingsUpdate
-
-/**
- * Successful Response
- */
-export const zSettingsUpdateSiteSettingsResponse = zSiteSettingsRead
 
 export const zTasksTaskFeedQuery = z.object({
   view: z.enum(['list', 'cards', 'calendar']).optional().default('list'),
