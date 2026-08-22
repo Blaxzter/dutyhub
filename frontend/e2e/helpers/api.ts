@@ -70,18 +70,81 @@ export async function api<T = unknown>(page: Page, method: string, path: string,
   return result.__body as T
 }
 
+/**
+ * Like `api`, but resolves with the HTTP status instead of throwing.
+ *
+ * Permission tests care about *which* refusal they got — 403 for "not allowed
+ * here" versus 404 for "you cannot even see this" — and that distinction is
+ * lost once the error is a thrown string.
+ */
+export async function apiStatus(
+  page: Page,
+  method: string,
+  path: string,
+  body?: object,
+): Promise<number> {
+  const token = await getToken(page)
+  return page.evaluate(
+    async ({ url, method, body, token }) => {
+      const res = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      })
+      return res.status
+    },
+    { url: `${API}${path}`, method, body, token },
+  )
+}
+
 /** Create an event (draft or published). Admin token required. */
 export async function createEvent(
   page: Page,
   name: string,
   status: 'draft' | 'published' = 'published',
+  visibility: 'public' | 'private' = 'public',
 ): Promise<EventRead> {
   return api<EventRead>(page, 'POST', '/events/', {
     name,
     status,
+    visibility,
     start_date: futureDate(30),
     end_date: futureDate(34),
   })
+}
+
+/**
+ * Invite someone into an event and accept on their behalf.
+ *
+ * Takes both pages because an invitation is created by an organiser and
+ * redeemed by the invitee — the two halves authenticate as different users.
+ */
+export async function addMember(
+  inviterPage: Page,
+  inviteePage: Page,
+  eventId: string,
+  inviteeEmail: string,
+  role: 'admin' | 'member' = 'member',
+): Promise<void> {
+  const invitation = await api<{ token: string }>(
+    inviterPage,
+    'POST',
+    `/events/${eventId}/invitations`,
+    { email: inviteeEmail, role },
+  )
+  await api(inviteePage, 'POST', `/invitations/${invitation.token}/accept`)
+}
+
+/** Remove someone from an event. */
+export async function removeMember(
+  page: Page,
+  eventId: string,
+  userId: string,
+): Promise<void> {
+  await api(page, 'DELETE', `/events/${eventId}/members/${userId}`)
 }
 
 /** Delete an event. Admin token required. */

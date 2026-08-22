@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Trash2 } from 'lucide-vue-next'
+import { Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -56,6 +56,7 @@ const authStore = useAuthStore()
             variant="ghost"
             size="icon"
             class="h-8 w-8"
+            :aria-label="t('duties.tasks.delete')"
             @click.stop="emit('delete', task)"
           >
             <Trash2 class="h-4 w-4 text-destructive" />

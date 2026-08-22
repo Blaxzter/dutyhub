@@ -10,8 +10,10 @@
     "printTask": "Print task",
     "scanToSignUp": "Scan to sign up online",
     "toolbar": {
+        "close": "Close print options",
         "filterDates": "Filter dates",
         "includeNames": "Show booked names",
+        "open": "Open print options",
         "repeatHeader": "Repeat header on each page",
         "showLocation": "Show location column",
         "showTitle": "Show title column",

@@ -111,7 +111,7 @@ function barSize(count: number): string {
           </div>
           <span
             class="text-[11px] tabular-nums w-6 text-right shrink-0 transition-opacity"
-            :class="bar.count > 0 ? 'text-foreground font-medium' : 'text-muted-foreground/50'"
+            :class="bar.count > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'"
           >
             {{ bar.count }}
           </span>

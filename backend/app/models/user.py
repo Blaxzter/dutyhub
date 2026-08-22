@@ -119,15 +119,10 @@ class User(Base, table=True):
 
     @property
     def is_admin(self) -> bool:
-        """Check if user has admin role."""
+        """Whether this user is a platform superadmin.
+
+        The only global role left. Anything scoped to a single event is
+        answered by ``app.logic.permissions`` from that event's membership,
+        never from this list.
+        """
         return "admin" in self.roles
-
-    @property
-    def is_task_manager(self) -> bool:
-        """Check if user has task_manager role."""
-        return "task_manager" in self.roles
-
-    @property
-    def is_manager(self) -> bool:
-        """Check if user has admin or task_manager role."""
-        return self.is_admin or self.is_task_manager

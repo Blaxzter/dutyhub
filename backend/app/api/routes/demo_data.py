@@ -16,6 +16,7 @@ from app.api.deps import CurrentSuperuser, DBDep
 from app.crud.user_availability import user_availability as crud_user_availability
 from app.models.booking import Booking
 from app.models.event import Event
+from app.models.event_membership import EventMembership
 from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
@@ -156,6 +157,7 @@ async def create_demo_data(
             start_date=group_start,
             end_date=group_end,
             status="published" if params.publish_tasks else "draft",
+            visibility="public",
             created_by_id=_current_user.id,
         )
         db.add(group)
@@ -163,6 +165,15 @@ async def create_demo_data(
 
     # Flush to get group IDs
     if created_groups:
+        await db.flush()
+        # Membership is what makes an event visible now, so the person who
+        # asked for demo data has to own what was just made for them.
+        for group in created_groups:
+            db.add(
+                EventMembership(
+                    user_id=_current_user.id, event_id=group.id, role="owner"
+                )
+            )
         await db.flush()
 
     # --- Tasks — distribute roughly equally across groups ---
@@ -243,6 +254,14 @@ async def create_demo_data(
 
     # Flush to get user + shift IDs for bookings
     if created_users or created_shifts:
+        await db.flush()
+
+    # Demo users take part in every demo event — otherwise their bookings and
+    # availabilities would belong to events they are not members of.
+    for user in created_users:
+        for group in created_groups:
+            db.add(EventMembership(user_id=user.id, event_id=group.id, role="member"))
+    if created_users and created_groups:
         await db.flush()
 
     # --- User availabilities per (user, event) — drives the team heatmap ---

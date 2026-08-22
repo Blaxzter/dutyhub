@@ -3,7 +3,7 @@ import { computed, onMounted, ref, toRaw, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { ArrowLeft, CalendarDays, CalendarPlus, Clock, Plus, Users, X } from 'lucide-vue-next'
+import { ArrowLeft, CalendarDays, CalendarPlus, Clock, Plus, Users, X } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -15,6 +15,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import {
   type RemainderMode,
   type ScheduleConfig,
+  eachDateInRange,
   useShiftPreview,
 } from '@/composables/useShiftPreview'
 
@@ -63,7 +64,7 @@ const category = ref('')
 
 // Task event
 const isScopedManagerOnly = computed(
-  () => !authStore.isAdmin && !authStore.isTaskManager && authStore.isEventManager,
+  () => !authStore.isAdmin && authStore.isEventManager,
 )
 const eventMode = ref<'none' | 'existing' | 'new'>(
   isScopedManagerOnly.value ? 'existing' : 'none',
@@ -267,7 +268,7 @@ const loadEvents = async () => {
 
     // Scoped event managers can only create tasks in their managed events
     const managedIds = authStore.managedEventIds
-    if (!authStore.isAdmin && !authStore.isTaskManager && managedIds.length > 0) {
+    if (!authStore.isAdmin && managedIds.length > 0) {
       items = items.filter((g) => managedIds.includes(g.id))
     }
 
@@ -295,18 +296,9 @@ const availableDates = computed(() => {
       .filter((dateStr) => !overrides.value.some((o) => o.date === dateStr))
   }
 
-  const dates: string[] = []
-  const start = new Date(startDate.value.toString())
-  const end = new Date(endDate.value.toString())
-  const current = new Date(start)
-  while (current <= end) {
-    const dateStr = current.toISOString().split('T')[0]
-    if (!overrides.value.some((o) => o.date === dateStr)) {
-      dates.push(dateStr)
-    }
-    current.setDate(current.getDate() + 1)
-  }
-  return dates
+  return eachDateInRange(startDate.value.toString(), endDate.value.toString()).filter(
+    (dateStr) => !overrides.value.some((o) => o.date === dateStr),
+  )
 })
 
 // --- Form validation ---
@@ -350,6 +342,11 @@ const handleSubmit = async () => {
           const [date, start_time, end_time] = key.split('|')
           return { date, start_time: start_time + ':00', end_time: end_time + ':00' }
         }),
+        // Without this the backend walks every day between start_date and
+        // end_date, so the gap days between hand-picked dates get shifts the
+        // preview never showed (#144).
+        specific_dates:
+          dateMode.value === 'specific' ? specificDates.value.map((d) => d.toString()) : null,
       },
     }
 
@@ -418,21 +415,21 @@ const handleSubmit = async () => {
         <AccordionContent class="px-6 pb-6">
           <div class="space-y-4">
             <div class="space-y-2">
-              <Label>{{ t('duties.tasks.fields.name') }} *</Label>
-              <Input v-model="name" data-testid="input-task-name" />
+              <Label for="task-name">{{ t('duties.tasks.fields.name') }} *</Label>
+              <Input id="task-name" v-model="name" data-testid="input-task-name" />
             </div>
             <div class="space-y-2">
-              <Label>{{ t('duties.tasks.fields.description') }}</Label>
-              <Textarea v-model="description" :rows="3" />
+              <Label for="task-description">{{ t('duties.tasks.fields.description') }}</Label>
+              <Textarea id="task-description" v-model="description" :rows="3" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
-                <Label>{{ t('duties.tasks.fields.location') }}</Label>
-                <Input v-model="location" />
+                <Label for="task-location">{{ t('duties.tasks.fields.location') }}</Label>
+                <Input id="task-location" v-model="location" />
               </div>
               <div class="space-y-2">
-                <Label>{{ t('duties.tasks.fields.category') }}</Label>
-                <Input v-model="category" />
+                <Label for="task-category">{{ t('duties.tasks.fields.category') }}</Label>
+                <Input id="task-category" v-model="category" />
               </div>
             </div>
             <div class="flex justify-end pt-2">
@@ -494,12 +491,14 @@ const handleSubmit = async () => {
           <!-- Create new event -->
           <div v-if="eventMode === 'new'" class="mt-4 space-y-4 rounded-md border bg-card p-4">
             <div class="space-y-2">
-              <Label>{{ t('duties.events.fields.name') }} *</Label>
-              <Input v-model="newEventName" />
+              <Label for="new-event-name">{{ t('duties.events.fields.name') }} *</Label>
+              <Input id="new-event-name" v-model="newEventName" />
             </div>
             <div class="space-y-2">
-              <Label>{{ t('duties.events.fields.description') }}</Label>
-              <Input v-model="newEventDescription" />
+              <Label for="new-event-description">{{
+                t('duties.events.fields.description')
+              }}</Label>
+              <Input id="new-event-description" v-model="newEventDescription" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div class="space-y-2">
@@ -630,6 +629,11 @@ const handleSubmit = async () => {
                   {{ formatDateLabel(date.toString()) }}
                   <button
                     class="ml-1 rounded-full p-0.5 hover:bg-muted"
+                    :aria-label="
+                      t('duties.tasks.createView.removeDate', {
+                        date: formatDateLabel(date.toString()),
+                      })
+                    "
                     @click="removeSpecificDate(index)"
                   >
                     <X class="h-3 w-3" />

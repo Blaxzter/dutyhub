@@ -8,9 +8,19 @@
  *
  * Each parallel Playwright worker gets its own admin and member user,
  * so tests never interfere with each other.
+ *
+ * Those worker users are shared by every test the worker runs, so a test that
+ * deletes or deactivates one would poison all the later ones. Destructive
+ * flows therefore use the *disposable* fixtures further down: a fresh user per
+ * test that is deleted again in teardown.
  */
-
-import { test as base, expect, type BrowserContext, type Page } from '@playwright/test'
+import {
+  type BrowserContext,
+  type Page,
+  type TestInfo,
+  test as base,
+  expect,
+} from '@playwright/test'
 
 const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
 
@@ -19,6 +29,33 @@ export interface TestUser {
   name: string
   roles: string[]
 }
+
+/** A user seeded via POST /testing/seed, including its database id. */
+export interface SeededUser extends TestUser {
+  id: string
+}
+
+/** How a disposable user should be seeded. */
+export interface DisposableUserOptions {
+  /** Roles to grant, e.g. `['admin']`. Defaults to a plain member. */
+  roles?: string[]
+  /** `false` seeds a suspended (inactive) account. Defaults to `true`. */
+  isActive?: boolean
+  /**
+   * `false` leaves the account in no event at all — the shape of a genuine
+   * first sign-in. Such a user has no selected event, so the router sends
+   * them to the picker instead of the dashboard. Defaults to `true`.
+   */
+  joinWorkerEvent?: boolean
+}
+
+/** A throwaway user that only lives for the duration of one test. */
+export interface DisposableUser extends SeededUser {
+  isActive: boolean
+}
+
+/** Seeds an extra disposable user; cleaned up with the rest at teardown. */
+export type SeedDisposableUser = (options?: DisposableUserOptions) => Promise<DisposableUser>
 
 export interface WorkerEvent {
   id: string
@@ -34,13 +71,24 @@ function isoDateOffset(daysFromNow: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-/** Node-side fetch helper. Uses X-Test-User-Email bypass (TESTING=true backend). */
-async function serverApi<T>(
+export interface RawApiResponse {
+  status: number
+  ok: boolean
+  /** Parsed JSON when the response had a JSON body, otherwise the raw text. */
+  body: unknown
+}
+
+/**
+ * Node-side fetch helper that resolves for *any* status instead of throwing.
+ * Destructive tests need to assert on 401/404 answers, which `serverApi` would
+ * turn into an exception.
+ */
+export async function serverApiRaw(
   method: string,
   path: string,
   email: string,
   body?: object,
-): Promise<T> {
+): Promise<RawApiResponse> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (email) headers['X-Test-User-Email'] = email
   const res = await fetch(`${API}${path}`, {
@@ -48,11 +96,51 @@ async function serverApi<T>(
     headers,
     body: body ? JSON.stringify(body) : undefined,
   })
+  const text = await res.text()
+  let parsed: unknown = text
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    // Empty or non-JSON body (204s, plain-text errors) — keep the raw text.
+  }
+  return { status: res.status, ok: res.ok, body: parsed }
+}
+
+/** Node-side fetch helper. Uses X-Test-User-Email bypass (TESTING=true backend). */
+export async function serverApi<T>(
+  method: string,
+  path: string,
+  email: string,
+  body?: object,
+): Promise<T> {
+  const res = await serverApiRaw(method, path, email, body)
   if (!res.ok) {
-    throw new Error(`API ${method} ${path} failed: ${res.status} ${await res.text()}`)
+    throw new Error(`API ${method} ${path} failed: ${res.status} ${JSON.stringify(res.body)}`)
   }
   if (res.status === 204) return null as T
-  return (await res.json()) as T
+  return res.body as T
+}
+
+/**
+ * Put a user into an event, through the real invitation endpoints.
+ *
+ * Membership is what grants access now, so nearly every fixture needs it.
+ * Deliberately uses the production API rather than a test-only shortcut, so
+ * the invite → accept path is exercised on every run.
+ */
+export async function joinEvent(
+  eventId: string,
+  inviterEmail: string,
+  inviteeEmail: string,
+  role: 'admin' | 'member' = 'member',
+): Promise<void> {
+  const invitation = await serverApi<{ token: string }>(
+    'POST',
+    `/events/${eventId}/invitations`,
+    inviterEmail,
+    { email: inviteeEmail, role },
+  )
+  await serverApi('POST', `/invitations/${invitation.token}/accept`, inviteeEmail)
 }
 
 /**
@@ -61,40 +149,43 @@ async function serverApi<T>(
  * and reports isAuthenticated=true without making any network calls.
  */
 function setupAuthBypass(context: BrowserContext, user: TestUser) {
-  return context.addInitScript((userInfo) => {
-    // Key must match the clientId + audience used in main.ts bypass mode
-    const key = '@@auth0spajs@@::test-client-id::test-audience::openid profile email'
-    const value = {
-      body: {
-        access_token: 'fake-test-token',
-        token_type: 'Bearer',
-        expires_in: 86400,
-        scope: 'openid profile email',
-        client_id: 'test-client-id',
-        audience: 'test-audience',
-        decodedToken: {
-          user: {
-            sub: `test|${userInfo.email}`,
-            email: userInfo.email,
-            name: userInfo.name,
-            email_verified: true,
-            picture: '',
-          },
-          claims: {
-            sub: `test|${userInfo.email}`,
-            aud: 'test-audience',
-            iss: 'https://test.auth0.local/',
-            exp: Math.floor(Date.now() / 1000) + 86400,
-            iat: Math.floor(Date.now() / 1000),
+  return context.addInitScript(
+    (userInfo) => {
+      // Key must match the clientId + audience used in main.ts bypass mode
+      const key = '@@auth0spajs@@::test-client-id::test-audience::openid profile email'
+      const value = {
+        body: {
+          access_token: 'fake-test-token',
+          token_type: 'Bearer',
+          expires_in: 86400,
+          scope: 'openid profile email',
+          client_id: 'test-client-id',
+          audience: 'test-audience',
+          decodedToken: {
+            user: {
+              sub: `test|${userInfo.email}`,
+              email: userInfo.email,
+              name: userInfo.name,
+              email_verified: true,
+              picture: '',
+            },
+            claims: {
+              sub: `test|${userInfo.email}`,
+              aud: 'test-audience',
+              iss: 'https://test.auth0.local/',
+              exp: Math.floor(Date.now() / 1000) + 86400,
+              iat: Math.floor(Date.now() / 1000),
+            },
           },
         },
-      },
-      expiresAt: Math.floor(Date.now() / 1000) + 86400,
-    }
-    localStorage.setItem(key, JSON.stringify(value))
-    localStorage.setItem('wirksam-last-seen-changelog', '99.99.99')
-    localStorage.setItem('locale', 'en')
-  }, { email: user.email, name: user.name })
+        expiresAt: Math.floor(Date.now() / 1000) + 86400,
+      }
+      localStorage.setItem(key, JSON.stringify(value))
+      localStorage.setItem('wirksam-last-seen-changelog', '99.99.99')
+      localStorage.setItem('locale', 'en')
+    },
+    { email: user.email, name: user.name },
+  )
 }
 
 /**
@@ -113,8 +204,17 @@ function setupApiInterception(page: Page, email: string) {
 
 /**
  * Seed a test user via the backend testing API (no auth required).
+ *
+ * Idempotent — re-seeding an existing address updates name/roles/is_active in
+ * place and leaves everything else (notably `selected_event_id`) alone, which
+ * is how destructive tests push a user back into the pending state.
  */
-async function seedUser(email: string, name: string, roles: string[], isActive = true): Promise<void> {
+export async function seedUser(
+  email: string,
+  name: string,
+  roles: string[],
+  isActive = true,
+): Promise<SeededUser> {
   const resp = await fetch(`${API}/testing/seed`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -123,75 +223,119 @@ async function seedUser(email: string, name: string, roles: string[], isActive =
   if (!resp.ok) {
     throw new Error(`Failed to seed user ${email}: ${resp.status} ${await resp.text()}`)
   }
+  const seeded = (await resp.json()) as { id: string }
+  return { id: seeded.id, email, name, roles }
 }
 
-const IS_TESTING = process.env.USE_AUTH0_E2E?.toLowerCase() !== 'true'
+/**
+ * Point a test user's `selected_event_id` at an event, so the router guard
+ * doesn't bounce authenticated pages to /select-event.
+ *
+ * Occasionally the first read-after-write 404s under parallel worker load;
+ * a single short retry papers over it without masking real failures.
+ */
+async function setSelectedEvent(email: string, eventId: string): Promise<void> {
+  const body = { selected_event_id: eventId }
+  try {
+    await serverApi('PUT', '/users/me/selected-event', email, body)
+  } catch (err) {
+    if (String(err).includes('404')) {
+      await new Promise((r) => setTimeout(r, 250))
+      await serverApi('PUT', '/users/me/selected-event', email, body)
+    } else {
+      throw err
+    }
+  }
+}
+
+/**
+ * Build the address for a disposable user.
+ *
+ * `testInfo.testId` is a hex digest of project + file + title: unique per test,
+ * stable across retries, and made only of characters an email local part
+ * accepts. It is trimmed to its tail so the address stays comfortably inside
+ * the 64-character limit `EmailStr` enforces on the backend. The worker index
+ * keeps two workers running the same test (shards, retries) apart, and `seq`
+ * separates several disposables seeded inside a single test.
+ */
+function disposableEmail(testInfo: TestInfo, seq: number): string {
+  const id = testInfo.testId.replace(/[^a-z0-9]/gi, '').slice(-24)
+  const suffix = seq > 1 ? `-${seq}` : ''
+  return `disposable-${id}-w${testInfo.workerIndex}${suffix}@test.example.com`
+}
+
+export const IS_TESTING = process.env.USE_AUTH0_E2E?.toLowerCase() !== 'true'
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 export const test = base.extend<
   // Test-scoped fixtures
-  { adminPage: Page; memberPage: Page },
+  {
+    adminPage: Page
+    memberPage: Page
+    disposableUserOptions: DisposableUserOptions
+    seedDisposableUser: SeedDisposableUser
+    disposableUser: DisposableUser
+    disposablePage: Page
+  },
   // Worker-scoped fixtures
   { adminUser: TestUser; memberUser: TestUser; workerEvent: WorkerEvent }
 >({
   // Worker-scoped: each parallel worker seeds its own admin user
-  adminUser: [async ({}, use, workerInfo) => {
-    if (!IS_TESTING) {
-      await use({ email: '', name: '', roles: [] })
-      return
-    }
-    const email = `admin-worker-${workerInfo.workerIndex}@test.example.com`
-    const name = `Test Admin ${workerInfo.workerIndex}`
-    await seedUser(email, name, ['admin'])
-    await use({ email, name, roles: ['admin'] })
-  }, { scope: 'worker' }],
+  adminUser: [
+    async ({}, use, workerInfo) => {
+      if (!IS_TESTING) {
+        await use({ email: '', name: '', roles: [] })
+        return
+      }
+      const email = `admin-worker-${workerInfo.workerIndex}@test.example.com`
+      const name = `Test Admin ${workerInfo.workerIndex}`
+      await seedUser(email, name, ['admin'])
+      await use({ email, name, roles: ['admin'] })
+    },
+    { scope: 'worker' },
+  ],
 
   // Worker-scoped: each parallel worker seeds its own member user
-  memberUser: [async ({}, use, workerInfo) => {
-    if (!IS_TESTING) {
-      await use({ email: '', name: '', roles: [] })
-      return
-    }
-    const email = `member-worker-${workerInfo.workerIndex}@test.example.com`
-    const name = `Test Member ${workerInfo.workerIndex}`
-    await seedUser(email, name, [])
-    await use({ email, name, roles: [] })
-  }, { scope: 'worker' }],
+  memberUser: [
+    async ({}, use, workerInfo) => {
+      if (!IS_TESTING) {
+        await use({ email: '', name: '', roles: [] })
+        return
+      }
+      const email = `member-worker-${workerInfo.workerIndex}@test.example.com`
+      const name = `Test Member ${workerInfo.workerIndex}`
+      await seedUser(email, name, [])
+      await use({ email, name, roles: [] })
+    },
+    { scope: 'worker' },
+  ],
 
   // Worker-scoped: each parallel worker seeds its own published event and
   // points both the admin and member user at it as their selected_event_id,
   // so the router guard doesn't bounce authenticated pages to /select-event.
-  workerEvent: [async ({ adminUser, memberUser }, use, workerInfo) => {
-    if (!IS_TESTING) {
-      await use({ id: '', name: '', start_date: '', end_date: '' })
-      return
-    }
-    const event = await serverApi<WorkerEvent>('POST', '/events/', adminUser.email, {
-      name: `E2E Worker Event ${workerInfo.workerIndex}`,
-      status: 'published',
-      start_date: isoDateOffset(1),
-      end_date: isoDateOffset(60),
-    })
-    // Occasionally the first read-after-write 404s under parallel worker load;
-    // a single short retry papers over it without masking real failures.
-    const setSelected = async (email: string) => {
-      const body = { selected_event_id: event.id }
-      try {
-        await serverApi('PUT', '/users/me/selected-event', email, body)
-      } catch (err) {
-        if (String(err).includes('404')) {
-          await new Promise((r) => setTimeout(r, 250))
-          await serverApi('PUT', '/users/me/selected-event', email, body)
-        } else {
-          throw err
-        }
+  workerEvent: [
+    async ({ adminUser, memberUser }, use, workerInfo) => {
+      if (!IS_TESTING) {
+        await use({ id: '', name: '', start_date: '', end_date: '' })
+        return
       }
-    }
-    await setSelected(adminUser.email)
-    await setSelected(memberUser.email)
-    await use(event)
-  }, { scope: 'worker' }],
+      // Public so the Discover tab has something to show, and so the event can
+      // be featured. Creating it makes adminUser its owner automatically.
+      const event = await serverApi<WorkerEvent>('POST', '/events/', adminUser.email, {
+        name: `E2E Worker Event ${workerInfo.workerIndex}`,
+        status: 'published',
+        visibility: 'public',
+        start_date: isoDateOffset(1),
+        end_date: isoDateOffset(60),
+      })
+      await joinEvent(event.id, adminUser.email, memberUser.email, 'member')
+      await setSelectedEvent(adminUser.email, event.id)
+      await setSelectedEvent(memberUser.email, event.id)
+      await use(event)
+    },
+    { scope: 'worker' },
+  ],
 
   // Test-scoped: a page pre-configured as the admin user
   adminPage: async ({ browser, adminUser, workerEvent }, use) => {
@@ -223,6 +367,98 @@ export const test = base.extend<
     const page = await context.newPage()
     if (IS_TESTING) {
       await setupApiInterception(page, memberUser.email)
+      await page.goto('/app/home')
+      await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
+    }
+    await use(page)
+    await context.close()
+  },
+
+  // ── Disposable users ────────────────────────────────────────────────────
+  // Test-scoped throwaway accounts for flows that destroy the user they run
+  // as (self-deletion, deactivation, role changes, approval). Never point a
+  // destructive action at adminUser/memberUser — those are shared by every
+  // test in the worker.
+
+  /**
+   * Shape of the `disposableUser` account. Override per file or describe block:
+   *
+   *   test.use({ disposableUserOptions: { roles: ['admin'], isActive: false } })
+   *
+   * This is an option fixture rather than an argument to a factory because
+   * `disposablePage` has to build its browser context from the *same* account,
+   * and a fixture can only depend on another fixture. `seedDisposableUser` is
+   * still exposed for tests that need a second throwaway account.
+   */
+  disposableUserOptions: [{}, { option: true }],
+
+  /** Factory for extra disposable users; all of them are deleted in teardown. */
+  seedDisposableUser: async ({ adminUser, workerEvent }, use, testInfo) => {
+    const created: DisposableUser[] = []
+    let seq = 0
+
+    const seed: SeedDisposableUser = async (options = {}) => {
+      seq += 1
+      const roles = options.roles ?? []
+      const isActive = options.isActive ?? true
+      const joinWorkerEvent = options.joinWorkerEvent ?? true
+      if (!IS_TESTING) {
+        return { id: '', email: '', name: '', roles, isActive }
+      }
+      const email = disposableEmail(testInfo, seq)
+      const name = `Disposable User ${testInfo.workerIndex}-${seq}`
+      // Always seed active first: PUT /users/me/selected-event rejects inactive
+      // users, and without a selection the router bounces every authenticated
+      // page to /select-event. Re-seeding flips is_active without touching the
+      // selection, so suspended users still land where the test expects.
+      const seeded = await seedUser(email, name, roles, true)
+      if (joinWorkerEvent) {
+        // Selecting an event requires membership in it.
+        await joinEvent(workerEvent.id, adminUser.email, email, 'member')
+        await setSelectedEvent(email, workerEvent.id)
+      }
+      if (!isActive) {
+        await seedUser(email, name, roles, false)
+      }
+      const user: DisposableUser = { ...seeded, isActive }
+      created.push(user)
+      return user
+    }
+
+    await use(seed)
+
+    // Teardown deletes each account as the worker admin. A 404 means the test
+    // already deleted it — which is exactly what some of these tests do — so it
+    // must be tolerated. POST /testing/reset is deliberately NOT used: it wipes
+    // every test user and would destroy the other workers' fixtures.
+    for (const user of created) {
+      const res = await serverApiRaw('DELETE', `/users/${user.id}`, adminUser.email)
+      if (!res.ok && res.status !== 404) {
+        throw new Error(
+          `Failed to clean up disposable user ${user.email}: ` +
+            `${res.status} ${JSON.stringify(res.body)}`,
+        )
+      }
+    }
+  },
+
+  /** Test-scoped: a freshly seeded user that this test may safely destroy. */
+  disposableUser: async ({ seedDisposableUser, disposableUserOptions }, use) => {
+    await use(await seedDisposableUser(disposableUserOptions))
+  },
+
+  /** Test-scoped: a page pre-configured as the disposable user. */
+  disposablePage: async ({ browser, disposableUser }, use) => {
+    const context = await browser.newContext()
+    if (IS_TESTING) {
+      await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
+      await setupAuthBypass(context, disposableUser)
+    }
+    const page = await context.newPage()
+    if (IS_TESTING) {
+      await setupApiInterception(page, disposableUser.email)
+      // An account in no event is redirected to the picker rather than the
+      // dashboard; both render a `page-heading`, so one wait covers either.
       await page.goto('/app/home')
       await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
     }

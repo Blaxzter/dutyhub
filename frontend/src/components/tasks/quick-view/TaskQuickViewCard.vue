@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { MapPin, ShieldCheck, Tag, Trash2 } from 'lucide-vue-next'
+import { MapPin, ShieldCheck, Tag, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -215,6 +215,7 @@ watch(
             variant="ghost"
             size="icon"
             class="h-6 w-6"
+            :aria-label="t('duties.tasks.delete')"
             @click.stop="emit('delete', task)"
           >
             <Trash2 class="h-3.5 w-3.5 text-destructive" />

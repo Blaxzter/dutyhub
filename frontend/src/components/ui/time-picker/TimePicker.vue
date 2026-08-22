@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { nextTick, ref, watch, type HTMLAttributes } from 'vue'
 
-import { Clock } from 'lucide-vue-next'
+import { Clock } from '@lucide/vue'
 
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover'
 
 import { cn } from '@/lib/utils'
 
@@ -20,6 +20,7 @@ const emit = defineEmits<{
 const open = ref(false)
 const listRef = ref<HTMLDivElement>()
 const wrapperRef = ref<HTMLDivElement>()
+const inputRef = ref<HTMLInputElement>()
 const localValue = ref(props.modelValue)
 
 watch(
@@ -70,11 +71,27 @@ function onInteractOutside(e: Event) {
     e.preventDefault()
   }
 }
+
+/**
+ * Clicking the box anywhere outside the input (the clock icon, the padding)
+ * hands focus to the input, whose focus handler opens the list. The wrapper
+ * itself is only the popover anchor, not its trigger — see the template.
+ */
+function focusInput() {
+  inputRef.value?.focus()
+}
 </script>
 
 <template>
   <Popover :open="open" @update:open="onOpenChange">
-    <PopoverTrigger as-child>
+    <!--
+      Anchor, not trigger: a PopoverTrigger forces aria-haspopup and
+      aria-expanded onto whatever it wraps, and this wrapper is a plain div
+      with no widget role, which may not carry them (axe aria-allowed-attr).
+      Anchoring positions the list against the box without claiming semantics
+      the div does not have; the input inside opens and closes the list.
+    -->
+    <PopoverAnchor as-child>
       <div
         ref="wrapperRef"
         :class="
@@ -84,10 +101,11 @@ function onInteractOutside(e: Event) {
             props.class,
           )
         "
-        @click.prevent
+        @click.prevent="focusInput"
       >
         <Clock class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         <input
+          ref="inputRef"
           type="text"
           :value="localValue"
           :placeholder="placeholder ?? 'HH:MM'"
@@ -97,7 +115,7 @@ function onInteractOutside(e: Event) {
           @click.stop
         />
       </div>
-    </PopoverTrigger>
+    </PopoverAnchor>
     <PopoverContent
       class="w-[var(--reka-popover-trigger-width)] min-w-28 p-1"
       align="start"

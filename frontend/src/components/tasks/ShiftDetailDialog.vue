@@ -9,7 +9,7 @@ import {
   MapPin,
   Tag,
   Users,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -337,7 +337,12 @@ const navigateToBooking = () => {
         <div class="flex items-center justify-end gap-2 pt-2">
           <DropdownMenu v-if="hasMenuItems">
             <DropdownMenuTrigger as-child>
-              <Button variant="outline" size="sm" class="h-8 w-8 p-0">
+              <Button
+                variant="outline"
+                size="sm"
+                class="h-8 w-8 p-0"
+                :aria-label="t('common.actions.moreActions')"
+              >
                 <EllipsisVertical class="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>

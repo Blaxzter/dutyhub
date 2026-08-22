@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
-import { ChevronDown, ChevronRight, Plus, Search } from 'lucide-vue-next'
+import { ChevronDown, ChevronRight, Plus, Search } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -51,7 +51,7 @@ const SEARCH_DEBOUNCE_MS = 300
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
-const { get, post, delete: del } = useAuthenticatedClient()
+const { get, post, patch, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 
 const selectedEventId = computed(() => authStore.selectedEventId)
@@ -97,12 +97,42 @@ async function handleVisibleMonth(range: { from: string; to: string }) {
   }
 }
 
+const canFeature = computed(() => authStore.isAdmin)
+const featuringId = ref<string | null>(null)
+
 function buildBaseQuery(): Record<string, unknown> {
   const q: Record<string, unknown> = { limit: PAGE_SIZE }
+  // The superadmin curates the whole catalogue; everyone else manages the
+  // events they actually belong to.
+  q.scope = authStore.isAdmin ? 'all' : 'mine'
   if (searchQuery.value) q.search = searchQuery.value
   if (dateFrom.value) q.date_from = dateFrom.value
   if (dateTo.value) q.date_to = dateTo.value
   return q
+}
+
+/** Put an event on (or take it off) the home screen. Superadmin only. */
+async function handleToggleFeatured(event: EventRead) {
+  featuringId.value = event.id
+  try {
+    const res = await patch<{ data: EventRead }>({
+      url: `/events/${event.id}/featured`,
+      body: { is_featured: !event.is_featured },
+    })
+    const apply = (list: EventRead[]) =>
+      list.map((e) => (e.id === event.id ? { ...e, is_featured: res.data.is_featured } : e))
+    activeItems.value = apply(activeItems.value)
+    expiredItems.value = apply(expiredItems.value)
+    toast.success(
+      res.data.is_featured
+        ? t('duties.events.featured.featured')
+        : t('duties.events.featured.unfeatured'),
+    )
+  } catch (error) {
+    toastApiError(error)
+  } finally {
+    featuringId.value = null
+  }
 }
 
 async function loadActive() {
@@ -281,6 +311,9 @@ onMounted(loadActive)
             </th>
             <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.endDate') }}</th>
             <th class="px-4 py-2 text-left font-medium">{{ t('duties.events.fields.status') }}</th>
+            <th class="px-4 py-2 text-left font-medium">
+              {{ t('duties.events.members.columnHeader') }}
+            </th>
             <th class="px-4 py-2 text-right font-medium"></th>
           </tr>
         </thead>
@@ -294,8 +327,11 @@ onMounted(loadActive)
             :key="event.id"
             :event="event"
             :selected-event-id="selectedEventId"
+            :can-feature="canFeature"
+            :featuring-id="featuringId"
             @edit="handleEdit"
             @delete="handleDelete"
+            @toggle-featured="handleToggleFeatured"
           />
         </tbody>
       </table>
@@ -373,6 +409,9 @@ onMounted(loadActive)
                   <th class="px-4 py-2 text-left font-medium">
                     {{ t('duties.events.fields.status') }}
                   </th>
+                  <th class="px-4 py-2 text-left font-medium">
+                    {{ t('duties.events.members.columnHeader') }}
+                  </th>
                   <th class="px-4 py-2 text-right font-medium"></th>
                 </tr>
               </thead>
@@ -386,9 +425,12 @@ onMounted(loadActive)
                   :key="event.id"
                   :event="event"
                   :selected-event-id="selectedEventId"
+                  :can-feature="canFeature"
+                  :featuring-id="featuringId"
                   muted
                   @edit="handleEdit"
                   @delete="handleDelete"
+                  @toggle-featured="handleToggleFeatured"
                 />
               </tbody>
             </table>

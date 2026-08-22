@@ -74,8 +74,8 @@ class TestAddShiftsCoverage:
         r = await async_client.post(
             f"/api/v1/tasks/{test_task.id}/add-shifts",
             json={
-                "start_date": "2026-05-24",
-                "end_date": "2026-05-24",
+                "start_date": "2026-06-11",
+                "end_date": "2026-06-11",
                 "location": "Entrance A",
                 "category": "Security",
                 "schedule": {

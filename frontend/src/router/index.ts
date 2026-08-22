@@ -16,7 +16,14 @@ declare module 'vue-router' {
   interface RouteMeta {
     breadcrumbs?: BreadcrumbItem[]
     layout?: 'preauth' | 'postauth' | 'minimal'
+    /** Platform-wide role. Only 'admin' (superadmin) is still meaningful. */
     requiresRole?: string | string[]
+    /**
+     * Requires owner/admin on *some* event. Per-event checks still happen in
+     * the view and on the server — this only keeps the nav honest by hiding
+     * pages a participant could never use.
+     */
+    requiresEventManager?: boolean
   }
 }
 
@@ -102,21 +109,18 @@ const router = createRouter({
           name: 'event-settings',
           component: () => import('@/views/events/EventSettingsView.vue'),
           meta: {
-            requiresRole: ['admin', 'task_manager'],
-            breadcrumbs: [
-              { title: 'Event Details', titleKey: 'duties.events.detail.title' },
-            ],
+            breadcrumbs: [{ title: 'Event Details', titleKey: 'duties.events.detail.title' }],
           },
         },
         {
-          path: 'admin/events',
-          name: 'admin-events',
+          path: 'events',
+          name: 'my-events',
           component: () => import('@/views/admin/AdminEventsView.vue'),
           meta: {
-            requiresRole: ['admin', 'task_manager'],
+            requiresEventManager: true,
             breadcrumbs: [
               { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
-              { title: 'Manage Events', titleKey: 'admin.events.title' },
+              { title: 'My Events', titleKey: 'admin.events.title' },
             ],
           },
         },
@@ -133,7 +137,7 @@ const router = createRouter({
           name: 'task-create',
           component: () => import('@/views/tasks/TaskCreateView.vue'),
           meta: {
-            requiresRole: ['admin', 'task_manager'],
+            requiresEventManager: true,
             breadcrumbs: [
               { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
               { title: 'Create Task', titleKey: 'duties.tasks.createView.title' },
@@ -145,7 +149,7 @@ const router = createRouter({
           name: 'task-edit',
           component: () => import('@/views/tasks/TaskEditView.vue'),
           meta: {
-            requiresRole: ['admin', 'task_manager'],
+            requiresEventManager: true,
             breadcrumbs: [
               { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
               { title: 'Edit Task', titleKey: 'duties.tasks.editView.title' },
@@ -157,7 +161,7 @@ const router = createRouter({
           name: 'task-add-shifts',
           component: () => import('@/views/tasks/TaskAddShiftsView.vue'),
           meta: {
-            requiresRole: ['admin', 'task_manager'],
+            requiresEventManager: true,
             breadcrumbs: [
               { title: 'Tasks', titleKey: 'duties.tasks.title', to: { name: 'tasks' } },
               { title: 'Add Shifts', titleKey: 'duties.tasks.addShiftsView.title' },
@@ -254,7 +258,7 @@ const router = createRouter({
           name: 'reporting',
           component: () => import('@/views/admin/ReportingView.vue'),
           meta: {
-            requiresRole: ['admin', 'task_manager'],
+            requiresEventManager: true,
             breadcrumbs: [
               { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
               { title: 'Reports', titleKey: 'admin.reporting.title' },
@@ -317,9 +321,14 @@ const router = createRouter({
           component: () => import('@/views/NotFoundView.vue'),
         },
         {
-          path: 'pending-approval',
-          name: 'pending-approval',
-          component: () => import('@/views/PendingApprovalView.vue'),
+          path: 'invite/:token',
+          name: 'invite-accept',
+          component: () => import('@/views/events/InviteAcceptView.vue'),
+        },
+        {
+          path: 'account-suspended',
+          name: 'account-suspended',
+          component: () => import('@/views/AccountSuspendedView.vue'),
         },
       ],
     },
@@ -343,13 +352,15 @@ const normalizeRoles = (roles: string | string[]) => (Array.isArray(roles) ? rol
 // Routes that bypass the "must have a selected event" guard
 const SELECTED_EVENT_EXEMPT_ROUTES = new Set<string>([
   'select-event',
-  'admin-events',
+  'my-events',
   'event-settings',
   'admin-users',
   'admin-demo-data',
   'settings',
   'notification-preferences',
-  'pending-approval',
+  // An invite link has to work before you belong to anything.
+  'invite-accept',
+  'account-suspended',
   'changelog',
   'preauth-changelog',
 ])
@@ -372,12 +383,13 @@ router.beforeEach(async (to) => {
       }
     }
 
-    // Redirect inactive users to pending approval page
-    if (!authStore.isActive && to.name !== 'pending-approval') {
-      return { name: 'pending-approval' }
+    // Suspension is still a moderation tool even though the approval queue is
+    // gone, so a suspended account gets told rather than left on a page where
+    // every request comes back 403.
+    if (!authStore.isActive && to.name !== 'account-suspended') {
+      return { name: 'account-suspended' }
     }
-    // Don't let active users visit the pending page
-    if (authStore.isActive && to.name === 'pending-approval') {
+    if (authStore.isActive && to.name === 'account-suspended') {
       return { name: 'home' }
     }
 
@@ -394,15 +406,19 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if (!to.meta.requiresRole) return true
   if (!authStore.isAuthenticated) return true
 
+  // Pages that only make sense to someone who runs at least one event. The
+  // per-event decision still belongs to the view and the API; this just keeps
+  // a participant from landing on an empty management screen.
+  if (to.meta.requiresEventManager && !authStore.isManager) {
+    return { name: 'home' }
+  }
+
+  if (!to.meta.requiresRole) return true
+
   const requiredRoles = normalizeRoles(to.meta.requiresRole)
-  const hasRole = requiredRoles.some((role) => authStore.roles.includes(role))
-  // Scoped event managers are allowed on routes that accept task_manager
-  const eventManagerAllowed =
-    !hasRole && requiredRoles.includes('task_manager') && authStore.isEventManager
-  if (!hasRole && !eventManagerAllowed) {
+  if (!requiredRoles.some((role) => authStore.roles.includes(role))) {
     return { name: 'home' }
   }
 

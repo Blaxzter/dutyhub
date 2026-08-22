@@ -41,21 +41,39 @@ lint-frontend:
 format-frontend:
     cd frontend && pnpm format
 
+# Fail if the en/de locale trees have drifted apart
+check-locales:
+    node scripts/pre-commit/check_locale_parity.js
+
 # Lint everything
-lint: lint-backend lint-frontend
+lint: lint-backend lint-frontend check-locales
 
 # Format everything
 format: format-backend format-frontend
 
 # ── Testing ───────────────────────────────────────────────────
 
-# Run backend tests with coverage
+# Run backend tests with coverage (delegates to the same script CI runs, so the
+# reported total cannot diverge from the CI number)
 test-backend:
-    cd backend && uv run coverage run --source=app -m pytest && uv run coverage report --show-missing
+    cd backend && uv run bash scripts/test.sh
 
-# Run frontend type check
+# Run frontend unit tests (Vitest)
+test-frontend:
+    cd frontend && pnpm test:unit
+
+# Run frontend unit tests with coverage
+test-frontend-coverage:
+    cd frontend && pnpm test:unit:coverage
+
+# Run frontend type check (app sources, then the unit tests)
 type-check:
-    cd frontend && pnpm type-check
+    cd frontend && pnpm type-check && pnpm type-check:unit
+
+# Regenerate the golden fixtures the useShiftPreview parity tests assert against.
+# Run this whenever app/logic/shift_generator.py changes.
+dump-shift-fixtures:
+    cd backend && uv run python scripts/dump_shift_generator_fixtures.py
 
 # Run Playwright e2e tests. Extra playwright flags are passed through.
 # e.g.: just test-e2e --headed --project=chromium
@@ -100,6 +118,11 @@ migrate:
 migration message:
     cd backend && uv run alembic revision --autogenerate -m "{{message}}"
 
+# Fail if the SQLModel models and the migration history have diverged.
+# Requires a running DB (`just dev` or `docker compose up db -d`).
+check-migrations:
+    cd backend && uv run alembic upgrade head && uv run alembic check
+
 # Seed the database with demo data
 seed:
     cd backend && uv run python -m app.scripts.initial_data
@@ -109,6 +132,11 @@ seed:
 # Regenerate the changelog JSON from markdown files
 generate-changelog:
     cd frontend && pnpm generate-changelog
+
+# Regenerate frontend/e2e/COVERAGE.md from `playwright test --list`.
+# Collection only — starts no stack and no browser, so it is safe to run anytime.
+generate-e2e-coverage:
+    cd frontend && pnpm generate-e2e-coverage
 
 # Regenerate the frontend API client from backend OpenAPI spec
 generate-client:

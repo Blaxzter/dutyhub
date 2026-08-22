@@ -24,6 +24,8 @@
         "title": "Demodaten"
     },
     "events": {
+        "deleteEvent": "Event {name} löschen",
+        "editEvent": "Event {name} bearbeiten",
         "expiredSection": "Abgelaufene Veranstaltungen",
         "filters": {
             "allDates": "Alle Daten",
@@ -104,18 +106,6 @@
         "activate": "Aktivieren",
         "activated": "Konto für {name} aktiviert.",
         "active": "Aktiv",
-        "approvalPassword": {
-            "changePlaceholder": "Neues Freigabe-Passwort eingeben",
-            "clear": "Freigabe-Passwort löschen",
-            "clearDialogDescription": "Sind Sie sicher, dass Sie das Freigabe-Passwort löschen möchten? Wartende Benutzer können sich dann nicht mehr selbst freigeben.",
-            "clearDialogTitle": "Freigabe-Passwort löschen",
-            "cleared": "Freigabe-Passwort gelöscht.",
-            "description": "Legen Sie ein optionales Passwort fest, das wartende Benutzer eingeben können, um sich selbst freizugeben.",
-            "placeholder": "Freigabe-Passwort eingeben",
-            "saved": "Freigabe-Passwort gespeichert.",
-            "savedAndCopied": "Freigabe-Passwort gespeichert und in die Zwischenablage kopiert.",
-            "title": "Freigabe-Passwort"
-        },
         "approve": "Freigeben",
         "columns": {
             "actions": "Aktionen",
@@ -130,6 +120,7 @@
         "delete": "Benutzer löschen",
         "deleteDialogDescription": "Möchten Sie das Konto von {name} wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
         "deleteDialogTitle": "Benutzer löschen",
+        "deleteTransferDescription": "{name} hat noch Veranstaltungsgruppen oder Veranstaltungen erstellt. Wählen Sie, wer diese übernehmen soll – danach wird das Konto dauerhaft gelöscht.",
         "deletedToast": "Konto für {name} gelöscht.",
         "empty": "Keine Benutzer vorhanden.",
         "filters": {
@@ -143,6 +134,8 @@
         "inactive": "Inaktiv",
         "makeAdmin": "Admin machen",
         "makeTaskManager": "Task-Manager machen",
+        "ownedEvents": "Veranstaltungsgruppen: {count}",
+        "ownedTasks": "Veranstaltungen: {count}",
         "pending": "Ausstehend",
         "reject": "Ablehnen",
         "rejectDialogDescription": "Geben Sie optional einen Grund für die Ablehnung der Kontoanfrage von {name} an. Der Benutzer sieht diese Nachricht.",
@@ -163,6 +156,11 @@
         },
         "statsTotal": "Benutzer gesamt",
         "subtitle": "Plattformbenutzer und deren Rollen anzeigen und verwalten.",
-        "title": "Benutzerverwaltung"
+        "title": "Benutzerverwaltung",
+        "transferAndDelete": "Übertragen und löschen",
+        "transferNoResults": "Keine Mitglieder gefunden.",
+        "transferToMe": "Mir übertragen",
+        "transferToOther": "Einem anderen Mitglied übertragen",
+        "userActions": "Aktionen für {name}"
     }
 }

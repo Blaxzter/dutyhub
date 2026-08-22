@@ -13,7 +13,7 @@ import {
   Database,
   House,
   Users,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 
@@ -199,12 +199,12 @@ const navAdmin = computed(() => {
     icon: typeof Users
     routeName: string
   }[] = []
-  if (authStore.isAdmin || authStore.isTaskManager) {
+  if (authStore.isManager) {
     items.push({
       title: 'Manage Events',
       titleKey: 'admin.events.title',
       icon: CalendarRange,
-      routeName: 'admin-events',
+      routeName: 'my-events',
     })
   }
   if (authStore.isAdmin) {
@@ -335,7 +335,7 @@ const navAdmin = computed(() => {
       <RouterLink
         :to="{ name: 'changelog' }"
         data-testid="sidebar-version-link"
-        class="inline-flex items-center justify-center gap-1 w-full text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors pb-1 event-data-[collapsible=icon]:hidden"
+        class="inline-flex items-center justify-center gap-1 w-full text-[10px] text-muted-foreground hover:text-foreground transition-colors pb-1 event-data-[collapsible=icon]:hidden"
       >
         <span>WirkSam {{ appVersion }}</span>
         <span v-if="hasNewVersions" class="size-1.5 rounded-full bg-primary" />

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import { XIcon } from 'lucide-vue-next'
+import { XIcon } from '@lucide/vue'
 
 import { Button } from '@/components/ui/button'
 
@@ -30,7 +30,11 @@ const dismiss = () => {
     leave-active-class="transition duration-200 ease-in"
     leave-to-class="translate-y-full opacity-0"
   >
-    <div v-if="visible" class="fixed bottom-0 inset-x-0 z-50 p-4 pointer-tasks-none">
+    <div
+      v-if="visible"
+      data-testid="cookie-notice"
+      class="fixed bottom-0 inset-x-0 z-50 p-4 pointer-tasks-none"
+    >
       <div
         class="max-w-lg mx-auto bg-card border rounded-lg shadow-lg p-4 flex items-center gap-3 pointer-tasks-auto"
       >
@@ -43,7 +47,13 @@ const dismiss = () => {
         <Button variant="outline" size="sm" @click="dismiss">
           {{ $t('preauth.cookieNotice.dismiss') }}
         </Button>
-        <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" @click="dismiss">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8 shrink-0"
+          :aria-label="$t('common.actions.close')"
+          @click="dismiss"
+        >
           <XIcon class="h-4 w-4" />
         </Button>
       </div>

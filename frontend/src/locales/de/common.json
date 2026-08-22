@@ -1,4 +1,17 @@
 {
+    "accountSuspended": {
+        "cancel": "Abbrechen",
+        "confirmDelete": "Konto löschen",
+        "deleteAccount": "Mein Konto löschen",
+        "deleteConfirmDescription": "Damit werden dein Konto und alle zugehörigen Daten entfernt. Das lässt sich nicht rückgängig machen.",
+        "deleteConfirmTitle": "Konto löschen?",
+        "deleteError": "Dein Konto konnte nicht gelöscht werden. Bitte versuche es erneut.",
+        "deleting": "Wird gelöscht…",
+        "description": "Eine Administratorin oder ein Administrator hat dieses Konto gesperrt. Du kannst die App gerade nicht nutzen. Wenn das ein Versehen ist, melde dich bei ihnen.",
+        "logout": "Abmelden",
+        "reasonLabel": "Angegebener Grund",
+        "title": "Dein Konto ist gesperrt"
+    },
     "actions": {
         "back": "Zurück",
         "cancel": "Abbrechen",
@@ -8,6 +21,8 @@
         "delete": "Löschen",
         "edit": "Bearbeiten",
         "hide": "Verbergen",
+        "hidePassword": "Passwort verbergen",
+        "moreActions": "Weitere Aktionen",
         "next": "Weiter",
         "previous": "Vorherige",
         "publish": "Veröffentlichen",
@@ -15,6 +30,7 @@
         "save": "Speichern",
         "search": "Suchen...",
         "show": "Anzeigen",
+        "showPassword": "Passwort anzeigen",
         "submit": "Absenden"
     },
     "dialog": {
@@ -72,28 +88,6 @@
     "language": {
         "current": "Aktuelle Sprache",
         "switch": "Sprache wechseln"
-    },
-    "pendingApproval": {
-        "approvalCodeLabel": "Freigabecode vorhanden?",
-        "approvalCodePlaceholder": "Freigabecode eingeben",
-        "approvalSuccess": "Ihr Konto wurde freigegeben!",
-        "approvalWrongPassword": "Ungültiger Freigabecode. Bitte versuchen Sie es erneut.",
-        "approveButton": "Freigeben",
-        "approving": "Wird freigegeben...",
-        "cancel": "Abbrechen",
-        "confirmDelete": "Konto löschen",
-        "deleteAccount": "Anfrage zurückziehen",
-        "deleteConfirmDescription": "Ihr Konto wird dauerhaft gelöscht. Sie können sich jederzeit erneut registrieren.",
-        "deleteConfirmTitle": "Freigabeanfrage zurückziehen?",
-        "deleteError": "Konto konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
-        "deleting": "Wird gelöscht...",
-        "description": "Ihr Konto wurde erstellt, muss aber von einem Administrator freigegeben werden, bevor Sie auf die Plattform zugreifen können.",
-        "hint": "Sie können sich anmelden, sobald Ihr Konto bestätigt wurde.",
-        "logout": "Abmelden",
-        "rejectedDescription": "Ihre Kontoanfrage wurde geprüft und nicht genehmigt.",
-        "rejectedTitle": "Konto abgelehnt",
-        "rejectionReasonLabel": "Begründung",
-        "title": "Konto wartet auf Freigabe"
     },
     "states": {
         "error": "Fehler",

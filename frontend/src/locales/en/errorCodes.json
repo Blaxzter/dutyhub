@@ -15,6 +15,10 @@
         "not_found": "The requested task was not found"
     },
     "user": {
-        "not_found": "The requested user was not found"
+        "not_found": "The requested user was not found",
+        "owns_content": "This member still has events or tasks they created. Choose who should take them over first.",
+        "transfer_same_user": "Please choose a different member to take over.",
+        "transfer_target_inactive": "The chosen member's account is not active.",
+        "transfer_target_not_found": "The chosen member could not be found."
     }
 }

@@ -7,7 +7,7 @@ import {
   getLocalTimeZone,
   today as todayDate,
 } from '@internationalized/date'
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, X } from '@lucide/vue'
 import {
   type DateRange,
   RangeCalendarCell,
@@ -164,6 +164,7 @@ const hasValue = computed(() => props.dateFrom !== null)
         <button
           v-if="hasValue"
           class="ml-auto rounded-sm p-0.5 hover:bg-accent"
+          :aria-label="resetLabel ?? t('utils.dateRangePicker.clear')"
           @click.stop="clearSelection"
         >
           <X class="h-3 w-3" />

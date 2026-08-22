@@ -1,10 +1,14 @@
-FROM node:25-alpine
+FROM node:26-alpine
 
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
 
-RUN npm install -g pnpm@10.30.3 && pnpm install
+# Derive the pnpm version from package.json's `packageManager` rather than
+# hardcoding it, so it cannot drift when that pin is bumped.
+RUN npm install -g \
+    "pnpm@$(node -p "require('./package.json').packageManager.replace(/^pnpm@/, '').split('+')[0]")" \
+    && pnpm install
 
 COPY . .
 

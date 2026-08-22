@@ -10,9 +10,13 @@ const { orientation } = useCarousel()
 </script>
 
 <template>
+  <!-- `role="group"` is the shadcn-vue default and a real ARIA role. The
+       terminology rename in d28ba80 blanket-replaced "group" with "event",
+       leaving `role="event"` — not a valid ARIA role at all, which axe flags as
+       a critical `aria-roles` violation on every slide. -->
   <div
     data-slot="carousel-item"
-    role="event"
+    role="group"
     aria-roledescription="slide"
     :class="
       cn(

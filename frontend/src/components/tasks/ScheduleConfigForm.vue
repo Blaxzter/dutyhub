@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 
-import { CircleAlert, Plus, Trash2 } from 'lucide-vue-next'
+import { CircleAlert, Plus, Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'
@@ -229,7 +229,12 @@ const outsideEventWindow = computed(() => {
           <Label>{{ t('duties.shifts.fields.endTime') }}</Label>
           <TimePicker v-model="override.endTime" />
         </div>
-        <Button variant="ghost" size="icon" @click="removeOverride(index)">
+        <Button
+          variant="ghost"
+          size="icon"
+          :aria-label="t('duties.tasks.createView.schedule.removeExceptionLabel')"
+          @click="removeOverride(index)"
+        >
           <Trash2 class="h-4 w-4 text-destructive" />
         </Button>
       </div>

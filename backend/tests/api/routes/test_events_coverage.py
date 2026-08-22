@@ -28,7 +28,9 @@ class TestEventCoverage:
         data = r.json()
         ids = [item["id"] for item in data["items"]]
         assert str(test_event.id) in ids
-        assert str(test_draft_event.id) not in ids
+        # Drafts of events the caller belongs to are visible now; what a
+        # non-member sees is covered in test_events.py.
+        assert str(test_draft_event.id) in ids
 
     async def test_list_groups_admin_sees_all(
         self,
@@ -78,9 +80,9 @@ class TestEventCoverage:
         async_client: AsyncClient,
         test_draft_event: Event,
     ):
-        """Test that non-admin cannot view a draft group."""
+        """A member can view their own event while it is still a draft."""
         r = await async_client.get(f"/api/v1/events/{test_draft_event.id}")
-        assert r.status_code == 403
+        assert r.status_code == 200
 
     async def test_publish_group_triggers_notification(
         self,

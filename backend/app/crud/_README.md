@@ -28,8 +28,10 @@ from app.crud.base import CRUDBase
 from app.models import YourModel
 from app.schemas import YourModelCreate, YourModelUpdate
 
+
 class CRUDYourModel(CRUDBase[YourModel, YourModelCreate, YourModelUpdate]):
     pass
+
 
 your_model = CRUDYourModel(YourModel)
 ```
@@ -95,7 +97,7 @@ async for user in crud.user.iterate(session, filter_by=filters):
 # Advanced filtering with comparisons
 filters = [
     NamedFilterFields("age", 18, greater_then_comp="gt"),
-    NamedFilterFields("status", "banned", is_not=True)
+    NamedFilterFields("status", "banned", is_not=True),
 ]
 ```
 
@@ -134,11 +136,7 @@ from app.schemas import UserUpdate
 
 # Using schema
 update_data = UserUpdate(full_name="Jane Doe")
-updated_user = await crud.user.update(
-    session,
-    db_obj=existing_user,
-    obj_in=update_data
-)
+updated_user = await crud.user.update(session, db_obj=existing_user, obj_in=update_data)
 
 # Using dictionary
 update_dict = {"full_name": "Jane Doe"}
@@ -146,7 +144,7 @@ updated_user = await crud.user.update(
     session,
     db_obj=existing_user,
     obj_in=update_dict,
-    skip_refresh=True  # Skip database refresh for performance
+    skip_refresh=True,  # Skip database refresh for performance
 )
 ```
 
@@ -197,28 +195,34 @@ NamedFilterFields("score", 100, greater_then_comp="le")
 from sqlmodel import SQLModel, Field
 from app.models import Base
 
+
 class User(Base, table=True):
     id: int = Field(primary_key=True)
     email: str = Field(unique=True, index=True)
     full_name: str
     is_active: bool = True
 
+
 # schemas/user.py
 from pydantic import BaseModel, EmailStr
+
 
 class UserCreate(BaseModel):
     email: EmailStr
     full_name: str
     is_active: bool = True
 
+
 class UserUpdate(BaseModel):
     full_name: str | None = None
     is_active: bool | None = None
+
 
 # crud/user.py
 from app.crud.base import CRUDBase
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
+
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     async def get_by_email(self, session: AsyncSession, *, email: str) -> User | None:
@@ -233,6 +237,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             return None
         return user
 
+
 user = CRUDUser(User)
 ```
 
@@ -244,10 +249,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         self, session: AsyncSession, *, skip: int = 0, limit: int = 100
     ) -> list[User]:
         result = await session.execute(
-            select(User)
-            .where(User.is_active == True)
-            .offset(skip)
-            .limit(limit)
+            select(User).where(User.is_active == True).offset(skip).limit(limit)
         )
         return result.scalars().all()
 
@@ -297,15 +299,18 @@ from app import crud
 
 router = APIRouter()
 
+
 @router.get("/{user_id}")
 async def get_user(user_id: int, session: DBDep):
     user = await crud.user.get(session, id=user_id, raise_404_error=True)
     return user
 
+
 @router.post("/")
 async def create_user(user_in: UserCreate, session: DBDep):
     user = await crud.user.create(session, obj_in=user_in)
     return user
+
 
 @router.patch("/{user_id}")
 async def update_user(

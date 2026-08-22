@@ -7,11 +7,10 @@ from sqlmodel import col
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
-from app.crud.event_manager import event_manager as crud_egm
+from app.crud.event_membership import event_membership as crud_membership
 from app.crud.task import task as crud_task
-from app.logic.event_scope import get_user_event_scope
-from app.logic.permissions import require_event_access
-from app.models.event_manager import EventManager
+from app.logic.event_scope import get_user_event_scope, get_visible_event_ids
+from app.logic.permissions import get_event_role, require_event_role
 from app.models.shift import Shift
 from app.models.task import Task
 from app.schemas.booking import TaskBookingEntry
@@ -38,32 +37,29 @@ async def list_tasks(
     event_id: uuid.UUID | None = Query(default=None),
     all_events: bool = Query(default=False),
 ) -> TaskListResponse:
-    """List published tasks (all users) or all tasks (admin/manager).
+    """List tasks from the events the caller belongs to.
 
-    Scoped event managers see published tasks plus tasks in their managed groups.
+    Membership is the outer boundary: you never see a task in an event you are
+    not in. Within your events, drafts are visible only to those who can
+    manage the event; everyone else sees published tasks.
 
     Defaults to scoping by the current user's selected event. Pass an explicit
-    ``event_id`` to override, or ``all_events=true`` to disable scoping.
+    ``event_id`` to override, or ``all_events=true`` to disable that scoping
+    (membership still applies).
     """
     effective_status = status
     also_include_group_ids = None
 
-    if current_user.is_manager:
-        # Global admin/task_manager — see everything
-        pass
-    else:
-        # Check for scoped event manager
-        result = await session.execute(
-            select(col(EventManager.event_id)).where(
-                col(EventManager.user_id) == current_user.id
-            )
+    visible_event_ids = await get_visible_event_ids(session, current_user)
+    if visible_event_ids is not None:
+        manageable_ids = await crud_membership.list_event_ids_for_user(
+            session, user_id=current_user.id, minimum_role="admin"
         )
-        managed_ids: list[uuid.UUID] = list(result.scalars().all())
-
         if effective_status is None:
             effective_status = "published"
-        if managed_ids:
-            also_include_group_ids = managed_ids
+        if manageable_ids:
+            # Within events they run, admins also see drafts.
+            also_include_group_ids = manageable_ids
 
     effective_event_id = event_id
     if effective_event_id is None and not all_events:
@@ -80,6 +76,7 @@ async def list_tasks(
         booked_by_user_id=booked_by_user_id,
         also_include_group_ids=also_include_group_ids,
         event_id=effective_event_id,
+        restrict_to_event_ids=visible_event_ids,
     )
     total = await crud_task.get_count_filtered(
         session,
@@ -88,6 +85,7 @@ async def list_tasks(
         booked_by_user_id=booked_by_user_id,
         also_include_group_ids=also_include_group_ids,
         event_id=effective_event_id,
+        restrict_to_event_ids=visible_event_ids,
     )
     return TaskListResponse(
         items=[TaskRead.model_validate(i) for i in items],
@@ -104,14 +102,15 @@ async def get_task(
     current_user: CurrentUser,
 ) -> Task:
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    if not current_user.is_manager and db_task.status != "published":
-        # Allow scoped event managers to see their unpublished tasks
-        if not db_task.event_id or not await crud_egm.is_manager(
-            session, user_id=current_user.id, event_id=db_task.event_id
-        ):
-            raise_problem(
-                403, code="task.not_published", detail="Task is not published"
-            )
+    role = await get_event_role(current_user, session, db_task.event_id)
+    if role is None:
+        raise_problem(
+            404,
+            code="task.not_found",
+            detail="Task not found",
+        )
+    if db_task.status != "published" and role not in ("owner", "admin"):
+        raise_problem(403, code="task.not_published", detail="Task is not published")
     return db_task
 
 
@@ -121,7 +120,7 @@ async def create_task(
     session: DBDep,
     current_user: CurrentUser,
 ) -> Task:
-    await require_event_access(current_user, session, task_in.event_id)
+    await require_event_role(current_user, session, task_in.event_id)
     task_in.created_by_id = current_user.id
     return await crud_task.create(session, obj_in=task_in)
 
@@ -135,7 +134,7 @@ async def update_task(
     background_tasks: BackgroundTasks,
 ) -> Task:
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_access(current_user, session, db_task.event_id)
+    await require_event_role(current_user, session, db_task.event_id)
     old_status = db_task.status
     updated = await crud_task.update(session, db_obj=db_task, obj_in=task_in)
 
@@ -185,7 +184,7 @@ async def delete_task(
     cancellation_reason: str | None = Query(default=None),
 ) -> None:
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_access(current_user, session, db_task.event_id)
+    await require_event_role(current_user, session, db_task.event_id)
 
     # Collect all shift IDs for this task
     stmt = select(col(Shift.id)).where(col(Shift.task_id) == db_task.id)

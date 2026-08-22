@@ -104,7 +104,7 @@ const navigateToAbout = () => {
         <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
           {{ $t('preauth.landing.subtitle') }}
         </p>
-        <p class="text-sm text-muted-foreground/70 italic max-w-xl mx-auto">
+        <p class="text-sm text-muted-foreground italic max-w-xl mx-auto">
           {{ $t('preauth.landing.nameExplainer') }}
         </p>
       </div>
@@ -226,10 +226,19 @@ const navigateToAbout = () => {
 
         <!-- Dot indicators -->
         <div class="flex justify-center gap-2 mt-4">
+          <!-- These were empty <button> elements: no text, no icon, no label,
+               so a screen reader announced four identical "button"s with no way
+               to tell which slide each one went to (axe `button-name`). -->
           <button
             v-for="(slide, index) in slides"
             :key="slide.key"
             @click="goToSlide(index)"
+            :aria-label="
+              $t('preauth.landing.showcase.goToSlide', {
+                title: $t(`preauth.landing.showcase.slides.${slide.key}.title`),
+              })
+            "
+            :aria-current="currentSlide === index ? 'true' : undefined"
             class="w-2 h-2 rounded-full transition-all duration-200"
             :class="
               currentSlide === index

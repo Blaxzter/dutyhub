@@ -23,16 +23,16 @@
                 "description": "Ihre bestätigten Dienstbuchungen",
                 "title": "Meine Buchungen"
             },
+            "joinRequests": {
+                "description": "Personen, die bei deinen Veranstaltungen mitmachen möchten",
+                "pendingAction": "Ansehen",
+                "pendingDismiss": "Später",
+                "pendingToast": "1 Person möchte mitmachen | {count} Personen möchten mitmachen",
+                "title": "Anfragen"
+            },
             "tasks": {
                 "description": "Verfügbare Veranstaltungen",
                 "title": "Veranstaltungen"
-            },
-            "users": {
-                "description": "Benutzer warten auf Freigabe",
-                "pendingAction": "Überprüfen",
-                "pendingDismiss": "Schließen",
-                "pendingToast": "{count} Benutzer wartet auf Freigabe | {count} Benutzer warten auf Freigabe",
-                "title": "Ausstehende Benutzer"
             }
         },
         "subtitle": "Willkommen zurück! Hier ist Ihre Dienstübersicht.",

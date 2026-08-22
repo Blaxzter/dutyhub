@@ -17,7 +17,7 @@ import {
   Printer,
   Tag,
   Trash2,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -625,6 +625,7 @@ onMounted(async () => {
                 data-testid="btn-delete-task"
                 variant="destructive"
                 size="icon"
+                :aria-label="t('duties.tasks.delete')"
                 @click="handleDeleteTask"
               >
                 <Trash2 class="h-4 w-4" />
@@ -636,7 +637,11 @@ onMounted(async () => {
           <div class="sm:hidden shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
-                <Button variant="outline" size="icon">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  :aria-label="t('common.actions.moreActions')"
+                >
                   <EllipsisVertical class="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -856,6 +861,7 @@ onMounted(async () => {
                     variant="ghost"
                     size="sm"
                     class="text-destructive hover:text-destructive"
+                    :aria-label="t('duties.tasks.detail.deleteBatch')"
                     @click="handleDeleteBatch(event.batch!)"
                   >
                     <Trash2 class="h-3.5 w-3.5" />
@@ -956,6 +962,7 @@ onMounted(async () => {
                         variant="ghost"
                         size="icon"
                         class="absolute bottom-0.5 right-0.5 h-5 w-5"
+                        :aria-label="t('duties.shifts.delete')"
                         @click.stop="handleDeleteShift(shift)"
                       >
                         <Trash2 class="h-3 w-3 text-destructive" />

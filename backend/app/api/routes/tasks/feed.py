@@ -11,11 +11,11 @@ from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
-from app.crud.event_manager import event_manager as crud_egm
+from app.crud.event_membership import event_membership as crud_membership
 from app.crud.task import task as crud_task
-from app.logic.event_scope import get_user_event_scope
+from app.logic.event_scope import get_user_event_scope, get_visible_event_ids
+from app.logic.permissions import get_event_role
 from app.models.booking import Booking
-from app.models.event_manager import EventManager
 from app.models.shift import Shift
 from app.models.task import Task
 from app.schemas.feed import (
@@ -304,18 +304,14 @@ async def task_feed(
     effective_status: str | None = None
     also_include_group_ids: list[uuid.UUID] | None = None
 
-    if current_user.is_manager:
-        pass  # global admin/task_manager — see everything
-    else:
-        result = await session.execute(
-            select(col(EventManager.event_id)).where(
-                col(EventManager.user_id) == current_user.id
-            )
+    visible_event_ids = await get_visible_event_ids(session, current_user)
+    if visible_event_ids is not None:
+        manageable_ids = await crud_membership.list_event_ids_for_user(
+            session, user_id=current_user.id, minimum_role="admin"
         )
-        managed_ids: list[uuid.UUID] = list(result.scalars().all())
         effective_status = "published"
-        if managed_ids:
-            also_include_group_ids = managed_ids
+        if manageable_ids:
+            also_include_group_ids = manageable_ids
 
     effective_event_id = event_id
     if effective_event_id is None and not all_events:
@@ -343,6 +339,7 @@ async def task_feed(
         has_future_shifts=future_shifts_cutoff,
         also_include_group_ids=also_include_group_ids,
         event_id=effective_event_id,
+        restrict_to_event_ids=visible_event_ids,
     )
     total = await crud_task.get_count_filtered(
         session,
@@ -354,6 +351,7 @@ async def task_feed(
         has_future_shifts=future_shifts_cutoff,
         also_include_group_ids=also_include_group_ids,
         event_id=effective_event_id,
+        restrict_to_event_ids=visible_event_ids,
     )
 
     if not tasks:
@@ -392,18 +390,15 @@ async def task_active_dates(
         .order_by(col(Shift.date))
     )
 
-    if current_user.is_manager:
-        pass  # global admin/task_manager — no status filter
-    else:
-        result = await session.execute(
-            select(col(EventManager.event_id)).where(
-                col(EventManager.user_id) == current_user.id
-            )
+    visible_event_ids = await get_visible_event_ids(session, current_user)
+    if visible_event_ids is not None:
+        query = query.where(col(Task.event_id).in_(visible_event_ids))
+        manageable_ids = await crud_membership.list_event_ids_for_user(
+            session, user_id=current_user.id, minimum_role="admin"
         )
-        managed_ids: list[uuid.UUID] = list(result.scalars().all())
         status_filter = col(Task.status) == "published"
-        if managed_ids:
-            status_filter = or_(status_filter, col(Task.event_id).in_(managed_ids))
+        if manageable_ids:
+            status_filter = or_(status_filter, col(Task.event_id).in_(manageable_ids))
         query = query.where(status_filter)
 
     result = await session.execute(query)
@@ -420,13 +415,11 @@ async def get_shift_window(
 ) -> ShiftWindowResponse:
     """Get shifts for a single task within a date window (for next/prev navigation)."""
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    if not current_user.is_manager and db_task.status != "published":
-        if not db_task.event_id or not await crud_egm.is_manager(
-            session, user_id=current_user.id, event_id=db_task.event_id
-        ):
-            raise_problem(
-                403, code="task.not_published", detail="Task is not published"
-            )
+    role = await get_event_role(current_user, session, db_task.event_id)
+    if role is None:
+        raise_problem(404, code="task.not_found", detail="Task not found")
+    if db_task.status != "published" and role not in ("owner", "admin"):
+        raise_problem(403, code="task.not_published", detail="Task is not published")
 
     end_date = start_date + dt.timedelta(days=days - 1)
     pairs = await _query_shifts_with_bookings(

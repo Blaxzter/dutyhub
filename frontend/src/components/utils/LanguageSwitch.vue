@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ChevronDownIcon } from 'lucide-vue-next'
+import { ChevronDownIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useAuthStore } from '@/stores/auth'
@@ -75,7 +75,10 @@ const changeLanguage = async (languageCode: string) => {
 <template>
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
-      <Button :variant="variant" :size="size" class="gap-2">
+      <!-- With :show-text="false" (the mobile header) the only children are a
+           decorative flag span and a chevron, leaving the button with no
+           accessible name — axe reports a critical `button-name` violation. -->
+      <Button :variant="variant" :size="size" class="gap-2" :aria-label="$t('common.language.switch')">
         <span :class="`fi fi-${currentLanguage.flag}`" class="h-4 w-6 rounded-sm" />
         <span v-if="showText" class="hidden sm:inline">{{ currentLanguage.nativeName }}</span>
         <ChevronDownIcon class="h-3 w-3 opacity-50" />

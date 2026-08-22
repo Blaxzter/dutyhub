@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { BarChart3, Download, EllipsisVertical } from 'lucide-vue-next'
+import { BarChart3, Download, EllipsisVertical } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -188,7 +188,12 @@ onMounted(() => {
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <Button variant="outline" size="sm" class="sm:hidden">
+            <Button
+              variant="outline"
+              size="sm"
+              class="sm:hidden"
+              :aria-label="t('common.actions.moreActions')"
+            >
               <EllipsisVertical class="size-4" />
             </Button>
           </DropdownMenuTrigger>

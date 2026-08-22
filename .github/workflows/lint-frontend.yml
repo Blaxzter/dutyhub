@@ -1,0 +1,104 @@
+name: Lint Frontend
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - "frontend/**"
+            - "scripts/pre-commit/check_locale_parity.js"
+            - ".github/workflows/lint-frontend.yml"
+    pull_request:
+        types:
+            - opened
+            - synchronize
+        branches:
+            - main
+            - dev
+        paths:
+            - "frontend/**"
+            - "scripts/pre-commit/check_locale_parity.js"
+            - ".github/workflows/lint-frontend.yml"
+
+permissions:
+    contents: read
+
+jobs:
+    lint-frontend:
+        if: github.actor != 'dependabot[bot]'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            # Must precede setup-node: `cache: pnpm` shells out to `pnpm store path`,
+            # so pnpm has to be on PATH already.
+            - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+              with:
+                  package_json_file: frontend/package.json
+            - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+              with:
+                  node-version: lts/*
+                  cache: pnpm
+                  cache-dependency-path: frontend/pnpm-lock.yaml
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              working-directory: frontend
+            # NOT `pnpm lint` — that script is `eslint . --fix`, which mutates files
+            # and would let CI silently repair violations instead of failing.
+            - name: ESLint
+              run: pnpm exec eslint .
+              working-directory: frontend
+            # Dependency-free Node, so it needs no install and runs from the
+            # repo root. The pre-commit hook alone is bypassable with
+            # --no-verify and never runs on PRs.
+            - name: Check en/de locale parity
+              run: node scripts/pre-commit/check_locale_parity.js
+            # e2e/COVERAGE.md is generated from `playwright test --list`, which
+            # only *collects* tests — no web server, no browser, so this needs
+            # neither a running stack nor a `playwright install` step.
+            - name: Check e2e/COVERAGE.md is up to date
+              run: |
+                  pnpm generate-e2e-coverage
+                  git diff --exit-code e2e/COVERAGE.md || (echo "e2e/COVERAGE.md is stale — run 'just generate-e2e-coverage' and commit the result" && exit 1)
+              working-directory: frontend
+            # `src/changelog/generated/` is gitignored and produced by the
+            # `generate-changelog` Vite plugin at buildStart. `vue-tsc` does not
+            # go through Vite, so on a clean checkout the type-check fails with
+            # "Cannot find module '../changelog/generated/en.json'". Generate it
+            # explicitly first. (`build-only` below regenerates it via the plugin,
+            # which is harmless.)
+            - name: Generate changelog JSON
+              run: pnpm generate-changelog
+              working-directory: frontend
+            # `src/client/` is committed, so a plain checkout is enough here;
+            # generate-client.yml separately guards it against going stale.
+            - name: Type check
+              run: pnpm type-check
+              working-directory: frontend
+            # Separate project: tsconfig.app.json excludes src/**/__tests__/*,
+            # so the unit tests need their own vue-tsc pass to be type-checked.
+            - name: Type check unit tests
+              run: pnpm type-check:unit
+              working-directory: frontend
+            # `--coverage` rather than a bare `test:unit`: the per-file
+            # thresholds in vitest.config.ts only run when coverage is
+            # collected, so without this the gate silently does nothing. It
+            # exits non-zero when any covered file drops below its floor, or
+            # when a new file lands under src/lib, src/composables or
+            # src/stores with no spec — the same "fail the job that owns it"
+            # shape as the backend's fail_under.
+            - name: Unit tests with coverage gate
+              run: pnpm test:unit:coverage
+              working-directory: frontend
+            # `if: always()` because the report is most useful on the run that
+            # failed the threshold check — vitest writes it before checking.
+            - name: Store coverage report
+              if: always()
+              uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+              with:
+                  name: frontend-coverage-html
+                  path: frontend/coverage
+                  include-hidden-files: true
+            - name: Build
+              run: pnpm build-only
+              working-directory: frontend

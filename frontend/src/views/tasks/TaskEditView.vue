@@ -3,7 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
 import { parseDate } from '@internationalized/date'
-import { ArrowLeft, Clock, Info, RefreshCw } from 'lucide-vue-next'
+import { ArrowLeft, Clock, Info, RefreshCw } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -16,6 +16,7 @@ import { useFormatters } from '@/composables/useFormatters'
 import {
   type RemainderMode,
   type ScheduleConfig,
+  eachDateInRange,
   slotKey,
   useShiftPreview,
 } from '@/composables/useShiftPreview'
@@ -208,18 +209,9 @@ watch(startDate, (val) => {
 // --- Available dates for exceptions ---
 const availableDates = computed(() => {
   if (!startDate.value || !endDate.value) return []
-  const dates: string[] = []
-  const start = new Date(startDate.value.toString())
-  const end = new Date(endDate.value.toString())
-  const current = new Date(start)
-  while (current <= end) {
-    const dateStr = current.toISOString().split('T')[0]
-    if (!overrides.value.some((o) => o.date === dateStr)) {
-      dates.push(dateStr)
-    }
-    current.setDate(current.getDate() + 1)
-  }
-  return dates
+  return eachDateInRange(startDate.value.toString(), endDate.value.toString()).filter(
+    (dateStr) => !overrides.value.some((o) => o.date === dateStr),
+  )
 })
 
 // --- Load task data ---

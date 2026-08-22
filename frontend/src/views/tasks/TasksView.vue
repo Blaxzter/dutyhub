@@ -9,7 +9,7 @@ import {
   List,
   Plus,
   Search,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -201,7 +201,7 @@ const navigateToTask = (task: { id: string }) => {
 }
 
 const navigateToEvent = (event: { id: string }) => {
-  if (authStore.isAdmin || authStore.isTaskManager || authStore.canManageEvent(event.id)) {
+  if (authStore.canManageEvent(event.id)) {
     router.push({ name: 'event-settings', params: { eventId: event.id } })
   }
 }
@@ -237,7 +237,11 @@ onMounted(loadTasks)
           >
             <Tooltip>
               <TooltipTrigger as-child>
-                <ToggleGroupItem value="today" data-testid="btn-focus-today">
+                <ToggleGroupItem
+                  value="today"
+                  data-testid="btn-focus-today"
+                  :aria-label="t('duties.tasks.focusMode.today')"
+                >
                   <CalendarClock class="h-4 w-4" />
                 </ToggleGroupItem>
               </TooltipTrigger>
@@ -247,7 +251,11 @@ onMounted(loadTasks)
             </Tooltip>
             <Tooltip>
               <TooltipTrigger as-child>
-                <ToggleGroupItem value="first-available" data-testid="btn-focus-first-available">
+                <ToggleGroupItem
+                  value="first-available"
+                  data-testid="btn-focus-first-available"
+                  :aria-label="t('duties.tasks.focusMode.firstAvailable')"
+                >
                   <CalendarSearch class="h-4 w-4" />
                 </ToggleGroupItem>
               </TooltipTrigger>

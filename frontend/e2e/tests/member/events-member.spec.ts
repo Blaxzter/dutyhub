@@ -13,29 +13,44 @@
 import { expect, test } from '../../fixtures.js'
 import { api, clearAvailability } from '../../helpers/api.js'
 
-// ── RBAC: member cannot reach admin pages or see admin controls ──────────────
+// ── RBAC: what a plain participant can and cannot do ─────────────────────────
 
 test.describe('Member – RBAC', () => {
-  test('member does not see the Manage Events sidebar link', async ({ memberPage: member }) => {
+  test('member does not see the My Events sidebar link', async ({ memberPage: member }) => {
+    // The link is for people who run an event; a participant runs none.
     await member.goto('/app/home')
-    await expect(member.getByTestId('sidebar-link-admin-events')).toBeHidden()
+    await expect(member.getByTestId('sidebar-link-my-events')).toBeHidden()
   })
 
-  test('member is redirected home from /app/admin/events', async ({ memberPage: member }) => {
-    await member.goto('/app/admin/events')
+  test('member is redirected home from /app/events', async ({ memberPage: member }) => {
+    await member.goto('/app/events')
     await expect(member).toHaveURL(/\/app\/home/)
   })
 
-  test('member is redirected home from /app/event-settings', async ({ memberPage: member }) => {
-    await member.goto('/app/event-settings')
-    await expect(member).toHaveURL(/\/app\/home/)
-  })
-
-  test('member does not see the Create Event button on the picker', async ({
+  test('member can open event settings but sees no management controls', async ({
     memberPage: member,
   }) => {
+    // Belonging to the event is enough to look at who else is in it — but the
+    // invitations and join-request panels stay admin-only.
+    await member.goto('/app/event-settings?tab=people')
+    await expect(member.getByTestId('section-event-members')).toBeVisible()
+    await expect(member.getByTestId('section-event-invitations')).toBeHidden()
+    await expect(member.getByTestId('section-join-requests')).toBeHidden()
+  })
+
+  test('member cannot change anyone\'s role', async ({ memberPage: member }) => {
+    await member.goto('/app/event-settings?tab=people')
+    await expect(member.getByTestId('section-event-members')).toBeVisible()
+    await expect(member.getByTestId('btn-remove-member')).toHaveCount(0)
+  })
+
+  test('member CAN create their own event from the picker', async ({
+    memberPage: member,
+  }) => {
+    // The whole point of the refactor: no gatekeeper stands between a
+    // participant and running something themselves.
     await member.goto('/app/select-event?mode=switch')
-    await expect(member.getByTestId('select-event-create-card')).toBeHidden()
+    await expect(member.getByTestId('select-event-create-card')).toBeVisible()
   })
 
   test('member does not see the member availabilities admin section', async ({

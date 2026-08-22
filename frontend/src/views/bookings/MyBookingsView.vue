@@ -11,7 +11,7 @@ import {
   Search,
   Trash2,
   XCircle,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -469,6 +469,7 @@ onMounted(loadBookings)
                         variant="ghost"
                         size="icon"
                         class="h-8 w-8 text-destructive hover:text-destructive"
+                        :aria-label="t('duties.bookings.cancel')"
                         @click="handleCancel(booking)"
                       >
                         <Trash2 class="h-4 w-4" />

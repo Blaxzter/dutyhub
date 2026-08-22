@@ -22,7 +22,7 @@ from pathlib import Path
 def run(
     cmd: list[str], *, check: bool = True, capture: bool = False
 ) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(cmd, capture_output=capture, text=True)
+    result = subprocess.run(cmd, capture_output=capture, text=True, check=False)
     if check and result.returncode != 0:
         if capture:
             print(result.stderr or result.stdout)

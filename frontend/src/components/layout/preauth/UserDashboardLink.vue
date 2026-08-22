@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { UserIcon } from 'lucide-vue-next'
+import { UserIcon } from '@lucide/vue'
 
 import { useAvatarUrl } from '@/composables/useAvatarUrl'
 

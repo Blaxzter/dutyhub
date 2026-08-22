@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRight, type LucideIcon } from 'lucide-vue-next'
+import { ChevronRight, type LucideIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { type LocationQueryRaw, RouterLink, useRoute, useRouter } from 'vue-router'
 
@@ -133,6 +133,9 @@ const isRouteActive = (routeName?: string, routeParams?: Record<string, string>)
                 <CollapsibleTrigger as-child>
                   <button
                     class="flex shrink-0 items-center justify-center rounded-r-md px-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors group-data-[collapsible=icon]:hidden"
+                    :aria-label="
+                      t('navigation.sidebar.toggleSubmenu', { title: resolveTitle(item) })
+                    "
                     @click="handleSidebarToggle(item)"
                   >
                     <ChevronRight

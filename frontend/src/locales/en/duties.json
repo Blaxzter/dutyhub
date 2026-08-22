@@ -124,10 +124,10 @@
     },
     "events": {
         "create": "Create Event",
+        "created": "Event created",
         "delete": "Delete Event",
         "deleteConfirm": "Are you sure you want to delete this event? All related availability data will be lost.",
         "detail": {
-            "addManager": "Add Manager",
             "dateConstraintHint": "Date range is limited by existing tasks. Use \"Shift Dates\" below to move everything at once.",
             "earliestTask": "Earliest task: {date}",
             "editDescription": "Update the name, description, and date range for this event.",
@@ -138,22 +138,14 @@
                 "eventStart": "Task start",
                 "today": "Today"
             },
-            "managerAdded": "Manager added.",
-            "managerRemoved": "Manager removed.",
-            "managers": "Event Managers",
-            "managersEmpty": "No scoped managers assigned to this group.",
-            "managersNoResults": "No users found.",
-            "managersSearch": "Search users by name or email...",
-            "managersSubtitle": "Users with scoped access to manage tasks in this group",
             "nav": {
                 "availability": "Availability",
                 "details": "Details",
-                "management": "Management",
+                "people": "People",
                 "print": "Print",
                 "tasks": "Tasks"
             },
             "printDescription": "Generate printable overview sheets or full task details for this group.",
-            "roleTaskManager": "Task Manager",
             "shiftApply": "Shift all dates",
             "shiftBackward": "backward",
             "shiftDates": "Shift Dates",
@@ -171,10 +163,18 @@
         "edit": "Edit Event",
         "empty": "No events found.",
         "expired": "Expired",
+        "featured": {
+            "badge": "Featured",
+            "feature": "Show {name} on the home screen",
+            "featured": "Added to the home screen",
+            "requiresPublic": "Only public events can go on the home screen",
+            "unfeature": "Remove {name} from the home screen",
+            "unfeatured": "Removed from the home screen"
+        },
         "fields": {
             "defaultTimes": "Default time window",
-            "defaultTimesHint": "Optional. Bounds the availability grid to these hours by default. Tasks may still be scheduled outside the window.",
-            "defaultTimesInvalid": "End time must be after start time. Overnight windows aren't supported yet — leave both empty for events that span midnight.",
+            "defaultTimesHint": "Optional. Bounds the availability grid to these hours by default. Tasks may still be scheduled outside the window. For events running into the next morning, leave both fields empty and set the times on each task instead.",
+            "defaultTimesInvalid": "End time must be after start time. Time windows past midnight aren't supported yet — leave both fields empty for events that run overnight.",
             "description": "Description",
             "endDate": "End Date",
             "endTime": "End time",
@@ -182,20 +182,123 @@
             "startDate": "Start Date",
             "startTime": "Start time",
             "status": "Status",
-            "timeOptional": "Optional"
+            "timeOptional": "Optional",
+            "visibility": "Who can see this event"
+        },
+        "invitations": {
+            "copyLink": "Copy link",
+            "createLink": "Create share link",
+            "emailsHint": "Separate several addresses with commas, spaces or new lines.",
+            "emailsLabel": "Email addresses",
+            "emailsPlaceholder": "anna{'@'}example.com, ben{'@'}example.com",
+            "empty": "No open invitations.",
+            "linkCopied": "Link copied",
+            "linksTitle": "Share links",
+            "pendingTitle": "Waiting for a reply",
+            "revoke": "Withdraw invitation",
+            "revoked": "Invitation withdrawn",
+            "roleLabel": "Join as",
+            "send": "Send invitation",
+            "sendMany": "Send {count} invitations",
+            "sent": "Invitation sent | Invitation sent | {count} invitations sent",
+            "skipped": "Already invited or taking part: {emails}",
+            "subtitle": "Invite people by email, or share a link.",
+            "title": "Invitations",
+            "uses": "not used yet | used once | used {count} times"
+        },
+        "invite": {
+            "accept": "Accept and join",
+            "alreadyMember": "You are already taking part in this event.",
+            "asRole": "You will join as",
+            "decline": "Not now",
+            "from": "You have been invited to take part.",
+            "fromNamed": "{name} invited you to take part.",
+            "goHome": "Go to start page",
+            "invalid": {
+                "already_used": "This invitation has already been used.",
+                "email_mismatch": "This invitation was sent to a different email address.",
+                "expired": "This invitation has expired. Ask the organisers for a new one.",
+                "revoked": "This invitation was withdrawn."
+            },
+            "joined": "Welcome to {name}",
+            "notFoundBody": "The invitation may have been withdrawn, or the link was mistyped.",
+            "notFoundTitle": "This link does not work",
+            "openEvent": "Open event"
+        },
+        "join": {
+            "request": "Ask to join",
+            "requestSent": "Request sent — the organisers will get back to you",
+            "requested": "Asked to join"
+        },
+        "joinRequests": {
+            "approve": "Let in",
+            "approved": "{name} can now take part",
+            "decline": "Decline",
+            "declined": "Request declined",
+            "empty": "No requests waiting.",
+            "subtitle": "People who would like to take part.",
+            "title": "Requests to join"
+        },
+        "members": {
+            "changeRoleFor": "Change role for {name}",
+            "columnHeader": "People",
+            "count": "no people | 1 person | {count} people",
+            "empty": "Nobody here yet.",
+            "leave": "Leave",
+            "left": "You have left this event",
+            "ownershipTransferred": "This event now belongs to its new owner",
+            "remove": "Remove {name}",
+            "removed": "Removed from the event",
+            "roleChanged": "Role updated",
+            "subtitle": "Everyone taking part, and what they can do.",
+            "title": "People",
+            "transferAction": "Hand over",
+            "transferHint": "The new owner takes full control. You stay on as an organiser.",
+            "transferPlaceholder": "Choose a person…",
+            "transferTitle": "Hand over this event",
+            "you": "(you)"
         },
         "pickDate": "Pick a date",
+        "roles": {
+            "admin": "Organiser",
+            "member": "Member",
+            "owner": "Owner"
+        },
+        "status": {
+            "draft": "Draft"
+        },
         "statuses": {
             "archived": "Archived",
             "draft": "Draft",
             "published": "Published"
         },
         "subtitle": "Browse upcoming task programmes",
-        "title": "Events"
+        "title": "Events",
+        "visibility": {
+            "private": {
+                "hint": "Only people you invite can find or join it.",
+                "label": "Private"
+            },
+            "public": {
+                "hint": "Anyone signed in can find it and ask to join.",
+                "label": "Public"
+            }
+        }
     },
     "selectEvent": {
         "changeEvent": "Change event",
+        "discover": {
+            "emptyBody": "There are no public events open at the moment — you can start your own.",
+            "emptyTitle": "Nothing to discover right now",
+            "featuredTitle": "Recommended",
+            "hint": "Public events you can ask to join. The organisers decide.",
+            "moreTitle": "More public events"
+        },
         "empty": "No upcoming events are available. Please check back later or contact an organizer.",
+        "emptyMine": {
+            "body": "Start your own, or look for one you can join.",
+            "title": "You are not part of an event yet"
+        },
         "expired": {
             "body": "The event you were working with has ended. Pick another to continue.",
             "title": "Your event has ended"
@@ -222,6 +325,10 @@
             "upcomingTasks": "Upcoming tasks"
         },
         "success": "Selected event updated.",
+        "tabs": {
+            "discover": "Discover",
+            "mine": "My events"
+        },
         "visual": {
             "expiredHeadline": "Let's get you into the next event.",
             "features": {
@@ -310,7 +417,11 @@
         "calendar": {
             "allDay": "All day",
             "more": "more",
+            "next": "Next period",
             "noItems": "Nothing scheduled for this day.",
+            "openEvent": "Open event {name}",
+            "openTask": "Open task {name}",
+            "previous": "Previous period",
             "today": "Today",
             "views": {
                 "day": "Day",
@@ -339,6 +450,7 @@
                 "shiftsOnDate": "{count} shifts",
                 "summary": "{shifts} shifts across {days} days"
             },
+            "removeDate": "Remove {date}",
             "schedule": {
                 "addException": "Add Exception",
                 "defaultEndTime": "Default End Time",
@@ -356,6 +468,7 @@
                     "short": "Create a shorter final shift"
                 },
                 "removeException": "Remove",
+                "removeExceptionLabel": "Remove date exception",
                 "slotDuration": "Shift Duration"
             },
             "sections": {
@@ -385,6 +498,7 @@
             "allCategories": "All categories",
             "allLocations": "All locations",
             "booked": "Booked",
+            "deleteBatch": "Delete shift series",
             "deleteBatchConfirm": "Are you sure you want to delete this batch? All its duty shifts and bookings will be removed.",
             "deleteBatchSuccess": "Batch deleted successfully.",
             "hiddenShifts": "{count} shifts hidden by filter",
@@ -448,7 +562,9 @@
         "pickDate": "Pick a date",
         "quickView": {
             "availableShifts": "{count} available",
+            "nextDays": "Next days",
             "noMore": "No more tasks",
+            "previousDays": "Previous days",
             "showLess": "Show less",
             "showMore": "Show {count} more"
         },

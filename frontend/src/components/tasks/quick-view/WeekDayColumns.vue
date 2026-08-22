@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { useFormatters } from '@/composables/useFormatters'
@@ -103,8 +103,8 @@ function slotClasses(shift: DayShiftEntry): string {
 
 function slotCountClasses(shift: DayShiftEntry): string {
   if (shift.isBookedByMe) return 'text-green-600/70 dark:text-green-400/70'
-  if (slotHasCapacity(shift)) return 'text-primary/60'
-  return 'text-muted-foreground/60'
+  if (slotHasCapacity(shift)) return 'text-primary'
+  return 'text-muted-foreground'
 }
 
 defineExpose({ totalHidden, maxShiftCount })
@@ -116,6 +116,7 @@ defineExpose({ totalHidden, maxShiftCount })
     <div class="flex items-center">
       <button
         class="flex w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+        :aria-label="t('duties.tasks.quickView.previousDays')"
         @click="emit('previous')"
       >
         <ChevronLeft class="h-4 w-4" />
@@ -145,6 +146,7 @@ defineExpose({ totalHidden, maxShiftCount })
 
       <button
         class="flex w-6 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
+        :aria-label="t('duties.tasks.quickView.nextDays')"
         @click="emit('next')"
       >
         <ChevronRight class="h-4 w-4" />

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import { useColorMode } from '@vueuse/core'
-import { ArrowRight, Bell, CalendarRange, Megaphone, ShieldCheck, Users } from 'lucide-vue-next'
+import { ArrowRight, Bell, CalendarRange, Megaphone, ShieldCheck, Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import wirksamDarkLogo from '@/assets/logo/wirksam-dark.svg'

@@ -8,7 +8,7 @@ import {
   ChevronRight,
   Clock,
   List,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -326,6 +326,7 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
         variant="outline"
         size="icon"
         class="hidden h-8 w-8 sm:inline-flex"
+        :aria-label="t('duties.tasks.calendar.previous')"
         @click="navigatePrev"
       >
         <ChevronLeft class="h-4 w-4" />
@@ -347,6 +348,7 @@ watch(calendarDate, (d) => emit('update:calendarDate', dateToStr(d)))
         variant="outline"
         size="icon"
         class="hidden h-8 w-8 sm:inline-flex"
+        :aria-label="t('duties.tasks.calendar.next')"
         @click="navigateNext"
       >
         <ChevronRight class="h-4 w-4" />

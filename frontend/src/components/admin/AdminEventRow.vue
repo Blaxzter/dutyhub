@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { CheckCircle2, Pencil, Trash2 } from 'lucide-vue-next'
+import { CheckCircle2, Globe, Lock, Pencil, Star, Trash2, Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 
 import type { EventRead } from '@/client/types.gen'
+import { roleLabelKey } from '@/lib/event-roles'
 import { formatDate } from '@/lib/format'
 import { statusVariant } from '@/lib/status'
 
@@ -13,11 +14,15 @@ defineProps<{
   event: EventRead
   selectedEventId: string | null
   muted?: boolean
+  /** Only the platform superadmin can curate the home screen. */
+  canFeature?: boolean
+  featuringId?: string | null
 }>()
 
 defineEmits<{
   edit: [event: EventRead]
   delete: [event: EventRead]
+  toggleFeatured: [event: EventRead]
 }>()
 
 const { t } = useI18n()
@@ -44,6 +49,9 @@ const { t } = useI18n()
           <CheckCircle2 class="size-3" />
           {{ t('duties.selectEvent.pick.current') }}
         </Badge>
+        <Badge v-if="event.my_role" variant="outline">
+          {{ t(roleLabelKey(event.my_role)) }}
+        </Badge>
       </div>
       <div
         v-if="event.description"
@@ -56,16 +64,48 @@ const { t } = useI18n()
     <td class="px-4 py-2">{{ formatDate(event.start_date) }}</td>
     <td class="px-4 py-2">{{ formatDate(event.end_date) }}</td>
     <td class="px-4 py-2">
-      <Badge :variant="statusVariant(event.status)">
-        {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
-      </Badge>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <Badge :variant="statusVariant(event.status)">
+          {{ t(`duties.events.statuses.${event.status ?? 'draft'}`) }}
+        </Badge>
+        <Badge variant="outline" class="gap-1">
+          <component :is="event.visibility === 'public' ? Globe : Lock" class="size-3" />
+          {{ t(`duties.events.visibility.${event.visibility}.label`) }}
+        </Badge>
+      </div>
+    </td>
+    <td class="px-4 py-2">
+      <span class="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <Users class="size-3.5" />
+        {{ event.member_count ?? 0 }}
+      </span>
     </td>
     <td class="px-4 py-2 text-right">
+      <Button
+        v-if="canFeature"
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8"
+        data-testid="btn-toggle-featured"
+        :disabled="featuringId === event.id || event.visibility !== 'public'"
+        :aria-label="
+          event.is_featured
+            ? t('duties.events.featured.unfeature', { name: event.name })
+            : t('duties.events.featured.feature', { name: event.name })
+        "
+        :title="
+          event.visibility !== 'public' ? t('duties.events.featured.requiresPublic') : undefined
+        "
+        @click="$emit('toggleFeatured', event)"
+      >
+        <Star class="h-4 w-4" :class="event.is_featured ? 'fill-amber-400 text-amber-500' : ''" />
+      </Button>
       <Button
         variant="ghost"
         size="icon"
         class="h-8 w-8"
         data-testid="btn-edit-event"
+        :aria-label="t('admin.events.editEvent', { name: event.name })"
         @click="$emit('edit', event)"
       >
         <Pencil class="h-4 w-4" />
@@ -75,6 +115,7 @@ const { t } = useI18n()
         size="icon"
         class="h-8 w-8"
         data-testid="btn-delete-event"
+        :aria-label="t('admin.events.deleteEvent', { name: event.name })"
         @click="$emit('delete', event)"
       >
         <Trash2 class="h-4 w-4 text-destructive" />

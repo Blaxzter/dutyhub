@@ -10,8 +10,10 @@
     "printTask": "Veranstaltung drucken",
     "scanToSignUp": "Scannen, um sich online anzumelden",
     "toolbar": {
+        "close": "Druckoptionen schließen",
         "filterDates": "Tage filtern",
         "includeNames": "Gebuchte Namen anzeigen",
+        "open": "Druckoptionen öffnen",
         "repeatHeader": "Kopfzeile auf jeder Seite",
         "showLocation": "Ortspalte anzeigen",
         "showTitle": "Titelspalte anzeigen",

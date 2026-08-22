@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 
-import { LoaderIcon, Trash2Icon, UploadIcon } from 'lucide-vue-next'
+import { LoaderIcon, Trash2Icon, UploadIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
 

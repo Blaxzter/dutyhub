@@ -1,7 +1,6 @@
 """Route tests for Reporting endpoints."""
 
 import pytest
-from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -128,12 +127,13 @@ class TestReportingRoutes:
 class TestReportingTaskManagerRole:
     """Test task_manager scoped access to /reporting/ endpoints."""
 
-    async def test_reporting_overview_accessible_as_task_manager(
+    async def test_reporting_overview_accessible_as_event_admin(
         self,
         async_client: AsyncClient,
-        as_task_manager: None,
+        test_event: Event,
+        as_event_admin: None,
     ):
-        """Test that a task_manager can access the reporting overview."""
+        """Running an event is what unlocks reporting for it."""
         r = await async_client.get("/api/v1/reporting/overview")
 
         assert r.status_code == 200
@@ -141,10 +141,11 @@ class TestReportingTaskManagerRole:
         assert "overview" in data
         assert "task_fill_rates" in data
 
-    async def test_reporting_export_accessible_as_task_manager(
+    async def test_reporting_export_accessible_as_event_admin(
         self,
         async_client: AsyncClient,
-        as_task_manager: None,
+        test_event: Event,
+        as_event_admin: None,
     ):
         """Test that a task_manager can access the CSV export."""
         r = await async_client.get("/api/v1/reporting/export")
@@ -152,69 +153,75 @@ class TestReportingTaskManagerRole:
         assert r.status_code == 200
         assert "text/csv" in r.headers["content-type"]
 
-    async def test_reporting_blocked_for_normal_user(
+    async def test_reporting_blocked_for_plain_member(
         self,
         async_client: AsyncClient,
+        test_event: Event,
     ):
-        """Test that a plain user cannot access reporting endpoints."""
+        """Belonging to an event is not enough — you have to run one."""
         r = await async_client.get("/api/v1/reporting/overview")
 
         assert r.status_code == 403
 
-    async def test_reporting_export_blocked_for_normal_user(
+    async def test_reporting_export_blocked_for_plain_member(
         self,
         async_client: AsyncClient,
+        test_event: Event,
     ):
-        """Test that a plain user cannot access reporting CSV export."""
+        """Same rule for the CSV export."""
         r = await async_client.get("/api/v1/reporting/export")
 
         assert r.status_code == 403
 
-    async def test_task_manager_sees_only_own_tasks_in_stats(
+    async def test_event_admin_sees_only_their_events_tasks(
         self,
         async_client: AsyncClient,
-        app: FastAPI,
         db_session: AsyncSession,
-        test_task_manager_user: User,
+        test_event_admin_user: User,
         test_event: Event,
+        as_event_admin: None,
     ):
-        """Test that task_manager overview stats only count tasks they manage."""
+        """Stats cover the events the caller runs, and nothing outside them."""
         from datetime import date
-        from typing import Any, get_args
 
-        from app.api import deps as deps_module
+        from app.models.event import Event as EventModel
         from app.models.task import Task as TaskModel
 
-        # Create a task owned by the task_manager user in the managed group
-        task = TaskModel(
-            name="Manager's Task",
-            start_date=date(2026, 7, 1),
-            end_date=date(2026, 7, 1),
+        mine = TaskModel(
+            name="Task In My Event",
+            start_date=date(2026, 6, 11),
+            end_date=date(2026, 6, 11),
             status="published",
-            created_by_id=test_task_manager_user.id,
+            created_by_id=test_event_admin_user.id,
             event_id=test_event.id,
         )
-        db_session.add(task)
+        # An event this user has nothing to do with.
+        elsewhere = EventModel(
+            name="Someone Else's Event",
+            start_date=date(2026, 7, 1),
+            end_date=date(2026, 7, 2),
+            status="published",
+            visibility="private",
+        )
+        db_session.add_all([mine, elsewhere])
         await db_session.flush()
-
-        # Override deps to return the task_manager user
-        user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
-        manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
-
-        async def override():
-            return test_task_manager_user
-
-        app.dependency_overrides[user_dep] = override
-        app.dependency_overrides[manager_dep] = override
+        db_session.add(
+            TaskModel(
+                name="Task Elsewhere",
+                start_date=date(2026, 7, 1),
+                end_date=date(2026, 7, 1),
+                status="published",
+                event_id=elsewhere.id,
+            )
+        )
+        await db_session.flush()
 
         r = await async_client.get("/api/v1/reporting/overview")
 
-        app.dependency_overrides.pop(user_dep, None)
-        app.dependency_overrides.pop(manager_dep, None)
-
         assert r.status_code == 200
-        # The task_manager only sees tasks they created or groups they manage
         overview = r.json()["overview"]
-        assert "total_tasks" in overview
-        # Their own task should be counted
         assert overview["total_tasks"] >= 1
+
+        fill_rates = r.json().get("task_fill_rates", [])
+        names = [t["task_name"] for t in fill_rates]
+        assert "Task Elsewhere" not in names

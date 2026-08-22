@@ -27,13 +27,17 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
-              uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  # diff-cover diffs against the merge base, so it needs history
+                  # rather than the default depth-1 checkout.
+                  fetch-depth: 0
             - name: Set up Python
-              uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+              uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
               with:
                   python-version: "3.13"
             - name: Install uv
-              uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+              uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
               with:
                   version: "0.4.15"
                   enable-cache: true
@@ -46,8 +50,30 @@ jobs:
             - name: Migrate DB
               run: uv run bash scripts/prestart.sh
               working-directory: backend
+            # Fails if the SQLModel models would produce a non-empty autogenerate
+            # diff against the migration history. Runs against the DB prestart.sh
+            # just migrated, so it needs no extra service.
+            - name: Check for migration drift
+              run: uv run alembic check
+              working-directory: backend
+            # scripts/test.sh ends with `coverage report`, and fail_under = 95 in
+            # [tool.coverage.report] makes that exit non-zero below the floor —
+            # so the aggregate gate fails THIS job rather than arriving later as
+            # a separate smokeshow status.
             - name: Run tests
               run: uv run bash scripts/tests-start.sh "Coverage for ${{ github.sha }}"
+              working-directory: backend
+            # Aggregate coverage alone lets a large PR add hundreds of uncovered
+            # lines and still pass. This gates the lines the PR actually touched,
+            # at a higher bar than the aggregate floor. Pull requests only —
+            # there is no meaningful diff for a push to main.
+            - name: Diff coverage on changed lines
+              if: github.event_name == 'pull_request'
+              run: |
+                  git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+                  uv run diff-cover coverage.xml \
+                    --compare-branch="origin/${{ github.base_ref }}" \
+                    --fail-under=90
               working-directory: backend
             - run: docker compose down -v --remove-orphans
             - name: Store coverage files

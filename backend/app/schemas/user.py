@@ -69,6 +69,33 @@ class UserCounts(BaseModel):
     rejected: int
 
 
+class UserOwnedContent(BaseModel):
+    """Counts of content created (owned) by a user."""
+
+    events: int = Field(..., description="Number of events created by the user")
+    tasks: int = Field(..., description="Number of tasks created by the user")
+    total: int = Field(..., description="Total number of owned items")
+
+
+class OwnershipTransferRequest(BaseModel):
+    """Request body for transferring a user's owned content to another user."""
+
+    target_user_id: uuid.UUID = Field(
+        ..., description="User who takes over ownership of all events and tasks"
+    )
+
+
+class OwnershipTransferResult(BaseModel):
+    """Summary of a completed ownership transfer."""
+
+    events_transferred: int = Field(
+        ..., description="Number of events reassigned to the target user"
+    )
+    tasks_transferred: int = Field(
+        ..., description="Number of tasks reassigned to the target user"
+    )
+
+
 class UserListResponse(BaseModel):
     items: list[UserRead]
     skip: int

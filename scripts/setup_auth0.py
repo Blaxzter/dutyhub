@@ -44,6 +44,7 @@ def check_auth0_cli() -> None:
                     "--scopes",
                     "create:client_grants,read:users,update:users,delete:users",
                 ],
+                check=False,
             )
             if login_result.returncode != 0:
                 print("Login failed. Please try manually:")
@@ -60,7 +61,7 @@ def check_auth0_cli() -> None:
 
 
 def run(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(list(args), capture_output=True, text=True)
+    result = subprocess.run(list(args), capture_output=True, text=True, check=False)
     if check and result.returncode != 0:
         print(f"\nCommand failed: {' '.join(args)}")
         print(f"stderr: {result.stderr.strip()}")

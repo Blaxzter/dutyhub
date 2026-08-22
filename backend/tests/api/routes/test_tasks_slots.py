@@ -119,8 +119,8 @@ class TestTaskShiftsRoutes:
         r = await async_client.post(
             f"/api/v1/tasks/{test_task.id}/add-shifts",
             json={
-                "start_date": "2026-06-15",
-                "end_date": "2026-06-17",
+                "start_date": "2026-06-11",
+                "end_date": "2026-06-13",
                 "schedule": {
                     "default_start_time": "10:00:00",
                     "default_end_time": "14:00:00",
@@ -134,6 +134,43 @@ class TestTaskShiftsRoutes:
         assert r.status_code == 201
         data = r.json()
         assert data["shifts_added"] >= 1
+
+    async def test_add_shifts_honours_specific_dates(
+        self, async_client: AsyncClient, as_admin: None, test_task: Task
+    ):
+        """Gap days inside the submitted span get no shifts (#144).
+
+        The wizard's "specific dates" mode sends start=min / end=max, so without
+        the date list the two skipped days here would be created silently.
+        """
+        r = await async_client.post(
+            f"/api/v1/tasks/{test_task.id}/add-shifts",
+            json={
+                "start_date": "2026-06-11",
+                "end_date": "2026-06-14",
+                "schedule": {
+                    "default_start_time": "10:00:00",
+                    "default_end_time": "12:00:00",
+                    "shift_duration_minutes": 120,
+                    "people_per_shift": 1,
+                    "overrides": [],
+                    "specific_dates": ["2026-06-11", "2026-06-14"],
+                },
+            },
+        )
+
+        assert r.status_code == 201
+        assert r.json()["shifts_added"] == 2
+
+        shifts = await async_client.get(
+            "/api/v1/shifts/", params={"task_id": str(test_task.id), "limit": 200}
+        )
+        assert shifts.status_code == 200
+        dates = {s["date"] for s in shifts.json()["items"]}
+        assert "2026-06-11" in dates
+        assert "2026-06-14" in dates
+        assert "2026-06-12" not in dates
+        assert "2026-06-13" not in dates
 
     async def test_list_batches(self, async_client: AsyncClient, test_task: Task):
         """Test listing shift batches for a task."""

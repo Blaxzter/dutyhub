@@ -5,9 +5,18 @@ on:
       - opened
       - synchronize
       - reopened
+      - edited
       # For label-checker
       - labeled
       - unlabeled
+
+# Dependabot fires several events in quick succession per PR. Without this, the
+# resulting concurrent runs race each other and some see a not-yet-updated label
+# list, leaving a stale red `check-labels` on the PR forever. Queue them instead
+# of cancelling so every run reports a real (green) result.
+concurrency:
+  group: labels-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 jobs:
   labeler:
@@ -16,8 +25,59 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+    - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+      id: labeler
       if: ${{ github.event.action != 'labeled' && github.event.action != 'unlabeled' }}
+    # Path globs cannot tell a feature from a bugfix, so PRs that only touch
+    # app code get no label at all and `check-labels` fails. Derive one from the
+    # conventional-commit prefix in the PR title instead.
+    - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      if: ${{ github.event.action != 'labeled' && github.event.action != 'unlabeled' }}
+      env:
+        # Read from the labeler's own output rather than the API — the labels
+        # endpoint is eventually consistent right after it has written to it.
+        CURRENT_LABELS: ${{ steps.labeler.outputs.all-labels }}
+      with:
+        script: |
+          const GATE = ['breaking', 'security', 'feature', 'bug', 'refactor', 'upgrade', 'docs', 'lang-all', 'internal']
+          const BY_PREFIX = {
+            feat: 'feature',
+            fix: 'bug',
+            perf: 'refactor',
+            refactor: 'refactor',
+            style: 'refactor',
+            docs: 'docs',
+            test: 'internal',
+            chore: 'internal',
+            ci: 'internal',
+            build: 'internal',
+            revert: 'internal',
+          }
+
+          const existing = (process.env.CURRENT_LABELS ?? '').split(',').map((n) => n.trim())
+          if (existing.some((n) => GATE.includes(n))) {
+            core.info(`PR already carries a gate label: ${existing.join(', ')}`)
+            return
+          }
+
+          // `feat(scope)!: …`, `fix: …`, `⬆ bump …`
+          const title = context.payload.pull_request.title.trim()
+          const match = /^([a-z]+)(\([^)]*\))?(!?):/i.exec(title)
+          let label = match ? BY_PREFIX[match[1].toLowerCase()] : undefined
+          if (match?.[3] === '!') label = 'breaking'
+          if (!label && /^(⬆|bump\b)/i.test(title)) label = 'upgrade'
+
+          if (!label) {
+            core.warning(`Could not derive a label from PR title: "${title}"`)
+            return
+          }
+          core.info(`Adding "${label}" derived from PR title`)
+          await github.rest.issues.addLabels({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.payload.pull_request.number,
+            labels: [label],
+          })
     - run: echo "Done adding labels"
   # Run this after labeler applied labels
   check-labels:
@@ -27,7 +87,31 @@ jobs:
       pull-requests: read
     runs-on: ubuntu-latest
     steps:
+      # The labels API is eventually consistent — reading it immediately after
+      # the labeler job occasionally still returns the pre-labeling list.
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const GATE = ['breaking', 'security', 'feature', 'bug', 'refactor', 'upgrade', 'docs', 'lang-all', 'internal']
+            for (let attempt = 1; attempt <= 6; attempt++) {
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+              })
+              const names = pr.labels.map((l) => l.name)
+              if (names.some((n) => GATE.includes(n))) {
+                core.info(`Gate label present after ${attempt} attempt(s): ${names.join(', ')}`)
+                return
+              }
+              core.info(`Attempt ${attempt}: no gate label yet (${names.join(', ') || 'none'})`)
+              await new Promise((r) => setTimeout(r, 5000))
+            }
+            core.warning('No gate label visible after retrying; letting the checker report it')
+      # `any_of`, not `one_of`: `one_of` means *exactly* one, so a PR that legitimately
+      # carries two categories (e.g. a workflow bump is both `internal` and `upgrade`)
+      # was rejected. All we want to enforce is that the PR is categorised at all.
       - uses: docker://agilepathway/pull-request-label-checker@sha256:14f5f3dfda922496d07d53494e2d2b42885165f90677a1c03d600059b7706a61
         with:
-          one_of: breaking,security,feature,bug,refactor,upgrade,docs,lang-all,internal
+          any_of: breaking,security,feature,bug,refactor,upgrade,docs,lang-all,internal
           repo_token: ${{ secrets.GITHUB_TOKEN }}

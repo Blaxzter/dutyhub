@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { type Component, ref } from 'vue'
 
-import { ChevronsUpDown, Plus } from 'lucide-vue-next'
+import { ChevronsUpDown, Plus } from '@lucide/vue'
 
 import {
   DropdownMenu,

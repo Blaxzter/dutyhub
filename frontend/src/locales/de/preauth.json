@@ -154,6 +154,7 @@
         "learnMore": "Mehr erfahren",
         "nameExplainer": "WirkSam — von \"wirksam\" und \"zusammen\". Weil Ehrenamt am besten funktioniert, wenn wir gemeinsam anpacken.",
         "showcase": {
+            "goToSlide": "Folie anzeigen: {title}",
             "slides": {
                 "bookings": {
                     "description": "Alle bestätigten Dienste an einem Ort — filtern nach bevorstehend, diesen Monat oder alle anzeigen.",
@@ -209,7 +210,8 @@
             "goToDashboard": "Zum Dashboard",
             "howItWorks": "So funktioniert's",
             "signIn": "Anmelden"
-        }
+        },
+        "openMenu": "Menü öffnen"
     },
     "privacy": {
         "backToHome": "Zurück zur Startseite",

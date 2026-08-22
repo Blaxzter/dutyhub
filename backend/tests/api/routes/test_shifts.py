@@ -137,10 +137,10 @@ class TestShiftRoutes:
 class TestShiftsTaskManagerRole:
     """Test task_manager role access on /shifts/ routes."""
 
-    async def test_create_shift_as_task_manager(
+    async def test_create_shift_as_event_admin(
         self,
         async_client: AsyncClient,
-        as_task_manager: None,
+        as_event_admin: None,
         test_task: Task,
     ):
         """Test that a task_manager can create duty shifts."""
@@ -177,10 +177,10 @@ class TestShiftsTaskManagerRole:
 
         assert r.status_code == 403
 
-    async def test_update_shift_as_task_manager(
+    async def test_update_shift_as_event_admin(
         self,
         async_client: AsyncClient,
-        as_task_manager: None,
+        as_event_admin: None,
         test_shift: Shift,
     ):
         """Test that a task_manager can update duty shifts."""
@@ -205,10 +205,10 @@ class TestShiftsTaskManagerRole:
 
         assert r.status_code == 403
 
-    async def test_delete_shift_as_task_manager(
+    async def test_delete_shift_as_event_admin(
         self,
         async_client: AsyncClient,
-        as_task_manager: None,
+        as_event_admin: None,
         db_session: AsyncSession,
         test_task: Task,
     ):

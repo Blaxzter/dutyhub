@@ -11,6 +11,7 @@
  */
 import { expect, test } from '../../fixtures.js'
 import {
+  addMember,
   api,
   clearAvailability,
   createEvent,
@@ -22,9 +23,14 @@ import {
 // ── Picker visibility (admin-published vs draft) ─────────────────────────────
 
 test.describe('Cross-user – picker visibility', () => {
-  test('admin-published event appears in the member picker', async ({ adminPage, memberPage }) => {
+  test('an event the member joined appears in My events', async ({
+    adminPage,
+    memberPage,
+    memberUser,
+  }) => {
     const event = await createEvent(adminPage, uniqueName('E2E Cross Published'))
     try {
+      await addMember(adminPage, memberPage, event.id, memberUser.email)
       await memberPage.goto('/app/select-event?mode=switch')
       await expect(memberPage.getByText(event.name).first()).toBeVisible()
     } finally {
@@ -32,16 +38,40 @@ test.describe('Cross-user – picker visibility', () => {
     }
   })
 
-  test('admin draft event is hidden from the member picker', async ({
+  test('a public event the member has not joined shows under Discover', async ({
     adminPage,
     memberPage,
   }) => {
-    const draft = await createEvent(adminPage, uniqueName('E2E Cross Draft'), 'draft')
+    const event = await createEvent(adminPage, uniqueName('E2E Cross Discover'))
     try {
       await memberPage.goto('/app/select-event?mode=switch')
-      await expect(memberPage.getByText(draft.name)).toBeHidden()
+      // Not a member yet, so it must not be in the "My events" list…
+      await expect(memberPage.getByText(event.name)).toBeHidden()
+      // …but it is public, so Discover offers it.
+      await memberPage.getByTestId('tab-discover').click()
+      await expect(memberPage.getByText(event.name).first()).toBeVisible()
     } finally {
-      await deleteEvent(adminPage, draft.id)
+      await deleteEvent(adminPage, event.id)
+    }
+  })
+
+  test('a private event the member is not in stays hidden everywhere', async ({
+    adminPage,
+    memberPage,
+  }) => {
+    const secret = await createEvent(
+      adminPage,
+      uniqueName('E2E Cross Private'),
+      'published',
+      'private',
+    )
+    try {
+      await memberPage.goto('/app/select-event?mode=switch')
+      await expect(memberPage.getByText(secret.name)).toBeHidden()
+      await memberPage.getByTestId('tab-discover').click()
+      await expect(memberPage.getByText(secret.name)).toBeHidden()
+    } finally {
+      await deleteEvent(adminPage, secret.id)
     }
   })
 })

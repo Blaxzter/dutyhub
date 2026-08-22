@@ -59,7 +59,11 @@ alembic upgrade head
 # Or via just:
 just migration "Add <feature>"
 just migrate
+just check-migrations   # fails if models and migrations have diverged
 ```
+
+`alembic check` also runs in the *Test Backend* CI job, so a model change without
+a matching migration fails the PR rather than surfacing at deploy time.
 
 ### API Client Generation
 
@@ -93,14 +97,37 @@ When adding a feature: model → schema → CRUD → route → register in `api/
 
 ### Auth Pattern
 
-From `backend/app/api/deps.py`:
+Signup is open: anyone who authenticates gets an active account, and that
+account grants nothing on its own. **Authorisation lives on the event**, not on
+the user — every event is its own tenancy with an `EventMembership` row per
+participant (`owner` > `admin` > `member`). The single remaining global role is
+`admin`, the platform superadmin, who passes every check.
 
-- `CurrentUser` — validates JWT, checks DB user exists and is active; use for all protected endpoints
-- `CurrentSuperuser` — admin-only (e.g., delete/create users)
+Identity, from `backend/app/api/deps.py`:
+
+- `CurrentUser` — validates JWT, checks the DB user exists and is active; use for all protected endpoints
+- `CurrentSuperuser` — platform superadmin only (user management, featuring events)
 - `CurrentUser` + `claims: dict = Depends(auth0.require_auth())` — when you need both DB user and Auth0 profile data (e.g., `/me` endpoints)
 - `auth0.require_auth()` alone — only for Auth0-specific operations with no DB requirement
 
-On first login the frontend calls `POST /users/me` with Auth0 profile data; backend upserts the user and seeds demo data.
+Per-event permission, from `backend/app/logic/permissions.py` — these two are
+the *only* gates, so grepping for them finds every check:
+
+- `require_event_role(user, session, event_id, minimum=...)` — for mutations; raises 403
+- `require_event_visible(user, session, event)` — for reads; raises **404** (not 403) so a private event cannot be probed by id
+
+For queries, `backend/app/logic/event_scope.py` returns the id list to filter
+by. `None` means unrestricted (superadmin only); an **empty list means "nothing"
+and must never be collapsed to `None`** — that would hand a new account the
+whole database.
+
+On first login the frontend calls `POST /users/me` with Auth0 profile data; backend upserts the user.
+
+Getting into an event: its admins invite by email or share a link
+(`/events/{id}/invitations` → `/invitations/{token}/accept`), or someone asks
+to join a **public** event and an event admin decides
+(`/events/{id}/join-request` → `.../join-requests/{id}/decide`). Private events
+are invitation-only. `is_featured` (superadmin-only) curates the home screen.
 
 ### Frontend Structure
 

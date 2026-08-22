@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-import { Printer, Settings, X } from 'lucide-vue-next'
+import { Printer, Settings, X } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -31,6 +31,7 @@ const expanded = ref(true)
       size="icon"
       variant="outline"
       class="shadow-lg"
+      :aria-label="t('print.toolbar.open')"
       @click="expanded = true"
     >
       <Settings class="h-4 w-4" />
@@ -45,6 +46,7 @@ const expanded = ref(true)
         <span class="text-sm font-semibold">{{ t('print.toolbar.title') }}</span>
         <button
           class="h-5 w-5 flex items-center justify-center rounded hover:bg-muted"
+          :aria-label="t('print.toolbar.close')"
           @click="expanded = false"
         >
           <X class="h-3.5 w-3.5" />
