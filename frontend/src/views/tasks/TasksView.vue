@@ -201,7 +201,7 @@ const navigateToTask = (task: { id: string }) => {
 }
 
 const navigateToEvent = (event: { id: string }) => {
-  if (authStore.isAdmin || authStore.isTaskManager || authStore.canManageEvent(event.id)) {
+  if (authStore.canManageEvent(event.id)) {
     router.push({ name: 'event-settings', params: { eventId: event.id } })
   }
 }

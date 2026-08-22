@@ -1,7 +1,6 @@
 """Route tests for Task endpoints."""
 
 import pytest
-from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -203,26 +202,50 @@ class TestTasksRoutes:
 
 
 @pytest.mark.asyncio
-class TestTasksTaskManagerRole:
-    """Test suite verifying task_manager role access on /tasks/ routes."""
+class TestTasksEventAdminRole:
+    """Managing tasks is scoped to the event they belong to."""
 
-    async def test_create_task_as_task_manager(
+    async def test_create_task_in_my_event(
         self,
         async_client: AsyncClient,
-        as_task_manager: None,
+        test_event: Event,
+        as_event_admin: None,
     ):
-        """Test that a task_manager can create a task (no group required)."""
+        """An event admin can create tasks inside the event they run."""
         r = await async_client.post(
             "/api/v1/tasks/",
             json={
                 "name": "Manager Task",
-                "start_date": "2026-08-01",
-                "end_date": "2026-08-02",
+                "start_date": "2026-06-11",
+                "end_date": "2026-06-12",
+                "event_id": str(test_event.id),
             },
         )
 
         assert r.status_code == 201
         assert r.json()["name"] == "Manager Task"
+
+    async def test_create_task_without_an_event_is_refused(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        as_event_admin: None,
+    ):
+        """Every task must belong to an event that grants the right to make it.
+
+        An event-less task would sit outside the permission model entirely, so
+        only the platform superadmin may create one.
+        """
+        r = await async_client.post(
+            "/api/v1/tasks/",
+            json={
+                "name": "Orphan Task",
+                "start_date": "2026-08-01",
+                "end_date": "2026-08-02",
+            },
+        )
+
+        assert r.status_code == 403
 
     async def test_create_task_as_normal_user_raises_403(
         self,
@@ -240,11 +263,11 @@ class TestTasksTaskManagerRole:
 
         assert r.status_code == 403
 
-    async def test_update_task_as_task_manager(
+    async def test_update_task_as_event_admin(
         self,
         async_client: AsyncClient,
         test_task: Task,
-        as_task_manager: None,
+        as_event_admin: None,
     ):
         """Test that a task_manager can update any task."""
         r = await async_client.patch(
@@ -268,11 +291,11 @@ class TestTasksTaskManagerRole:
 
         assert r.status_code == 403
 
-    async def test_delete_task_as_task_manager(
+    async def test_delete_task_as_event_admin(
         self,
         async_client: AsyncClient,
         test_task: Task,
-        as_task_manager: None,
+        as_event_admin: None,
     ):
         """Test that a task_manager can delete any task."""
         r = await async_client.delete(f"/api/v1/tasks/{test_task.id}")
@@ -289,119 +312,76 @@ class TestTasksTaskManagerRole:
 
         assert r.status_code == 403
 
-    async def test_scoped_manager_can_manage_own_group_task(
+    async def test_event_admin_can_manage_tasks_in_their_event(
         self,
         async_client: AsyncClient,
-        app: FastAPI,
         db_session: AsyncSession,
-        test_task_manager_user: User,
+        test_event_admin_user: User,
         test_event: Event,
+        as_event_admin: None,
     ):
-        """Test that a scoped event manager can edit tasks in their assigned event."""
+        """An admin membership is enough to edit that event's tasks."""
         from datetime import date
-        from typing import Any, get_args
 
-        from app.api import deps as deps_module
-        from app.crud.event_manager import event_manager as crud_egm
         from app.models.task import Task as TaskModel
 
-        # Assign test_task_manager_user as scoped manager (no global role)
-        test_task_manager_user.roles = []
-        db_session.add(test_task_manager_user)
-        await db_session.flush()
-        await crud_egm.assign(
-            db_session,
-            user_id=test_task_manager_user.id,
-            event_id=test_event.id,
-        )
-
-        # Create a task in that group
         task = TaskModel(
             name="Group Task",
-            start_date=date(2026, 7, 1),
-            end_date=date(2026, 7, 1),
+            start_date=date(2026, 6, 11),
+            end_date=date(2026, 6, 11),
             status="published",
-            created_by_id=test_task_manager_user.id,
+            created_by_id=test_event_admin_user.id,
             event_id=test_event.id,
         )
         db_session.add(task)
         await db_session.flush()
         await db_session.refresh(task)
 
-        # Override deps to return the scoped user
-        user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
-        manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
-
-        async def override():
-            return test_task_manager_user
-
-        app.dependency_overrides[user_dep] = override
-        app.dependency_overrides[manager_dep] = override
-
         r = await async_client.patch(
-            f"/api/v1/tasks/{task.id}", json={"name": "Renamed by Scoped Manager"}
+            f"/api/v1/tasks/{task.id}", json={"name": "Renamed by Event Admin"}
         )
-
-        app.dependency_overrides.pop(user_dep, None)
-        app.dependency_overrides.pop(manager_dep, None)
 
         assert r.status_code == 200
-        assert r.json()["name"] == "Renamed by Scoped Manager"
+        assert r.json()["name"] == "Renamed by Event Admin"
 
-    async def test_scoped_manager_cannot_manage_other_group_task(
+    async def test_event_admin_cannot_manage_another_events_task(
         self,
         async_client: AsyncClient,
-        app: FastAPI,
         db_session: AsyncSession,
-        test_task_manager_user: User,
+        test_event_admin_user: User,
         test_event: Event,
-        test_draft_event: Event,
+        as_event_admin: None,
     ):
-        """Test that a scoped event manager cannot edit tasks in another event."""
+        """An admin membership grants nothing outside its own event."""
         from datetime import date
-        from typing import Any, get_args
 
-        from app.api import deps as deps_module
-        from app.crud.event_manager import event_manager as crud_egm
+        from app.models.event import Event as EventModel
         from app.models.task import Task as TaskModel
 
-        # Assign user as scoped manager for test_event only (no global role)
-        test_task_manager_user.roles = []
-        db_session.add(test_task_manager_user)
-        await db_session.flush()
-        await crud_egm.assign(
-            db_session,
-            user_id=test_task_manager_user.id,
-            event_id=test_event.id,
+        other_event = EventModel(
+            name="Someone Else's Event",
+            start_date=date(2026, 7, 1),
+            end_date=date(2026, 7, 2),
+            status="published",
+            visibility="private",
         )
+        db_session.add(other_event)
+        await db_session.flush()
 
-        # Create task in the OTHER group
         task = TaskModel(
             name="Other Group Task",
             start_date=date(2026, 7, 1),
             end_date=date(2026, 7, 1),
             status="published",
-            created_by_id=test_task_manager_user.id,
-            event_id=test_draft_event.id,
+            created_by_id=test_event_admin_user.id,
+            event_id=other_event.id,
         )
         db_session.add(task)
         await db_session.flush()
         await db_session.refresh(task)
 
-        user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
-        manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
-
-        async def override():
-            return test_task_manager_user
-
-        app.dependency_overrides[user_dep] = override
-        app.dependency_overrides[manager_dep] = override
-
         r = await async_client.patch(
             f"/api/v1/tasks/{task.id}", json={"name": "Should Fail"}
         )
-
-        app.dependency_overrides.pop(user_dep, None)
-        app.dependency_overrides.pop(manager_dep, None)
 
         assert r.status_code == 403

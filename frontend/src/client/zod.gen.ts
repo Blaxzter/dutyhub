@@ -224,7 +224,7 @@ export const zDashboardFeedResponse = z.object({
   events: z.array(zDashboardEvent),
   bookings: z.array(zDashboardBookingItem),
   booking_count: z.int(),
-  pending_user_count: z.int().nullish(),
+  pending_join_request_count: z.int().optional().default(0),
 })
 
 /**
@@ -272,8 +272,163 @@ export const zEventCreate = z.object({
   default_start_time: z.iso.time().nullish(),
   default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
+  visibility: z.enum(['public', 'private']).optional().default('private'),
   created_by_id: z.uuid().nullish(),
 })
+
+/**
+ * EventInvitationBulkCreate
+ *
+ * Invite several addresses in one go, all with the same role.
+ */
+export const zEventInvitationBulkCreate = z
+  .object({
+    emails: z.array(z.email()).min(1).max(100),
+    role: z.enum(['admin', 'member']).optional().default('member'),
+    expires_in_days: z.int().gte(1).lte(365).nullish().default(14),
+  })
+  .register(z.globalRegistry, {
+    description: 'Invite several addresses in one go, all with the same role.',
+  })
+
+/**
+ * EventInvitationCreate
+ *
+ * Create either a targeted invite (``email`` set) or a share link.
+ */
+export const zEventInvitationCreate = z
+  .object({
+    email: z.email().nullish(),
+    role: z.enum(['admin', 'member']).optional().default('member'),
+    expires_in_days: z.int().gte(1).lte(365).nullish().default(14),
+  })
+  .register(z.globalRegistry, {
+    description: 'Create either a targeted invite (``email`` set) or a share link.',
+  })
+
+/**
+ * EventInvitationPreview
+ *
+ * What an invitee sees before deciding to accept.
+ *
+ * Deliberately narrow: it is reachable by anyone holding the token, so it
+ * exposes the event's identity and nothing about its members or contents.
+ */
+export const zEventInvitationPreview = z
+  .object({
+    event_id: z.uuid(),
+    event_name: z.string(),
+    event_description: z.string().nullish(),
+    start_date: z.iso.date(),
+    end_date: z.iso.date(),
+    role: z.enum(['admin', 'member']),
+    invited_by_name: z.string().nullish(),
+    is_valid: z.boolean(),
+    invalid_reason: z.string().nullish(),
+    already_member: z.boolean().optional().default(false),
+  })
+  .register(z.globalRegistry, {
+    description:
+      "What an invitee sees before deciding to accept.\n\nDeliberately narrow: it is reachable by anyone holding the token, so it\nexposes the event's identity and nothing about its members or contents.",
+  })
+
+/**
+ * EventInvitationRead
+ */
+export const zEventInvitationRead = z.object({
+  id: z.uuid(),
+  event_id: z.uuid(),
+  email: z.string().nullish(),
+  role: z.enum(['admin', 'member']),
+  token: z.string(),
+  invited_by_id: z.uuid().nullish(),
+  expires_at: z.iso.datetime().nullish(),
+  revoked_at: z.iso.datetime().nullish(),
+  accepted_at: z.iso.datetime().nullish(),
+  use_count: z.int().optional().default(0),
+})
+
+/**
+ * EventInvitationBulkResult
+ */
+export const zEventInvitationBulkResult = z.object({
+  created: z.array(zEventInvitationRead),
+  skipped_existing_members: z.array(z.string()).optional(),
+  skipped_already_invited: z.array(z.string()).optional(),
+})
+
+/**
+ * EventJoinRequestCreate
+ */
+export const zEventJoinRequestCreate = z.object({
+  message: z.string().max(500).nullish(),
+})
+
+/**
+ * EventJoinRequestDecision
+ */
+export const zEventJoinRequestDecision = z.object({
+  approve: z.boolean(),
+  role: z.enum(['admin', 'member']).optional().default('member'),
+})
+
+/**
+ * EventJoinRequestRead
+ */
+export const zEventJoinRequestRead = z.object({
+  id: z.uuid(),
+  event_id: z.uuid(),
+  user_id: z.uuid(),
+  status: z.enum(['pending', 'approved', 'declined']),
+  message: z.string().nullish(),
+  created_at: z.iso.datetime(),
+  decided_at: z.iso.datetime().nullish(),
+  user_name: z.string().nullish(),
+  user_email: z.string().nullish(),
+  user_avatar_etag: z.string().nullish(),
+})
+
+/**
+ * EventMemberRead
+ *
+ * A membership joined with the display fields of its user.
+ */
+export const zEventMemberRead = z
+  .object({
+    user_id: z.uuid(),
+    event_id: z.uuid(),
+    role: z.enum(['owner', 'admin', 'member']),
+    joined_at: z.iso.datetime(),
+    name: z.string().nullish(),
+    email: z.string().nullish(),
+    avatar_etag: z.string().nullish(),
+  })
+  .register(z.globalRegistry, {
+    description: 'A membership joined with the display fields of its user.',
+  })
+
+/**
+ * EventMemberRoleUpdate
+ */
+export const zEventMemberRoleUpdate = z.object({
+  role: z.enum(['admin', 'member']),
+})
+
+/**
+ * EventOwnershipTransfer
+ *
+ * Hand ownership of an event to another member.
+ *
+ * The outgoing owner is demoted to ``admin`` so they keep working access.
+ */
+export const zEventOwnershipTransfer = z
+  .object({
+    new_owner_id: z.uuid(),
+  })
+  .register(z.globalRegistry, {
+    description:
+      'Hand ownership of an event to another member.\n\nThe outgoing owner is demoted to ``admin`` so they keep working access.',
+  })
 
 /**
  * EventRead
@@ -286,10 +441,17 @@ export const zEventRead = z.object({
   default_start_time: z.iso.time().nullish(),
   default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
+  visibility: z.enum(['public', 'private']).optional().default('private'),
   id: z.uuid(),
   created_by_id: z.uuid().nullish(),
+  is_featured: z.boolean().optional().default(false),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
+  my_role: z.enum(['owner', 'admin', 'member']).nullish(),
+  member_count: z.int().optional().default(0),
+  join_request_status: z.string().nullish(),
+  pending_request_count: z.int().optional().default(0),
+  can_manage: z.boolean().readonly(),
   is_expired: z.boolean().readonly(),
 })
 
@@ -314,6 +476,7 @@ export const zEventUpdate = z.object({
   default_start_time: z.iso.time().nullish(),
   default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).nullish(),
+  visibility: z.enum(['public', 'private']).nullish(),
 })
 
 /**
@@ -323,6 +486,13 @@ export const zExcludedShift = z.object({
   date: z.iso.date(),
   start_time: z.iso.time(),
   end_time: z.iso.time(),
+})
+
+/**
+ * FeaturedUpdate
+ */
+export const zFeaturedUpdate = z.object({
+  is_featured: z.boolean(),
 })
 
 /**
@@ -646,15 +816,6 @@ export const zSelectedEventUpdate = z
   })
 
 /**
- * SelfApproveRequest
- */
-export const zSelfApproveRequest = z.object({
-  password: z.string().register(z.globalRegistry, {
-    description: 'The approval password to verify',
-  }),
-})
-
-/**
  * ShiftBatchRead
  */
 export const zShiftBatchRead = z.object({
@@ -900,26 +1061,6 @@ export const zSidebarResponse = z.object({
   events: z.array(zSidebarEvent),
   tasks: z.array(zSidebarTask),
   bookings: z.array(zSidebarBooking),
-})
-
-/**
- * SiteSettingsRead
- */
-export const zSiteSettingsRead = z.object({
-  has_approval_password: z
-    .boolean()
-    .register(z.globalRegistry, {
-      description: 'Whether an approval password is currently configured',
-    })
-    .optional()
-    .default(false),
-})
-
-/**
- * SiteSettingsUpdate
- */
-export const zSiteSettingsUpdate = z.object({
-  approval_password: z.string().nullish(),
 })
 
 /**
@@ -1385,14 +1526,7 @@ export const zUserProfile = z.object({
   is_admin: z
     .boolean()
     .register(z.globalRegistry, {
-      description: 'Whether user has admin role',
-    })
-    .optional()
-    .default(false),
-  is_task_manager: z
-    .boolean()
-    .register(z.globalRegistry, {
-      description: 'Whether user has task_manager role',
+      description: 'Whether user is a platform superadmin',
     })
     .optional()
     .default(false),
@@ -1404,10 +1538,11 @@ export const zUserProfile = z.object({
     .optional()
     .default(true),
   rejection_reason: z.string().nullish(),
-  managed_event_ids: z
-    .array(z.uuid())
+  event_roles: z
+    .record(z.string(), z.string())
     .register(z.globalRegistry, {
-      description: 'IDs of events this user manages (via event_managers)',
+      description:
+        "This user's role in each event they belong to, keyed by event id: owner, admin or member",
     })
     .optional(),
   selected_event_id: z.uuid().nullish(),
@@ -1501,10 +1636,16 @@ export const zEventReadWritable = z.object({
   default_start_time: z.iso.time().nullish(),
   default_end_time: z.iso.time().nullish(),
   status: z.enum(['draft', 'published', 'archived']).optional().default('draft'),
+  visibility: z.enum(['public', 'private']).optional().default('private'),
   id: z.uuid(),
   created_by_id: z.uuid().nullish(),
+  is_featured: z.boolean().optional().default(false),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
+  my_role: z.enum(['owner', 'admin', 'member']).nullish(),
+  member_count: z.int().optional().default(0),
+  join_request_status: z.string().nullish(),
+  pending_request_count: z.int().optional().default(0),
 })
 
 /**
@@ -1556,24 +1697,6 @@ export const zUsersUpdateSelectedEventBody = zSelectedEventUpdate
  * Successful Response
  */
 export const zUsersUpdateSelectedEventResponse = zUserProfile
-
-/**
- * Response Users-Get Approval Password Status
- *
- * Successful Response
- */
-export const zUsersGetApprovalPasswordStatusResponse = z
-  .record(z.string(), z.boolean())
-  .register(z.globalRegistry, {
-    description: 'Successful Response',
-  })
-
-export const zUsersSelfApproveBody = zSelfApproveRequest
-
-/**
- * Successful Response
- */
-export const zUsersSelfApproveResponse = zUserProfile
 
 /**
  * Response Users-Get Auth0 Management Url
@@ -1686,18 +1809,6 @@ export const zUsersUploadMyAvatarResponse = zAvatarUploadResponse
 export const zUsersGetUserAvatarPath = z.object({
   user_id: z.uuid(),
 })
-
-/**
- * Successful Response
- */
-export const zSettingsGetSiteSettingsResponse = zSiteSettingsRead
-
-export const zSettingsUpdateSiteSettingsBody = zSiteSettingsUpdate
-
-/**
- * Successful Response
- */
-export const zSettingsUpdateSiteSettingsResponse = zSiteSettingsRead
 
 export const zTasksTaskFeedQuery = z.object({
   view: z.enum(['list', 'cards', 'calendar']).optional().default('list'),
@@ -2099,8 +2210,17 @@ export const zCalendarRegenerateFeedResponse = zCalendarFeedRead
 export const zEventsListEventsQuery = z.object({
   skip: z.int().gte(0).optional().default(0),
   limit: z.int().gte(1).lte(200).optional().default(100),
+  scope: z
+    .enum(['mine', 'discover', 'featured', 'all'])
+    .register(z.globalRegistry, {
+      description:
+        'mine — events you belong to; discover — public events you could join; featured — the curated home selection; all — superadmin only',
+    })
+    .optional()
+    .default('mine'),
   search: z.string().nullish(),
   status: z.enum(['draft', 'published', 'archived']).nullish(),
+  visibility: z.enum(['public', 'private']).nullish(),
   date_from: z.iso.date().nullish(),
   date_to: z.iso.date().nullish(),
   is_expired: z.boolean().nullish(),
@@ -2119,7 +2239,7 @@ export const zEventsCreateEventBody = zEventCreate
 export const zEventsCreateEventResponse = zEventRead
 
 export const zEventsDeleteEventPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 /**
@@ -2130,7 +2250,7 @@ export const zEventsDeleteEventResponse = z.void().register(z.globalRegistry, {
 })
 
 export const zEventsGetEventPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 /**
@@ -2141,7 +2261,7 @@ export const zEventsGetEventResponse = zEventRead
 export const zEventsUpdateEventBody = zEventUpdate
 
 export const zEventsUpdateEventPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 /**
@@ -2149,8 +2269,19 @@ export const zEventsUpdateEventPath = z.object({
  */
 export const zEventsUpdateEventResponse = zEventRead
 
+export const zEventsSetEventFeaturedBody = zFeaturedUpdate
+
+export const zEventsSetEventFeaturedPath = z.object({
+  event_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsSetEventFeaturedResponse = zEventRead
+
 export const zEventsGetTaskDateBoundsPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 /**
@@ -2167,7 +2298,7 @@ export const zEventsGetTaskDateBoundsResponse = z
 export const zEventsShiftEventDatesBody = zShiftDatesRequest
 
 export const zEventsShiftEventDatesPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 /**
@@ -2176,7 +2307,7 @@ export const zEventsShiftEventDatesPath = z.object({
 export const zEventsShiftEventDatesResponse = zEventRead
 
 export const zEventsListEventAvailabilitiesPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 export const zEventsListEventAvailabilitiesQuery = z.object({
@@ -2196,7 +2327,7 @@ export const zEventsListEventAvailabilitiesResponse = z
   })
 
 export const zEventsDeleteMyAvailabilityPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 /**
@@ -2207,7 +2338,7 @@ export const zEventsDeleteMyAvailabilityResponse = z.void().register(z.globalReg
 })
 
 export const zEventsGetMyAvailabilityPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 /**
@@ -2218,7 +2349,7 @@ export const zEventsGetMyAvailabilityResponse = zUserAvailabilityRead
 export const zEventsSetMyAvailabilityBody = zUserAvailabilityCreate
 
 export const zEventsSetMyAvailabilityPath = z.object({
-  group_id: z.uuid(),
+  event_id: z.uuid(),
 })
 
 /**
@@ -2226,40 +2357,181 @@ export const zEventsSetMyAvailabilityPath = z.object({
  */
 export const zEventsSetMyAvailabilityResponse = zUserAvailabilityRead
 
-export const zEventsListEventManagersPath = z.object({
-  group_id: z.uuid(),
+export const zEventsListEventMembersPath = z.object({
+  event_id: z.uuid(),
 })
 
 /**
- * Response Events-List Event Managers
+ * Response Events-List Event Members
  *
  * Successful Response
  */
-export const zEventsListEventManagersResponse = z.array(zUserRead).register(z.globalRegistry, {
-  description: 'Successful Response',
-})
+export const zEventsListEventMembersResponse = z
+  .array(zEventMemberRead)
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
 
-export const zEventsRemoveGroupManagerPath = z.object({
-  group_id: z.uuid(),
+export const zEventsRemoveMemberPath = z.object({
+  event_id: z.uuid(),
   user_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventsRemoveGroupManagerResponse = z.void().register(z.globalRegistry, {
+export const zEventsRemoveMemberResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
 
-export const zEventsAssignGroupManagerPath = z.object({
-  group_id: z.uuid(),
+export const zEventsUpdateMemberRoleBody = zEventMemberRoleUpdate
+
+export const zEventsUpdateMemberRolePath = z.object({
+  event_id: z.uuid(),
   user_id: z.uuid(),
 })
 
 /**
  * Successful Response
  */
-export const zEventsAssignGroupManagerResponse = zUserRead
+export const zEventsUpdateMemberRoleResponse = zEventMemberRead
+
+export const zEventsTransferEventOwnershipBody = zEventOwnershipTransfer
+
+export const zEventsTransferEventOwnershipPath = z.object({
+  event_id: z.uuid(),
+})
+
+/**
+ * Response Events-Transfer Event Ownership
+ *
+ * Successful Response
+ */
+export const zEventsTransferEventOwnershipResponse = z
+  .array(zEventMemberRead)
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
+
+export const zEventsListEventInvitationsPath = z.object({
+  event_id: z.uuid(),
+})
+
+/**
+ * Response Events-List Event Invitations
+ *
+ * Successful Response
+ */
+export const zEventsListEventInvitationsResponse = z
+  .array(zEventInvitationRead)
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
+
+export const zEventsCreateEventInvitationBody = zEventInvitationCreate
+
+export const zEventsCreateEventInvitationPath = z.object({
+  event_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsCreateEventInvitationResponse = zEventInvitationRead
+
+export const zEventsCreateEventInvitationsBulkBody = zEventInvitationBulkCreate
+
+export const zEventsCreateEventInvitationsBulkPath = z.object({
+  event_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsCreateEventInvitationsBulkResponse = zEventInvitationBulkResult
+
+export const zEventsRevokeEventInvitationPath = z.object({
+  event_id: z.uuid(),
+  invitation_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsRevokeEventInvitationResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zEventsWithdrawJoinRequestPath = z.object({
+  event_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsWithdrawJoinRequestResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zEventsRequestToJoinEventBody = zEventJoinRequestCreate
+
+export const zEventsRequestToJoinEventPath = z.object({
+  event_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsRequestToJoinEventResponse = zEventJoinRequestRead
+
+export const zEventsListJoinRequestsPath = z.object({
+  event_id: z.uuid(),
+})
+
+export const zEventsListJoinRequestsQuery = z.object({
+  status: z.string().nullish().default('pending'),
+})
+
+/**
+ * Response Events-List Join Requests
+ *
+ * Successful Response
+ */
+export const zEventsListJoinRequestsResponse = z
+  .array(zEventJoinRequestRead)
+  .register(z.globalRegistry, {
+    description: 'Successful Response',
+  })
+
+export const zEventsDecideJoinRequestBody = zEventJoinRequestDecision
+
+export const zEventsDecideJoinRequestPath = z.object({
+  event_id: z.uuid(),
+  request_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zEventsDecideJoinRequestResponse = zEventJoinRequestRead
+
+export const zInvitationsPreviewInvitationPath = z.object({
+  token: z.string(),
+})
+
+/**
+ * Successful Response
+ */
+export const zInvitationsPreviewInvitationResponse = zEventInvitationPreview
+
+export const zInvitationsAcceptInvitationPath = z.object({
+  token: z.string(),
+})
+
+/**
+ * Successful Response
+ */
+export const zInvitationsAcceptInvitationResponse = zEventRead
 
 /**
  * Response Notifications-List Notification Types

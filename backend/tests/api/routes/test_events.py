@@ -1,11 +1,15 @@
 """Route tests for Event and UserAvailability endpoints."""
 
+import uuid
 from typing import Any
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.crud.event_membership import event_membership as crud_membership
 from app.models.event import Event
+from app.models.user import User
 from app.models.user_availability import UserAvailability
 
 
@@ -22,19 +26,52 @@ class TestEventRoutes:
         assert data["total"] >= 1
         assert any(item["name"] == test_event.name for item in data["items"])
 
-    async def test_list_events_hides_drafts_from_normal_user(
+    async def test_list_events_returns_only_my_events(
         self,
         async_client: AsyncClient,
         test_event: Event,
         test_draft_event: Event,
+        test_private_event: Event,
     ):
-        """Test that draft groups are not visible to normal users."""
+        """The default scope is the caller's own events, drafts included.
+
+        Membership replaced publication status as the boundary: a member
+        helping to plan an event sees it before it goes live, and an event
+        they are not in never appears at all.
+        """
         r = await async_client.get("/api/v1/events/")
 
         assert r.status_code == 200
         names = [item["name"] for item in r.json()["items"]]
         assert test_event.name in names
-        assert test_draft_event.name not in names
+        assert test_draft_event.name in names
+        assert test_private_event.name not in names
+
+    async def test_discover_scope_excludes_events_i_am_in(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        test_private_event: Event,
+    ):
+        """Discover offers public events the caller could still join."""
+        r = await async_client.get("/api/v1/events/?scope=discover")
+
+        assert r.status_code == 200
+        names = [item["name"] for item in r.json()["items"]]
+        assert test_event.name not in names, "already a member"
+        assert test_private_event.name not in names, "private stays hidden"
+
+    async def test_scope_all_is_downgraded_for_non_superadmin(
+        self,
+        async_client: AsyncClient,
+        test_private_event: Event,
+    ):
+        """Asking for everything must not become a way to see everything."""
+        r = await async_client.get("/api/v1/events/?scope=all")
+
+        assert r.status_code == 200
+        names = [item["name"] for item in r.json()["items"]]
+        assert test_private_event.name not in names
 
     async def test_list_events_admin_sees_all(
         self,
@@ -59,13 +96,26 @@ class TestEventRoutes:
         assert r.json()["name"] == test_event.name
         assert r.json()["status"] == "published"
 
-    async def test_draft_event_hidden_from_normal_user(
+    async def test_draft_event_visible_to_its_members(
         self, async_client: AsyncClient, test_draft_event: Event
     ):
-        """Test that a normal user cannot access a draft event."""
+        """A member may open their own event while it is still a draft."""
         r = await async_client.get(f"/api/v1/events/{test_draft_event.id}")
 
-        assert r.status_code == 403
+        assert r.status_code == 200
+        assert r.json()["my_role"] == "member"
+
+    async def test_private_event_is_404_for_non_members(
+        self, async_client: AsyncClient, test_private_event: Event
+    ):
+        """A stranger gets 404, not 403.
+
+        403 would confirm the event exists, letting anyone probe for private
+        events by id.
+        """
+        r = await async_client.get(f"/api/v1/events/{test_private_event.id}")
+
+        assert r.status_code == 404
 
     async def test_draft_event_accessible_to_admin(
         self,
@@ -286,15 +336,15 @@ class TestAvailabilityRoutes:
 
 
 @pytest.mark.asyncio
-class TestEventsTaskManagerRole:
-    """Test task_manager role access on /events/ routes."""
+class TestEventSelfService:
+    """Any signed-in user can run their own event."""
 
-    async def test_create_event_as_task_manager(
+    async def test_create_event_as_event_admin(
         self,
         async_client: AsyncClient,
-        as_task_manager: None,
+        as_event_admin: None,
     ):
-        """Test that a task_manager can create an event."""
+        """Test that an event admin can create a further event."""
         r = await async_client.post(
             "/api/v1/events/",
             json={
@@ -307,29 +357,61 @@ class TestEventsTaskManagerRole:
         assert r.status_code == 201
         assert r.json()["name"] == "Manager Group"
 
-    async def test_create_event_as_normal_user_raises_403(
+    async def test_plain_user_can_create_an_event_and_owns_it(
         self,
         async_client: AsyncClient,
+        db_session: AsyncSession,
+        test_user: User,
     ):
-        """Test that a plain user cannot create events."""
+        """The headline of the refactor: no gatekeeper stands in the way.
+
+        Creating an event also seeds the owner membership, so the creator can
+        immediately manage what they just made.
+        """
         r = await async_client.post(
             "/api/v1/events/",
             json={
-                "name": "Unauthorized Group",
+                "name": "My Own Event",
                 "start_date": "2026-09-01",
                 "end_date": "2026-09-07",
             },
         )
 
-        assert r.status_code == 403
+        assert r.status_code == 201
+        body = r.json()
+        assert body["my_role"] == "owner"
+        assert body["can_manage"] is True
+        assert body["member_count"] == 1
 
-    async def test_update_event_as_task_manager(
+        role = await crud_membership.get_role(
+            db_session, user_id=test_user.id, event_id=uuid.UUID(body["id"])
+        )
+        assert role == "owner"
+
+    async def test_new_events_are_private_by_default(
+        self,
+        async_client: AsyncClient,
+    ):
+        """An event should not be discoverable until its owner says so."""
+        r = await async_client.post(
+            "/api/v1/events/",
+            json={
+                "name": "Quiet Event",
+                "start_date": "2026-09-01",
+                "end_date": "2026-09-07",
+            },
+        )
+
+        assert r.status_code == 201
+        assert r.json()["visibility"] == "private"
+
+    async def test_update_event_as_event_admin(
         self,
         async_client: AsyncClient,
         test_event: Event,
-        as_task_manager: None,
+        as_event_admin: None,
     ):
-        """Test that a task_manager can update any event."""
+        """An event admin can edit the event they run."""
         r = await async_client.patch(
             f"/api/v1/events/{test_event.id}",
             json={"name": "Updated by Manager"},
@@ -351,13 +433,28 @@ class TestEventsTaskManagerRole:
 
         assert r.status_code == 403
 
-    async def test_delete_event_as_task_manager(
+    async def test_delete_event_as_event_admin_is_refused(
         self,
         async_client: AsyncClient,
         test_event: Event,
-        as_task_manager: None,
+        as_event_admin: None,
     ):
-        """Test that a task_manager can delete any event."""
+        """Deleting is owner-only, deliberately stricter than editing.
+
+        An admin invited to help run an event should not be able to destroy
+        the whole thing.
+        """
+        r = await async_client.delete(f"/api/v1/events/{test_event.id}")
+
+        assert r.status_code == 403
+
+    async def test_delete_event_as_owner(
+        self,
+        async_client: AsyncClient,
+        test_event: Event,
+        as_admin: None,
+    ):
+        """The owner (here the superadmin) can delete."""
         r = await async_client.delete(f"/api/v1/events/{test_event.id}")
 
         assert r.status_code == 204
@@ -372,14 +469,14 @@ class TestEventsTaskManagerRole:
 
         assert r.status_code == 403
 
-    async def test_list_availabilities_as_task_manager(
+    async def test_list_availabilities_as_event_admin(
         self,
         async_client: AsyncClient,
         test_event: Event,
         test_user_availability: UserAvailability,
-        as_task_manager: None,
+        as_event_admin: None,
     ):
-        """Test that a task_manager can list availabilities for a group."""
+        """An event admin can see who is available for their event."""
         r = await async_client.get(f"/api/v1/events/{test_event.id}/availabilities")
 
         assert r.status_code == 200
@@ -389,7 +486,7 @@ class TestEventsTaskManagerRole:
         async_client: AsyncClient,
         test_event: Event,
     ):
-        """Test that a plain user cannot list all group availabilities."""
+        """A plain member cannot see the whole roster of availabilities."""
         r = await async_client.get(f"/api/v1/events/{test_event.id}/availabilities")
 
         assert r.status_code == 403

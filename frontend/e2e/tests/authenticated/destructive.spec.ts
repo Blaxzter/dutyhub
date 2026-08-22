@@ -8,7 +8,7 @@
  */
 import type { Locator, Page } from '@playwright/test'
 
-import { IS_TESTING, expect, seedUser, serverApi, serverApiRaw, test } from '../../fixtures.js'
+import { IS_TESTING, expect, serverApiRaw, test } from '../../fixtures.js'
 
 /**
  * The fixtures pin the UI locale to English (localStorage `locale` plus the
@@ -34,9 +34,6 @@ const DELETE_ACCOUNT = {
   confirm: 'Yes, delete my account',
 } as const
 
-/** `src/locales/en/common.json` → `pendingApproval.approvalWrongPassword` */
-const WRONG_APPROVAL_CODE = 'Invalid approval code. Please try again.'
-
 // These flows need accounts that can be seeded and destroyed at will, which
 // only exists in isolated mode. Auth0 mode has no throwaway users.
 test.beforeEach(() => {
@@ -61,20 +58,6 @@ async function runRowAction(page: Page, row: Locator, item: string): Promise<voi
   // to the document body, so it is looked up from the page rather than the row.
   await row.getByRole('button').click()
   await page.getByRole('menuitem', { name: item, exact: true }).click()
-}
-
-/**
- * Save a new approval password from the card on the admin users page.
- *
- * The card's controls are icon-only buttons in a fixed order —
- * [show/hide, save, clear] — and a successful save clears the input again,
- * which is what we wait on.
- */
-async function setApprovalPassword(card: Locator, password: string): Promise<void> {
-  const input = card.locator('input[name="wirksam-approval-password"]')
-  await input.fill(password)
-  await card.getByRole('button').nth(1).click()
-  await expect(input).toHaveValue('')
 }
 
 test.describe('Destructive – account self-deletion', () => {
@@ -133,9 +116,9 @@ test.describe('Destructive – deactivate and reactivate', () => {
     await runRowAction(adminPage, row, MENU.deactivate)
     await expect(row).toContainText(STATUS.pending)
 
-    // The blocked user is bounced to the pending-approval screen…
+    // The blocked user is bounced to the suspended-account screen…
     await disposablePage.goto('/app/home')
-    await expect(disposablePage).toHaveURL(/\/pending-approval/)
+    await expect(disposablePage).toHaveURL(/\/account-suspended/)
 
     // …and endpoints that require an active account reject them.
     const blocked = await serverApiRaw('GET', '/users/me/export', disposableUser.email)
@@ -185,91 +168,5 @@ test.describe('Destructive – grant and revoke admin', () => {
     await disposablePage.goto('/app/admin/users')
     await expect(disposablePage).toHaveURL(/\/app\/home/)
     await expect(adminNavLink).toBeHidden()
-  })
-})
-
-test.describe('Destructive – pending approval', () => {
-  test.use({ disposableUserOptions: { isActive: false } })
-
-  test('an admin approves a pending user and unlocks the app', async ({
-    adminPage,
-    disposablePage,
-    disposableUser,
-  }) => {
-    // A pending account never gets past the approval screen.
-    await expect(disposablePage).toHaveURL(/\/pending-approval/)
-    await expect(disposablePage.getByTestId('btn-withdraw')).toBeVisible()
-
-    const row = await findUserRow(adminPage, disposableUser.email)
-    await expect(row).toContainText(STATUS.pending)
-    await runRowAction(adminPage, row, MENU.activate)
-    await expect(row).toContainText(STATUS.active)
-
-    await disposablePage.goto('/app/home')
-    await expect(disposablePage).toHaveURL(/\/app\/home/)
-    await expect(disposablePage.getByTestId('page-heading')).toBeVisible()
-  })
-})
-
-test.describe('Destructive – approval password', () => {
-  test.use({ disposableUserOptions: { isActive: false } })
-
-  // The approval password is global site state, so it is always handed back
-  // cleared — a leftover password would change what other tests see on the
-  // admin users page and on the pending-approval screen.
-  test.afterEach(async ({ adminUser }) => {
-    await serverApi('PATCH', '/settings/', adminUser.email, { approval_password: null })
-  })
-
-  test('a pending user self-approves, and rotating the password revokes the old one', async ({
-    adminPage,
-    disposablePage,
-    disposableUser,
-  }) => {
-    // Saving copies the password to the clipboard.
-    await adminPage.context().grantPermissions(['clipboard-read', 'clipboard-write'])
-
-    await adminPage.goto('/app/admin/users')
-    const card = adminPage.getByTestId('section-approval-password')
-    await expect(card).toBeVisible()
-
-    const firstPassword = `e2e-approve-${Date.now()}`
-    await setApprovalPassword(card, firstPassword)
-
-    // Pending users may read the status even though they cannot read settings.
-    const status = await serverApi<{ has_approval_password: boolean }>(
-      'GET',
-      '/users/approval-password-status',
-      disposableUser.email,
-    )
-    expect(status.has_approval_password).toBe(true)
-
-    // The waiting screen fetched the status on mount, before the password
-    // existed, so reload to make the self-approval form appear.
-    await expect(disposablePage).toHaveURL(/\/pending-approval/)
-    await disposablePage.reload()
-    await disposablePage.getByTestId('input-approval-code').fill(firstPassword)
-    await disposablePage.getByTestId('btn-approve').click()
-    await expect(disposablePage).toHaveURL(/\/app\/home/)
-
-    // Rotate the password, then push the same account back into the pending
-    // state so the rotation can be proven through the same UI.
-    const secondPassword = `e2e-rotated-${Date.now()}`
-    await setApprovalPassword(card, secondPassword)
-    await seedUser(disposableUser.email, disposableUser.name, disposableUser.roles, false)
-
-    await disposablePage.goto('/app/home')
-    await expect(disposablePage).toHaveURL(/\/pending-approval/)
-
-    // The retired password is rejected…
-    await disposablePage.getByTestId('input-approval-code').fill(firstPassword)
-    await disposablePage.getByTestId('btn-approve').click()
-    await expect(disposablePage.getByText(WRONG_APPROVAL_CODE)).toBeVisible()
-    await expect(disposablePage).toHaveURL(/\/pending-approval/)
-
-    // …while the rotated one is accepted.
-    await disposablePage.getByTestId('input-approval-code').fill(secondPassword)
-    await disposablePage.getByTestId('btn-approve').click()
-    await expect(disposablePage).toHaveURL(/\/app\/home/)
   })
 })

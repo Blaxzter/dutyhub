@@ -43,13 +43,13 @@ class TestDashboardRoutes:
         assert "tasks" in data
         assert "bookings" in data
 
-    async def test_dashboard_feed_admin_sees_pending_users(
+    async def test_dashboard_feed_reports_pending_join_requests(
         self, async_client: AsyncClient, as_admin: None
     ):
-        """Test that admins get pending_user_count in dashboard feed."""
+        """The dashboard surfaces join requests waiting on this user."""
         r = await async_client.get("/api/v1/dashboard/feed")
 
         assert r.status_code == 200
         data = r.json()
-        assert "pending_user_count" in data
-        assert data["pending_user_count"] is not None
+        assert "pending_join_request_count" in data
+        assert data["pending_join_request_count"] == 0

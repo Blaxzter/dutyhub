@@ -468,9 +468,9 @@ export type DashboardFeedResponse = {
    */
   booking_count: number
   /**
-   * Pending User Count
+   * Pending Join Request Count
    */
-  pending_user_count?: number | null
+  pending_join_request_count?: number
 }
 
 /**
@@ -644,9 +644,242 @@ export type EventCreate = {
    */
   status?: 'draft' | 'published' | 'archived'
   /**
+   * Visibility
+   */
+  visibility?: 'public' | 'private'
+  /**
    * Created By Id
    */
   created_by_id?: string | null
+}
+
+/**
+ * EventInvitationBulkCreate
+ *
+ * Invite several addresses in one go, all with the same role.
+ */
+export type EventInvitationBulkCreate = {
+  /**
+   * Emails
+   */
+  emails: Array<string>
+  /**
+   * Role
+   */
+  role?: 'admin' | 'member'
+  /**
+   * Expires In Days
+   */
+  expires_in_days?: number | null
+}
+
+/**
+ * EventInvitationBulkResult
+ */
+export type EventInvitationBulkResult = {
+  /**
+   * Created
+   */
+  created: Array<EventInvitationRead>
+  /**
+   * Skipped Existing Members
+   */
+  skipped_existing_members?: Array<string>
+  /**
+   * Skipped Already Invited
+   */
+  skipped_already_invited?: Array<string>
+}
+
+/**
+ * EventInvitationCreate
+ *
+ * Create either a targeted invite (``email`` set) or a share link.
+ */
+export type EventInvitationCreate = {
+  /**
+   * Email
+   */
+  email?: string | null
+  /**
+   * Role
+   */
+  role?: 'admin' | 'member'
+  /**
+   * Expires In Days
+   *
+   * Null means the invite never expires
+   */
+  expires_in_days?: number | null
+}
+
+/**
+ * EventInvitationPreview
+ *
+ * What an invitee sees before deciding to accept.
+ *
+ * Deliberately narrow: it is reachable by anyone holding the token, so it
+ * exposes the event's identity and nothing about its members or contents.
+ */
+export type EventInvitationPreview = {
+  /**
+   * Event Id
+   */
+  event_id: string
+  /**
+   * Event Name
+   */
+  event_name: string
+  /**
+   * Event Description
+   */
+  event_description?: string | null
+  /**
+   * Start Date
+   */
+  start_date: string
+  /**
+   * End Date
+   */
+  end_date: string
+  /**
+   * Role
+   */
+  role: 'admin' | 'member'
+  /**
+   * Invited By Name
+   */
+  invited_by_name?: string | null
+  /**
+   * Is Valid
+   */
+  is_valid: boolean
+  /**
+   * Invalid Reason
+   *
+   * One of: expired, revoked, already_used, email_mismatch
+   */
+  invalid_reason?: string | null
+  /**
+   * Already Member
+   */
+  already_member?: boolean
+}
+
+/**
+ * EventInvitationRead
+ */
+export type EventInvitationRead = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Event Id
+   */
+  event_id: string
+  /**
+   * Email
+   */
+  email?: string | null
+  /**
+   * Role
+   */
+  role: 'admin' | 'member'
+  /**
+   * Token
+   */
+  token: string
+  /**
+   * Invited By Id
+   */
+  invited_by_id?: string | null
+  /**
+   * Expires At
+   */
+  expires_at?: string | null
+  /**
+   * Revoked At
+   */
+  revoked_at?: string | null
+  /**
+   * Accepted At
+   */
+  accepted_at?: string | null
+  /**
+   * Use Count
+   */
+  use_count?: number
+}
+
+/**
+ * EventJoinRequestCreate
+ */
+export type EventJoinRequestCreate = {
+  /**
+   * Message
+   */
+  message?: string | null
+}
+
+/**
+ * EventJoinRequestDecision
+ */
+export type EventJoinRequestDecision = {
+  /**
+   * Approve
+   */
+  approve: boolean
+  /**
+   * Role
+   */
+  role?: 'admin' | 'member'
+}
+
+/**
+ * EventJoinRequestRead
+ */
+export type EventJoinRequestRead = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Event Id
+   */
+  event_id: string
+  /**
+   * User Id
+   */
+  user_id: string
+  /**
+   * Status
+   */
+  status: 'pending' | 'approved' | 'declined'
+  /**
+   * Message
+   */
+  message?: string | null
+  /**
+   * Created At
+   */
+  created_at: string
+  /**
+   * Decided At
+   */
+  decided_at?: string | null
+  /**
+   * User Name
+   */
+  user_name?: string | null
+  /**
+   * User Email
+   */
+  user_email?: string | null
+  /**
+   * User Avatar Etag
+   */
+  user_avatar_etag?: string | null
 }
 
 /**
@@ -669,6 +902,66 @@ export type EventListResponse = {
    * Limit
    */
   limit: number
+}
+
+/**
+ * EventMemberRead
+ *
+ * A membership joined with the display fields of its user.
+ */
+export type EventMemberRead = {
+  /**
+   * User Id
+   */
+  user_id: string
+  /**
+   * Event Id
+   */
+  event_id: string
+  /**
+   * Role
+   */
+  role: 'owner' | 'admin' | 'member'
+  /**
+   * Joined At
+   */
+  joined_at: string
+  /**
+   * Name
+   */
+  name?: string | null
+  /**
+   * Email
+   */
+  email?: string | null
+  /**
+   * Avatar Etag
+   */
+  avatar_etag?: string | null
+}
+
+/**
+ * EventMemberRoleUpdate
+ */
+export type EventMemberRoleUpdate = {
+  /**
+   * Role
+   */
+  role: 'admin' | 'member'
+}
+
+/**
+ * EventOwnershipTransfer
+ *
+ * Hand ownership of an event to another member.
+ *
+ * The outgoing owner is demoted to ``admin`` so they keep working access.
+ */
+export type EventOwnershipTransfer = {
+  /**
+   * New Owner Id
+   */
+  new_owner_id: string
 }
 
 /**
@@ -704,6 +997,10 @@ export type EventRead = {
    */
   status?: 'draft' | 'published' | 'archived'
   /**
+   * Visibility
+   */
+  visibility?: 'public' | 'private'
+  /**
    * Id
    */
   id: string
@@ -712,6 +1009,10 @@ export type EventRead = {
    */
   created_by_id?: string | null
   /**
+   * Is Featured
+   */
+  is_featured?: boolean
+  /**
    * Created At
    */
   created_at: string
@@ -719,6 +1020,26 @@ export type EventRead = {
    * Updated At
    */
   updated_at: string
+  /**
+   * My Role
+   */
+  my_role?: 'owner' | 'admin' | 'member' | null
+  /**
+   * Member Count
+   */
+  member_count?: number
+  /**
+   * Join Request Status
+   */
+  join_request_status?: string | null
+  /**
+   * Pending Request Count
+   */
+  pending_request_count?: number
+  /**
+   * Can Manage
+   */
+  readonly can_manage: boolean
   /**
    * Is Expired
    */
@@ -757,6 +1078,10 @@ export type EventUpdate = {
    * Status
    */
   status?: 'draft' | 'published' | 'archived' | null
+  /**
+   * Visibility
+   */
+  visibility?: 'public' | 'private' | null
 }
 
 /**
@@ -775,6 +1100,16 @@ export type ExcludedShift = {
    * End Time
    */
   end_time: string
+}
+
+/**
+ * FeaturedUpdate
+ */
+export type FeaturedUpdate = {
+  /**
+   * Is Featured
+   */
+  is_featured: boolean
 }
 
 /**
@@ -1445,18 +1780,6 @@ export type SelectedEventUpdate = {
 }
 
 /**
- * SelfApproveRequest
- */
-export type SelfApproveRequest = {
-  /**
-   * Password
-   *
-   * The approval password to verify
-   */
-  password: string
-}
-
-/**
  * ShiftBatchRead
  */
 export type ShiftBatchRead = {
@@ -1965,30 +2288,6 @@ export type SidebarTask = {
    * Next Shift Start Time
    */
   next_shift_start_time?: string | null
-}
-
-/**
- * SiteSettingsRead
- */
-export type SiteSettingsRead = {
-  /**
-   * Has Approval Password
-   *
-   * Whether an approval password is currently configured
-   */
-  has_approval_password?: boolean
-}
-
-/**
- * SiteSettingsUpdate
- */
-export type SiteSettingsUpdate = {
-  /**
-   * Approval Password
-   *
-   * Set or clear the approval password (null to clear)
-   */
-  approval_password?: string | null
 }
 
 /**
@@ -2888,15 +3187,9 @@ export type UserProfile = {
   /**
    * Is Admin
    *
-   * Whether user has admin role
+   * Whether user is a platform superadmin
    */
   is_admin?: boolean
-  /**
-   * Is Task Manager
-   *
-   * Whether user has task_manager role
-   */
-  is_task_manager?: boolean
   /**
    * Is Active
    *
@@ -2906,15 +3199,17 @@ export type UserProfile = {
   /**
    * Rejection Reason
    *
-   * Reason for account rejection
+   * Reason the account was suspended
    */
   rejection_reason?: string | null
   /**
-   * Managed Event Ids
+   * Event Roles
    *
-   * IDs of events this user manages (via event_managers)
+   * This user's role in each event they belong to, keyed by event id: owner, admin or member
    */
-  managed_event_ids?: Array<string>
+  event_roles?: {
+    [key: string]: string
+  }
   /**
    * Selected Event Id
    *
@@ -3164,6 +3459,10 @@ export type EventReadWritable = {
    */
   status?: 'draft' | 'published' | 'archived'
   /**
+   * Visibility
+   */
+  visibility?: 'public' | 'private'
+  /**
    * Id
    */
   id: string
@@ -3172,6 +3471,10 @@ export type EventReadWritable = {
    */
   created_by_id?: string | null
   /**
+   * Is Featured
+   */
+  is_featured?: boolean
+  /**
    * Created At
    */
   created_at: string
@@ -3179,6 +3482,22 @@ export type EventReadWritable = {
    * Updated At
    */
   updated_at: string
+  /**
+   * My Role
+   */
+  my_role?: 'owner' | 'admin' | 'member' | null
+  /**
+   * Member Count
+   */
+  member_count?: number
+  /**
+   * Join Request Status
+   */
+  join_request_status?: string | null
+  /**
+   * Pending Request Count
+   */
+  pending_request_count?: number
 }
 
 /**
@@ -3517,118 +3836,6 @@ export type UsersUpdateSelectedEventResponses = {
 
 export type UsersUpdateSelectedEventResponse =
   UsersUpdateSelectedEventResponses[keyof UsersUpdateSelectedEventResponses]
-
-export type UsersGetApprovalPasswordStatusData = {
-  body?: never
-  path?: never
-  query?: never
-  url: '/api/v1/users/approval-password-status'
-}
-
-export type UsersGetApprovalPasswordStatusErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type UsersGetApprovalPasswordStatusError =
-  UsersGetApprovalPasswordStatusErrors[keyof UsersGetApprovalPasswordStatusErrors]
-
-export type UsersGetApprovalPasswordStatusResponses = {
-  /**
-   * Response Users-Get Approval Password Status
-   *
-   * Successful Response
-   */
-  200: {
-    [key: string]: boolean
-  }
-}
-
-export type UsersGetApprovalPasswordStatusResponse =
-  UsersGetApprovalPasswordStatusResponses[keyof UsersGetApprovalPasswordStatusResponses]
-
-export type UsersSelfApproveData = {
-  body: SelfApproveRequest
-  path?: never
-  query?: never
-  url: '/api/v1/users/self-approve'
-}
-
-export type UsersSelfApproveErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type UsersSelfApproveError = UsersSelfApproveErrors[keyof UsersSelfApproveErrors]
-
-export type UsersSelfApproveResponses = {
-  /**
-   * Successful Response
-   */
-  200: UserProfile
-}
-
-export type UsersSelfApproveResponse = UsersSelfApproveResponses[keyof UsersSelfApproveResponses]
 
 export type UsersGetAuth0ManagementUrlData = {
   body?: never
@@ -4332,116 +4539,6 @@ export type UsersGetUserAvatarResponses = {
    */
   200: unknown
 }
-
-export type SettingsGetSiteSettingsData = {
-  body?: never
-  path?: never
-  query?: never
-  url: '/api/v1/settings/'
-}
-
-export type SettingsGetSiteSettingsErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type SettingsGetSiteSettingsError =
-  SettingsGetSiteSettingsErrors[keyof SettingsGetSiteSettingsErrors]
-
-export type SettingsGetSiteSettingsResponses = {
-  /**
-   * Successful Response
-   */
-  200: SiteSettingsRead
-}
-
-export type SettingsGetSiteSettingsResponse =
-  SettingsGetSiteSettingsResponses[keyof SettingsGetSiteSettingsResponses]
-
-export type SettingsUpdateSiteSettingsData = {
-  body: SiteSettingsUpdate
-  path?: never
-  query?: never
-  url: '/api/v1/settings/'
-}
-
-export type SettingsUpdateSiteSettingsErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type SettingsUpdateSiteSettingsError =
-  SettingsUpdateSiteSettingsErrors[keyof SettingsUpdateSiteSettingsErrors]
-
-export type SettingsUpdateSiteSettingsResponses = {
-  /**
-   * Successful Response
-   */
-  200: SiteSettingsRead
-}
-
-export type SettingsUpdateSiteSettingsResponse =
-  SettingsUpdateSiteSettingsResponses[keyof SettingsUpdateSiteSettingsResponses]
 
 export type TasksTaskFeedData = {
   body?: never
@@ -6695,6 +6792,12 @@ export type EventsListEventsData = {
      */
     limit?: number
     /**
+     * Scope
+     *
+     * mine — events you belong to; discover — public events you could join; featured — the curated home selection; all — superadmin only
+     */
+    scope?: 'mine' | 'discover' | 'featured' | 'all'
+    /**
      * Search
      */
     search?: string | null
@@ -6702,6 +6805,10 @@ export type EventsListEventsData = {
      * Status
      */
     status?: 'draft' | 'published' | 'archived' | null
+    /**
+     * Visibility
+     */
+    visibility?: 'public' | 'private' | null
     /**
      * Date From
      */
@@ -6821,12 +6928,12 @@ export type EventsDeleteEventData = {
   body?: never
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}'
+  url: '/api/v1/events/{event_id}'
 }
 
 export type EventsDeleteEventErrors = {
@@ -6879,12 +6986,12 @@ export type EventsGetEventData = {
   body?: never
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}'
+  url: '/api/v1/events/{event_id}'
 }
 
 export type EventsGetEventErrors = {
@@ -6937,12 +7044,12 @@ export type EventsUpdateEventData = {
   body: EventUpdate
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}'
+  url: '/api/v1/events/{event_id}'
 }
 
 export type EventsUpdateEventErrors = {
@@ -6991,16 +7098,76 @@ export type EventsUpdateEventResponses = {
 
 export type EventsUpdateEventResponse = EventsUpdateEventResponses[keyof EventsUpdateEventResponses]
 
+export type EventsSetEventFeaturedData = {
+  body: FeaturedUpdate
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/featured'
+}
+
+export type EventsSetEventFeaturedErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsSetEventFeaturedError =
+  EventsSetEventFeaturedErrors[keyof EventsSetEventFeaturedErrors]
+
+export type EventsSetEventFeaturedResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventRead
+}
+
+export type EventsSetEventFeaturedResponse =
+  EventsSetEventFeaturedResponses[keyof EventsSetEventFeaturedResponses]
+
 export type EventsGetTaskDateBoundsData = {
   body?: never
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}/task-date-bounds'
+  url: '/api/v1/events/{event_id}/task-date-bounds'
 }
 
 export type EventsGetTaskDateBoundsErrors = {
@@ -7059,12 +7226,12 @@ export type EventsShiftEventDatesData = {
   body: ShiftDatesRequest
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}/shift-dates'
+  url: '/api/v1/events/{event_id}/shift-dates'
 }
 
 export type EventsShiftEventDatesErrors = {
@@ -7119,9 +7286,9 @@ export type EventsListEventAvailabilitiesData = {
   body?: never
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: {
     /**
@@ -7133,7 +7300,7 @@ export type EventsListEventAvailabilitiesData = {
      */
     limit?: number
   }
-  url: '/api/v1/events/{group_id}/availabilities'
+  url: '/api/v1/events/{event_id}/availabilities'
 }
 
 export type EventsListEventAvailabilitiesErrors = {
@@ -7190,12 +7357,12 @@ export type EventsDeleteMyAvailabilityData = {
   body?: never
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}/availability/me'
+  url: '/api/v1/events/{event_id}/availability/me'
 }
 
 export type EventsDeleteMyAvailabilityErrors = {
@@ -7250,12 +7417,12 @@ export type EventsGetMyAvailabilityData = {
   body?: never
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}/availability/me'
+  url: '/api/v1/events/{event_id}/availability/me'
 }
 
 export type EventsGetMyAvailabilityErrors = {
@@ -7310,12 +7477,12 @@ export type EventsSetMyAvailabilityData = {
   body: UserAvailabilityCreate
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}/availability'
+  url: '/api/v1/events/{event_id}/availability'
 }
 
 export type EventsSetMyAvailabilityErrors = {
@@ -7366,19 +7533,19 @@ export type EventsSetMyAvailabilityResponses = {
 export type EventsSetMyAvailabilityResponse =
   EventsSetMyAvailabilityResponses[keyof EventsSetMyAvailabilityResponses]
 
-export type EventsListEventManagersData = {
+export type EventsListEventMembersData = {
   body?: never
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}/managers'
+  url: '/api/v1/events/{event_id}/members'
 }
 
-export type EventsListEventManagersErrors = {
+export type EventsListEventMembersErrors = {
   /**
    * Bad Request
    */
@@ -7413,38 +7580,38 @@ export type EventsListEventManagersErrors = {
   500: ProblemDetails
 }
 
-export type EventsListEventManagersError =
-  EventsListEventManagersErrors[keyof EventsListEventManagersErrors]
+export type EventsListEventMembersError =
+  EventsListEventMembersErrors[keyof EventsListEventMembersErrors]
 
-export type EventsListEventManagersResponses = {
+export type EventsListEventMembersResponses = {
   /**
-   * Response Events-List Event Managers
+   * Response Events-List Event Members
    *
    * Successful Response
    */
-  200: Array<UserRead>
+  200: Array<EventMemberRead>
 }
 
-export type EventsListEventManagersResponse =
-  EventsListEventManagersResponses[keyof EventsListEventManagersResponses]
+export type EventsListEventMembersResponse =
+  EventsListEventMembersResponses[keyof EventsListEventMembersResponses]
 
-export type EventsRemoveGroupManagerData = {
+export type EventsRemoveMemberData = {
   body?: never
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
     /**
      * User Id
      */
     user_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}/managers/{user_id}'
+  url: '/api/v1/events/{event_id}/members/{user_id}'
 }
 
-export type EventsRemoveGroupManagerErrors = {
+export type EventsRemoveMemberErrors = {
   /**
    * Bad Request
    */
@@ -7479,36 +7646,35 @@ export type EventsRemoveGroupManagerErrors = {
   500: ProblemDetails
 }
 
-export type EventsRemoveGroupManagerError =
-  EventsRemoveGroupManagerErrors[keyof EventsRemoveGroupManagerErrors]
+export type EventsRemoveMemberError = EventsRemoveMemberErrors[keyof EventsRemoveMemberErrors]
 
-export type EventsRemoveGroupManagerResponses = {
+export type EventsRemoveMemberResponses = {
   /**
    * Successful Response
    */
   204: void
 }
 
-export type EventsRemoveGroupManagerResponse =
-  EventsRemoveGroupManagerResponses[keyof EventsRemoveGroupManagerResponses]
+export type EventsRemoveMemberResponse =
+  EventsRemoveMemberResponses[keyof EventsRemoveMemberResponses]
 
-export type EventsAssignGroupManagerData = {
-  body?: never
+export type EventsUpdateMemberRoleData = {
+  body: EventMemberRoleUpdate
   path: {
     /**
-     * Group Id
+     * Event Id
      */
-    group_id: string
+    event_id: string
     /**
      * User Id
      */
     user_id: string
   }
   query?: never
-  url: '/api/v1/events/{group_id}/managers/{user_id}'
+  url: '/api/v1/events/{event_id}/members/{user_id}'
 }
 
-export type EventsAssignGroupManagerErrors = {
+export type EventsUpdateMemberRoleErrors = {
   /**
    * Bad Request
    */
@@ -7543,18 +7709,697 @@ export type EventsAssignGroupManagerErrors = {
   500: ProblemDetails
 }
 
-export type EventsAssignGroupManagerError =
-  EventsAssignGroupManagerErrors[keyof EventsAssignGroupManagerErrors]
+export type EventsUpdateMemberRoleError =
+  EventsUpdateMemberRoleErrors[keyof EventsUpdateMemberRoleErrors]
 
-export type EventsAssignGroupManagerResponses = {
+export type EventsUpdateMemberRoleResponses = {
   /**
    * Successful Response
    */
-  201: UserRead
+  200: EventMemberRead
 }
 
-export type EventsAssignGroupManagerResponse =
-  EventsAssignGroupManagerResponses[keyof EventsAssignGroupManagerResponses]
+export type EventsUpdateMemberRoleResponse =
+  EventsUpdateMemberRoleResponses[keyof EventsUpdateMemberRoleResponses]
+
+export type EventsTransferEventOwnershipData = {
+  body: EventOwnershipTransfer
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/transfer-ownership'
+}
+
+export type EventsTransferEventOwnershipErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsTransferEventOwnershipError =
+  EventsTransferEventOwnershipErrors[keyof EventsTransferEventOwnershipErrors]
+
+export type EventsTransferEventOwnershipResponses = {
+  /**
+   * Response Events-Transfer Event Ownership
+   *
+   * Successful Response
+   */
+  200: Array<EventMemberRead>
+}
+
+export type EventsTransferEventOwnershipResponse =
+  EventsTransferEventOwnershipResponses[keyof EventsTransferEventOwnershipResponses]
+
+export type EventsListEventInvitationsData = {
+  body?: never
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/invitations'
+}
+
+export type EventsListEventInvitationsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsListEventInvitationsError =
+  EventsListEventInvitationsErrors[keyof EventsListEventInvitationsErrors]
+
+export type EventsListEventInvitationsResponses = {
+  /**
+   * Response Events-List Event Invitations
+   *
+   * Successful Response
+   */
+  200: Array<EventInvitationRead>
+}
+
+export type EventsListEventInvitationsResponse =
+  EventsListEventInvitationsResponses[keyof EventsListEventInvitationsResponses]
+
+export type EventsCreateEventInvitationData = {
+  body: EventInvitationCreate
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/invitations'
+}
+
+export type EventsCreateEventInvitationErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsCreateEventInvitationError =
+  EventsCreateEventInvitationErrors[keyof EventsCreateEventInvitationErrors]
+
+export type EventsCreateEventInvitationResponses = {
+  /**
+   * Successful Response
+   */
+  201: EventInvitationRead
+}
+
+export type EventsCreateEventInvitationResponse =
+  EventsCreateEventInvitationResponses[keyof EventsCreateEventInvitationResponses]
+
+export type EventsCreateEventInvitationsBulkData = {
+  body: EventInvitationBulkCreate
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/invitations/bulk'
+}
+
+export type EventsCreateEventInvitationsBulkErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsCreateEventInvitationsBulkError =
+  EventsCreateEventInvitationsBulkErrors[keyof EventsCreateEventInvitationsBulkErrors]
+
+export type EventsCreateEventInvitationsBulkResponses = {
+  /**
+   * Successful Response
+   */
+  201: EventInvitationBulkResult
+}
+
+export type EventsCreateEventInvitationsBulkResponse =
+  EventsCreateEventInvitationsBulkResponses[keyof EventsCreateEventInvitationsBulkResponses]
+
+export type EventsRevokeEventInvitationData = {
+  body?: never
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+    /**
+     * Invitation Id
+     */
+    invitation_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/invitations/{invitation_id}'
+}
+
+export type EventsRevokeEventInvitationErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsRevokeEventInvitationError =
+  EventsRevokeEventInvitationErrors[keyof EventsRevokeEventInvitationErrors]
+
+export type EventsRevokeEventInvitationResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type EventsRevokeEventInvitationResponse =
+  EventsRevokeEventInvitationResponses[keyof EventsRevokeEventInvitationResponses]
+
+export type EventsWithdrawJoinRequestData = {
+  body?: never
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/join-request'
+}
+
+export type EventsWithdrawJoinRequestErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsWithdrawJoinRequestError =
+  EventsWithdrawJoinRequestErrors[keyof EventsWithdrawJoinRequestErrors]
+
+export type EventsWithdrawJoinRequestResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type EventsWithdrawJoinRequestResponse =
+  EventsWithdrawJoinRequestResponses[keyof EventsWithdrawJoinRequestResponses]
+
+export type EventsRequestToJoinEventData = {
+  body: EventJoinRequestCreate
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/join-request'
+}
+
+export type EventsRequestToJoinEventErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsRequestToJoinEventError =
+  EventsRequestToJoinEventErrors[keyof EventsRequestToJoinEventErrors]
+
+export type EventsRequestToJoinEventResponses = {
+  /**
+   * Successful Response
+   */
+  201: EventJoinRequestRead
+}
+
+export type EventsRequestToJoinEventResponse =
+  EventsRequestToJoinEventResponses[keyof EventsRequestToJoinEventResponses]
+
+export type EventsListJoinRequestsData = {
+  body?: never
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+  }
+  query?: {
+    /**
+     * Status
+     */
+    status?: string | null
+  }
+  url: '/api/v1/events/{event_id}/join-requests'
+}
+
+export type EventsListJoinRequestsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsListJoinRequestsError =
+  EventsListJoinRequestsErrors[keyof EventsListJoinRequestsErrors]
+
+export type EventsListJoinRequestsResponses = {
+  /**
+   * Response Events-List Join Requests
+   *
+   * Successful Response
+   */
+  200: Array<EventJoinRequestRead>
+}
+
+export type EventsListJoinRequestsResponse =
+  EventsListJoinRequestsResponses[keyof EventsListJoinRequestsResponses]
+
+export type EventsDecideJoinRequestData = {
+  body: EventJoinRequestDecision
+  path: {
+    /**
+     * Event Id
+     */
+    event_id: string
+    /**
+     * Request Id
+     */
+    request_id: string
+  }
+  query?: never
+  url: '/api/v1/events/{event_id}/join-requests/{request_id}/decide'
+}
+
+export type EventsDecideJoinRequestErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type EventsDecideJoinRequestError =
+  EventsDecideJoinRequestErrors[keyof EventsDecideJoinRequestErrors]
+
+export type EventsDecideJoinRequestResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventJoinRequestRead
+}
+
+export type EventsDecideJoinRequestResponse =
+  EventsDecideJoinRequestResponses[keyof EventsDecideJoinRequestResponses]
+
+export type InvitationsPreviewInvitationData = {
+  body?: never
+  path: {
+    /**
+     * Token
+     */
+    token: string
+  }
+  query?: never
+  url: '/api/v1/invitations/{token}'
+}
+
+export type InvitationsPreviewInvitationErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type InvitationsPreviewInvitationError =
+  InvitationsPreviewInvitationErrors[keyof InvitationsPreviewInvitationErrors]
+
+export type InvitationsPreviewInvitationResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventInvitationPreview
+}
+
+export type InvitationsPreviewInvitationResponse =
+  InvitationsPreviewInvitationResponses[keyof InvitationsPreviewInvitationResponses]
+
+export type InvitationsAcceptInvitationData = {
+  body?: never
+  path: {
+    /**
+     * Token
+     */
+    token: string
+  }
+  query?: never
+  url: '/api/v1/invitations/{token}/accept'
+}
+
+export type InvitationsAcceptInvitationErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type InvitationsAcceptInvitationError =
+  InvitationsAcceptInvitationErrors[keyof InvitationsAcceptInvitationErrors]
+
+export type InvitationsAcceptInvitationResponses = {
+  /**
+   * Successful Response
+   */
+  200: EventRead
+}
+
+export type InvitationsAcceptInvitationResponse =
+  InvitationsAcceptInvitationResponses[keyof InvitationsAcceptInvitationResponses]
 
 export type NotificationsListNotificationTypesData = {
   body?: never

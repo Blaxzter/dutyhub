@@ -30,7 +30,13 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         has_future_shifts: dt.date | dt.datetime | None = None,
         also_include_group_ids: list[uuid.UUID] | None = None,
         event_id: uuid.UUID | None = None,
+        restrict_to_event_ids: list[uuid.UUID] | None = None,
     ) -> Select[Any]:
+        if restrict_to_event_ids is not None:
+            # A hard AND, unlike also_include_group_ids which widens the status
+            # filter. None means unrestricted; an empty list means nothing is
+            # visible, and must not silently degrade to unrestricted.
+            query = query.where(col(Task.event_id).in_(restrict_to_event_ids))
         if event_id is not None:
             query = query.where(col(Task.event_id) == event_id)
         if search:
@@ -129,6 +135,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         sort_dir: Literal["asc", "desc"] = "asc",
         also_include_group_ids: list[uuid.UUID] | None = None,
         event_id: uuid.UUID | None = None,
+        restrict_to_event_ids: list[uuid.UUID] | None = None,
     ) -> list[Task]:
         query = select(Task)
         query = self._apply_common_filters(
@@ -142,6 +149,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             has_future_shifts=has_future_shifts,
             also_include_group_ids=also_include_group_ids,
             event_id=event_id,
+            restrict_to_event_ids=restrict_to_event_ids,
         )
         order_col = getattr(Task, sort_by)
         query = query.order_by(
@@ -164,6 +172,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
         has_future_shifts: dt.date | None = None,
         also_include_group_ids: list[uuid.UUID] | None = None,
         event_id: uuid.UUID | None = None,
+        restrict_to_event_ids: list[uuid.UUID] | None = None,
     ) -> int:
         query = select(func.count()).select_from(Task)
         query = self._apply_common_filters(
@@ -177,6 +186,7 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             has_future_shifts=has_future_shifts,
             also_include_group_ids=also_include_group_ids,
             event_id=event_id,
+            restrict_to_event_ids=restrict_to_event_ids,
         )
         result = await db.execute(query)
         return result.scalar_one()

@@ -6,10 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
-from app.crud.event_manager import event_manager as crud_egm
 from app.crud.shift import shift as crud_shift
 from app.crud.task import task as crud_task
-from app.logic.permissions import require_event_access
+from app.logic.permissions import get_event_role, require_event_role
 from app.models.shift import Shift
 from app.schemas.booking import ShiftBookingEntry
 from app.schemas.shift import (
@@ -53,14 +52,13 @@ async def list_shifts(
 ) -> ShiftListResponse:
     if task_id:
         db_task = await crud_task.get(session, task_id, raise_404_error=True)
-        if not current_user.is_manager and db_task.status != "published":
-            # Allow scoped group managers to see shifts for their unpublished tasks
-            if not db_task.event_id or not await crud_egm.is_manager(
-                session, user_id=current_user.id, event_id=db_task.event_id
-            ):
-                raise_problem(
-                    403, code="task.not_published", detail="Task is not published"
-                )
+        role = await get_event_role(current_user, session, db_task.event_id)
+        if role is None:
+            raise_problem(404, code="task.not_found", detail="Task not found")
+        if db_task.status != "published" and role not in ("owner", "admin"):
+            raise_problem(
+                403, code="task.not_published", detail="Task is not published"
+            )
 
     items = await crud_shift.get_multi_filtered(
         session,
@@ -97,7 +95,7 @@ async def create_shift(
     current_user: CurrentUser,
 ) -> ShiftRead:
     db_task = await crud_task.get(session, str(slot_in.task_id), raise_404_error=True)
-    await require_event_access(current_user, session, db_task.event_id)
+    await require_event_role(current_user, session, db_task.event_id)
     shift = await crud_shift.create(session, obj_in=slot_in)
     return await _enrich_shift(session, shift)
 
@@ -112,7 +110,7 @@ async def update_shift(
 ) -> ShiftRead:
     db_shift = await crud_shift.get(session, slot_id, raise_404_error=True)
     db_task = await crud_task.get(session, str(db_shift.task_id), raise_404_error=True)
-    await require_event_access(current_user, session, db_task.event_id)
+    await require_event_role(current_user, session, db_task.event_id)
     old_start = db_shift.start_time
     old_end = db_shift.end_time
     old_date = db_shift.date
@@ -154,7 +152,7 @@ async def delete_shift(
 
     # Get task name for snapshot
     db_task = await crud_task.get(session, str(shift.task_id), raise_404_error=True)
-    await require_event_access(current_user, session, db_task.event_id)
+    await require_event_role(current_user, session, db_task.event_id)
 
     # Cancel confirmed bookings with snapshot before deleting the shift
     await crud_booking.cancel_bookings_for_shifts(

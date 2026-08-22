@@ -15,9 +15,13 @@ test.describe('Dashboard – stats cards', () => {
     await expect(page.getByTestId('stat-card-bookings')).toBeVisible()
   })
 
-  test('shows Pending Users stat card for admin', async ({ adminPage: page }) => {
+  test('shows the join-requests stat card to someone who runs an event', async ({
+    adminPage: page,
+  }) => {
+    // Replaces the old platform-wide "pending users" tile: with open signup
+    // the only thing left to approve is entry to a specific event.
     await page.goto('/app/home')
-    await expect(page.getByTestId('stat-card-users')).toBeVisible()
+    await expect(page.getByTestId('stat-card-join-requests')).toBeVisible()
   })
 
   test('Tasks card navigates to tasks', async ({ adminPage: page }) => {

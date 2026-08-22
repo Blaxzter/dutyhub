@@ -64,7 +64,7 @@ const category = ref('')
 
 // Task event
 const isScopedManagerOnly = computed(
-  () => !authStore.isAdmin && !authStore.isTaskManager && authStore.isEventManager,
+  () => !authStore.isAdmin && authStore.isEventManager,
 )
 const eventMode = ref<'none' | 'existing' | 'new'>(
   isScopedManagerOnly.value ? 'existing' : 'none',
@@ -268,7 +268,7 @@ const loadEvents = async () => {
 
     // Scoped event managers can only create tasks in their managed events
     const managedIds = authStore.managedEventIds
-    if (!authStore.isAdmin && !authStore.isTaskManager && managedIds.length > 0) {
+    if (!authStore.isAdmin && managedIds.length > 0) {
       items = items.filter((g) => managedIds.includes(g.id))
     }
 

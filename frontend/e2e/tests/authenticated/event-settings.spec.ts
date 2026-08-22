@@ -214,10 +214,15 @@ test.describe('Event Settings – member restrictions', () => {
     await deleteEvent(page, event.id).catch(() => {})
   })
 
-  test('member is redirected home from /app/event-settings', async ({ memberPage: member }) => {
+  test('a non-member cannot see the event settings content', async ({
+    memberPage: member,
+  }) => {
+    // The route itself is open — access is decided per event. This event was
+    // created by the admin and the member was never invited, so it is 404 to
+    // them and no editing surface renders.
     await member.goto(`/app/event-settings/${event.id}`)
-    // Route requires admin/task_manager role — router redirects to /app/home
-    await expect(member).toHaveURL(/\/app\/home/)
+    await expect(member.getByTestId('section-event-members')).toBeHidden()
+    await expect(member.getByTestId('tab-people')).toBeHidden()
   })
 
   test('member cannot shift dates via API', async ({ memberPage: member }) => {

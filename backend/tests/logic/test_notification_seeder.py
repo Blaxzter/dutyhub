@@ -19,7 +19,7 @@ from app.models.notification import NotificationType
 
 # Spot-check codes that must exist after seeding. Kept explicit (not derived
 # from the registry) so a silent registry rename shows up as a test failure.
-KNOWN_CODES = ["booking.confirmed", "task.published", "user.registered"]
+KNOWN_CODES = ["booking.confirmed", "task.published", "event.invitation"]
 
 
 @pytest.mark.asyncio

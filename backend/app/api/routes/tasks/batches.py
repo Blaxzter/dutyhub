@@ -7,7 +7,7 @@ from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
 from app.crud.shift_batch import shift_batch as crud_shift_batch
 from app.crud.task import task as crud_task
-from app.logic.permissions import require_event_access
+from app.logic.permissions import require_event_role
 from app.models.shift import Shift
 from app.schemas.shift_batch import ShiftBatchRead
 
@@ -43,7 +43,7 @@ async def delete_batch(
 
     # Get task name for snapshot
     db_task = await crud_task.get(session, task_id, raise_404_error=True)
-    await require_event_access(current_user, session, db_task.event_id)
+    await require_event_role(current_user, session, db_task.event_id)
 
     # Collect shift IDs in this batch
     stmt = select(col(Shift.id)).where(col(Shift.batch_id) == db_batch.id)

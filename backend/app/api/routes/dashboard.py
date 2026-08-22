@@ -9,11 +9,16 @@ from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
 from app.crud.event import event as crud_event
+from app.crud.event_membership import event_membership as crud_membership
 from app.crud.task import task as crud_task
-from app.logic.event_scope import get_user_event_scope
+from app.logic.event_scope import (
+    get_manageable_event_ids,
+    get_user_event_scope,
+    get_visible_event_ids,
+)
 from app.models.booking import Booking
 from app.models.event import Event
-from app.models.event_manager import EventManager
+from app.models.event_join_request import EventJoinRequest
 from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
@@ -36,15 +41,19 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 async def _get_visibility_filters(
     session,
     user: User,  # noqa: ANN001
-) -> tuple[str | None, list[uuid.UUID] | None]:
-    """Return (effective_status, managed_group_ids) for the current user."""
-    if user.is_manager:
-        return None, None  # global admin/task_manager — see everything
-    result = await session.execute(
-        select(col(EventManager.event_id)).where(col(EventManager.user_id) == user.id)
+) -> tuple[str | None, list[uuid.UUID] | None, list[uuid.UUID] | None]:
+    """Return (effective_status, manageable_ids, visible_event_ids).
+
+    ``visible_event_ids`` of None means unrestricted (platform superadmin);
+    an empty list means the user is in no events and should see nothing.
+    """
+    visible = await get_visible_event_ids(session, user)
+    if visible is None:
+        return None, None, None
+    manageable = await crud_membership.list_event_ids_for_user(
+        session, user_id=user.id, minimum_role="admin"
     )
-    managed_ids: list[uuid.UUID] = list(result.scalars().all())
-    return "published", managed_ids or None
+    return "published", manageable or None, visible
 
 
 @router.get("/feed", response_model=DashboardFeedResponse)
@@ -53,15 +62,17 @@ async def dashboard_feed(
     current_user: CurrentUser,
 ) -> DashboardFeedResponse:
     """Single endpoint powering the /app/home dashboard."""
-    effective_status, managed_group_ids = await _get_visibility_filters(
-        session, current_user
-    )
+    (
+        effective_status,
+        managed_group_ids,
+        visible_event_ids,
+    ) = await _get_visibility_filters(session, current_user)
     now = dt.datetime.now()
     today = now.date()
 
     # Tasks + count (only current/future)
     tasks_list, task_count, groups_list = await _load_tasks_and_groups(
-        session, effective_status, today, now, managed_group_ids
+        session, effective_status, today, now, managed_group_ids, visible_event_ids
     )
 
     # User's upcoming confirmed bookings with shift info (single query, no N+1)
@@ -69,10 +80,12 @@ async def dashboard_feed(
         session, current_user.id, today, now.time()
     )
 
-    # Pending user count (admin only)
-    pending_user_count = None
-    if current_user.is_admin:
-        pending_user_count = await _count_pending_users(session)
+    # Join requests waiting on this user, across every event they manage.
+    # Replaces the old platform-wide approval queue: with open signup there is
+    # nothing to approve at the account level, only at the event level.
+    pending_join_request_count = await _count_pending_join_requests(
+        session, current_user
+    )
 
     return DashboardFeedResponse(
         tasks=[DashboardTask.model_validate(e) for e in tasks_list],
@@ -80,7 +93,7 @@ async def dashboard_feed(
         events=[DashboardEvent.model_validate(g) for g in groups_list],
         bookings=bookings,
         booking_count=booking_count,
-        pending_user_count=pending_user_count,
+        pending_join_request_count=pending_join_request_count,
     )
 
 
@@ -90,6 +103,7 @@ async def _load_tasks_and_groups(  # noqa: ANN001, ANN202
     today: dt.date,
     now: dt.datetime,
     managed_group_ids: list[uuid.UUID] | None = None,
+    visible_event_ids: list[uuid.UUID] | None = None,
 ):
     tasks_list = await crud_task.get_multi_filtered(
         session,
@@ -98,6 +112,7 @@ async def _load_tasks_and_groups(  # noqa: ANN001, ANN202
         date_from=today,
         has_future_shifts=now,
         also_include_group_ids=managed_group_ids,
+        restrict_to_event_ids=visible_event_ids,
     )
     task_count = await crud_task.get_count_filtered(
         session,
@@ -105,10 +120,13 @@ async def _load_tasks_and_groups(  # noqa: ANN001, ANN202
         date_from=today,
         has_future_shifts=now,
         also_include_group_ids=managed_group_ids,
+        restrict_to_event_ids=visible_event_ids,
     )
     groups_list = await crud_event.get_multi_filtered(
         session,
         limit=100,
+        scope="all" if visible_event_ids is None else "mine",
+        member_event_ids=visible_event_ids or [],
         status=effective_status,
         also_include_ids=managed_group_ids,
     )
@@ -172,15 +190,18 @@ async def _load_bookings(
     return items, total
 
 
-async def _count_pending_users(session) -> int:  # noqa: ANN001
+async def _count_pending_join_requests(session, user: User) -> int:  # noqa: ANN001
+    """Join requests awaiting a decision in events this user administers."""
+    manageable = await get_manageable_event_ids(session, user)
     query = (
         select(func.count())
-        .select_from(User)
-        .where(
-            col(User.is_active) == False,  # noqa: E712
-            col(User.rejection_reason).is_(None),
-        )
+        .select_from(EventJoinRequest)
+        .where(col(EventJoinRequest.status) == "pending")
     )
+    if manageable is not None:
+        if not manageable:
+            return 0
+        query = query.where(col(EventJoinRequest.event_id).in_(manageable))
     result = await session.execute(query)
     return result.scalar_one()
 
@@ -220,13 +241,17 @@ async def dashboard_sidebar(
     now = dt.datetime.now()
     today = now.date()
     now_time = now.time()
-    effective_status, managed_group_ids = await _get_visibility_filters(
-        session, current_user
-    )
+    (
+        effective_status,
+        managed_group_ids,
+        visible_event_ids,
+    ) = await _get_visibility_filters(session, current_user)
 
     scoped_event_id = get_user_event_scope(current_user)
 
-    groups = await _sidebar_events(session, today, effective_status, managed_group_ids)
+    groups = await _sidebar_events(
+        session, today, effective_status, managed_group_ids, visible_event_ids
+    )
     tasks = await _sidebar_tasks(
         session,
         today,
@@ -234,6 +259,7 @@ async def dashboard_sidebar(
         effective_status,
         managed_group_ids,
         event_id=scoped_event_id,
+        visible_event_ids=visible_event_ids,
     )
     bookings = await _sidebar_bookings(
         session,
@@ -255,14 +281,17 @@ async def _sidebar_events(  # noqa: ANN001
     today: dt.date,
     status: str | None,
     managed_group_ids: list[uuid.UUID] | None = None,
+    visible_event_ids: list[uuid.UUID] | None = None,
 ) -> list[SidebarEvent]:
-    """Published groups (+ managed groups) whose end_date >= today, limit 5."""
+    """The user's events whose end_date >= today, limit 5."""
     query = (
         select(col(Event.id), col(Event.name), col(Event.status))
         .where(col(Event.end_date) >= today)
         .order_by(col(Event.start_date))
         .limit(5)
     )
+    if visible_event_ids is not None:
+        query = query.where(col(Event.id).in_(visible_event_ids))
     if status:
         status_filter = col(Event.status) == status
         if managed_group_ids:
@@ -279,6 +308,7 @@ async def _sidebar_tasks(  # noqa: ANN001
     status: str | None,
     managed_group_ids: list[uuid.UUID] | None = None,
     event_id: uuid.UUID | None = None,
+    visible_event_ids: list[uuid.UUID] | None = None,
 ) -> list[SidebarTask]:
     """Published tasks with open-shift count and next shift date, limit 10.
 
@@ -367,6 +397,8 @@ async def _sidebar_tasks(  # noqa: ANN001
         query = query.where(status_filter)
     if event_id is not None:
         query = query.where(col(Task.event_id) == event_id)
+    if visible_event_ids is not None:
+        query = query.where(col(Task.event_id).in_(visible_event_ids))
 
     result = await session.execute(query)
     return [

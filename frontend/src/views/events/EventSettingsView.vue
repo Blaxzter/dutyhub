@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { Pencil, ShieldCheck } from '@lucide/vue'
+import { Pencil, Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -12,9 +12,18 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import Button from '@/components/ui/button/Button.vue'
 
 import EventEditForm from '@/components/events/EventEditForm.vue'
-import EventManagers from '@/components/events/EventManagers.vue'
+import EventInvitations from '@/components/events/EventInvitations.vue'
+import EventJoinRequests from '@/components/events/EventJoinRequests.vue'
+import EventMembers from '@/components/events/EventMembers.vue'
 
-import type { EventRead, TaskListResponse, TaskRead, UserRead } from '@/client/types.gen'
+import type {
+  EventInvitationRead,
+  EventJoinRequestRead,
+  EventMemberRead,
+  EventRead,
+  TaskListResponse,
+  TaskRead,
+} from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -29,12 +38,13 @@ const targetEventId = computed<string | null>(() => {
   return authStore.selectedEventId ?? null
 })
 
-type Tab = 'details' | 'managers'
+type Tab = 'details' | 'people'
 const activeTab = ref<Tab>('details')
 
 function readTabFromQuery() {
   const qTab = route.query.tab
-  if (qTab === 'managers') activeTab.value = 'managers'
+  // "managers" is the old name for this tab; keep old links working.
+  if (qTab === 'people' || qTab === 'managers') activeTab.value = 'people'
   else activeTab.value = 'details'
 }
 readTabFromQuery()
@@ -52,23 +62,67 @@ function setTab(tab: Tab) {
 
 const event = ref<EventRead | null>(null)
 const tasks = ref<TaskRead[]>([])
-const managers = ref<UserRead[]>([])
+const members = ref<EventMemberRead[]>([])
+const invitations = ref<EventInvitationRead[]>([])
+const joinRequests = ref<EventJoinRequestRead[]>([])
 const loading = ref(false)
 
 const canManage = computed(() =>
   targetEventId.value ? authStore.canManageEvent(targetEventId.value) : false,
 )
+const isOwner = computed(() =>
+  targetEventId.value ? authStore.isEventOwner(targetEventId.value) : false,
+)
+/** Anyone in the event can see the roster; only admins get the rest. */
+const isMember = computed(() =>
+  targetEventId.value ? authStore.isEventMember(targetEventId.value) : false,
+)
 
-async function loadManagers() {
+async function loadMembers() {
   if (!targetEventId.value) return
   try {
-    const res = await get<{ data: UserRead[] }>({
-      url: `/events/${targetEventId.value}/managers`,
+    const res = await get<{ data: EventMemberRead[] }>({
+      url: `/events/${targetEventId.value}/members`,
     })
-    managers.value = res.data
+    members.value = res.data
   } catch {
-    managers.value = []
+    members.value = []
   }
+}
+
+async function loadInvitations() {
+  if (!targetEventId.value || !canManage.value) return
+  try {
+    const res = await get<{ data: EventInvitationRead[] }>({
+      url: `/events/${targetEventId.value}/invitations`,
+    })
+    invitations.value = res.data
+  } catch {
+    invitations.value = []
+  }
+}
+
+async function loadJoinRequests() {
+  if (!targetEventId.value || !canManage.value) return
+  try {
+    const res = await get<{ data: EventJoinRequestRead[] }>({
+      url: `/events/${targetEventId.value}/join-requests`,
+      query: { status: 'pending' },
+    })
+    joinRequests.value = res.data
+  } catch {
+    joinRequests.value = []
+  }
+}
+
+async function loadPeople() {
+  await Promise.all([loadMembers(), loadInvitations(), loadJoinRequests()])
+}
+
+/** After leaving an event the user no longer belongs here — send them home. */
+async function handleLeft() {
+  await authStore.loadProfile()
+  router.push({ name: 'select-event', query: { mode: 'switch' } })
 }
 
 async function loadEvent() {
@@ -84,7 +138,7 @@ async function loadEvent() {
     ])
     event.value = eventRes.data
     tasks.value = tasksRes.data.items
-    if (canManage.value) await loadManagers()
+    if (isMember.value) await loadPeople()
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -98,7 +152,9 @@ function handleUpdated(updated: EventRead) {
 
 watch(targetEventId, () => {
   event.value = null
-  managers.value = []
+  members.value = []
+  invitations.value = []
+  joinRequests.value = []
   tasks.value = []
   loadEvent()
 })
@@ -129,17 +185,24 @@ onMounted(loadEvent)
         {{ t('duties.events.detail.nav.details') }}
       </Button>
       <Button
-        v-if="authStore.isAdmin"
+        v-if="isMember"
         variant="ghost"
         :class="[
           'rounded-none border-b-2 -mb-px',
-          activeTab === 'managers' ? 'border-primary text-primary' : 'border-transparent',
+          activeTab === 'people' ? 'border-primary text-primary' : 'border-transparent',
         ]"
-        data-testid="tab-managers"
-        @click="setTab('managers')"
+        data-testid="tab-people"
+        @click="setTab('people')"
       >
-        <ShieldCheck class="mr-2 h-4 w-4" />
-        {{ t('duties.events.detail.nav.management') }}
+        <Users class="mr-2 h-4 w-4" />
+        {{ t('duties.events.detail.nav.people') }}
+        <span
+          v-if="joinRequests.length > 0"
+          class="ml-2 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground"
+          data-testid="people-tab-badge"
+        >
+          {{ joinRequests.length }}
+        </span>
       </Button>
     </div>
 
@@ -156,13 +219,28 @@ onMounted(loadEvent)
         @updated="handleUpdated"
         @cancel="router.back()"
       />
-      <EventManagers
-        v-else-if="activeTab === 'managers'"
-        :event-id="targetEventId"
-        :managers="managers"
-        :can-edit="authStore.isAdmin"
-        @updated="loadManagers"
-      />
+      <div v-else-if="activeTab === 'people'" class="space-y-6">
+        <EventJoinRequests
+          v-if="canManage"
+          :event-id="targetEventId"
+          :requests="joinRequests"
+          @updated="loadPeople"
+        />
+        <EventMembers
+          :event-id="targetEventId"
+          :members="members"
+          :can-edit="canManage"
+          :is-owner="isOwner"
+          @updated="loadPeople"
+          @left="handleLeft"
+        />
+        <EventInvitations
+          v-if="canManage"
+          :event-id="targetEventId"
+          :invitations="invitations"
+          @updated="loadInvitations"
+        />
+      </div>
     </template>
   </div>
 </template>

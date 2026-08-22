@@ -18,7 +18,13 @@ async def app(
     db_session: AsyncSession,
     test_user: User,
 ) -> AsyncGenerator[FastAPI, None]:
-    """FastAPI app with test dependency overrides."""
+    """FastAPI app with test dependency overrides.
+
+    Only two identity dependencies survive the self-service refactor:
+    ``CurrentUser`` and ``CurrentSuperuser``. Everything that used to be a
+    global manager role is now a per-event membership, so tests grant access
+    by inserting an ``EventMembership`` rather than by swapping a dependency.
+    """
 
     async def override_get_db():
         yield db_session
@@ -31,8 +37,8 @@ async def app(
         get_args(deps_module.CurrentUser)[1].dependency
     ] = override_current_user
 
-    # CurrentSuperuser and CurrentManager raise 403 by default — use as_admin or
-    # as_task_manager fixtures to grant access in tests that require those roles.
+    # CurrentSuperuser denies by default — use the as_admin fixture for the
+    # handful of endpoints that are still platform-wide.
     async def override_deny():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -41,12 +47,6 @@ async def app(
 
     fastapi_app.dependency_overrides[
         get_args(deps_module.CurrentSuperuser)[1].dependency
-    ] = override_deny
-    fastapi_app.dependency_overrides[
-        get_args(deps_module.CurrentGlobalManager)[1].dependency
-    ] = override_deny
-    fastapi_app.dependency_overrides[
-        get_args(deps_module.CurrentManager)[1].dependency
     ] = override_deny
 
     yield fastapi_app
@@ -62,63 +62,64 @@ async def async_client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
         yield client
 
 
-@pytest_asyncio.fixture
-async def as_admin(app: FastAPI, test_admin_user: User) -> AsyncGenerator[None, None]:
-    """Temporarily override CurrentUser, CurrentManager, CurrentGlobalManager and CurrentSuperuser to return an admin user."""
+def _swap_identity(app: FastAPI, user: User, *, superuser: bool):
+    """Point CurrentUser (and optionally CurrentSuperuser) at ``user``."""
     user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
-    manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
-    global_manager_dep: Any = get_args(deps_module.CurrentGlobalManager)[1].dependency
     superuser_dep: Any = get_args(deps_module.CurrentSuperuser)[1].dependency
     originals = {
-        dep: app.dependency_overrides.get(dep)
-        for dep in (user_dep, manager_dep, global_manager_dep, superuser_dep)
-    }
-
-    async def override_current_user():
-        return test_admin_user
-
-    for dep in (user_dep, manager_dep, global_manager_dep, superuser_dep):
-        app.dependency_overrides[dep] = override_current_user
-    yield
-    for dep, original in originals.items():
-        if original:
-            app.dependency_overrides[dep] = original
-        else:
-            app.dependency_overrides.pop(dep, None)
-
-
-@pytest_asyncio.fixture
-async def as_task_manager(
-    app: FastAPI, test_task_manager_user: User
-) -> AsyncGenerator[None, None]:
-    """Temporarily override CurrentUser, CurrentManager, CurrentGlobalManager to return a task_manager user.
-
-    CurrentSuperuser is overridden to raise 403 because task_managers are not admins.
-    """
-    user_dep: Any = get_args(deps_module.CurrentUser)[1].dependency
-    manager_dep: Any = get_args(deps_module.CurrentManager)[1].dependency
-    global_manager_dep: Any = get_args(deps_module.CurrentGlobalManager)[1].dependency
-    superuser_dep: Any = get_args(deps_module.CurrentSuperuser)[1].dependency
-    manager_deps = (user_dep, manager_dep, global_manager_dep)
-    originals = {
-        dep: app.dependency_overrides.get(dep) for dep in (*manager_deps, superuser_dep)
+        dep: app.dependency_overrides.get(dep) for dep in (user_dep, superuser_dep)
     }
 
     async def override():
-        return test_task_manager_user
+        return user
 
-    async def override_superuser():
+    async def override_deny():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions",
         )
 
-    for dep in manager_deps:
-        app.dependency_overrides[dep] = override
-    app.dependency_overrides[superuser_dep] = override_superuser
-    yield
+    app.dependency_overrides[user_dep] = override
+    app.dependency_overrides[superuser_dep] = override if superuser else override_deny
+    return originals
+
+
+def _restore(app: FastAPI, originals: dict[Any, Any]) -> None:
     for dep, original in originals.items():
         if original:
             app.dependency_overrides[dep] = original
         else:
             app.dependency_overrides.pop(dep, None)
+
+
+@pytest_asyncio.fixture
+async def as_admin(app: FastAPI, test_admin_user: User) -> AsyncGenerator[None, None]:
+    """Act as the platform superadmin."""
+    originals = _swap_identity(app, test_admin_user, superuser=True)
+    yield
+    _restore(app, originals)
+
+
+@pytest_asyncio.fixture
+async def as_event_admin(
+    app: FastAPI, test_event_admin_user: User
+) -> AsyncGenerator[None, None]:
+    """Act as someone who administers the fixture events but holds no global role.
+
+    Pair with ``test_event`` / ``test_draft_event``, which grant this user the
+    ``admin`` membership. CurrentSuperuser still denies — an event admin is
+    not a platform admin.
+    """
+    originals = _swap_identity(app, test_event_admin_user, superuser=False)
+    yield
+    _restore(app, originals)
+
+
+@pytest_asyncio.fixture
+async def as_outsider(
+    app: FastAPI, test_outsider_user: User
+) -> AsyncGenerator[None, None]:
+    """Act as a signed-in user who belongs to no event at all."""
+    originals = _swap_identity(app, test_outsider_user, superuser=False)
+    yield
+    _restore(app, originals)

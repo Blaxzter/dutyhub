@@ -2,22 +2,25 @@ import datetime as dt
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Query
 from pydantic import BaseModel
 from sqlalchemy import func as sa_func
 from sqlalchemy import select as sa_select
 from sqlalchemy import update as sa_update
 from sqlmodel import col
 
-from app.api.deps import CurrentGlobalManager, CurrentSuperuser, CurrentUser, DBDep
+from app.api.deps import CurrentSuperuser, CurrentUser, DBDep
 from app.core.errors import raise_problem
+from app.crud.event import EventScope
 from app.crud.event import event as crud_event
-from app.crud.event_manager import event_manager as crud_egm
+from app.crud.event_invitation import event_invitation as crud_invitation
+from app.crud.event_invitation import invitation_invalid_reason
+from app.crud.event_join_request import event_join_request as crud_join_request
+from app.crud.event_membership import event_membership as crud_membership
 from app.crud.user import user as crud_user
 from app.crud.user_availability import user_availability as crud_availability
-from app.logic.permissions import require_event_access
+from app.logic.permissions import require_event_role, require_event_visible
 from app.models.event import Event
-from app.models.event_manager import EventManager
 from app.models.shift import Shift
 from app.models.shift_batch import ShiftBatch
 from app.models.task import Task
@@ -29,8 +32,24 @@ from app.schemas.event import (
     EventRead,
     EventStatus,
     EventUpdate,
+    EventVisibility,
 )
-from app.schemas.user import UserRead
+from app.schemas.event_invitation import (
+    EventInvitationBulkCreate,
+    EventInvitationBulkResult,
+    EventInvitationCreate,
+    EventInvitationRead,
+)
+from app.schemas.event_join_request import (
+    EventJoinRequestCreate,
+    EventJoinRequestDecision,
+    EventJoinRequestRead,
+)
+from app.schemas.event_membership import (
+    EventMemberRead,
+    EventMemberRoleUpdate,
+    EventOwnershipTransfer,
+)
 from app.schemas.user_availability import (
     UserAvailabilityCreate,
     UserAvailabilityRead,
@@ -40,115 +59,159 @@ from app.schemas.user_availability import (
 router = APIRouter(prefix="/events", tags=["events"])
 
 
+# --- Read helpers -------------------------------------------------------
+
+
+async def decorate_events(
+    session: DBDep,
+    user: UserModel,
+    events: list[Event],
+) -> list[EventRead]:
+    """Attach viewer-relative context to a page of events.
+
+    Member counts, the caller's own role and any pending join request are all
+    fetched in one query each rather than per row, so a long Discover list
+    costs a constant number of round trips.
+    """
+    event_ids = [e.id for e in events]
+    if not event_ids:
+        return []
+
+    member_counts = await crud_membership.count_by_event(session, event_ids=event_ids)
+    my_roles = await crud_membership.get_roles_for_user(session, user_id=user.id)
+    request_statuses = await crud_join_request.statuses_for_user(
+        session, user_id=user.id, event_ids=event_ids
+    )
+
+    # Only events the caller can manage need a pending-request badge.
+    manageable = [
+        e.id
+        for e in events
+        if user.is_admin or my_roles.get(e.id) in ("owner", "admin")
+    ]
+    pending_counts = await crud_join_request.count_pending_by_event(
+        session, event_ids=manageable
+    )
+
+    out: list[EventRead] = []
+    for e in events:
+        read = EventRead.model_validate(e)
+        read.my_role = "owner" if user.is_admin else my_roles.get(e.id)
+        read.member_count = member_counts.get(e.id, 0)
+        read.join_request_status = request_statuses.get(e.id)
+        read.pending_request_count = pending_counts.get(e.id, 0)
+        out.append(read)
+    return out
+
+
+async def decorate_event(
+    session: DBDep,
+    user: UserModel,
+    event: Event,
+) -> EventRead:
+    decorated = await decorate_events(session, user, [event])
+    return decorated[0]
+
+
+# --- Event CRUD ---------------------------------------------------------
+
+
 @router.get("/", response_model=EventListResponse)
 async def list_events(
     session: DBDep,
     current_user: CurrentUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=200),
+    scope: EventScope = Query(
+        default="mine",
+        description=(
+            "mine — events you belong to; discover — public events you could "
+            "join; featured — the curated home selection; all — superadmin only"
+        ),
+    ),
     search: str | None = None,
     status: EventStatus | None = None,
+    visibility: EventVisibility | None = None,
     date_from: dt.date | None = None,
     date_to: dt.date | None = None,
     is_expired: bool | None = None,
 ) -> EventListResponse:
-    """List published events (all users) or all groups (admin/manager).
+    """List events in one of four scopes.
 
-    Scoped event managers see published groups plus their managed groups
-    regardless of status.
+    Visibility is enforced in the query itself: a private event can only ever
+    come back under ``mine`` (or ``all`` for the platform superadmin).
     """
-    effective_status = status
-    also_include_ids: list[uuid.UUID] | None = None
+    effective_scope: EventScope = scope
+    if scope == "all" and not current_user.is_admin:
+        effective_scope = "mine"
 
-    if current_user.is_manager:
-        # Global admin/task_manager — see everything
-        pass
-    else:
-        # Check if user is a scoped event manager
-        result = await session.execute(
-            sa_select(col(EventManager.event_id)).where(
-                col(EventManager.user_id) == current_user.id
-            )
-        )
-        managed_ids = list(result.scalars().all())
-
-        if effective_status is None:
-            effective_status = "published"
-        if managed_ids:
-            also_include_ids = managed_ids
+    member_event_ids = await crud_membership.list_event_ids_for_user(
+        session, user_id=current_user.id
+    )
 
     filter_kwargs: dict[str, Any] = {
+        "scope": effective_scope,
+        "member_event_ids": member_event_ids,
         "search": search,
-        "status": effective_status,
+        "status": status,
+        "visibility": visibility,
         "date_from": date_from,
         "date_to": date_to,
         "is_expired": is_expired,
-        "also_include_ids": also_include_ids,
     }
 
     items = await crud_event.get_multi_filtered(
-        session,
-        skip=skip,
-        limit=limit,
-        **filter_kwargs,
+        session, skip=skip, limit=limit, **filter_kwargs
     )
-    total = await crud_event.get_count_filtered(
-        session,
-        **filter_kwargs,
-    )
+    total = await crud_event.get_count_filtered(session, **filter_kwargs)
     return EventListResponse(
-        items=[EventRead.model_validate(i) for i in items],
+        items=await decorate_events(session, current_user, items),
         total=total,
         skip=skip,
         limit=limit,
     )
 
 
-@router.get("/{group_id}", response_model=EventRead)
+@router.get("/{event_id}", response_model=EventRead)
 async def get_event(
-    group_id: uuid.UUID,
+    event_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
-) -> Event:
-    db_group = await crud_event.get(session, group_id, raise_404_error=True)
-    if not current_user.is_manager and db_group.status != "published":
-        # Allow scoped event managers to see their own unpublished groups
-        is_scoped = await crud_egm.is_manager(
-            session, user_id=current_user.id, event_id=group_id
-        )
-        if not is_scoped:
-            raise_problem(
-                403,
-                code="event.not_published",
-                detail="Task group is not published",
-            )
-    return db_group
+) -> EventRead:
+    db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_visible(current_user, session, db_event)
+    return await decorate_event(session, current_user, db_event)
 
 
 @router.post("/", response_model=EventRead, status_code=201)
 async def create_event(
-    group_in: EventCreate,
+    event_in: EventCreate,
     session: DBDep,
-    current_user: CurrentGlobalManager,
-) -> Event:
-    group_in.created_by_id = current_user.id
-    return await crud_event.create(session, obj_in=group_in)
+    current_user: CurrentUser,
+) -> EventRead:
+    """Create an event. Any signed-in user may; the creator becomes its owner."""
+    event_in.created_by_id = current_user.id
+    db_event = await crud_event.create(session, obj_in=event_in)
+    await crud_membership.upsert(
+        session, user_id=current_user.id, event_id=db_event.id, role="owner"
+    )
+    return await decorate_event(session, current_user, db_event)
 
 
-@router.patch("/{group_id}", response_model=EventRead)
+@router.patch("/{event_id}", response_model=EventRead)
 async def update_event(
-    group_id: uuid.UUID,
-    group_in: EventUpdate,
+    event_id: uuid.UUID,
+    event_in: EventUpdate,
     session: DBDep,
     current_user: CurrentUser,
     background_tasks: BackgroundTasks,
-) -> Event:
-    db_group = await crud_event.get(session, group_id, raise_404_error=True)
-    await require_event_access(current_user, session, db_group.id)
+) -> EventRead:
+    db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, db_event.id, minimum="admin")
 
     # Validate date range against existing tasks
-    new_start = group_in.start_date or db_group.start_date
-    new_end = group_in.end_date or db_group.end_date
+    new_start = event_in.start_date or db_event.start_date
+    new_end = event_in.end_date or db_event.end_date
     if new_end < new_start:
         raise_problem(
             422,
@@ -159,16 +222,16 @@ async def update_event(
     # Validate default time window after merging with the DB record (PATCH may
     # carry only one of the two fields, but the resulting pair must satisfy
     # end > start).
-    update_fields = group_in.model_fields_set
+    update_fields = event_in.model_fields_set
     new_start_time = (
-        group_in.default_start_time
+        event_in.default_start_time
         if "default_start_time" in update_fields
-        else db_group.default_start_time
+        else db_event.default_start_time
     )
     new_end_time = (
-        group_in.default_end_time
+        event_in.default_end_time
         if "default_end_time" in update_fields
-        else db_group.default_end_time
+        else db_event.default_end_time
     )
     if (
         new_start_time is not None
@@ -184,12 +247,12 @@ async def update_event(
                 "events that span midnight."
             ),
         )
-    if group_in.start_date is not None or group_in.end_date is not None:
+    if event_in.start_date is not None or event_in.end_date is not None:
         result = await session.execute(
             sa_select(
                 sa_func.min(col(Task.start_date)),
                 sa_func.max(col(Task.end_date)),
-            ).where(col(Task.event_id) == group_id)
+            ).where(col(Task.event_id) == event_id)
         )
         row = result.one()
         earliest_task, latest_task = row[0], row[1]
@@ -206,8 +269,15 @@ async def update_event(
                 detail=f"Cannot set end date before {latest_task.isoformat()} — a task ends on that date",
             )
 
-    old_status = db_group.status
-    updated = await crud_event.update(session, db_obj=db_group, obj_in=group_in)
+    old_status = db_event.status
+    updated = await crud_event.update(session, db_obj=db_event, obj_in=event_in)
+
+    # An event pulled back out of public listings should not keep its featured
+    # slot on the home screen.
+    if updated.visibility == "private" and updated.is_featured:
+        updated.is_featured = False
+        session.add(updated)
+        await session.flush()
 
     # Notify when event is published
     if old_status != "published" and updated.status == "published":
@@ -219,22 +289,53 @@ async def update_event(
             event_name=updated.name,
         )
 
-    return updated
+    return await decorate_event(session, current_user, updated)
 
 
-@router.get("/{group_id}/task-date-bounds")
-async def get_task_date_bounds(
-    group_id: uuid.UUID,
+class FeaturedUpdate(BaseModel):
+    is_featured: bool
+
+
+@router.patch("/{event_id}/featured", response_model=EventRead)
+async def set_event_featured(
+    event_id: uuid.UUID,
+    body: FeaturedUpdate,
     session: DBDep,
-    _current_user: CurrentUser,
+    current_user: CurrentSuperuser,
+) -> EventRead:
+    """Platform superadmin: curate which events surface on the home screen.
+
+    Featuring is the one thing event owners cannot do for themselves — it is
+    the whole of the superadmin's remaining editorial role.
+    """
+    db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    if body.is_featured and db_event.visibility != "public":
+        raise_problem(
+            422,
+            code="event.feature_requires_public",
+            detail="Only public events can be featured on the home screen",
+        )
+    db_event.is_featured = body.is_featured
+    session.add(db_event)
+    await session.flush()
+    await session.refresh(db_event)
+    return await decorate_event(session, current_user, db_event)
+
+
+@router.get("/{event_id}/task-date-bounds")
+async def get_task_date_bounds(
+    event_id: uuid.UUID,
+    session: DBDep,
+    current_user: CurrentUser,
 ) -> dict[str, dt.date | None]:
-    """Return the earliest task start and latest task end within this group."""
-    await crud_event.get(session, group_id, raise_404_error=True)
+    """Return the earliest task start and latest task end within this event."""
+    db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_visible(current_user, session, db_event)
     result = await session.execute(
         sa_select(
             sa_func.min(col(Task.start_date)),
             sa_func.max(col(Task.end_date)),
-        ).where(col(Task.event_id) == group_id)
+        ).where(col(Task.event_id) == event_id)
     )
     row = result.one()
     return {"earliest_start": row[0], "latest_end": row[1]}
@@ -244,33 +345,33 @@ class ShiftDatesRequest(BaseModel):
     new_start_date: dt.date
 
 
-@router.post("/{group_id}/shift-dates", response_model=EventRead)
+@router.post("/{event_id}/shift-dates", response_model=EventRead)
 async def shift_event_dates(
-    group_id: uuid.UUID,
+    event_id: uuid.UUID,
     body: ShiftDatesRequest,
     session: DBDep,
     current_user: CurrentUser,
-) -> Event:
+) -> EventRead:
     """Shift the entire event and all its tasks/shifts/availabilities by a date offset.
 
-    The offset is calculated from the difference between the current group
+    The offset is calculated from the difference between the current event
     start_date and the provided new_start_date.
     """
-    db_group = await crud_event.get(session, group_id, raise_404_error=True)
-    await require_event_access(current_user, session, db_group.id)
+    db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, db_event.id, minimum="admin")
 
-    delta = body.new_start_date - db_group.start_date
+    delta = body.new_start_date - db_event.start_date
     if delta.days == 0:
-        return db_group
+        return await decorate_event(session, current_user, db_event)
 
     # 1. Shift the event itself
-    db_group.start_date = db_group.start_date + delta
-    db_group.end_date = db_group.end_date + delta
-    session.add(db_group)
+    db_event.start_date = db_event.start_date + delta
+    db_event.end_date = db_event.end_date + delta
+    session.add(db_event)
 
-    # Get task IDs in this group
+    # Get task IDs in this event
     task_ids_result = await session.execute(
-        sa_select(col(Task.id)).where(col(Task.event_id) == group_id)
+        sa_select(col(Task.id)).where(col(Task.event_id) == event_id)
     )
     task_ids = list(task_ids_result.scalars().all())
 
@@ -278,7 +379,7 @@ async def shift_event_dates(
         # 2. Shift tasks
         await session.execute(
             sa_update(Task)
-            .where(col(Task.event_id) == group_id)
+            .where(col(Task.event_id) == event_id)
             .values(
                 start_date=Task.start_date + delta,
                 end_date=Task.end_date + delta,
@@ -338,12 +439,12 @@ async def shift_event_dates(
                 )
                 session.add(batch)
 
-    # 6. Shift user availability dates for this group
+    # 6. Shift user availability dates for this event
     from app.models.user_availability import UserAvailability
 
     avail_ids_result = await session.execute(
         sa_select(col(UserAvailability.id)).where(
-            col(UserAvailability.event_id) == group_id
+            col(UserAvailability.event_id) == event_id
         )
     )
     avail_ids = list(avail_ids_result.scalars().all())
@@ -355,8 +456,8 @@ async def shift_event_dates(
         )
 
     await session.flush()
-    await session.refresh(db_group)
-    return db_group
+    await session.refresh(db_event)
+    return await decorate_event(session, current_user, db_event)
 
 
 def _shift_overrides(
@@ -379,34 +480,39 @@ def _shift_overrides(
     return shifted
 
 
-@router.delete("/{group_id}", status_code=204)
+@router.delete("/{event_id}", status_code=204)
 async def delete_event(
-    group_id: uuid.UUID,
+    event_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
 ) -> None:
-    db_group = await crud_event.get(session, group_id, raise_404_error=True)
-    await require_event_access(current_user, session, db_group.id)
-    await session.delete(db_group)
+    """Delete an event. Owner (or platform superadmin) only.
+
+    Deliberately stricter than editing: an admin brought in to help run an
+    event should not be able to destroy it.
+    """
+    db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, db_event.id, minimum="owner")
+    await session.delete(db_event)
     await session.commit()
 
 
 # --- Availability endpoints ---
 
 
-@router.get("/{group_id}/availabilities", response_model=list[UserAvailabilityWithUser])
+@router.get("/{event_id}/availabilities", response_model=list[UserAvailabilityWithUser])
 async def list_event_availabilities(
-    group_id: uuid.UUID,
+    event_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=200, ge=1, le=500),
 ) -> list[UserAvailabilityWithUser]:
-    """List all user availabilities for this event (managers only)."""
-    await crud_event.get(session, group_id, raise_404_error=True)
-    await require_event_access(current_user, session, group_id)
+    """List all user availabilities for this event (event admins only)."""
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="admin")
     availabilities = await crud_availability.get_multi_by_group(
-        session, event_id=group_id, skip=skip, limit=limit
+        session, event_id=event_id, skip=skip, limit=limit
     )
 
     user_ids = [a.user_id for a in availabilities]
@@ -431,16 +537,16 @@ async def list_event_availabilities(
     ]
 
 
-@router.get("/{group_id}/availability/me", response_model=UserAvailabilityRead)
+@router.get("/{event_id}/availability/me", response_model=UserAvailabilityRead)
 async def get_my_availability(
-    group_id: uuid.UUID,
+    event_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
 ) -> UserAvailabilityRead:
     avail = await crud_availability.get_by_user_and_group(
         session,
         user_id=current_user.id,
-        event_id=group_id,
+        event_id=event_id,
     )
     if not avail:
         raise_problem(
@@ -452,21 +558,23 @@ async def get_my_availability(
 
 
 @router.post(
-    "/{group_id}/availability",
+    "/{event_id}/availability",
     response_model=UserAvailabilityRead,
     status_code=201,
 )
 async def set_my_availability(
-    group_id: uuid.UUID,
+    event_id: uuid.UUID,
     avail_in: UserAvailabilityCreate,
     session: DBDep,
     current_user: CurrentUser,
 ) -> UserAvailabilityRead:
-    await crud_event.get(session, group_id, raise_404_error=True)
+    await crud_event.get(session, event_id, raise_404_error=True)
+    # Offering availability is a member action — you must be in the event.
+    await require_event_role(current_user, session, event_id, minimum="member")
     await crud_availability.upsert_for_user(
         session,
         user_id=current_user.id,
-        event_id=group_id,
+        event_id=event_id,
         obj_in=avail_in,
     )
     await session.flush()
@@ -474,21 +582,21 @@ async def set_my_availability(
     avail = await crud_availability.get_by_user_and_group(
         session,
         user_id=current_user.id,
-        event_id=group_id,
+        event_id=event_id,
     )
     return UserAvailabilityRead.model_validate(avail)
 
 
-@router.delete("/{group_id}/availability/me", status_code=204)
+@router.delete("/{event_id}/availability/me", status_code=204)
 async def delete_my_availability(
-    group_id: uuid.UUID,
+    event_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
 ) -> None:
     deleted = await crud_availability.delete_for_user(
         session,
         user_id=current_user.id,
-        event_id=group_id,
+        event_id=event_id,
     )
     if not deleted:
         raise_problem(
@@ -499,54 +607,494 @@ async def delete_my_availability(
     await session.commit()
 
 
-# --- Manager assignment endpoints ---
+# --- Membership ---------------------------------------------------------
 
 
-@router.get("/{group_id}/managers", response_model=list[UserRead])
-async def list_event_managers(
-    group_id: uuid.UUID,
+@router.get("/{event_id}/members", response_model=list[EventMemberRead])
+async def list_event_members(
+    event_id: uuid.UUID,
     session: DBDep,
     current_user: CurrentUser,
-) -> list[UserRead]:
-    """List all assigned managers for this event."""
-    await crud_event.get(session, group_id, raise_404_error=True)
-    await require_event_access(current_user, session, group_id)
-    assignments = await crud_egm.get_by_group(session, event_id=group_id)
-    user_ids = [a.user_id for a in assignments]
-    if not user_ids:
-        return []
-    result = await session.execute(
-        sa_select(UserModel).where(UserModel.id.in_(user_ids))  # type: ignore[attr-defined]
-    )
-    return [UserRead.model_validate(u) for u in result.scalars().all()]
-
-
-@router.post("/{group_id}/managers/{user_id}", response_model=UserRead, status_code=201)
-async def assign_group_manager(
-    group_id: uuid.UUID,
-    user_id: uuid.UUID,
-    session: DBDep,
-    _current_user: CurrentSuperuser,
-) -> UserRead:
-    """Admin-only: assign a user as manager of this event."""
-    await crud_event.get(session, group_id, raise_404_error=True)
-    user = await crud_user.get(session, id=user_id, raise_404_error=True)
-    await crud_egm.assign(session, user_id=user_id, event_id=group_id)
-    return UserRead.model_validate(user)
-
-
-@router.delete("/{group_id}/managers/{user_id}", status_code=204)
-async def remove_group_manager(
-    group_id: uuid.UUID,
-    user_id: uuid.UUID,
-    session: DBDep,
-    _current_user: CurrentSuperuser,
-) -> None:
-    """Admin-only: remove a user as manager of this event."""
-    await crud_event.get(session, group_id, raise_404_error=True)
-    removed = await crud_egm.remove(session, user_id=user_id, event_id=group_id)
-    if not removed:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Manager assignment not found",
+) -> list[EventMemberRead]:
+    """The event roster. Visible to anyone in the event."""
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="member")
+    rows = await crud_membership.list_members(session, event_id=event_id)
+    return [
+        EventMemberRead(
+            user_id=membership.user_id,
+            event_id=membership.event_id,
+            role=membership.role,  # type: ignore[arg-type]
+            joined_at=membership.created_at,
+            name=user.name,
+            email=user.email,
+            avatar_etag=user.avatar_etag,
         )
+        for membership, user in rows
+    ]
+
+
+@router.patch(
+    "/{event_id}/members/{user_id}",
+    response_model=EventMemberRead,
+)
+async def update_member_role(
+    event_id: uuid.UUID,
+    user_id: uuid.UUID,
+    body: EventMemberRoleUpdate,
+    session: DBDep,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> EventMemberRead:
+    """Promote or demote a member. Event admins and the owner may do this."""
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="admin")
+
+    membership = await crud_membership.get(session, user_id=user_id, event_id=event_id)
+    if not membership:
+        raise_problem(
+            404,
+            code="event.member_not_found",
+            detail="That user is not a member of this event",
+        )
+    if membership.role == "owner":
+        raise_problem(
+            422,
+            code="event.cannot_demote_owner",
+            detail=(
+                "The owner's role cannot be changed directly. "
+                "Transfer ownership instead."
+            ),
+        )
+
+    updated = await crud_membership.upsert(
+        session, user_id=user_id, event_id=event_id, role=body.role
+    )
+    user = await crud_user.get(session, id=user_id, raise_404_error=True)
+
+    from app.logic.notifications.triggers import dispatch_event_role_changed
+
+    background_tasks.add_task(
+        dispatch_event_role_changed,
+        event_id=event_id,
+        user_id=user_id,
+        role=body.role,
+    )
+
+    return EventMemberRead(
+        user_id=updated.user_id,
+        event_id=updated.event_id,
+        role=updated.role,  # type: ignore[arg-type]
+        joined_at=updated.created_at,
+        name=user.name,
+        email=user.email,
+        avatar_etag=user.avatar_etag,
+    )
+
+
+@router.delete("/{event_id}/members/{user_id}", status_code=204)
+async def remove_member(
+    event_id: uuid.UUID,
+    user_id: uuid.UUID,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> None:
+    """Remove someone from an event, or leave it yourself.
+
+    Anyone may remove themselves; removing *others* needs admin. The owner
+    cannot be removed at all — ownership has to be transferred first, so an
+    event is never left without someone in charge.
+    """
+    await crud_event.get(session, event_id, raise_404_error=True)
+    is_self = user_id == current_user.id
+    if not is_self:
+        await require_event_role(current_user, session, event_id, minimum="admin")
+
+    membership = await crud_membership.get(session, user_id=user_id, event_id=event_id)
+    if not membership:
+        raise_problem(
+            404,
+            code="event.member_not_found",
+            detail="That user is not a member of this event",
+        )
+    if membership.role == "owner":
+        raise_problem(
+            422,
+            code="event.cannot_remove_owner",
+            detail=("The event owner cannot be removed. Transfer ownership first."),
+        )
+
+    await crud_membership.remove(session, user_id=user_id, event_id=event_id)
+
+    # Clear the selection so the removed user is not stranded on an event
+    # they can no longer open.
+    removed_user = await crud_user.get(session, id=user_id)
+    if removed_user and removed_user.selected_event_id == event_id:
+        removed_user.selected_event_id = None
+        session.add(removed_user)
+        await session.flush()
+
+
+@router.post("/{event_id}/transfer-ownership", response_model=list[EventMemberRead])
+async def transfer_event_ownership(
+    event_id: uuid.UUID,
+    body: EventOwnershipTransfer,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> list[EventMemberRead]:
+    """Hand the event to another member. Owner only.
+
+    The outgoing owner stays on as an admin rather than losing access.
+    """
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="owner")
+
+    target = await crud_membership.get(
+        session, user_id=body.new_owner_id, event_id=event_id
+    )
+    if not target:
+        raise_problem(
+            422,
+            code="event.new_owner_not_member",
+            detail="The new owner must already be a member of this event",
+        )
+    if body.new_owner_id == current_user.id:
+        raise_problem(
+            422,
+            code="event.already_owner",
+            detail="That user already owns this event",
+        )
+
+    await crud_membership.upsert(
+        session, user_id=body.new_owner_id, event_id=event_id, role="owner"
+    )
+    # The platform superadmin can transfer an event they do not personally
+    # belong to; only demote a real membership row.
+    if await crud_membership.get(session, user_id=current_user.id, event_id=event_id):
+        await crud_membership.upsert(
+            session, user_id=current_user.id, event_id=event_id, role="admin"
+        )
+
+    db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    db_event.created_by_id = body.new_owner_id
+    session.add(db_event)
+    await session.flush()
+
+    return await list_event_members(event_id, session, current_user)
+
+
+# --- Invitations --------------------------------------------------------
+
+
+@router.get("/{event_id}/invitations", response_model=list[EventInvitationRead])
+async def list_event_invitations(
+    event_id: uuid.UUID,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> list[EventInvitationRead]:
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="admin")
+    invitations = await crud_invitation.list_open_for_event(session, event_id=event_id)
+    return [EventInvitationRead.model_validate(i) for i in invitations]
+
+
+@router.post(
+    "/{event_id}/invitations",
+    response_model=EventInvitationRead,
+    status_code=201,
+)
+async def create_event_invitation(
+    event_id: uuid.UUID,
+    body: EventInvitationCreate,
+    session: DBDep,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> EventInvitationRead:
+    """Invite one person by email, or mint a shareable link (omit ``email``)."""
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="admin")
+
+    if body.email:
+        existing_user = await crud_user.get_by_email(session, email=str(body.email))
+        if existing_user:
+            already = await crud_membership.get(
+                session, user_id=existing_user.id, event_id=event_id
+            )
+            if already:
+                raise_problem(
+                    409,
+                    code="event.already_member",
+                    detail="That person is already a member of this event",
+                )
+        open_invite = await crud_invitation.find_pending_for_email(
+            session, event_id=event_id, email=str(body.email)
+        )
+        if open_invite and invitation_invalid_reason(open_invite) is None:
+            raise_problem(
+                409,
+                code="event.already_invited",
+                detail="That address already has an open invitation",
+            )
+
+    invitation = await crud_invitation.create(
+        session,
+        event_id=event_id,
+        email=str(body.email) if body.email else None,
+        role=body.role,
+        invited_by_id=current_user.id,
+        expires_in_days=body.expires_in_days,
+    )
+
+    if invitation.email:
+        from app.logic.notifications.triggers import dispatch_event_invitation
+
+        background_tasks.add_task(
+            dispatch_event_invitation,
+            invitation_id=invitation.id,
+        )
+
+    return EventInvitationRead.model_validate(invitation)
+
+
+@router.post(
+    "/{event_id}/invitations/bulk",
+    response_model=EventInvitationBulkResult,
+    status_code=201,
+)
+async def create_event_invitations_bulk(
+    event_id: uuid.UUID,
+    body: EventInvitationBulkCreate,
+    session: DBDep,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> EventInvitationBulkResult:
+    """Invite a list of addresses at once.
+
+    Addresses that are already members or already invited are reported back
+    rather than failing the whole batch — pasting a team list twice should be
+    harmless.
+    """
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="admin")
+
+    created: list[EventInvitationRead] = []
+    skipped_members: list[str] = []
+    skipped_invited: list[str] = []
+
+    for address in body.emails:
+        email = str(address)
+        existing_user = await crud_user.get_by_email(session, email=email)
+        if existing_user and await crud_membership.get(
+            session, user_id=existing_user.id, event_id=event_id
+        ):
+            skipped_members.append(email)
+            continue
+        open_invite = await crud_invitation.find_pending_for_email(
+            session, event_id=event_id, email=email
+        )
+        if open_invite and invitation_invalid_reason(open_invite) is None:
+            skipped_invited.append(email)
+            continue
+
+        invitation = await crud_invitation.create(
+            session,
+            event_id=event_id,
+            email=email,
+            role=body.role,
+            invited_by_id=current_user.id,
+            expires_in_days=body.expires_in_days,
+        )
+        created.append(EventInvitationRead.model_validate(invitation))
+
+        from app.logic.notifications.triggers import dispatch_event_invitation
+
+        background_tasks.add_task(
+            dispatch_event_invitation, invitation_id=invitation.id
+        )
+
+    return EventInvitationBulkResult(
+        created=created,
+        skipped_existing_members=skipped_members,
+        skipped_already_invited=skipped_invited,
+    )
+
+
+@router.delete("/{event_id}/invitations/{invitation_id}", status_code=204)
+async def revoke_event_invitation(
+    event_id: uuid.UUID,
+    invitation_id: uuid.UUID,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> None:
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="admin")
+    invitation = await crud_invitation.get(session, invitation_id=invitation_id)
+    if not invitation or invitation.event_id != event_id:
+        raise_problem(
+            404,
+            code="event.invitation_not_found",
+            detail="Invitation not found",
+        )
+    await crud_invitation.revoke(session, invitation=invitation)
+
+
+# --- Join requests ------------------------------------------------------
+
+
+@router.post(
+    "/{event_id}/join-request",
+    response_model=EventJoinRequestRead,
+    status_code=201,
+)
+async def request_to_join_event(
+    event_id: uuid.UUID,
+    body: EventJoinRequestCreate,
+    session: DBDep,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> EventJoinRequestRead:
+    """Ask to be let into a public event.
+
+    Private events are invitation-only, and are 404 to non-members anyway, so
+    this only ever applies to the public catalogue.
+    """
+    db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_visible(current_user, session, db_event)
+
+    if db_event.visibility != "public":
+        raise_problem(
+            403,
+            code="event.not_joinable",
+            detail="This event is invitation-only",
+        )
+    if await crud_membership.get(session, user_id=current_user.id, event_id=event_id):
+        raise_problem(
+            409,
+            code="event.already_member",
+            detail="You are already a member of this event",
+        )
+
+    request = await crud_join_request.upsert_pending(
+        session,
+        user_id=current_user.id,
+        event_id=event_id,
+        message=body.message,
+    )
+
+    from app.logic.notifications.triggers import dispatch_event_join_requested
+
+    background_tasks.add_task(
+        dispatch_event_join_requested,
+        event_id=event_id,
+        user_id=current_user.id,
+    )
+
+    return EventJoinRequestRead(
+        **request.model_dump(),
+        user_name=current_user.name,
+        user_email=current_user.email,
+        user_avatar_etag=current_user.avatar_etag,
+    )
+
+
+@router.delete("/{event_id}/join-request", status_code=204)
+async def withdraw_join_request(
+    event_id: uuid.UUID,
+    session: DBDep,
+    current_user: CurrentUser,
+) -> None:
+    """Withdraw your own pending request."""
+    deleted = await crud_join_request.delete_for_user(
+        session, user_id=current_user.id, event_id=event_id
+    )
+    if not deleted:
+        raise_problem(
+            404,
+            code="event.join_request_not_found",
+            detail="No join request to withdraw",
+        )
+
+
+@router.get("/{event_id}/join-requests", response_model=list[EventJoinRequestRead])
+async def list_join_requests(
+    event_id: uuid.UUID,
+    session: DBDep,
+    current_user: CurrentUser,
+    status: str | None = Query(default="pending"),
+) -> list[EventJoinRequestRead]:
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="admin")
+    rows = await crud_join_request.list_for_event(
+        session, event_id=event_id, status=status
+    )
+    return [
+        EventJoinRequestRead(
+            **request.model_dump(),
+            user_name=user.name,
+            user_email=user.email,
+            user_avatar_etag=user.avatar_etag,
+        )
+        for request, user in rows
+    ]
+
+
+@router.post(
+    "/{event_id}/join-requests/{request_id}/decide",
+    response_model=EventJoinRequestRead,
+)
+async def decide_join_request(
+    event_id: uuid.UUID,
+    request_id: uuid.UUID,
+    body: EventJoinRequestDecision,
+    session: DBDep,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> EventJoinRequestRead:
+    """Approve or decline someone's request to join."""
+    await crud_event.get(session, event_id, raise_404_error=True)
+    await require_event_role(current_user, session, event_id, minimum="admin")
+
+    request = await crud_join_request.get_by_id(session, request_id=request_id)
+    if not request or request.event_id != event_id:
+        raise_problem(
+            404,
+            code="event.join_request_not_found",
+            detail="Join request not found",
+        )
+    if request.status != "pending":
+        raise_problem(
+            409,
+            code="event.join_request_decided",
+            detail="That request has already been decided",
+        )
+
+    decided = await crud_join_request.decide(
+        session,
+        request=request,
+        approve=body.approve,
+        decided_by_id=current_user.id,
+    )
+    if body.approve:
+        await crud_membership.upsert(
+            session,
+            user_id=decided.user_id,
+            event_id=event_id,
+            role=body.role,
+        )
+
+    from app.logic.notifications.triggers import dispatch_event_join_decided
+
+    background_tasks.add_task(
+        dispatch_event_join_decided,
+        event_id=event_id,
+        user_id=decided.user_id,
+        approved=body.approve,
+    )
+
+    applicant = await crud_user.get(session, id=decided.user_id)
+    return EventJoinRequestRead(
+        **decided.model_dump(),
+        user_name=applicant.name if applicant else None,
+        user_email=applicant.email if applicant else None,
+        user_avatar_etag=applicant.avatar_etag if applicant else None,
+    )

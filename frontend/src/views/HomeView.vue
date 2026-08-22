@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { useLocalStorage } from '@vueuse/core'
 import { BookCheck, CalendarDays, HelpCircle, SlidersHorizontal, Users } from '@lucide/vue'
+import { useLocalStorage } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -21,7 +21,7 @@ import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
 import { ShiftCalendar } from '@/components/tasks/shift-calendar'
 import type { BookingCalendarItem } from '@/components/tasks/shift-calendar'
 
-import type { DashboardTask, DashboardEvent, DashboardFeedResponse } from '@/client'
+import type { DashboardEvent, DashboardFeedResponse, DashboardTask } from '@/client'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -71,10 +71,8 @@ async function loadStats() {
     events.value = feed.events
     myBookingCount.value = feed.booking_count
 
-    // Update pending user count for admin badge
-    if (feed.pending_user_count != null) {
-      authStore.pendingUserCount = feed.pending_user_count
-    }
+    // Join requests waiting on this user, across the events they run.
+    authStore.notifyPendingJoinRequests(feed.pending_join_request_count ?? 0)
 
     // Map feed bookings to calendar items
     const newMap = new Map<string, string>()
@@ -102,7 +100,7 @@ const navigateToTask = (task: { id: string }) => {
 }
 
 const navigateToEvent = (event: { id: string }) => {
-  if (authStore.isAdmin || authStore.isTaskManager || authStore.canManageEvent(event.id)) {
+  if (authStore.canManageEvent(event.id)) {
     router.push({ name: 'event-settings', params: { eventId: event.id } })
   }
 }
@@ -113,7 +111,9 @@ onMounted(loadStats)
 <template>
   <div class="mx-auto max-w-7xl space-y-6">
     <div class="space-y-2">
-      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">{{ t('dashboard.home.title') }}</h1>
+      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
+        {{ t('dashboard.home.title') }}
+      </h1>
       <p class="text-muted-foreground">
         {{ t('dashboard.home.subtitle') }}
       </p>
@@ -160,21 +160,21 @@ onMounted(loadStats)
       </Card>
 
       <Card
-        v-if="authStore.isManager"
-        data-testid="stat-card-users"
+        v-if="authStore.isEventManager"
+        data-testid="stat-card-join-requests"
         class="cursor-pointer hover:shadow-md transition-shadow"
-        @click="router.push({ name: 'admin-users' })"
+        @click="router.push({ name: 'my-events', query: { tab: 'requests' } })"
       >
         <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle class="text-sm font-medium">{{
-            t('dashboard.home.stats.users.title')
+            t('dashboard.home.stats.joinRequests.title')
           }}</CardTitle>
           <Users class="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div class="text-2xl font-bold">{{ authStore.pendingUserCount }}</div>
+          <div class="text-2xl font-bold">{{ authStore.pendingJoinRequestCount }}</div>
           <p class="text-xs text-muted-foreground">
-            {{ t('dashboard.home.stats.users.description') }}
+            {{ t('dashboard.home.stats.joinRequests.description') }}
           </p>
         </CardContent>
       </Card>

@@ -51,9 +51,10 @@ test.describe('Admin Users – page structure', () => {
     await expect(page.getByTestId('users-table').getByText(new RegExp(adminUser.name, 'i'))).toBeVisible()
   })
 
-  test('shows approval password section', async ({ adminPage: page }) => {
+  test('no longer offers an approval password', async ({ adminPage: page }) => {
+    // Signup is open, so there is no approval to shortcut with a password.
     await page.goto('/app/admin/users')
-    await expect(page.getByTestId('section-approval-password')).toBeVisible()
+    await expect(page.getByTestId('section-approval-password')).toHaveCount(0)
   })
 })
 

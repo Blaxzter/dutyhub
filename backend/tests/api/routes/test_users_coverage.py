@@ -9,8 +9,6 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps as deps_module
-from app.core.security import hash_password
-from app.crud.site_settings import site_settings as crud_site_settings
 from app.models.booking import Booking
 from app.models.shift import Shift
 from app.models.task import Task
@@ -72,187 +70,6 @@ class TestProfileInit:
             assert r.status_code == 200
             data = r.json()
             assert data["sub"] == test_user.auth0_sub
-        finally:
-            app.dependency_overrides.pop(dep, None)
-
-
-@pytest.mark.asyncio
-class TestSelfApprove:
-    """Test POST /self-approve endpoint."""
-
-    async def test_self_approve_success(
-        self,
-        app: FastAPI,
-        async_client: AsyncClient,
-        db_session: AsyncSession,
-    ):
-        """Test successful self-approval with correct password."""
-        # Create a pending (inactive) user
-        pending_user = User(
-            auth0_sub="auth0|pending_approve",
-            email="pending@example.com",
-            name="Pending User",
-            is_active=False,
-        )
-        db_session.add(pending_user)
-        await db_session.flush()
-        await db_session.refresh(pending_user)
-
-        # Set approval password in site settings
-        settings = await crud_site_settings.get(db_session)
-        settings.approval_password = hash_password("secret123")
-        db_session.add(settings)
-        await db_session.flush()
-
-        # Override AnyUser to return the pending user
-        dep: Any = get_args(deps_module.AnyUser)[1].dependency
-
-        async def override_any_user():
-            return pending_user
-
-        app.dependency_overrides[dep] = override_any_user
-        try:
-            r = await async_client.post(
-                "/api/v1/users/self-approve",
-                json={"password": "secret123"},
-            )
-
-            assert r.status_code == 200
-            assert r.json()["is_active"] is True
-        finally:
-            app.dependency_overrides.pop(dep, None)
-
-    async def test_self_approve_already_active(
-        self,
-        app: FastAPI,
-        async_client: AsyncClient,
-        test_user: User,
-    ):
-        """Test self-approve fails for already active user."""
-        dep: Any = get_args(deps_module.AnyUser)[1].dependency
-
-        async def override_any_user():
-            return test_user
-
-        app.dependency_overrides[dep] = override_any_user
-        try:
-            r = await async_client.post(
-                "/api/v1/users/self-approve",
-                json={"password": "any"},
-            )
-
-            assert r.status_code == 400
-        finally:
-            app.dependency_overrides.pop(dep, None)
-
-    async def test_self_approve_wrong_password(
-        self,
-        app: FastAPI,
-        async_client: AsyncClient,
-        db_session: AsyncSession,
-    ):
-        """Test self-approve fails with wrong password."""
-        pending_user = User(
-            auth0_sub="auth0|pending_wrong_pw",
-            email="wrongpw@example.com",
-            name="Wrong PW User",
-            is_active=False,
-        )
-        db_session.add(pending_user)
-        await db_session.flush()
-        await db_session.refresh(pending_user)
-
-        settings = await crud_site_settings.get(db_session)
-        settings.approval_password = hash_password("correct_password")
-        db_session.add(settings)
-        await db_session.flush()
-
-        dep: Any = get_args(deps_module.AnyUser)[1].dependency
-
-        async def override_any_user():
-            return pending_user
-
-        app.dependency_overrides[dep] = override_any_user
-        try:
-            r = await async_client.post(
-                "/api/v1/users/self-approve",
-                json={"password": "wrong_password"},
-            )
-
-            assert r.status_code == 403
-        finally:
-            app.dependency_overrides.pop(dep, None)
-
-    async def test_self_approve_not_configured(
-        self,
-        app: FastAPI,
-        async_client: AsyncClient,
-        db_session: AsyncSession,
-    ):
-        """Test self-approve fails when no approval password is configured."""
-        pending_user = User(
-            auth0_sub="auth0|pending_no_config",
-            email="noconfig@example.com",
-            name="No Config User",
-            is_active=False,
-        )
-        db_session.add(pending_user)
-        await db_session.flush()
-        await db_session.refresh(pending_user)
-
-        # Ensure no approval password is set
-        settings = await crud_site_settings.get(db_session)
-        settings.approval_password = None
-        db_session.add(settings)
-        await db_session.flush()
-
-        dep: Any = get_args(deps_module.AnyUser)[1].dependency
-
-        async def override_any_user():
-            return pending_user
-
-        app.dependency_overrides[dep] = override_any_user
-        try:
-            r = await async_client.post(
-                "/api/v1/users/self-approve",
-                json={"password": "any"},
-            )
-
-            assert r.status_code == 403
-        finally:
-            app.dependency_overrides.pop(dep, None)
-
-    async def test_self_approve_rejected_user(
-        self,
-        app: FastAPI,
-        async_client: AsyncClient,
-        db_session: AsyncSession,
-    ):
-        """Test self-approve fails for a rejected user."""
-        rejected_user = User(
-            auth0_sub="auth0|rejected_user",
-            email="rejected@example.com",
-            name="Rejected User",
-            is_active=False,
-            rejection_reason="Not eligible",
-        )
-        db_session.add(rejected_user)
-        await db_session.flush()
-        await db_session.refresh(rejected_user)
-
-        dep: Any = get_args(deps_module.AnyUser)[1].dependency
-
-        async def override_any_user():
-            return rejected_user
-
-        app.dependency_overrides[dep] = override_any_user
-        try:
-            r = await async_client.post(
-                "/api/v1/users/self-approve",
-                json={"password": "any"},
-            )
-
-            assert r.status_code == 400
         finally:
             app.dependency_overrides.pop(dep, None)
 
@@ -365,7 +182,7 @@ class TestExportWithData:
 
 @pytest.mark.asyncio
 class TestAdminUserManagement:
-    """Test admin user update with approval/rejection notifications."""
+    """Admin suspension controls. Signup is open, so these are moderation."""
 
     async def test_admin_approve_user_triggers_notification(
         self,
@@ -373,7 +190,7 @@ class TestAdminUserManagement:
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test that approving a user dispatches approval notification."""
+        """Reinstating a suspended account flips is_active back on."""
         user = User(
             auth0_sub="auth0|approve_notif_test",
             email="approve_notif@example.com",
@@ -398,7 +215,7 @@ class TestAdminUserManagement:
         as_admin: None,
         db_session: AsyncSession,
     ):
-        """Test that rejecting a user dispatches rejection notification."""
+        """Recording a suspension reason is persisted on the account."""
         user = User(
             auth0_sub="auth0|reject_notif_test",
             email="reject_notif@example.com",

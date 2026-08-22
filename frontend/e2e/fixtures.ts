@@ -14,13 +14,12 @@
  * flows therefore use the *disposable* fixtures further down: a fresh user per
  * test that is deleted again in teardown.
  */
-
 import {
-  test as base,
-  expect,
   type BrowserContext,
   type Page,
   type TestInfo,
+  test as base,
+  expect,
 } from '@playwright/test'
 
 const API = process.env.VITE_API_URL ?? 'http://localhost:8787/api/v1'
@@ -40,8 +39,14 @@ export interface SeededUser extends TestUser {
 export interface DisposableUserOptions {
   /** Roles to grant, e.g. `['admin']`. Defaults to a plain member. */
   roles?: string[]
-  /** `false` seeds a pending (inactive) account. Defaults to `true`. */
+  /** `false` seeds a suspended (inactive) account. Defaults to `true`. */
   isActive?: boolean
+  /**
+   * `false` leaves the account in no event at all — the shape of a genuine
+   * first sign-in. Such a user has no selected event, so the router sends
+   * them to the picker instead of the dashboard. Defaults to `true`.
+   */
+  joinWorkerEvent?: boolean
 }
 
 /** A throwaway user that only lives for the duration of one test. */
@@ -117,45 +122,70 @@ export async function serverApi<T>(
 }
 
 /**
+ * Put a user into an event, through the real invitation endpoints.
+ *
+ * Membership is what grants access now, so nearly every fixture needs it.
+ * Deliberately uses the production API rather than a test-only shortcut, so
+ * the invite → accept path is exercised on every run.
+ */
+export async function joinEvent(
+  eventId: string,
+  inviterEmail: string,
+  inviteeEmail: string,
+  role: 'admin' | 'member' = 'member',
+): Promise<void> {
+  const invitation = await serverApi<{ token: string }>(
+    'POST',
+    `/events/${eventId}/invitations`,
+    inviterEmail,
+    { email: inviteeEmail, role },
+  )
+  await serverApi('POST', `/invitations/${invitation.token}/accept`, inviteeEmail)
+}
+
+/**
  * Pre-seed Auth0 SDK localStorage cache so the SDK (initialised with
  * test-client-id / test-audience in bypass mode) finds a cached token
  * and reports isAuthenticated=true without making any network calls.
  */
 function setupAuthBypass(context: BrowserContext, user: TestUser) {
-  return context.addInitScript((userInfo) => {
-    // Key must match the clientId + audience used in main.ts bypass mode
-    const key = '@@auth0spajs@@::test-client-id::test-audience::openid profile email'
-    const value = {
-      body: {
-        access_token: 'fake-test-token',
-        token_type: 'Bearer',
-        expires_in: 86400,
-        scope: 'openid profile email',
-        client_id: 'test-client-id',
-        audience: 'test-audience',
-        decodedToken: {
-          user: {
-            sub: `test|${userInfo.email}`,
-            email: userInfo.email,
-            name: userInfo.name,
-            email_verified: true,
-            picture: '',
-          },
-          claims: {
-            sub: `test|${userInfo.email}`,
-            aud: 'test-audience',
-            iss: 'https://test.auth0.local/',
-            exp: Math.floor(Date.now() / 1000) + 86400,
-            iat: Math.floor(Date.now() / 1000),
+  return context.addInitScript(
+    (userInfo) => {
+      // Key must match the clientId + audience used in main.ts bypass mode
+      const key = '@@auth0spajs@@::test-client-id::test-audience::openid profile email'
+      const value = {
+        body: {
+          access_token: 'fake-test-token',
+          token_type: 'Bearer',
+          expires_in: 86400,
+          scope: 'openid profile email',
+          client_id: 'test-client-id',
+          audience: 'test-audience',
+          decodedToken: {
+            user: {
+              sub: `test|${userInfo.email}`,
+              email: userInfo.email,
+              name: userInfo.name,
+              email_verified: true,
+              picture: '',
+            },
+            claims: {
+              sub: `test|${userInfo.email}`,
+              aud: 'test-audience',
+              iss: 'https://test.auth0.local/',
+              exp: Math.floor(Date.now() / 1000) + 86400,
+              iat: Math.floor(Date.now() / 1000),
+            },
           },
         },
-      },
-      expiresAt: Math.floor(Date.now() / 1000) + 86400,
-    }
-    localStorage.setItem(key, JSON.stringify(value))
-    localStorage.setItem('wirksam-last-seen-changelog', '99.99.99')
-    localStorage.setItem('locale', 'en')
-  }, { email: user.email, name: user.name })
+        expiresAt: Math.floor(Date.now() / 1000) + 86400,
+      }
+      localStorage.setItem(key, JSON.stringify(value))
+      localStorage.setItem('wirksam-last-seen-changelog', '99.99.99')
+      localStorage.setItem('locale', 'en')
+    },
+    { email: user.email, name: user.name },
+  )
 }
 
 /**
@@ -252,47 +282,60 @@ export const test = base.extend<
   { adminUser: TestUser; memberUser: TestUser; workerEvent: WorkerEvent }
 >({
   // Worker-scoped: each parallel worker seeds its own admin user
-  adminUser: [async ({}, use, workerInfo) => {
-    if (!IS_TESTING) {
-      await use({ email: '', name: '', roles: [] })
-      return
-    }
-    const email = `admin-worker-${workerInfo.workerIndex}@test.example.com`
-    const name = `Test Admin ${workerInfo.workerIndex}`
-    await seedUser(email, name, ['admin'])
-    await use({ email, name, roles: ['admin'] })
-  }, { scope: 'worker' }],
+  adminUser: [
+    async ({}, use, workerInfo) => {
+      if (!IS_TESTING) {
+        await use({ email: '', name: '', roles: [] })
+        return
+      }
+      const email = `admin-worker-${workerInfo.workerIndex}@test.example.com`
+      const name = `Test Admin ${workerInfo.workerIndex}`
+      await seedUser(email, name, ['admin'])
+      await use({ email, name, roles: ['admin'] })
+    },
+    { scope: 'worker' },
+  ],
 
   // Worker-scoped: each parallel worker seeds its own member user
-  memberUser: [async ({}, use, workerInfo) => {
-    if (!IS_TESTING) {
-      await use({ email: '', name: '', roles: [] })
-      return
-    }
-    const email = `member-worker-${workerInfo.workerIndex}@test.example.com`
-    const name = `Test Member ${workerInfo.workerIndex}`
-    await seedUser(email, name, [])
-    await use({ email, name, roles: [] })
-  }, { scope: 'worker' }],
+  memberUser: [
+    async ({}, use, workerInfo) => {
+      if (!IS_TESTING) {
+        await use({ email: '', name: '', roles: [] })
+        return
+      }
+      const email = `member-worker-${workerInfo.workerIndex}@test.example.com`
+      const name = `Test Member ${workerInfo.workerIndex}`
+      await seedUser(email, name, [])
+      await use({ email, name, roles: [] })
+    },
+    { scope: 'worker' },
+  ],
 
   // Worker-scoped: each parallel worker seeds its own published event and
   // points both the admin and member user at it as their selected_event_id,
   // so the router guard doesn't bounce authenticated pages to /select-event.
-  workerEvent: [async ({ adminUser, memberUser }, use, workerInfo) => {
-    if (!IS_TESTING) {
-      await use({ id: '', name: '', start_date: '', end_date: '' })
-      return
-    }
-    const event = await serverApi<WorkerEvent>('POST', '/events/', adminUser.email, {
-      name: `E2E Worker Event ${workerInfo.workerIndex}`,
-      status: 'published',
-      start_date: isoDateOffset(1),
-      end_date: isoDateOffset(60),
-    })
-    await setSelectedEvent(adminUser.email, event.id)
-    await setSelectedEvent(memberUser.email, event.id)
-    await use(event)
-  }, { scope: 'worker' }],
+  workerEvent: [
+    async ({ adminUser, memberUser }, use, workerInfo) => {
+      if (!IS_TESTING) {
+        await use({ id: '', name: '', start_date: '', end_date: '' })
+        return
+      }
+      // Public so the Discover tab has something to show, and so the event can
+      // be featured. Creating it makes adminUser its owner automatically.
+      const event = await serverApi<WorkerEvent>('POST', '/events/', adminUser.email, {
+        name: `E2E Worker Event ${workerInfo.workerIndex}`,
+        status: 'published',
+        visibility: 'public',
+        start_date: isoDateOffset(1),
+        end_date: isoDateOffset(60),
+      })
+      await joinEvent(event.id, adminUser.email, memberUser.email, 'member')
+      await setSelectedEvent(adminUser.email, event.id)
+      await setSelectedEvent(memberUser.email, event.id)
+      await use(event)
+    },
+    { scope: 'worker' },
+  ],
 
   // Test-scoped: a page pre-configured as the admin user
   adminPage: async ({ browser, adminUser, workerEvent }, use) => {
@@ -358,6 +401,7 @@ export const test = base.extend<
       seq += 1
       const roles = options.roles ?? []
       const isActive = options.isActive ?? true
+      const joinWorkerEvent = options.joinWorkerEvent ?? true
       if (!IS_TESTING) {
         return { id: '', email: '', name: '', roles, isActive }
       }
@@ -366,9 +410,13 @@ export const test = base.extend<
       // Always seed active first: PUT /users/me/selected-event rejects inactive
       // users, and without a selection the router bounces every authenticated
       // page to /select-event. Re-seeding flips is_active without touching the
-      // selection, so pending users still land where the test expects.
+      // selection, so suspended users still land where the test expects.
       const seeded = await seedUser(email, name, roles, true)
-      await setSelectedEvent(email, workerEvent.id)
+      if (joinWorkerEvent) {
+        // Selecting an event requires membership in it.
+        await joinEvent(workerEvent.id, adminUser.email, email, 'member')
+        await setSelectedEvent(email, workerEvent.id)
+      }
       if (!isActive) {
         await seedUser(email, name, roles, false)
       }
@@ -409,8 +457,8 @@ export const test = base.extend<
     const page = await context.newPage()
     if (IS_TESTING) {
       await setupApiInterception(page, disposableUser.email)
-      // A pending user is redirected to /pending-approval instead of the
-      // dashboard; both render a `page-heading`, so one warm-up covers either.
+      // An account in no event is redirected to the picker rather than the
+      // dashboard; both render a `page-heading`, so one wait covers either.
       await page.goto('/app/home')
       await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
     }

@@ -1,7 +1,6 @@
 # pyright: reportPrivateUsage=false
 """Unit tests for authentication dependencies."""
 
-import asyncio
 from collections.abc import Callable, Coroutine
 from contextlib import AsyncExitStack
 from types import SimpleNamespace
@@ -21,8 +20,6 @@ from app.api.deps import (
 )
 from app.core.config import settings
 from app.crud.user import user as crud_user
-from app.models.event import Event
-from app.models.event_manager import EventManager
 from app.models.user import User
 
 
@@ -54,7 +51,7 @@ class TestGetOrCreateUser:
         assert user.auth0_sub == "auth0|newuser456"
         assert user.email == "newuser@example.com"
         assert user.name == "New User"
-        assert user.is_active is False  # non-superadmin users start inactive
+        assert user.is_active is True  # signup is open; membership is the gate
         assert user.roles == []
 
         # Verify user was persisted
@@ -248,14 +245,17 @@ class TestCurrentUserDependency:
         assert exc_info.value.status_code == 403
         assert "Not enough permissions" in str(exc_info.value.detail)
 
-    async def test_current_user_rejects_new_inactive_user(
+    async def test_current_user_admits_brand_new_user(
         self,
         db_session: AsyncSession,
         mock_auth0_new_user_claims: dict[str, Any],
         mock_request: MagicMock,
     ):
-        """Test that a new non-superadmin user is created inactive and rejected."""
-        # Ensure user doesn't exist
+        """Signup is open: a first-time caller is provisioned and let through.
+
+        The account grants nothing on its own — every event is still gated by
+        membership — so there is no approval queue to hold them in.
+        """
         existing_user = await crud_user.get_by_auth0_sub(
             db_session, auth0_sub=mock_auth0_new_user_claims["sub"]
         )
@@ -263,47 +263,39 @@ class TestCurrentUserDependency:
 
         dependency = current_user()
 
+        user = await dependency(
+            request=mock_request,
+            session=db_session,
+            claims=mock_auth0_new_user_claims,
+        )
+
+        assert user.is_active is True
+        assert user.roles == []
+
+        created_user = await crud_user.get_by_auth0_sub(
+            db_session, auth0_sub=mock_auth0_new_user_claims["sub"]
+        )
+        assert created_user is not None
+        assert created_user.id == user.id
+
+    async def test_current_user_rejects_suspended_user(
+        self,
+        db_session: AsyncSession,
+        test_inactive_user: User,
+        mock_request: MagicMock,
+    ):
+        """``is_active`` is now a moderation switch, and it still bars entry."""
+        dependency = current_user()
+        claims = {
+            "sub": test_inactive_user.auth0_sub,
+            "email": test_inactive_user.email,
+        }
+
         with pytest.raises(HTTPException) as exc_info:
-            await dependency(
-                request=mock_request,
-                session=db_session,
-                claims=mock_auth0_new_user_claims,
-            )
+            await dependency(request=mock_request, session=db_session, claims=claims)
 
         assert exc_info.value.status_code == 403
         assert "Inactive user" in str(exc_info.value.detail)
-
-        # Verify user was still persisted in the database
-        created_user = await crud_user.get_by_auth0_sub(
-            db_session, auth0_sub=mock_auth0_new_user_claims["sub"]
-        )
-        assert created_user is not None
-        assert created_user.is_active is False
-
-    async def test_current_user_rejects_inactive_new_user(
-        self,
-        db_session: AsyncSession,
-        mock_auth0_new_user_claims: dict[str, Any],
-        mock_request: MagicMock,
-    ):
-        """Test current_user creates user from claims but rejects inactive."""
-        dependency = current_user()
-
-        with pytest.raises(HTTPException) as exc_info:
-            await dependency(
-                request=mock_request,
-                session=db_session,
-                claims=mock_auth0_new_user_claims,
-            )
-
-        assert exc_info.value.status_code == 403
-
-        # Verify user was created from claims
-        created_user = await crud_user.get_by_auth0_sub(
-            db_session, auth0_sub=mock_auth0_new_user_claims["sub"]
-        )
-        assert created_user is not None
-        assert created_user.is_active is False
 
 
 @pytest.mark.asyncio
@@ -430,7 +422,7 @@ class TestCurrentUserAnyOfRoles:
     ):
         """Test that first matching role grants access."""
         claims = {"sub": test_admin_user.auth0_sub, "email": test_admin_user.email}
-        dependency = current_user(any_of_roles=["admin", "task_manager"])
+        dependency = current_user(any_of_roles=["admin", "moderator"])
 
         user = await dependency(request=mock_request, session=db_session, claims=claims)
 
@@ -439,19 +431,22 @@ class TestCurrentUserAnyOfRoles:
     async def test_second_role_matches(
         self,
         db_session: AsyncSession,
-        test_task_manager_user: User,
         mock_request: MagicMock,
     ):
         """Test that second matching role grants access."""
-        claims = {
-            "sub": test_task_manager_user.auth0_sub,
-            "email": test_task_manager_user.email,
-        }
-        dependency = current_user(any_of_roles=["admin", "task_manager"])
+        moderator = await _make_user(
+            db_session,
+            email="moderator@example.com",
+            auth0_sub="auth0|moderator",
+            roles=["moderator"],
+            is_active=True,
+        )
+        claims = {"sub": moderator.auth0_sub, "email": moderator.email}
+        dependency = current_user(any_of_roles=["admin", "moderator"])
 
         user = await dependency(request=mock_request, session=db_session, claims=claims)
 
-        assert user.id == test_task_manager_user.id
+        assert user.id == moderator.id
 
     async def test_neither_role_matches_raises_403(
         self,
@@ -461,7 +456,7 @@ class TestCurrentUserAnyOfRoles:
     ):
         """Test that user with no matching role is rejected."""
         claims = {"sub": test_user.auth0_sub, "email": test_user.email}
-        dependency = current_user(any_of_roles=["admin", "task_manager"])
+        dependency = current_user(any_of_roles=["admin", "moderator"])
 
         with pytest.raises(HTTPException) as exc_info:
             await dependency(request=mock_request, session=db_session, claims=claims)
@@ -469,63 +464,10 @@ class TestCurrentUserAnyOfRoles:
         assert exc_info.value.status_code == 403
         assert "Not enough permissions" in str(exc_info.value.detail)
 
-    async def test_current_manager_annotated_allows_admin(
-        self,
-        db_session: AsyncSession,
-        test_admin_user: User,
-        mock_request: MagicMock,
-    ):
-        """Test CurrentManager annotated dep allows admin users."""
-        from app.api.deps import CurrentManager
-
-        claims = {"sub": test_admin_user.auth0_sub, "email": test_admin_user.email}
-        dep = get_args(CurrentManager)[1].dependency
-
-        user = await dep(request=mock_request, session=db_session, claims=claims)
-
-        assert user.id == test_admin_user.id
-
-    async def test_current_manager_annotated_allows_task_manager(
-        self,
-        db_session: AsyncSession,
-        test_task_manager_user: User,
-        mock_request: MagicMock,
-    ):
-        """Test CurrentManager annotated dep allows task_manager users."""
-        from app.api.deps import CurrentManager
-
-        claims = {
-            "sub": test_task_manager_user.auth0_sub,
-            "email": test_task_manager_user.email,
-        }
-        dep = get_args(CurrentManager)[1].dependency
-
-        user = await dep(request=mock_request, session=db_session, claims=claims)
-
-        assert user.id == test_task_manager_user.id
-
-    async def test_current_manager_annotated_rejects_plain_user(
-        self,
-        db_session: AsyncSession,
-        test_user: User,
-        mock_request: MagicMock,
-    ):
-        """Test CurrentManager annotated dep rejects plain users."""
-        from app.api.deps import CurrentManager
-
-        claims = {"sub": test_user.auth0_sub, "email": test_user.email}
-        dep = get_args(CurrentManager)[1].dependency
-
-        with pytest.raises(HTTPException) as exc_info:
-            await dep(request=mock_request, session=db_session, claims=claims)
-
-        assert exc_info.value.status_code == 403
-
 
 # ── helpers for the suites below ──────────────────────────────────
 
 _VERIFY_REQUEST = "app.api.deps.auth0.api_client.verify_request"
-_DISPATCH_USER_REGISTERED = "app.logic.notifications.triggers.dispatch_user_registered"
 
 _AuthDep = Callable[[Request], Coroutine[Any, Any, dict[str, Any]]]
 
@@ -769,14 +711,10 @@ class TestSuperadminEscalation:
             "name": "Founder",
         }
 
-        with patch(_DISPATCH_USER_REGISTERED, AsyncMock()) as mock_dispatch:
-            user = await get_or_create_user(db_session, claims)
-            await asyncio.sleep(0)
+        user = await get_or_create_user(db_session, claims)
 
         assert user.roles == ["admin"]
         assert user.is_active is True
-        # Superadmins skip the "new user needs approval" ping to the admins.
-        assert mock_dispatch.call_count == 0
 
     async def test_new_listed_user_matched_from_profile_data(
         self,
@@ -793,23 +731,24 @@ class TestSuperadminEscalation:
             "preferred_language": "de",
         }
 
-        with patch(_DISPATCH_USER_REGISTERED, AsyncMock()) as mock_dispatch:
-            user = await get_or_create_user(db_session, claims, profile_data)
-            await asyncio.sleep(0)
+        user = await get_or_create_user(db_session, claims, profile_data)
 
         assert user.email == "founder@example.com"
         assert user.roles == ["admin"]
         assert user.is_active is True
         assert user.email_verified is True
         assert user.preferred_language == "de"
-        assert mock_dispatch.call_count == 0
 
-    async def test_new_unlisted_user_is_created_inactive_without_roles(
+    async def test_new_unlisted_user_is_created_active_without_roles(
         self,
         db_session: AsyncSession,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """A first-time login from an unlisted email needs manual approval."""
+        """An unlisted first-time login is active but holds no global role.
+
+        This is the shape of every ordinary signup now: usable account, zero
+        authority until an event lets them in.
+        """
         monkeypatch.setattr(settings, "SUPERADMIN_EMAILS", ["founder@example.com"])
         claims = {
             "sub": "auth0|regular",
@@ -817,16 +756,10 @@ class TestSuperadminEscalation:
             "name": "Regular",
         }
 
-        with patch(_DISPATCH_USER_REGISTERED, AsyncMock()) as mock_dispatch:
-            user = await get_or_create_user(db_session, claims)
-            # Let the fire-and-forget task run so it cannot outlive the test.
-            await asyncio.sleep(0)
+        user = await get_or_create_user(db_session, claims)
 
-            assert user.roles == []
-            assert user.is_active is False
-            assert mock_dispatch.call_count == 1
-            assert mock_dispatch.call_args is not None
-            assert mock_dispatch.call_args.kwargs["user_email"] == "regular@example.com"
+        assert user.roles == []
+        assert user.is_active is True
 
 
 @pytest.mark.asyncio
@@ -943,96 +876,6 @@ class TestAuth0ProfileSync:
         user = await get_or_create_user(db_session, {"sub": "auth0|sync"})
 
         assert user.email_verified is True
-
-
-@pytest.mark.asyncio
-class TestAllowGroupManagers:
-    """``allow_group_managers=True`` turns a would-be 403 into a pass.
-
-    A user who manages at least one event is treated as a manager for
-    ``any_of_roles`` purposes even without a global role. The negative cases
-    below make sure the escape hatch is not wider than that.
-    """
-
-    async def test_event_manager_without_roles_passes(
-        self,
-        db_session: AsyncSession,
-        test_user: User,
-        test_event: Event,
-        mock_request: MagicMock,
-    ) -> None:
-        """Managing one event is enough to satisfy any_of_roles."""
-        db_session.add(EventManager(user_id=test_user.id, event_id=test_event.id))
-        await db_session.flush()
-
-        claims = {"sub": test_user.auth0_sub, "email": test_user.email}
-        dependency = current_user(
-            any_of_roles=["admin", "task_manager"], allow_group_managers=True
-        )
-
-        user = await dependency(request=mock_request, session=db_session, claims=claims)
-
-        assert user.id == test_user.id
-        assert user.roles == []
-
-    async def test_non_manager_without_roles_still_403(
-        self,
-        db_session: AsyncSession,
-        test_user: User,
-        mock_request: MagicMock,
-    ) -> None:
-        """Managing nothing keeps the 403 even with the flag enabled."""
-        claims = {"sub": test_user.auth0_sub, "email": test_user.email}
-        dependency = current_user(
-            any_of_roles=["admin", "task_manager"], allow_group_managers=True
-        )
-
-        with pytest.raises(HTTPException) as exc_info:
-            await dependency(request=mock_request, session=db_session, claims=claims)
-
-        assert exc_info.value.status_code == 403
-        assert "Not enough permissions" in str(exc_info.value.detail)
-
-    async def test_managing_another_users_event_is_not_enough(
-        self,
-        db_session: AsyncSession,
-        test_user: User,
-        test_admin_user: User,
-        test_event: Event,
-        mock_request: MagicMock,
-    ) -> None:
-        """The EventManager row must belong to the caller, not just exist."""
-        db_session.add(EventManager(user_id=test_admin_user.id, event_id=test_event.id))
-        await db_session.flush()
-
-        claims = {"sub": test_user.auth0_sub, "email": test_user.email}
-        dependency = current_user(
-            any_of_roles=["admin", "task_manager"], allow_group_managers=True
-        )
-
-        with pytest.raises(HTTPException) as exc_info:
-            await dependency(request=mock_request, session=db_session, claims=claims)
-
-        assert exc_info.value.status_code == 403
-
-    async def test_group_manager_does_not_bypass_required_roles(
-        self,
-        db_session: AsyncSession,
-        test_user: User,
-        test_event: Event,
-        mock_request: MagicMock,
-    ) -> None:
-        """The escape hatch applies to any_of_roles only, never required_roles."""
-        db_session.add(EventManager(user_id=test_user.id, event_id=test_event.id))
-        await db_session.flush()
-
-        claims = {"sub": test_user.auth0_sub, "email": test_user.email}
-        dependency = current_user(required_roles="admin", allow_group_managers=True)
-
-        with pytest.raises(HTTPException) as exc_info:
-            await dependency(request=mock_request, session=db_session, claims=claims)
-
-        assert exc_info.value.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -1337,15 +1180,11 @@ class TestGetUserFromQueryToken:
         request = _make_request(query_string="token=sse-token")
         claims = {"sub": "auth0|sse-newcomer", "email": "newcomer@example.com"}
 
-        with (
-            patch(_VERIFY_REQUEST, AsyncMock(return_value=claims)),
-            patch(_DISPATCH_USER_REGISTERED, AsyncMock()),
-        ):
+        with patch(_VERIFY_REQUEST, AsyncMock(return_value=claims)):
             user = await _get_user_from_query_token(request, token="sse-token")
-            await asyncio.sleep(0)
 
         assert user.auth0_sub == "auth0|sse-newcomer"
-        assert user.is_active is False
+        assert user.is_active is True
         assert user.roles == []
 
     async def test_rejected_token_raises_401(

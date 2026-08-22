@@ -11,6 +11,7 @@ import Skeleton from '@/components/ui/skeleton/Skeleton.vue'
     <td class="px-4 py-3"><Skeleton class="h-4 w-20" /></td>
     <td class="px-4 py-3"><Skeleton class="h-4 w-20" /></td>
     <td class="px-4 py-3"><Skeleton class="h-5 w-16 rounded-full" /></td>
+    <td class="px-4 py-3"><Skeleton class="h-4 w-8" /></td>
     <td class="px-4 py-3 text-right">
       <div class="flex justify-end gap-1">
         <Skeleton class="h-8 w-8 rounded-md" />

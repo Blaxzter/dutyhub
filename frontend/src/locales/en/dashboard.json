@@ -23,16 +23,16 @@
                 "description": "Your confirmed duty bookings",
                 "title": "My Bookings"
             },
+            "joinRequests": {
+                "description": "People waiting to join your events",
+                "pendingAction": "Review",
+                "pendingDismiss": "Later",
+                "pendingToast": "1 person is waiting to join | {count} people are waiting to join",
+                "title": "Requests"
+            },
             "tasks": {
                 "description": "Available tasks to browse",
                 "title": "Tasks"
-            },
-            "users": {
-                "description": "Users awaiting approval",
-                "pendingAction": "Review",
-                "pendingDismiss": "Dismiss",
-                "pendingToast": "{count} user is waiting for approval | {count} users are waiting for approval",
-                "title": "Pending Users"
             }
         },
         "subtitle": "Welcome back! Here's your duty overview.",

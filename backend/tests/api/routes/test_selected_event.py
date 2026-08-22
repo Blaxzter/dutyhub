@@ -18,7 +18,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps as deps_module
-from app.crud.event_manager import event_manager as crud_egm
+from app.crud.event_membership import event_membership as crud_membership
 from app.logic.event_scope import get_user_event_scope
 from app.models.booking import Booking
 from app.models.event import Event
@@ -46,6 +46,11 @@ async def _make_event(
     )
     session.add(event)
     await session.flush()
+    # Mirror POST /events/: creating an event seeds the owner membership, and
+    # without it the creator could not see their own event.
+    await crud_membership.upsert(
+        session, user_id=owner.id, event_id=event.id, role="owner"
+    )
     await session.refresh(event)
     return event
 
@@ -128,16 +133,33 @@ class TestUpdateSelectedEvent:
         await db_session.refresh(test_user)
         assert test_user.selected_event_id is None
 
-    async def test_draft_event_forbidden_for_regular_user(
+    async def test_event_forbidden_for_non_member(
+        self,
+        async_client: AsyncClient,
+        test_private_event: Event,
+    ):
+        """Selecting an event you do not belong to is refused.
+
+        Membership, not publication status, is what gates the selection now —
+        a member may select a draft event they are working on.
+        """
+        r = await async_client.put(
+            "/api/v1/users/me/selected-event",
+            json={"selected_event_id": str(test_private_event.id)},
+        )
+        assert r.status_code == 403
+
+    async def test_draft_event_allowed_for_member(
         self,
         async_client: AsyncClient,
         test_draft_event: Event,
     ):
+        """A member can scope themselves to an event that is still a draft."""
         r = await async_client.put(
             "/api/v1/users/me/selected-event",
             json={"selected_event_id": str(test_draft_event.id)},
         )
-        assert r.status_code == 403
+        assert r.status_code == 200
 
     async def test_draft_event_allowed_for_admin(
         self,
@@ -152,15 +174,18 @@ class TestUpdateSelectedEvent:
         assert r.status_code == 200
         assert r.json()["selected_event_id"] == str(test_draft_event.id)
 
-    async def test_draft_event_allowed_for_scoped_manager(
+    async def test_draft_event_allowed_for_event_admin(
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
         test_draft_event: Event,
     ):
-        await crud_egm.assign(
-            db_session, user_id=test_user.id, event_id=test_draft_event.id
+        await crud_membership.upsert(
+            db_session,
+            user_id=test_user.id,
+            event_id=test_draft_event.id,
+            role="admin",
         )
 
         r = await async_client.put(

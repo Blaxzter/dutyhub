@@ -4,7 +4,7 @@ from app.logic.notifications.registry import (
     ALL_NOTIFICATION_TYPES,
     BOOKING_CONFIRMED,
     BOOKING_REMINDER,
-    USER_REGISTERED,
+    SHIFT_STARTING_SOON_UNFILLED,
     NotificationTypeDef,
 )
 
@@ -82,9 +82,9 @@ class TestRegistry:
         """Verify BOOKING_REMINDER is not user-configurable."""
         assert BOOKING_REMINDER.is_user_configurable is False
 
-    def test_user_registered_is_admin_only(self):
-        """Verify USER_REGISTERED is admin-only."""
-        assert USER_REGISTERED.is_admin_only is True
+    def test_unfilled_shift_alert_is_admin_only(self):
+        """Verify SHIFT_STARTING_SOON_UNFILLED is admin-only."""
+        assert SHIFT_STARTING_SOON_UNFILLED.is_admin_only is True
 
     def test_registry_has_expected_categories(self):
         """Verify the registry covers expected categories."""
@@ -92,7 +92,8 @@ class TestRegistry:
         assert "booking" in categories
         assert "shift" in categories
         assert "task" in categories
-        assert "admin" in categories
+        assert "event" in categories
+        assert "user" in categories
         assert "user" in categories
 
     def test_every_type_has_valid_classification(self):

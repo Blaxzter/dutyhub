@@ -4,14 +4,11 @@ from typing import Annotated, Any, cast
 
 from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi_plugin import Auth0FastAPI  # type: ignore[import-untyped]
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import col
 
 from app.core.config import settings
 from app.core.db import async_session
 from app.crud.user import user as crud_user
-from app.models.event_manager import EventManager
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -148,32 +145,18 @@ async def get_or_create_user(
     is_superadmin = bool(
         email and email in [str(e) for e in settings.SUPERADMIN_EMAILS]
     )
+    # Signup is open: an account by itself grants nothing. Authorisation lives
+    # entirely in per-event membership, so there is no approval queue to sit in.
     user_in = UserCreate(
         auth0_sub=auth0_sub,
         email=email,
         name=name,
         email_verified=email_verified,
         roles=["admin"] if is_superadmin else [],
-        is_active=is_superadmin,
+        is_active=True,
         preferred_language=preferred_language,
     )
-    new_user = await crud_user.create(session, obj_in=user_in)
-
-    # Notify admins about new user registration (fire-and-forget)
-    if not is_superadmin:
-        import asyncio
-
-        from app.logic.notifications.triggers import dispatch_user_registered
-
-        asyncio.create_task(
-            dispatch_user_registered(
-                user_id=new_user.id,
-                user_name=new_user.name,
-                user_email=new_user.email,
-            )
-        )
-
-    return new_user
+    return await crud_user.create(session, obj_in=user_in)
 
 
 def current_user(
@@ -181,21 +164,18 @@ def current_user(
     *,
     any_of_roles: str | Iterable[str] | None = None,
     require_active: bool = True,
-    allow_group_managers: bool = False,
 ) -> _CurrentUserDep:
+    """Build a dependency resolving the caller to a ``User``.
+
+    Only the platform-wide ``admin`` role is checked here. Anything scoped to
+    a single event is decided by ``app.logic.permissions`` against that
+    event's membership, not by a global role on the account.
+    """
     required_roles_list = _normalize_required_roles(required_roles)
     any_of_roles_list = _normalize_required_roles(any_of_roles)
 
-    async def _is_any_group_manager(session: AsyncSession, user: User) -> bool:
-        """Check if user manages at least one event."""
-        result = await session.execute(
-            select(col(EventManager.id))
-            .where(col(EventManager.user_id) == user.id)
-            .limit(1)
-        )
-        return result.scalar_one_or_none() is not None
-
     async def _check_roles(session: AsyncSession, user: User) -> None:
+        _ = session
         if required_roles_list and not set(required_roles_list).issubset(
             set(user.roles)
         ):
@@ -207,9 +187,6 @@ def current_user(
         if any_of_roles_list and not set(any_of_roles_list).intersection(
             set(user.roles)
         ):
-            # Before rejecting, check if scoped group managers are allowed
-            if allow_group_managers and await _is_any_group_manager(session, user):
-                return
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Not enough permissions",
@@ -255,15 +232,6 @@ def current_user(
 
 CurrentUser = Annotated[User, Depends(current_user())]
 CurrentSuperuser = Annotated[User, Depends(current_user("admin"))]
-CurrentGlobalManager = Annotated[
-    User, Depends(current_user(any_of_roles=["admin", "task_manager"]))
-]
-CurrentManager = Annotated[
-    User,
-    Depends(
-        current_user(any_of_roles=["admin", "task_manager"], allow_group_managers=True)
-    ),
-]
 AnyUser = Annotated[User, Depends(current_user(require_active=False))]
 
 

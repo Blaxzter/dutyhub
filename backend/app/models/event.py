@@ -30,6 +30,23 @@ class Event(Base, table=True):
     status: str = Field(
         default="draft", sa_column=sa.Column(sa.String, nullable=False, index=True)
     )
+    visibility: str = Field(
+        default="private",
+        sa_column=sa.Column(
+            sa.String(16), nullable=False, server_default="private", index=True
+        ),
+        description=(
+            "'public' — listed in Discover, anyone may request to join. "
+            "'private' — invitation only, invisible to non-members."
+        ),
+    )
+    is_featured: bool = Field(
+        default=False,
+        sa_column=sa.Column(
+            sa.Boolean, nullable=False, server_default=sa.text("false"), index=True
+        ),
+        description="Superadmin-curated: surfaced on the home screen",
+    )
     created_by_id: uuid.UUID | None = Field(
         default=None,
         sa_column=sa.Column(

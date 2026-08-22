@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
@@ -13,23 +13,18 @@ from app.api.deps import (
     CurrentSuperuser,
     CurrentUser,
     DBDep,
-    auth0,
 )
 from app.core.config import settings
 from app.core.errors import raise_problem
-from app.core.security import verify_password
 from app.crud.event import event as crud_event
-from app.crud.event_manager import event_manager as crud_egm
-from app.crud.site_settings import site_settings as crud_site_settings
+from app.crud.event_membership import event_membership as crud_membership
 from app.crud.task import task as crud_task
 from app.crud.user import user as crud_user
 from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
 from app.models.booking import Booking
-from app.models.event_manager import EventManager
 from app.models.notification import NotificationSubscription
 from app.models.user import User
 from app.models.user_availability import UserAvailability, UserAvailabilityDate
-from app.schemas.site_settings import SelfApproveRequest
 from app.schemas.user import (
     OwnershipTransferRequest,
     OwnershipTransferResult,
@@ -53,13 +48,14 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 async def _build_user_profile(user: User, session: Any) -> UserProfile:
-    """Build a UserProfile including scoped managed_event_ids."""
-    result = await session.execute(
-        select(col(EventManager.event_id)).where(col(EventManager.user_id) == user.id)
-    )
-    managed_ids = list(result.scalars().all())
+    """Build a UserProfile carrying this user's role in each of their events.
+
+    The frontend decides what to render from ``event_roles`` alone, so it is
+    resolved here once per profile load rather than per view.
+    """
+    roles_by_event = await crud_membership.get_roles_for_user(session, user_id=user.id)
     profile = UserProfile.model_validate(user)
-    profile.managed_event_ids = managed_ids
+    profile.event_roles = {str(k): v for k, v in roles_by_event.items()}
     return profile
 
 
@@ -184,79 +180,20 @@ async def update_selected_event(
         event = await crud_event.get(
             session, body.selected_event_id, raise_404_error=True
         )
-        if event.status != "published" and not current_user.is_manager:
-            is_scoped = await crud_egm.is_manager(
-                session, user_id=current_user.id, event_id=event.id
+        # You can only work inside an event you belong to.
+        if not current_user.is_admin and not await crud_membership.get(
+            session, user_id=current_user.id, event_id=event.id
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of that event",
             )
-            if not is_scoped:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Event is not accessible",
-                )
 
     current_user.selected_event_id = body.selected_event_id
     session.add(current_user)
     await session.flush()
     await session.refresh(current_user)
     return await _build_user_profile(current_user, session)
-
-
-@router.get("/approval-password-status")
-async def get_approval_password_status(
-    session: DBDep,
-    claims: dict[str, Any] = Depends(auth0.require_auth()),  # type: ignore[assignment]
-) -> dict[str, bool]:
-    """Check whether an approval password is configured.
-
-    Available to any authenticated user (including inactive/pending users)
-    so the pending-approval page knows whether to show the password input.
-    """
-    _ = claims  # just need valid JWT
-    site_settings = await crud_site_settings.get(session)
-    return {"has_approval_password": site_settings.approval_password is not None}
-
-
-@router.post("/self-approve", response_model=UserProfile)
-async def self_approve(
-    user: AnyUser,
-    body: SelfApproveRequest,
-    session: DBDep,
-) -> UserProfile:
-    """Allow a pending user to self-approve by providing the approval password.
-
-    Does NOT require is_active so that pending users can call this.
-    Returns 400 if the user is already active or rejected.
-    Returns 403 if no approval password is configured or the password is wrong.
-    """
-    if user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is already active",
-        )
-    if user.rejection_reason:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User has been rejected",
-        )
-
-    site_settings = await crud_site_settings.get(session)
-    if not site_settings.approval_password:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Self-approval is not enabled",
-        )
-
-    if not verify_password(body.password, site_settings.approval_password):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid approval password",
-        )
-
-    user.is_active = True
-    session.add(user)
-    await session.flush()
-
-    return await _build_user_profile(user, session)
 
 
 @router.get("/auth0-management-url")
@@ -321,17 +258,20 @@ async def update_user(
     old_rejection = user.rejection_reason
     updated = await crud_user.update(session, db_obj=user, obj_in=user_in)
 
-    # Dispatch approval/rejection notifications
+    # Suspension controls. With open signup, is_active is a moderation switch
+    # rather than an approval gate — flipping it back on is a reinstatement.
     from app.logic.notifications.triggers import (
-        dispatch_user_approved,
-        dispatch_user_rejected,
+        dispatch_user_reinstated,
+        dispatch_user_suspended,
     )
 
     if not was_active and updated.is_active:
-        background_tasks.add_task(dispatch_user_approved, user_id=updated.id)
+        background_tasks.add_task(dispatch_user_reinstated, user_id=updated.id)
     elif not old_rejection and updated.rejection_reason:
         background_tasks.add_task(
-            dispatch_user_rejected, user_id=updated.id, reason=updated.rejection_reason
+            dispatch_user_suspended,
+            user_id=updated.id,
+            reason=updated.rejection_reason,
         )
 
     return updated

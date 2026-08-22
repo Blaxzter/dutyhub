@@ -8,7 +8,6 @@ import { toast } from 'vue-sonner'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
-import ApprovalPasswordCard from '@/components/admin/users/ApprovalPasswordCard.vue'
 import DeleteUserDialog from '@/components/admin/users/DeleteUserDialog.vue'
 import RejectUserDialog from '@/components/admin/users/RejectUserDialog.vue'
 import UsersGroupedList from '@/components/admin/users/UsersGroupedList.vue'
@@ -267,7 +266,6 @@ onMounted(loadUsers)
       :rejected="counts.rejected"
     />
 
-    <ApprovalPasswordCard />
 
     <div class="space-y-3 pt-4">
       <div class="flex items-baseline justify-between">

@@ -45,11 +45,11 @@ class TestShiftCoverage:
         """Test updating shift date triggers time-change notification."""
         r = await async_client.patch(
             f"/api/v1/shifts/{test_shift.id}",
-            json={"date": "2026-05-25"},
+            json={"date": "2026-06-12"},
         )
 
         assert r.status_code == 200
-        assert r.json()["date"] == "2026-05-25"
+        assert r.json()["date"] == "2026-06-12"
 
     async def test_update_shift_end_time_change(
         self,

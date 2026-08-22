@@ -29,7 +29,7 @@ test.describe('Sidebar – links', () => {
 
   test('shows Manage Events link for admin', async ({ adminPage: page }) => {
     await page.goto('/app/home')
-    await expect(page.getByTestId('sidebar-link-admin-events')).toBeVisible()
+    await expect(page.getByTestId('sidebar-link-my-events')).toBeVisible()
   })
 
   test('shows User Management link for admin', async ({ adminPage: page }) => {
@@ -57,10 +57,10 @@ test.describe('Sidebar – navigation', () => {
     await expect(page).toHaveURL(/\/app\/home/)
   })
 
-  test('Manage Events link navigates to /app/admin/events', async ({ adminPage: page }) => {
+  test('Manage Events link navigates to /app/events', async ({ adminPage: page }) => {
     await page.goto('/app/home')
-    await page.getByTestId('sidebar-link-admin-events').click()
-    await expect(page).toHaveURL(/\/app\/admin\/events/)
+    await page.getByTestId('sidebar-link-my-events').click()
+    await expect(page).toHaveURL(/\/app\/events/)
   })
 
   test('Tasks link navigates correctly', async ({ adminPage: page }) => {
@@ -160,7 +160,7 @@ test.describe('404 – not found', () => {
 test.describe('Member sidebar – no admin links', () => {
   test('member does not see Manage Events link', async ({ memberPage: member }) => {
     await member.goto('/app/home')
-    await expect(member.getByTestId('sidebar-link-admin-events')).toBeHidden()
+    await expect(member.getByTestId('sidebar-link-my-events')).toBeHidden()
   })
 
   test('member does not see User Management link', async ({ memberPage: member }) => {
