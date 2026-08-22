@@ -155,21 +155,23 @@ test.describe('Event members – invitations', () => {
 
   test('an invite link lets someone into a private event', async ({
     adminPage,
-    memberPage,
-    memberUser,
+    disposablePage,
+    disposableUser,
   }) => {
+    // Accepting in the UI switches the accepter's selected event, so this runs
+    // as a disposable identity rather than the shared memberUser.
     const invitation = await api<{ token: string }>(
       adminPage,
       'POST',
       `/events/${event.id}/invitations`,
-      { email: memberUser.email, role: 'member' },
+      { email: disposableUser.email, role: 'member' },
     )
 
-    await memberPage.goto(`/invite/${invitation.token}`)
-    await expect(memberPage.getByTestId('invite-event-name')).toContainText(event.name)
-    await memberPage.getByTestId('btn-accept-invite').click()
+    await disposablePage.goto(`/invite/${invitation.token}`)
+    await expect(disposablePage.getByTestId('invite-event-name')).toContainText(event.name)
+    await disposablePage.getByTestId('btn-accept-invite').click()
 
-    await memberPage.waitForURL('**/app/home')
+    await disposablePage.waitForURL('**/app/home')
     const members = await api<{ user_id: string }[]>(
       adminPage,
       'GET',
@@ -196,7 +198,7 @@ test.describe('Event members – invitations', () => {
     await expect(memberPage.getByTestId('invite-not-found')).toBeVisible()
   })
 
-  test('a share link admits anyone signed in', async ({ adminPage, memberPage }) => {
+  test('a share link admits anyone signed in', async ({ adminPage, disposablePage }) => {
     const invitation = await api<{ token: string }>(
       adminPage,
       'POST',
@@ -204,9 +206,9 @@ test.describe('Event members – invitations', () => {
       { role: 'member' },
     )
 
-    await memberPage.goto(`/invite/${invitation.token}`)
-    await memberPage.getByTestId('btn-accept-invite').click()
-    await memberPage.waitForURL('**/app/home')
+    await disposablePage.goto(`/invite/${invitation.token}`)
+    await disposablePage.getByTestId('btn-accept-invite').click()
+    await disposablePage.waitForURL('**/app/home')
 
     const members = await api<{ user_id: string }[]>(
       adminPage,

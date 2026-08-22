@@ -44,12 +44,12 @@ Not yet covered, and not currently tracked by an issue:
 | Project      | Spec files | Tests   |
 | ------------ | ---------- | ------- |
 | `a11y`       | 5          | 27      |
-| `chromium`   | 22         | 204     |
-| `member`     | 2          | 17      |
-| `multi-user` | 4          | 41      |
+| `chromium`   | 22         | 200     |
+| `member`     | 2          | 18      |
+| `multi-user` | 4          | 54      |
 | `public`     | 5          | 9       |
 | `test-reset` | 1          | 1       |
-| **Total**    | **39**     | **299** |
+| **Total**    | **39**     | **309** |
 
 ## Inventory
 
@@ -105,15 +105,15 @@ Not yet covered, and not currently tracked by an issue:
   - about page has no serious or critical violations
   - how-it-works page has no serious or critical violations
 
-### Project `chromium` — 22 files, 204 tests
+### Project `chromium` — 22 files, 200 tests
 
 #### `frontend/e2e/tests/authenticated/admin-events.spec.ts` — 12 tests
 
 - **Admin Events – navigation** (4)
   - sidebar shows Manage Events link (admin)
-  - clicking sidebar link navigates to /app/admin/events
-  - direct navigation to /app/admin/events works
-  - member is redirected home from /app/admin/events
+  - clicking sidebar link navigates to /app/events
+  - direct navigation to /app/events works
+  - member is redirected home from /app/events
 - **Admin Events – list view** (5)
   - shows heading and search input
   - created event appears as a table row
@@ -125,11 +125,8 @@ Not yet covered, and not currently tracked by an issue:
   - admin can open the create event dialog
   - admin can delete an event via trash icon
 
-#### `frontend/e2e/tests/authenticated/admin-user-actions.spec.ts` — 4 tests
+#### `frontend/e2e/tests/authenticated/admin-user-actions.spec.ts` — 2 tests
 
-- **Admin Users – approval password** (2)
-  - approval password section is visible
-  - approval password section has input and save button
 - **Admin Users – user table actions** (2)
   - user table is visible with data
   - shows stat cards for filtering
@@ -146,7 +143,7 @@ Not yet covered, and not currently tracked by an issue:
   - shows individual stat cards
   - shows user table
   - current admin user appears in the list
-  - shows approval password section
+  - no longer offers an approval password
 - **Admin Users – member RBAC** (1)
   - member cannot access admin users page
 
@@ -220,7 +217,7 @@ Not yet covered, and not currently tracked by an issue:
 - **Dashboard – stats cards** (5)
   - shows Tasks stat card
   - shows My Bookings stat card
-  - shows Pending Users stat card for admin
+  - shows the join-requests stat card to someone who runs an event
   - Tasks card navigates to tasks
   - My Bookings card navigates to bookings
 - **Dashboard – calendar** (2)
@@ -239,7 +236,7 @@ Not yet covered, and not currently tracked by an issue:
   - can open dashboard home
   - can open settings page
 
-#### `frontend/e2e/tests/authenticated/destructive.spec.ts` — 5 tests
+#### `frontend/e2e/tests/authenticated/destructive.spec.ts` — 3 tests
 
 - **Destructive – account self-deletion** (1)
   - a user deletes their own account and loses access
@@ -247,10 +244,6 @@ Not yet covered, and not currently tracked by an issue:
   - deactivating blocks a user and reactivating restores access
 - **Destructive – grant and revoke admin** (1)
   - the admin role opens and closes the admin area for that user
-- **Destructive – pending approval** (1)
-  - an admin approves a pending user and unlocks the app
-- **Destructive – approval password** (1)
-  - a pending user self-approves, and rotating the password revokes the old one
 
 #### `frontend/e2e/tests/authenticated/event-settings.spec.ts` — 15 tests
 
@@ -271,7 +264,7 @@ Not yet covered, and not currently tracked by an issue:
   - shift-dates with same start date is a no-op
   - shift-dates card is hidden when the event has no tasks
 - **Event Settings – member restrictions** (2)
-  - member is redirected home from /app/event-settings
+  - a non-member cannot see the event settings content
   - member cannot shift dates via API
 
 #### `frontend/e2e/tests/authenticated/navigation.spec.ts` — 26 tests
@@ -287,7 +280,7 @@ Not yet covered, and not currently tracked by an issue:
   - shows user profile button in sidebar
 - **Sidebar – navigation** (7)
   - Home link navigates to dashboard
-  - Manage Events link navigates to /app/admin/events
+  - Manage Events link navigates to /app/events
   - Tasks link navigates correctly
   - My Bookings link navigates correctly
   - Availability link navigates correctly
@@ -447,15 +440,16 @@ Not yet covered, and not currently tracked by an issue:
   - Create button is visible for admin
   - Create button navigates to create page
 
-### Project `member` — 2 files, 17 tests
+### Project `member` — 2 files, 18 tests
 
-#### `frontend/e2e/tests/member/events-member.spec.ts` — 11 tests
+#### `frontend/e2e/tests/member/events-member.spec.ts` — 12 tests
 
-- **Member – RBAC** (5)
-  - member does not see the Manage Events sidebar link
-  - member is redirected home from /app/admin/events
-  - member is redirected home from /app/event-settings
-  - member does not see the Create Event button on the picker
+- **Member – RBAC** (6)
+  - member does not see the My Events sidebar link
+  - member is redirected home from /app/events
+  - member can open event settings but sees no management controls
+  - member cannot change anyone's role
+  - member CAN create their own event from the picker
   - member does not see the member availabilities admin section
 - **Member – event picker** (1)
   - settings change action navigates to the picker with the worker event listed
@@ -477,7 +471,7 @@ Not yet covered, and not currently tracked by an issue:
   - member can view task detail
   - member can book a shift
 
-### Project `multi-user` — 4 files, 41 tests
+### Project `multi-user` — 4 files, 54 tests
 
 #### `frontend/e2e/tests/multi-user/event-manager-access.spec.ts` — 24 tests
 
@@ -492,7 +486,7 @@ Not yet covered, and not currently tracked by an issue:
   - scoped manager does NOT see manage controls on unmanaged task
 - **Event Manager – edit page access** (2)
   - scoped manager can access edit page for managed task
-  - scoped manager is redirected from edit page of unmanaged task
+  - event admin is bounced off the edit page of a task outside their events
 - **Event Manager – CRUD operations** (8)
   - scoped manager can update task name
   - scoped manager can publish and unpublish task
@@ -500,40 +494,55 @@ Not yet covered, and not currently tracked by an issue:
   - scoped manager can create and delete a shift
   - scoped manager can update event name
   - scoped manager can publish event
-  - scoped manager can delete managed event
+  - event admin cannot delete the event, but the owner can
   - scoped manager can add shifts to task
 - **Event Manager – cross-event isolation** (3)
   - scoped manager cannot update task in unmanaged event
-  - scoped manager cannot access availabilities of unmanaged event
-  - scoped manager cannot access managers list of unmanaged event
+  - event admin cannot read availabilities of an event they are not in
+  - event admin cannot read the roster of an event they are not in
 - **Event Manager – reporting** (2)
   - scoped manager can access reporting page
   - scoped manager sees reporting link in sidebar
-- **Event Manager – create event restriction** (2)
-  - scoped manager cannot create new events via API
-  - scoped manager does not see Manage Events in the sidebar
+- **Event Manager – self-service creation** (2)
+  - a non-admin can create their own event and owns it
+  - someone who runs an event sees My Events in the sidebar
 
-#### `frontend/e2e/tests/multi-user/event-managers.spec.ts` — 10 tests
+#### `frontend/e2e/tests/multi-user/event-members.spec.ts` — 22 tests
 
-- **Event Managers – admin UI** (5)
-  - admin sees the managers tab on /app/event-settings
-  - shows empty state when no managers assigned
-  - admin can assign a member as event manager via UI
-  - admin can remove an event manager via UI
-  - member is redirected home from the managers tab
-- **Event Managers – scoped permissions (API)** (4)
-  - member without assignment cannot create tasks in the event
-  - assigned manager can create tasks in their event
-  - assigned manager cannot create tasks in a different event
-  - removing manager revokes task creation access
-- **Event Managers – full E2E flow** (1)
-  - admin assigns manager via UI, manager creates task, admin sees it
+- **Event members – People tab** (8)
+  - owner sees the People tab with members, invitations and requests
+  - a freshly created event lists its creator as owner
+  - owner can invite by email from the UI
+  - owner can withdraw a pending invitation
+  - owner can promote a member to organiser
+  - owner can remove a member
+  - the owner row offers no remove button
+  - a non-member cannot open the event at all
+- **Event members – invitations** (4)
+  - an invite link lets someone into a private event
+  - an invite for a different address is refused
+  - an unknown token shows a dead-link page
+  - a share link admits anyone signed in
+- **Event members – scoped permissions (API)** (4)
+  - an event admin can create tasks in their own event
+  - an event admin cannot create tasks in someone else's event
+  - removing someone revokes their access
+  - a plain member cannot manage the event
+- **Event members – join requests** (2)
+  - a member can ask to join from Discover, and the owner lets them in
+  - a declined request grants no membership
+- **Event members – the first screen a new account sees** (4)
+  - an account in no event lands on Discover, not an empty list
+  - the featured event is pinned above the rest of Discover
+  - featuring is refused for a private event
+  - a member already in the event does not see it offered again
 
-#### `frontend/e2e/tests/multi-user/events-availability-cross-user.spec.ts` — 5 tests
+#### `frontend/e2e/tests/multi-user/events-availability-cross-user.spec.ts` — 6 tests
 
-- **Cross-user – picker visibility** (2)
-  - admin-published event appears in the member picker
-  - admin draft event is hidden from the member picker
+- **Cross-user – picker visibility** (3)
+  - an event the member joined appears in My events
+  - a public event the member has not joined shows under Discover
+  - a private event the member is not in stays hidden everywhere
 - **Cross-user – availability flow** (3)
   - member availability appears in admin team heatmap
   - member removing availability is reflected in admin team view

@@ -109,6 +109,13 @@ services:
             interval: 10s
             timeout: 5s
             retries: 5
+            # Without a start period the first probe only fires at `interval`,
+            # and `docker compose up --wait` can give up while the container is
+            # still `starting` — a flaky failure with a perfectly healthy app.
+            # `start_interval` probes every 2s during boot so it flips to
+            # healthy as soon as it actually is.
+            start_period: 30s
+            start_interval: 2s
 
         build:
             context: ./backend

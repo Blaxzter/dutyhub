@@ -59,19 +59,29 @@ the test cares *which* refusal it got — 403 ("not allowed here") and 404 ("you
 cannot even see this") mean different things in this codebase and are worth
 distinguishing.
 
-## Known flakiness
+## Don't touch the shared fixtures, including indirectly
 
-`events-availability-cross-user.spec.ts` clears and rewrites availability for
-the shared `workerEvent` in `beforeEach`/`afterEach`. Parallel copies of those
-tests therefore stomp on each other: roughly 1 run in 6 fails under a full
-parallel sweep or `--repeat-each`, while `--workers=1` is stable (19/19).
+`adminUser`, `memberUser` and `workerEvent` are shared by every test a worker
+runs, so anything that mutates them poisons whatever comes later — and the
+failure surfaces somewhere else entirely, which makes it look like flakiness.
 
-CI runs `workers: 1` with 2 retries, so this does not fail the build. Before
-chasing one of these, reproduce it serially:
+The subtle case is mutation through the UI. Accepting an invitation on
+`/invite/:token` calls `setSelectedEvent()`, so clicking that button as
+`memberPage` repoints the shared member at a throwaway event. When the test
+tears that event down, the FK nulls the selection, and every later test that
+needs a selected event gets bounced to the picker instead of the page it was
+testing.
+
+Any test that *acts* as an invitee — accepting, joining, switching events —
+should use `disposablePage` / `disposableUser`, which are deleted in teardown.
+Read-only checks (viewing an invite, asserting a refusal) are fine as
+`memberPage`.
+
+Before blaming flakiness, reproduce serially — that is how CI runs each shard:
 
 ```bash
-pnpm exec playwright test <file> --workers=1 --repeat-each=3
+pnpm exec playwright test --workers=1
 ```
 
-If it only fails in parallel, the fix is to give the test its own event rather
-than to add waits.
+If it fails there, it is not flaky. It is an ordering bug, and the cause is
+usually shared state.
