@@ -290,7 +290,9 @@
         "discover": {
             "emptyBody": "There are no public events open at the moment — you can start your own.",
             "emptyTitle": "Nothing to discover right now",
-            "hint": "Public events you can ask to join. The organisers decide."
+            "featuredTitle": "Recommended",
+            "hint": "Public events you can ask to join. The organisers decide.",
+            "moreTitle": "More public events"
         },
         "empty": "No upcoming events are available. Please check back later or contact an organizer.",
         "emptyMine": {

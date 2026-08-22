@@ -290,7 +290,9 @@
         "discover": {
             "emptyBody": "Aktuell sind keine öffentlichen Events offen — du kannst dein eigenes starten.",
             "emptyTitle": "Gerade nichts zu entdecken",
-            "hint": "Öffentliche Events, bei denen du anfragen kannst. Die Organisation entscheidet."
+            "featuredTitle": "Empfohlen",
+            "hint": "Öffentliche Events, bei denen du anfragen kannst. Die Organisation entscheidet.",
+            "moreTitle": "Weitere öffentliche Events"
         },
         "empty": "Keine anstehenden Veranstaltungen verfügbar. Bitte schauen Sie später wieder vorbei oder wenden Sie sich an eine organisierende Person.",
         "emptyMine": {

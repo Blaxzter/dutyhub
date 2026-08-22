@@ -55,6 +55,7 @@ const stripTranslateClass = computed(() => {
 
 const events = ref<EventRead[]>([])
 const discoverEvents = ref<EventRead[]>([])
+const featuredEvents = ref<EventRead[]>([])
 const eventStats = ref<Record<string, EventStats>>({})
 const loading = ref(true)
 const discoverLoading = ref(false)
@@ -107,15 +108,35 @@ async function loadEvents() {
   }
 }
 
-/** Public events the user is not in yet. Loaded lazily on first visit. */
+/**
+ * Public events the user is not in yet, plus the curated selection.
+ *
+ * Both are fetched together and loaded lazily on the first visit to Discover.
+ * `featured` is the superadmin's pick; those events are pulled out of the
+ * general list so they are not offered twice.
+ */
 async function loadDiscover() {
   discoverLoading.value = true
   try {
-    const res = await get<{ data: EventListResponse }>({
-      url: '/events/',
-      query: { limit: 100, date_from: today(), scope: 'discover' },
-    })
-    discoverEvents.value = res.data.items.filter((e) => !e.is_expired)
+    const [discoverRes, featuredRes] = await Promise.all([
+      get<{ data: EventListResponse }>({
+        url: '/events/',
+        query: { limit: 100, date_from: today(), scope: 'discover' },
+      }),
+      get<{ data: EventListResponse }>({
+        url: '/events/',
+        query: { limit: 100, date_from: today(), scope: 'featured' },
+      }),
+    ])
+
+    const open = discoverRes.data.items.filter((e) => !e.is_expired)
+    // The featured scope does not exclude events you already belong to, so
+    // drop those here — Discover is only about what you could still join.
+    const featured = featuredRes.data.items.filter((e) => !e.is_expired && !e.my_role)
+    const featuredIds = new Set(featured.map((e) => e.id))
+
+    featuredEvents.value = featured
+    discoverEvents.value = open.filter((e) => !featuredIds.has(e.id))
     discoverLoaded.value = true
   } catch (error) {
     toastApiError(error)
@@ -233,7 +254,20 @@ watch(
   { immediate: true },
 )
 
-onMounted(loadEvents)
+/**
+ * Open on Discover when the user belongs to no event yet.
+ *
+ * "My events" is empty for a brand-new account, and an empty list is a dead
+ * end. Discover is where the curated selection lives, so that is the useful
+ * first screen. Only applied on the initial load — once someone picks a tab
+ * themselves, their choice stands.
+ */
+onMounted(async () => {
+  await loadEvents()
+  if (events.value.length === 0) {
+    tab.value = 'discover'
+  }
+})
 </script>
 
 <template>
@@ -307,6 +341,7 @@ onMounted(loadEvents)
               v-model:tab="tab"
               :events="events"
               :discover-events="discoverEvents"
+              :featured-events="featuredEvents"
               :stats="eventStats"
               :loading="loading"
               :discover-loading="discoverLoading"

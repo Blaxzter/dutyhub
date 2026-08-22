@@ -82,9 +82,7 @@ test.describe('Event members – People tab', () => {
     await adminPage.getByTestId('input-invite-emails').fill(memberUser.email)
     await adminPage.getByTestId('btn-send-invites').click()
 
-    await expect(adminPage.getByTestId('pending-invite-row')).toContainText(
-      memberUser.email,
-    )
+    await expect(adminPage.getByTestId('pending-invite-row')).toContainText(memberUser.email)
   })
 
   test('owner can withdraw a pending invitation', async ({ adminPage, memberUser }) => {
@@ -97,11 +95,7 @@ test.describe('Event members – People tab', () => {
     await expect(adminPage.getByTestId('invitations-empty')).toBeVisible()
   })
 
-  test('owner can promote a member to organiser', async ({
-    adminPage,
-    memberPage,
-    memberUser,
-  }) => {
+  test('owner can promote a member to organiser', async ({ adminPage, memberPage, memberUser }) => {
     await addMember(adminPage, memberPage, event.id, memberUser.email)
     await adminPage.goto(peopleUrl(event.id))
 
@@ -184,10 +178,7 @@ test.describe('Event members – invitations', () => {
     expect(members).toHaveLength(2)
   })
 
-  test('an invite for a different address is refused', async ({
-    adminPage,
-    memberPage,
-  }) => {
+  test('an invite for a different address is refused', async ({ adminPage, memberPage }) => {
     const invitation = await api<{ token: string }>(
       adminPage,
       'POST',
@@ -257,7 +248,7 @@ test.describe('Event members – scoped permissions (API)', () => {
     await api(adminPage, 'DELETE', `/tasks/${result.task.id}`)
   })
 
-  test('an event admin cannot create tasks in someone else\'s event', async ({
+  test("an event admin cannot create tasks in someone else's event", async ({
     adminPage,
     memberPage,
     memberUser,
@@ -277,11 +268,7 @@ test.describe('Event members – scoped permissions (API)', () => {
     }
   })
 
-  test('removing someone revokes their access', async ({
-    adminPage,
-    memberPage,
-    memberUser,
-  }) => {
+  test('removing someone revokes their access', async ({ adminPage, memberPage, memberUser }) => {
     await addMember(adminPage, memberPage, event.id, memberUser.email, 'admin')
     const memberId = await getUserIdByEmail(adminPage, memberUser.email)
     await api(adminPage, 'DELETE', `/events/${event.id}/members/${memberId}`)
@@ -295,11 +282,7 @@ test.describe('Event members – scoped permissions (API)', () => {
     expect([403, 404]).toContain(status)
   })
 
-  test('a plain member cannot manage the event', async ({
-    adminPage,
-    memberPage,
-    memberUser,
-  }) => {
+  test('a plain member cannot manage the event', async ({ adminPage, memberPage, memberUser }) => {
     await addMember(adminPage, memberPage, event.id, memberUser.email, 'member')
 
     const status = await apiStatus(memberPage, 'PATCH', `/events/${event.id}`, {
@@ -330,17 +313,13 @@ test.describe('Event members – join requests', () => {
     await memberPage.goto('/app/select-event?mode=switch')
     await memberPage.getByTestId('tab-discover').click()
 
-    const card = memberPage
-      .getByTestId('select-event-card')
-      .filter({ hasText: event.name })
+    const card = memberPage.getByTestId('select-event-card').filter({ hasText: event.name })
     await card.getByTestId('btn-request-join').click()
     await expect(card.getByTestId('join-requested-badge')).toBeVisible()
 
     // The organiser decides — no platform admin involved.
     await adminPage.goto(peopleUrl(event.id))
-    const request = adminPage
-      .getByTestId('join-request-row')
-      .filter({ hasText: memberUser.email })
+    const request = adminPage.getByTestId('join-request-row').filter({ hasText: memberUser.email })
     await expect(request).toBeVisible()
     await request.getByTestId('btn-approve-request').click()
 
@@ -350,11 +329,7 @@ test.describe('Event members – join requests', () => {
     ).toBeVisible()
   })
 
-  test('a declined request grants no membership', async ({
-    adminPage,
-    memberPage,
-    memberUser,
-  }) => {
+  test('a declined request grants no membership', async ({ adminPage, memberPage, memberUser }) => {
     await api(memberPage, 'POST', `/events/${event.id}/join-request`, {})
 
     await adminPage.goto(peopleUrl(event.id))
@@ -371,5 +346,91 @@ test.describe('Event members – join requests', () => {
       `/events/${event.id}/members`,
     )
     expect(members).toHaveLength(1)
+  })
+})
+
+// ── First sign-in ────────────────────────────────────────────────────────────
+
+test.describe('Event members – the first screen a new account sees', () => {
+  // No membership anywhere, which is what a genuine first sign-in looks like.
+  test.use({ disposableUserOptions: { joinWorkerEvent: false } })
+
+  test('an account in no event lands on Discover, not an empty list', async ({
+    disposablePage,
+  }) => {
+    // With no selected event the router forces the picker. "My events" would
+    // be an empty dead end, so Discover — where the curated list lives — is
+    // the useful first screen.
+    await expect(disposablePage).toHaveURL(/\/app\/select-event/)
+    await expect(disposablePage.getByTestId('tab-discover')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+  })
+
+  test('the featured event is pinned above the rest of Discover', async ({
+    adminPage,
+    disposablePage,
+    workerEvent,
+  }) => {
+    await api(adminPage, 'PATCH', `/events/${workerEvent.id}/featured`, {
+      is_featured: true,
+    })
+    try {
+      await disposablePage.goto('/app/select-event?mode=onboarding')
+      await disposablePage.getByTestId('tab-discover').click()
+
+      await expect(disposablePage.getByTestId('featured-heading')).toBeVisible()
+      // Other parallel workers feature their own events, so match this
+      // worker's card by name rather than assuming a single featured card.
+      const featured = disposablePage
+        .locator('[data-featured="true"]')
+        .filter({ hasText: workerEvent.name })
+      await expect(featured).toHaveCount(1)
+    } finally {
+      await api(adminPage, 'PATCH', `/events/${workerEvent.id}/featured`, {
+        is_featured: false,
+      })
+    }
+  })
+
+  test('featuring is refused for a private event', async ({ adminPage }) => {
+    const secret = await createEvent(
+      adminPage,
+      uniqueName('E2E Not Featurable'),
+      'published',
+      'private',
+    )
+    try {
+      const status = await apiStatus(adminPage, 'PATCH', `/events/${secret.id}/featured`, {
+        is_featured: true,
+      })
+      expect(status).toBe(422)
+    } finally {
+      await deleteEvent(adminPage, secret.id).catch(() => {})
+    }
+  })
+
+  test('a member already in the event does not see it offered again', async ({
+    adminPage,
+    memberPage,
+    workerEvent,
+  }) => {
+    // Featured does not mean "show it to everyone" — someone already taking
+    // part has nothing to join.
+    await api(adminPage, 'PATCH', `/events/${workerEvent.id}/featured`, {
+      is_featured: true,
+    })
+    try {
+      await memberPage.goto('/app/select-event?mode=switch')
+      await memberPage.getByTestId('tab-discover').click()
+      await expect(
+        memberPage.locator('[data-featured="true"]').filter({ hasText: workerEvent.name }),
+      ).toHaveCount(0)
+    } finally {
+      await api(adminPage, 'PATCH', `/events/${workerEvent.id}/featured`, {
+        is_featured: false,
+      })
+    }
   })
 })

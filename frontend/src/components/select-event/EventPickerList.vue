@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ArrowRight, Compass, Plus, Users } from '@lucide/vue'
+import { computed } from 'vue'
+
+import { ArrowRight, Compass, Plus, Star, Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -17,6 +19,8 @@ export type PickerTab = 'mine' | 'discover'
 const props = defineProps<{
   events: EventRead[]
   discoverEvents: EventRead[]
+  /** Superadmin-curated events, pinned above the rest of Discover. */
+  featuredEvents: EventRead[]
   stats: Record<string, EventStats>
   loading: boolean
   discoverLoading: boolean
@@ -39,6 +43,11 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+/** Discover has nothing at all to offer — curated or otherwise. */
+const discoverIsEmpty = computed(
+  () => props.featuredEvents.length === 0 && props.discoverEvents.length === 0,
+)
 </script>
 
 <template>
@@ -180,7 +189,7 @@ const { t } = useI18n()
         </p>
 
         <div
-          v-if="props.discoverEvents.length === 0"
+          v-if="discoverIsEmpty"
           class="rounded-lg border border-dashed p-8 text-center"
           data-testid="discover-empty"
         >
@@ -192,6 +201,36 @@ const { t } = useI18n()
             <Plus class="mr-2 h-4 w-4" />
             {{ t('duties.selectEvent.pick.createNew') }}
           </Button>
+        </div>
+
+        <!-- The curated selection goes first: for a brand-new account this is
+             the only thing standing between them and an empty screen. -->
+        <template v-if="props.featuredEvents.length > 0">
+          <div class="flex items-center gap-2 pt-1" data-testid="featured-heading">
+            <Star class="h-4 w-4 text-amber-500" />
+            <h2 class="text-sm font-semibold">
+              {{ t('duties.selectEvent.discover.featuredTitle') }}
+            </h2>
+          </div>
+
+          <SelectableEventCard
+            v-for="event in props.featuredEvents"
+            :key="event.id"
+            variant="discover"
+            data-featured="true"
+            :event="event"
+            :stats="undefined"
+            :is-current="false"
+            :is-pending="false"
+            :requesting="props.requestingId === event.id"
+            @request-join="(e) => emit('requestJoin', e)"
+          />
+        </template>
+
+        <div v-if="props.featuredEvents.length > 0 && props.discoverEvents.length > 0" class="pt-1">
+          <h2 class="text-sm font-semibold text-muted-foreground">
+            {{ t('duties.selectEvent.discover.moreTitle') }}
+          </h2>
         </div>
 
         <SelectableEventCard
