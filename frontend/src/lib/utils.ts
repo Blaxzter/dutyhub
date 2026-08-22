@@ -10,14 +10,14 @@ export function cn(...inputs: ClassValue[]) {
  * Useful for handling i18n lists that are stored as numbered object keys.
  *
  * @param translationFn - The translation function from vue-i18n (usually `t`)
- * @param baseKey - The base translation key (e.g., 'preauth.about.sections.techStack.frontend.items')
+ * @param baseKey - The base translation key (e.g., 'preauth.landing.audience.organiser.points')
  * @returns Array of translated strings
  *
  * @example
  * // Given translations like:
  * // "items": { "0": "Vue.js", "1": "TypeScript", "2": "Tailwind" }
- * const items = getTranslationList(t, 'preauth.about.sections.techStack.frontend.items')
- * // Returns: ["Vue.js", "TypeScript", "Tailwind"]
+ * const items = getTranslationList(t, 'preauth.landing.audience.organiser.points')
+ * // Returns: ["Set up an event yourself …", "Invite your team by email …", …]
  */
 export function getTranslationList(
   translationFn: (key: string) => string,

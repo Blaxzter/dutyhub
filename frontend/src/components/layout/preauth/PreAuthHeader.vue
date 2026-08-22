@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
-import { InfoIcon, MenuIcon, WorkflowIcon } from '@lucide/vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import logo from '@/assets/logo/logo.svg'
@@ -10,133 +7,110 @@ import { useAuthStore } from '@/stores/auth'
 
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 
 import AppearanceMenu from '@/components/layout/AppearanceMenu.vue'
 import UserDashboardLink from '@/components/layout/preauth/UserDashboardLink.vue'
 import LanguageSwitch from '@/components/utils/LanguageSwitch.vue'
 
-defineProps<{
-  useFixedHeader: boolean
-}>()
+import { scrollToSection } from '@/lib/scroll-to-section'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const mobileMenuOpen = ref(false)
+/**
+ * Section links for the header, on wide screens only.
+ *
+ * There is no mobile menu. The pre-auth pages are one scrolling document, so a
+ * burger sheet with a focus trap only offered a slower way to do what scrolling
+ * already does — and it was the only thing standing between a phone visitor and
+ * the sign-in button. Small screens get the controls inline instead, and the
+ * sections are reached by scrolling.
+ */
+const sections = [
+  { hash: 'how-it-works', label: 'preauth.layout.navigation.howItWorks' },
+  { hash: 'features', label: 'preauth.layout.navigation.features' },
+  { hash: 'about', label: 'preauth.layout.navigation.about' },
+] as const
 
-const navItems = [
-  { name: 'about', label: 'preauth.layout.navigation.about', icon: InfoIcon },
-  { name: 'how-it-works', label: 'preauth.layout.navigation.howItWorks', icon: WorkflowIcon },
-]
+function goToSection(hash: string) {
+  // Already on the landing page: scroll rather than route, so re-picking the
+  // current section still moves and no navigation is silently dropped as a
+  // duplicate. From anywhere else, route and let scrollBehavior land the hash.
+  if (route.name === 'landing' && scrollToSection(hash)) return
+  router.push({ name: 'landing', hash: `#${hash}` })
+}
 
-const navigateToLanding = () => {
+function navigateToLanding() {
   router.push({ name: 'landing' })
 }
 
-const handleGetStarted = () => {
+function goToDashboard() {
+  router.push({ name: 'home' })
+}
+
+function handleGetStarted() {
   const redirectUri =
     import.meta.env.VITE_AUTH0_CALLBACK_URL || `${window.location.origin}/app/home`
   authStore.auth0.loginWithRedirect({
-    authorizationParams: {
-      redirect_uri: redirectUri,
-    },
+    authorizationParams: { redirect_uri: redirectUri },
   })
-}
-
-function mobileNavigate(name: string) {
-  mobileMenuOpen.value = false
-  router.push({ name })
 }
 </script>
 
 <template>
-  <header :class="useFixedHeader ? 'border-b flex-shrink-0' : 'border-b'">
-    <div class="max-w-7xl w-full mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center space-x-2 min-w-0">
-        <button
-          @click="navigateToLanding"
-          class="flex items-center gap-2 text-2xl font-bold hover:opacity-80 transition-opacity"
-        >
-          <img :src="logo" alt="Logo" class="h-10 w-10 sm:h-16 sm:w-16 shrink-0" />
-          <span class="text-xl sm:text-2xl">{{ $t('preauth.layout.appName') }}</span>
-        </button>
-      </div>
+  <header class="sticky top-0 z-40 border-b bg-background/85 backdrop-blur">
+    <!-- Tighter gutters on phones: at 320px the wordmark and the three controls
+         want every pixel, and the gutter is the cheapest thing to give up. -->
+    <div class="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-3 sm:px-6">
+      <!-- Named explicitly: the image is decorative, so without this the button
+           would be announced from its text alone. -->
+      <button
+        class="flex shrink-0 items-center gap-1.5 transition-opacity hover:opacity-80 sm:gap-2"
+        :aria-label="$t('preauth.layout.appName')"
+        @click="navigateToLanding"
+      >
+        <!-- Mark and wordmark both shrink a step on phones. The name is the
+             brand and stays at every width; it is the surrounding controls that
+             give way, not this. -->
+        <img :src="logo" alt="" class="size-8 shrink-0 rounded-lg sm:size-9" />
+        <span class="text-base font-bold whitespace-nowrap sm:text-xl">
+          {{ $t('preauth.layout.appName') }}
+        </span>
+      </button>
 
-      <!-- Desktop nav -->
-      <nav class="hidden md:flex items-center space-x-2">
-        <LanguageSwitch variant="ghost" size="sm" :show-text="false" />
-        <AppearanceMenu />
-
-        <Button
-          v-for="item in navItems"
-          :key="item.name"
-          variant="ghost"
-          @click="router.push({ name: item.name })"
-          :class="{
-            'bg-muted font-semibold': route.name === item.name,
-          }"
-        >
-          {{ $t(item.label) }}
-        </Button>
-
-        <div v-if="authStore.isAuthenticated" class="border-l ml-4">
-          <UserDashboardLink class="ml-4" @navigate="router.push({ name: 'home' })" />
+      <nav class="flex items-center gap-0.5 sm:gap-1">
+        <!-- The responsive display lives on this wrapper, not on the buttons.
+             `cn()` merges `hidden` over the variant's own `inline-flex`, and
+             Tailwind emits `hidden` after the `md:` media block — so
+             `hidden md:inline-flex` on a Button is `display: none` at every
+             width, which silently removed these links from the desktop header. -->
+        <div class="hidden items-center gap-1 md:flex">
+          <Button
+            v-for="section in sections"
+            :key="section.hash"
+            variant="ghost"
+            size="sm"
+            @click="goToSection(section.hash)"
+          >
+            {{ $t(section.label) }}
+          </Button>
         </div>
 
-        <Button v-else @click="handleGetStarted">{{
-          $t('preauth.layout.navigation.signIn')
-        }}</Button>
-      </nav>
+        <Separator orientation="vertical" class="mx-2 hidden h-6 md:block" />
 
-      <!-- Mobile nav -->
-      <div class="flex md:hidden items-center gap-1">
         <LanguageSwitch variant="ghost" size="sm" :show-text="false" />
         <AppearanceMenu />
 
-        <Sheet v-model:open="mobileMenuOpen">
-          <SheetTrigger as-child>
-            <!-- Icon-only: needs an explicit name or it is announced as
-                 just "button" (axe `button-name`). -->
-            <Button variant="ghost" size="icon" :aria-label="$t('preauth.layout.openMenu')">
-              <MenuIcon class="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" class="w-72 flex flex-col">
-            <SheetHeader>
-              <SheetTitle>{{ $t('preauth.layout.appName') }}</SheetTitle>
-            </SheetHeader>
-            <div class="flex flex-col gap-1 mt-4">
-              <Button
-                v-for="item in navItems"
-                :key="item.name"
-                variant="ghost"
-                class="justify-start gap-3"
-                :class="{ 'bg-muted font-semibold': route.name === item.name }"
-                @click="mobileNavigate(item.name)"
-              >
-                <component :is="item.icon" class="h-4 w-4" />
-                {{ $t(item.label) }}
-              </Button>
-            </div>
-
-            <div class="mt-auto">
-              <Separator class="mb-4" />
-
-              <div v-if="authStore.isAuthenticated">
-                <UserDashboardLink direction="vertical" @navigate="mobileNavigate('home')" />
-              </div>
-
-              <div v-else class="w-full px-4">
-                <Button @click="handleGetStarted" class="w-full mb-4">
-                  {{ $t('preauth.layout.navigation.signIn') }}
-                </Button>
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
+        <UserDashboardLink
+          v-if="authStore.isAuthenticated"
+          class="sm:ml-2"
+          @navigate="goToDashboard"
+        />
+        <Button v-else size="sm" class="sm:ml-2" @click="handleGetStarted">
+          {{ $t('preauth.layout.navigation.signIn') }}
+        </Button>
+      </nav>
     </div>
   </header>
 </template>

@@ -43,17 +43,17 @@ Not yet covered, and not currently tracked by an issue:
 
 | Project      | Spec files | Tests   |
 | ------------ | ---------- | ------- |
-| `a11y`       | 5          | 27      |
+| `a11y`       | 5          | 28      |
 | `chromium`   | 22         | 200     |
 | `member`     | 2          | 18      |
 | `multi-user` | 4          | 54      |
-| `public`     | 5          | 9       |
+| `public`     | 5          | 12      |
 | `test-reset` | 1          | 1       |
-| **Total**    | **39**     | **309** |
+| **Total**    | **39**     | **313** |
 
 ## Inventory
 
-### Project `a11y` — 5 files, 27 tests
+### Project `a11y` — 5 files, 28 tests
 
 #### `frontend/e2e/tests/a11y/admin-routes.spec.ts` — 11 tests
 
@@ -98,12 +98,13 @@ Not yet covered, and not currently tracked by an issue:
 - **a11y – member task detail** (1)
   - task detail
 
-#### `frontend/e2e/tests/a11y/public-pages.spec.ts` — 3 tests
+#### `frontend/e2e/tests/a11y/public-pages.spec.ts` — 4 tests
 
-- **a11y – public pages** (3)
+- **a11y – public pages** (4)
   - landing page has no serious or critical violations
-  - about page has no serious or critical violations
-  - how-it-works page has no serious or critical violations
+  - landing page volunteer journey has no serious or critical violations
+  - privacy page has no serious or critical violations
+  - the screenshot viewer has no serious or critical violations
 
 ### Project `chromium` — 22 files, 200 tests
 
@@ -554,24 +555,27 @@ Not yet covered, and not currently tracked by an issue:
   - member books shift, admin sees updated count
   - admin-created task visible to member in tasks list
 
-### Project `public` — 5 files, 9 tests
+### Project `public` — 5 files, 12 tests
 
 #### `frontend/e2e/tests/public/how-it-works.spec.ts` — 2 tests
 
-- **How It Works page** (2)
-  - is accessible via direct URL
-  - shows page content
+- **How It Works section** (2)
+  - the old /how-it-works path redirects to the landing section
+  - shows both the organiser and volunteer journeys
 
-#### `frontend/e2e/tests/public/landing.spec.ts` — 1 test
+#### `frontend/e2e/tests/public/landing.spec.ts` — 4 tests
 
-- **landing page** (1)
+- **landing page** (4)
   - renders main hero and auth actions
+  - every section the in-page nav links to actually exists
+  - the old /about path redirects into the landing page
+  - a screenshot opens in the viewer and pages through the gallery
 
 #### `frontend/e2e/tests/public/pages.spec.ts` — 2 tests
 
 - **public pages** (2)
-  - about page is accessible
-  - navigation works between landing and about
+  - header links jump to the landing page sections
+  - a legal page can navigate back into a landing section
 
 #### `frontend/e2e/tests/public/preauth-pages.spec.ts` — 3 tests
 

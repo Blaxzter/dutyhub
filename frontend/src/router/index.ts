@@ -16,6 +16,8 @@ declare module 'vue-router' {
   interface RouteMeta {
     breadcrumbs?: BreadcrumbItem[]
     layout?: 'preauth' | 'postauth' | 'minimal'
+    /** Route renders its own full-bleed sections; the pre-auth shell skips its page container. */
+    fullBleed?: boolean
     /** Platform-wide role. Only 'admin' (superadmin) is still meaningful. */
     requiresRole?: string | string[]
     /**
@@ -40,16 +42,20 @@ const router = createRouter({
           path: '',
           name: 'landing',
           component: () => import('@/views/preauth/LandingView.vue'),
+          meta: { fullBleed: true },
         },
+        // The About and How-It-Works pages were folded into the landing page as
+        // sections. Both paths were linked from outside the app, so they keep
+        // working as redirects to the anchor that replaced them.
         {
           path: 'about',
           name: 'about',
-          component: () => import('@/views/preauth/AboutView.vue'),
+          redirect: { name: 'landing', hash: '#about' },
         },
         {
           path: 'how-it-works',
           name: 'how-it-works',
-          component: () => import('@/views/preauth/HowItWorksView.vue'),
+          redirect: { name: 'landing', hash: '#how-it-works' },
         },
         {
           path: 'privacy',
@@ -345,6 +351,18 @@ const router = createRouter({
       redirect: { name: 'not-found' },
     },
   ],
+
+  /**
+   * The landing page is one long document with linkable sections, so a hash
+   * has to actually scroll somewhere. `scroll-mt-*` on each section handles
+   * the sticky header offset, and `savedPosition` keeps the back button
+   * returning to where the visitor was.
+   */
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    return { top: 0 }
+  },
 })
 
 const normalizeRoles = (roles: string | string[]) => (Array.isArray(roles) ? roles : [roles])

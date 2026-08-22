@@ -1,253 +1,68 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed } from 'vue'
 
+import { InfoIcon, LayoutGridIcon, UsersIcon, WorkflowIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
-import logo from '@/assets/logo/logo.svg'
-
 import { useAuthStore } from '@/stores/auth'
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '@/components/ui/carousel'
-import type { CarouselApi } from '@/components/ui/carousel'
+import LandingAbout from '@/components/landing/LandingAbout.vue'
+import LandingAudience from '@/components/landing/LandingAudience.vue'
+import LandingCta from '@/components/landing/LandingCta.vue'
+import LandingFeatures from '@/components/landing/LandingFeatures.vue'
+import LandingHero from '@/components/landing/LandingHero.vue'
+import LandingJourney from '@/components/landing/LandingJourney.vue'
+import LandingSectionNav from '@/components/landing/LandingSectionNav.vue'
 
-import ChipNav from '@/components/utils/ChipNav.vue'
-
+/**
+ * The single pre-auth marketing page.
+ *
+ * `/about` and `/how-it-works` used to be separate views that each repeated a
+ * slice of this content; they now redirect to the `#about` and `#how-it-works`
+ * sections below, so there is one story in one place.
+ */
 const authStore = useAuthStore()
 const router = useRouter()
-const { locale, t } = useI18n()
+const { t } = useI18n()
 
-const slideKeys = [
-  { key: 'dashboard', file: 'dashboard' },
-  { key: 'events', file: 'events' },
-  { key: 'tasks', file: 'tasks' },
-  { key: 'eventDetail', file: 'task-detail' },
-  { key: 'bookings', file: 'my-bookings' },
-  { key: 'notifications', file: 'notification-bell' },
-  { key: 'notificationPreferences', file: 'notification-preferences' },
-  { key: 'userManagement', file: 'user-management' },
-]
+const sections = computed(() => [
+  { id: 'audience', label: t('preauth.landing.nav.audience'), icon: UsersIcon },
+  { id: 'how-it-works', label: t('preauth.landing.nav.howItWorks'), icon: WorkflowIcon },
+  { id: 'features', label: t('preauth.landing.nav.features'), icon: LayoutGridIcon },
+  { id: 'about', label: t('preauth.landing.nav.about'), icon: InfoIcon },
+])
 
-const slides = computed(() =>
-  slideKeys.map((s) => ({
-    key: s.key,
-    image: `/screenshots/${locale.value}/${s.file}.png`,
-  })),
-)
-
-const currentSlide = ref(0)
-const carouselApi = ref<CarouselApi>()
-
-function onApiSet(api: CarouselApi) {
-  carouselApi.value = api
-  if (!api) return
-
-  const syncSlide = () => {
-    currentSlide.value = api.selectedScrollSnap()
-  }
-
-  api.on('select', syncSlide)
-  api.on('reInit', syncSlide)
-  nextTick(syncSlide)
-}
-
-const chipItems = computed(() =>
-  slides.value.map((s) => ({ label: t(`preauth.landing.showcase.slides.${s.key}.title`) })),
-)
-
-// Sync chip/dot selection → carousel
-watch(currentSlide, (index) => {
-  carouselApi.value?.scrollTo(index)
-})
-
-function goToSlide(index: number) {
-  currentSlide.value = index
-}
-
-const handleGetStarted = () => {
-  if (authStore.isAuthenticated) {
-    router.push({ name: 'home' })
-    return
-  }
+function signIn() {
   const redirectUri =
     import.meta.env.VITE_AUTH0_CALLBACK_URL || `${window.location.origin}/app/home`
-  authStore.auth0.loginWithRedirect({
-    authorizationParams: {
-      redirect_uri: redirectUri,
-    },
-  })
+  authStore.auth0.loginWithRedirect({ authorizationParams: { redirect_uri: redirectUri } })
 }
 
-const navigateToAbout = () => {
-  router.push({ name: 'about' })
+function goToDashboard() {
+  router.push({ name: 'home' })
 }
 </script>
 
 <template>
-  <div class="space-y-20">
-    <!-- Hero Section -->
-    <div class="text-center space-y-8">
-      <div class="space-y-4">
-        <img :src="logo" alt="Logo" class="h-24 w-24 mx-auto rounded-xl" />
-        <h1 data-testid="page-heading" class="text-4xl font-bold tracking-tight">
-          {{ $t('preauth.landing.welcome') }}
-        </h1>
-        <p class="text-xl text-muted-foreground max-w-2xl mx-auto">
-          {{ $t('preauth.landing.subtitle') }}
-        </p>
-        <p class="text-sm text-muted-foreground italic max-w-xl mx-auto">
-          {{ $t('preauth.landing.nameExplainer') }}
-        </p>
-      </div>
+  <div>
+    <LandingHero
+      :is-authenticated="authStore.isAuthenticated"
+      @sign-in="signIn"
+      @dashboard="goToDashboard"
+    />
 
-      <div class="space-y-4">
-        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button
-            data-testid="btn-cta-primary"
-            @click="handleGetStarted"
-            size="lg"
-            class="px-8 py-3 text-lg font-medium"
-          >
-            {{
-              authStore.isAuthenticated
-                ? $t('preauth.layout.navigation.goToDashboard')
-                : $t('preauth.landing.getStarted')
-            }}
-          </Button>
-          <Button
-            data-testid="btn-cta-secondary"
-            @click="navigateToAbout"
-            variant="outline"
-            size="lg"
-            class="px-8 py-3 text-lg font-medium"
-          >
-            {{ $t('preauth.landing.learnMore') }}
-          </Button>
-        </div>
-        <p class="text-sm text-muted-foreground">{{ $t('preauth.landing.authNote') }}</p>
-      </div>
-    </div>
+    <LandingSectionNav :items="sections" />
 
-    <!-- Feature Cards -->
-    <div data-testid="section-features" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle class="text-lg">
-            {{ $t('preauth.landing.features.fastSecure.title') }}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p class="text-muted-foreground">
-            {{ $t('preauth.landing.features.fastSecure.description') }}
-          </p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle class="text-lg">
-            {{ $t('preauth.landing.features.easyToUse.title') }}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p class="text-muted-foreground">
-            {{ $t('preauth.landing.features.easyToUse.description') }}
-          </p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle class="text-lg">
-            {{ $t('preauth.landing.features.scalable.title') }}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p class="text-muted-foreground">
-            {{ $t('preauth.landing.features.scalable.description') }}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
+    <LandingAudience />
+    <LandingJourney />
+    <LandingFeatures />
+    <LandingAbout />
 
-    <!-- Showcase Carousel Section -->
-    <div data-testid="section-preview" class="space-y-8">
-      <div class="text-center space-y-3">
-        <Badge variant="secondary" class="text-sm px-3 py-1">Preview</Badge>
-        <h2 class="text-3xl font-bold tracking-tight">
-          {{ $t('preauth.landing.showcase.title') }}
-        </h2>
-        <p class="text-lg text-muted-foreground max-w-xl mx-auto">
-          {{ $t('preauth.landing.showcase.subtitle') }}
-        </p>
-      </div>
-
-      <!-- Slide Selector Pills -->
-      <ChipNav v-model="currentSlide" :items="chipItems" variant="rounded" stretch />
-
-      <!-- Carousel -->
-      <div class="relative max-w-5xl mx-auto">
-        <Carousel class="w-full" @init-api="onApiSet" :opts="{ loop: true }">
-          <CarouselContent class="py-4">
-            <CarouselItem v-for="slide in slides" :key="slide.key">
-              <div class="space-y-4 px-8">
-                <div class="relative overflow-hidden rounded-xl border bg-background shadow-2xl">
-                  <div
-                    class="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10 pointer-tasks-none"
-                  />
-                  <img
-                    :src="slide.image"
-                    :alt="$t(`preauth.landing.showcase.slides.${slide.key}.title`)"
-                    class="w-full h-auto"
-                    loading="lazy"
-                  />
-                </div>
-                <div class="text-center space-y-2 pb-2">
-                  <h3 class="text-xl font-semibold">
-                    {{ $t(`preauth.landing.showcase.slides.${slide.key}.title`) }}
-                  </h3>
-                  <p class="text-muted-foreground max-w-lg mx-auto">
-                    {{ $t(`preauth.landing.showcase.slides.${slide.key}.description`) }}
-                  </p>
-                </div>
-              </div>
-            </CarouselItem>
-          </CarouselContent>
-          <CarouselPrevious class="-left-12 hidden lg:inline-flex" />
-          <CarouselNext class="-right-12 hidden lg:inline-flex" />
-        </Carousel>
-
-        <!-- Dot indicators -->
-        <div class="flex justify-center gap-2 mt-4">
-          <!-- These were empty <button> elements: no text, no icon, no label,
-               so a screen reader announced four identical "button"s with no way
-               to tell which slide each one went to (axe `button-name`). -->
-          <button
-            v-for="(slide, index) in slides"
-            :key="slide.key"
-            @click="goToSlide(index)"
-            :aria-label="
-              $t('preauth.landing.showcase.goToSlide', {
-                title: $t(`preauth.landing.showcase.slides.${slide.key}.title`),
-              })
-            "
-            :aria-current="currentSlide === index ? 'true' : undefined"
-            class="w-2 h-2 rounded-full transition-all duration-200"
-            :class="
-              currentSlide === index
-                ? 'bg-primary w-6'
-                : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-            "
-          />
-        </div>
-      </div>
-    </div>
+    <LandingCta
+      :is-authenticated="authStore.isAuthenticated"
+      @sign-in="signIn"
+      @dashboard="goToDashboard"
+    />
   </div>
 </template>

@@ -5,20 +5,28 @@ import { formatDate } from '@/lib/format'
 
 const appVersion = __APP_VERSION__
 const appVersionDate = __APP_VERSION_DATE__
+
+const legal = [
+  { name: 'privacy', label: 'preauth.layout.footer.privacy' },
+  { name: 'terms', label: 'preauth.layout.footer.terms' },
+  { name: 'impressum', label: 'preauth.layout.footer.impressum' },
+] as const
 </script>
 
 <template>
-  <footer class="border-t mt-auto flex-shrink-0">
+  <footer class="mt-auto shrink-0 border-t">
+    <!-- `max-w-6xl` and the same gutters as the header, so the footer lines up
+         with everything above it instead of running wider. -->
     <div
-      class="max-w-7xl w-full mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-sm text-muted-foreground"
+      class="mx-auto flex w-full max-w-6xl flex-col items-center gap-5 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-6"
     >
-      <div class="flex flex-col items-center sm:items-start gap-1">
+      <div class="flex flex-col items-center gap-1.5 sm:items-start">
         <p>{{ $t('preauth.layout.footer.copyright') }}</p>
-        <router-link
+        <RouterLink
           :to="{ name: 'preauth-changelog' }"
-          class="text-xs hover:text-foreground transition-colors inline-flex items-center gap-1"
+          class="inline-flex items-center gap-1 text-xs transition-colors hover:text-foreground"
         >
-          <SparklesIcon class="size-3" />
+          <SparklesIcon class="size-3 shrink-0" />
           <span>
             {{
               $t('preauth.layout.footer.version', {
@@ -27,18 +35,20 @@ const appVersionDate = __APP_VERSION_DATE__
               })
             }}
           </span>
-        </router-link>
+        </RouterLink>
       </div>
-      <nav class="flex items-center gap-4">
-        <router-link :to="{ name: 'privacy' }" class="hover:text-foreground transition-colors">
-          {{ $t('preauth.layout.footer.privacy') }}
-        </router-link>
-        <router-link :to="{ name: 'terms' }" class="hover:text-foreground transition-colors">
-          {{ $t('preauth.layout.footer.terms') }}
-        </router-link>
-        <router-link :to="{ name: 'impressum' }" class="hover:text-foreground transition-colors">
-          {{ $t('preauth.layout.footer.impressum') }}
-        </router-link>
+
+      <!-- Wrapping, not one row: "Nutzungsbedingungen" alone is half a phone
+           wide, and the three of them used to overrun the gutter entirely. -->
+      <nav class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:justify-end">
+        <RouterLink
+          v-for="item in legal"
+          :key="item.name"
+          :to="{ name: item.name }"
+          class="transition-colors hover:text-foreground"
+        >
+          {{ $t(item.label) }}
+        </RouterLink>
       </nav>
     </div>
   </footer>
