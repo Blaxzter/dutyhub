@@ -98,8 +98,17 @@
         "warning": "Warning"
     },
     "validation": {
+        "email": "That does not look like an email address yet.",
         "endDateBeforeStart": "End date must be after start date",
-        "invalidDate": "Please select a valid date",
-        "required": "This field is required"
+        "invalid": "Please take another look at this entry.",
+        "invalidDate": "Please choose a valid date.",
+        "listMax": "Pick at most {max}.",
+        "listMin": "Pick at least {min}.",
+        "numberMax": "Pick {max} or less.",
+        "numberMin": "Pick {min} or more.",
+        "required": "Please fill this in.",
+        "tooLong": "A little too long — {max} characters at most.",
+        "tooShort": "A little short — at least {min} characters.",
+        "url": "That does not look like a web address yet."
     }
 }

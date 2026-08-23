@@ -22,6 +22,7 @@ import { z } from 'zod'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
+import PasswordRequirement from '@/components/auth/PasswordRequirement.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -58,9 +59,10 @@ const changePasswordSchema = computed(() =>
         current_password: z
           .string()
           .min(1, t('user.settings.password.fields.currentPassword.required')),
-        new_password: z
-          .string()
-          .min(PASSWORD_MIN_LENGTH, t('auth.password.minLength', { min: PASSWORD_MIN_LENGTH })),
+        // Message comes from the global map in `lib/zod-i18n.ts`. Supplying one
+        // here is what used to make the error and the hint below the field the
+        // very same sentence, printed twice.
+        new_password: z.string().min(PASSWORD_MIN_LENGTH),
         // UI-only: the server has no use for it and never sees it.
         confirm_password: z.string(),
       })
@@ -82,6 +84,10 @@ const form = useForm({
   validationSchema: changePasswordSchema,
   initialValues: { current_password: '', new_password: '', confirm_password: '' },
 })
+
+const passwordLongEnough = computed(
+  () => String(form.values.new_password ?? '').length >= PASSWORD_MIN_LENGTH,
+)
 
 const onSubmit = form.handleSubmit(async (values) => {
   busy.value = true
@@ -161,7 +167,7 @@ const onSubmit = form.handleSubmit(async (values) => {
           </FormItem>
         </FormField>
 
-        <FormField v-slot="{ componentField }" name="new_password">
+        <FormField v-slot="{ componentField, errorMessage }" name="new_password">
           <FormItem>
             <FormLabel>{{ t('user.settings.password.fields.newPassword.label') }}</FormLabel>
             <div class="relative">
@@ -190,10 +196,15 @@ const onSubmit = form.handleSubmit(async (values) => {
                 <EyeIcon v-else class="h-4 w-4" />
               </Button>
             </div>
-            <FormDescription>
-              {{ t('auth.password.minLength', { min: PASSWORD_MIN_LENGTH }) }}
+            <!-- The rule, the tick and the error in one row. See `RegisterView`. -->
+            <FormDescription aria-live="polite">
+              <PasswordRequirement
+                :label="t('auth.password.requirement.unmet', { min: PASSWORD_MIN_LENGTH })"
+                :met-label="t('auth.password.requirement.met')"
+                :met="passwordLongEnough"
+                :message="errorMessage"
+              />
             </FormDescription>
-            <FormMessage />
           </FormItem>
         </FormField>
 

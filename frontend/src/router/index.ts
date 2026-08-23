@@ -344,10 +344,19 @@ const router = createRouter({
           name: 'account-suspended',
           component: () => import('@/views/AccountSuspendedView.vue'),
         },
-        // The five public auth screens. They live under `NoLayout` rather than
-        // in the pre-auth shell on purpose: a page asking for a password should
-        // not also carry a navigation bar full of places to go instead. The only
-        // links each of them offers belong to the flow it is part of.
+      ],
+    },
+    // The five public auth screens. They have their own frame rather than
+    // sitting in `NoLayout`: they paint a full-bleed split screen, and
+    // `NoLayout`'s centred container would inset it and cap its width. They
+    // still carry no navigation — a page asking for a password should not also
+    // offer a bar full of places to go instead, and the only links each of them
+    // has belong to the flow it is part of. Left unnamed on purpose: a named
+    // parent with children and no default child warns at runtime.
+    {
+      path: '/',
+      component: () => import('@/layout/AuthLayout.vue'),
+      children: [
         {
           path: 'login',
           name: 'login',

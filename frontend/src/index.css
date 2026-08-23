@@ -47,6 +47,118 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   Motion — the auth screens
+   Two rules hold everything here together.
+
+   Only `transform` and `opacity` are animated, so nothing in this block can
+   reflow the page or shift a field under a cursor.
+
+   And nothing that carries *text* animates its opacity. The E2E suite runs an
+   axe scan on /login, /register and /forgot-password with `color-contrast`
+   enforced at zero, and a heading caught halfway through a fade measures as a
+   contrast failure — intermittently, which is the worst kind. Text rises into
+   place; only the decorative layers behind it fade.
+
+   Every utility below is paired with `motion-reduce:animate-none` at the call
+   site, and the decorative layers get a second net at the bottom of this file
+   because they loop.
+   ───────────────────────────────────────────────────────────────────────── */
+@theme {
+  --animate-auth-rise: auth-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-auth-fade: auth-fade 0.6s ease-out both;
+  --animate-hero-drift-a: hero-drift-a 34s ease-in-out infinite;
+  --animate-hero-drift-b: hero-drift-b 46s ease-in-out infinite;
+  --animate-hero-sheen: hero-sheen 6s ease-in-out 0.8s 1 both;
+  --animate-shift-fill: shift-fill 0.6s cubic-bezier(0.33, 1, 0.68, 1) both;
+  --animate-shift-pop: shift-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+
+  /* Transform only — this one is used on headings and proof points. */
+  @keyframes auth-rise {
+    from {
+      transform: translate3d(0, 14px, 0);
+    }
+    to {
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  /* Decorative layers only. Never put text inside something using this. */
+  @keyframes auth-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Two drifts at deliberately mismatched periods (34s / 46s), so the pair does
+     not return to the same arrangement within a sitting. Each blob is inset
+     -20% beyond the pane, so a 6% translate never walks an edge into view. */
+  @keyframes hero-drift-a {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    50% {
+      transform: translate3d(5%, -6%, 0) scale(1.15);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+  }
+
+  @keyframes hero-drift-b {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1.08);
+    }
+    50% {
+      transform: translate3d(-6%, 4%, 0) scale(0.94);
+    }
+    100% {
+      transform: translate3d(0, 0, 0) scale(1.08);
+    }
+  }
+
+  /* One pass of light across the pane on arrival, and then never again. */
+  @keyframes hero-sheen {
+    0% {
+      opacity: 0;
+      transform: translate3d(-60%, 0, 0) rotate(12deg);
+    }
+    18% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+      transform: translate3d(320%, 0, 0) rotate(12deg);
+    }
+  }
+
+  /* The motif: places on a shift being taken. Each bar carries its final width
+     as a `width` and grows into it with scaleX, so what animates is a
+     composited transform and the grid never reflows mid-play. */
+  @keyframes shift-fill {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @keyframes shift-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Palettes
    Two palettes × two modes = four blocks.
      Default (earthy)  — warm cream + forest/terracotta. Selected when the
@@ -335,6 +447,43 @@
 
   .print-repeat-header {
     display: table-header-group;
+  }
+}
+
+/* ── Text fields ──────────────────────────────────────────────────────────
+   Edge draws its own reveal-eye and clear-✕ inside password and text inputs,
+   on top of the toggle the form already provides — two eyes, one field.
+   Chromium-Edge only; every other engine renders nothing here and ignores it.
+
+   The autofill rule is the other half: Chrome paints an autofilled box a fixed
+   pale yellow that ignores the palette completely. The usual fix is a 1000px
+   inset `box-shadow`, and it must not be used here — `Input.vue` draws its
+   entire focus indicator as a box-shadow ring (`focus-visible:ring-[3px]` over
+   `outline-none`), box-shadow does not stack across rules, and this rule would
+   win the cascade. An autofilled field would then focus with no visible ring,
+   on the one form whose fields a browser is most likely to fill in. Clipping
+   the background to the glyphs hides the yellow without going near box-shadow,
+   so both the focus ring and `aria-invalid:ring-destructive` survive. */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+input:-webkit-autofill {
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: var(--foreground);
+  caret-color: var(--foreground);
+}
+
+/* The hero pane's decorative layers loop, so they get a net as well as the
+   `motion-reduce:` utility on each of them: a looping animation that escapes
+   because a class was dropped in a refactor is the one kind somebody who asked
+   for less motion cannot get away from. */
+@media (prefers-reduced-motion: reduce) {
+  [data-hero-motion],
+  [data-hero-motion] * {
+    animation: none !important;
+    transition: none !important;
   }
 }
 

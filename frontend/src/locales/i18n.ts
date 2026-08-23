@@ -1,6 +1,8 @@
 import { watch } from 'vue'
 import { createI18n } from 'vue-i18n'
 
+import { installZodI18n } from '@/lib/zod-i18n'
+
 // Define types for the module structure
 interface TranslationModule {
   default?: Record<string, unknown>
@@ -77,5 +79,15 @@ watch(
   },
   { immediate: true },
 )
+
+/**
+ * Point Zod's global error map at our copy.
+ *
+ * Here rather than in `main.ts` so that everything holding this module — the
+ * app, and every Vitest spec that imports it — gets translated validation
+ * messages with no second wiring step to forget. See `lib/zod-i18n.ts` for why
+ * the generated schemas need no rebuild.
+ */
+installZodI18n((key, named) => (named ? i18n.global.t(key, named) : i18n.global.t(key)))
 
 export default i18n

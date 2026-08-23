@@ -198,7 +198,7 @@ const hasValue = computed(() => props.dateFrom !== null)
             <div class="**:data-[shift=native-select-icon]:right-1">
               <div class="relative">
                 <div
-                  class="absolute inset-0 flex h-full items-center text-sm pl-2 pointer-tasks-none"
+                  class="absolute inset-0 flex h-full items-center text-sm pl-2 pointer-events-none"
                 >
                   {{ formatter.custom(toDate(date), { month: 'short' }) }}
                 </div>
@@ -290,7 +290,7 @@ const hasValue = computed(() => props.dateFrom !== null)
                     v-if="isMarked(weekDate) && weekDate.month === month.value.month"
                     :class="
                       cn(
-                        'absolute bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full pointer-tasks-none',
+                        'absolute bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full pointer-events-none',
                         isEndpoint(weekDate) ? 'bg-primary-foreground' : 'bg-primary',
                       )
                     "

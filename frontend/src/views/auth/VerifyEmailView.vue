@@ -2,7 +2,7 @@
 /**
  * Redeem an email-verification link.
  *
- * There is nothing to fill in, so the request goes out on mount and the card
+ * There is nothing to fill in, so the request goes out on mount and the screen
  * reports what came back. Four outcomes, and each one gets its own words:
  * confirming, confirmed, expired, and spent-or-unknown.
  *
@@ -25,8 +25,8 @@ import { useAuthStore } from '@/stores/auth'
 
 import { useAuth } from '@/composables/useAuth'
 
+import AuthShell from '@/components/auth/AuthShell.vue'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 
 import { client } from '@/client/client.gen'
 import { normalizeApiError } from '@/lib/api-errors'
@@ -42,6 +42,15 @@ const state = ref<VerificationState>('pending')
 
 const heading = computed(() => t(`auth.verifyEmail.${state.value}.title`))
 const description = computed(() => t(`auth.verifyEmail.${state.value}.description`))
+
+/** A dead link is not a moment to open with "now we can reach you". */
+const isProblem = computed(() => state.value === 'expired' || state.value === 'invalid')
+
+const stateIcon = computed(() => {
+  if (state.value === 'pending') return LoaderIcon
+  if (state.value === 'success') return CircleCheckBigIcon
+  return MailWarningIcon
+})
 
 onMounted(async () => {
   const token = typeof route.query.token === 'string' ? route.query.token : ''
@@ -76,39 +85,27 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center p-4">
-    <Card class="w-full max-w-md" data-testid="verify-email-card">
-      <CardHeader class="space-y-3 text-center">
-        <LoaderIcon
-          v-if="state === 'pending'"
-          class="mx-auto h-10 w-10 animate-spin text-primary"
-        />
-        <CircleCheckBigIcon
-          v-else-if="state === 'success'"
-          class="mx-auto h-10 w-10 text-primary"
-        />
-        <MailWarningIcon v-else class="mx-auto h-10 w-10 text-destructive" />
-
-        <h1 class="text-xl leading-none font-semibold" data-testid="page-heading">
-          {{ heading }}
-        </h1>
-        <CardDescription :data-testid="`verify-email-${state}`">
-          {{ description }}
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent v-if="state !== 'pending'" class="space-y-4">
-        <Button v-if="isAuthenticated" class="w-full" as-child data-testid="link-continue">
-          <RouterLink :to="{ name: 'home' }">
-            {{ t('auth.verifyEmail.actions.continue') }}
-          </RouterLink>
-        </Button>
-        <Button v-else class="w-full" as-child data-testid="link-sign-in">
-          <RouterLink :to="{ name: 'login' }">
-            {{ t('auth.verifyEmail.actions.signIn') }}
-          </RouterLink>
-        </Button>
-      </CardContent>
-    </Card>
-  </div>
+  <AuthShell
+    hero="verifyEmail"
+    :hero-problem="isProblem"
+    :icon="stateIcon"
+    :busy="state === 'pending'"
+    :tone="isProblem ? 'destructive' : 'primary'"
+    :title="heading"
+    :description="description"
+    :description-testid="`verify-email-${state}`"
+  >
+    <div v-if="state !== 'pending'">
+      <Button v-if="isAuthenticated" class="w-full" as-child data-testid="link-continue">
+        <RouterLink :to="{ name: 'home' }">
+          {{ t('auth.verifyEmail.actions.continue') }}
+        </RouterLink>
+      </Button>
+      <Button v-else class="w-full" as-child data-testid="link-sign-in">
+        <RouterLink :to="{ name: 'login' }">
+          {{ t('auth.verifyEmail.actions.signIn') }}
+        </RouterLink>
+      </Button>
+    </div>
+  </AuthShell>
 </template>

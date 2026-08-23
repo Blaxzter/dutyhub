@@ -33,10 +33,10 @@ const dismiss = () => {
     <div
       v-if="visible"
       data-testid="cookie-notice"
-      class="fixed bottom-0 inset-x-0 z-50 p-4 pointer-tasks-none"
+      class="fixed bottom-0 inset-x-0 z-50 p-4 pointer-events-none"
     >
       <div
-        class="max-w-lg mx-auto bg-card border rounded-lg shadow-lg p-4 flex items-center gap-3 pointer-tasks-auto"
+        class="max-w-lg mx-auto bg-card border rounded-lg shadow-lg p-4 flex items-center gap-3 pointer-events-auto"
       >
         <p class="text-sm text-muted-foreground flex-1">
           {{ $t('preauth.cookieNotice.message') }}

@@ -9,15 +9,15 @@
  * into a membership oracle — type an address, learn whether that person uses
  * the service.
  */
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import { KeyRoundIcon, LoaderIcon, MailCheckIcon } from '@lucide/vue'
 import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { useI18n } from 'vue-i18n'
 
+import AuthShell from '@/components/auth/AuthShell.vue'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 
@@ -25,126 +25,154 @@ import { client } from '@/client/client.gen'
 import { zForgotPasswordRequest } from '@/client/zod.gen'
 import { toastApiError } from '@/lib/api-errors'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const busy = ref(false)
 /** The address the confirmation is about — never a claim that it was found. */
 const submittedEmail = ref<string | null>(null)
+const formRef = ref<HTMLFormElement | null>(null)
 
-const form = useForm({
-  validationSchema: toTypedSchema(zForgotPasswordRequest),
+/** Wrapped so a language switch re-runs validation — see `LoginView.vue`. */
+const forgotSchema = computed(() => {
+  void locale.value
+  return toTypedSchema(zForgotPasswordRequest)
+})
+
+const { errors, handleSubmit, resetForm } = useForm({
+  validationSchema: forgotSchema,
   initialValues: { email: '' },
 })
 
-const onSubmit = form.handleSubmit(async (values) => {
-  busy.value = true
-  try {
-    // A public endpoint: no bearer token to attach, so this goes straight to the
-    // generated client rather than through `useAuthenticatedClient`, which would
-    // throw for the anonymous visitor this page exists for.
-    await client.post<unknown, unknown, true>({
-      url: '/auth/forgot-password',
-      body: values,
-      throwOnError: true,
-    })
-    submittedEmail.value = values.email
-  } catch (error) {
-    // Reached by a rate limit or an outage — never by "no such address".
-    toastApiError(error)
-  } finally {
-    busy.value = false
-  }
-})
+const liveValidate = (field: 'email') => Boolean(errors.value[field])
+
+/**
+ * Send the cursor to the first field that is actually wrong.
+ *
+ * Somebody submitting from the keyboard has to be told *where* the problem is,
+ * not just that there is one. Walked in DOM order rather than over
+ * `Object.keys(errors)`, whose order comes from the generated schema and does
+ * not have to match the order the fields are laid out in — on the register form
+ * it lists `email` before `name`, and the cursor would skip the first field on
+ * the screen. Scoped to this form, so nothing else on the page can steal focus.
+ */
+function focusFirstInvalid(form: HTMLFormElement | null, invalid: Record<string, unknown>): void {
+  if (!form) return
+  const fields = Array.from(form.querySelectorAll<HTMLElement>('[name]'))
+  const first = fields.find((field) => invalid[field.getAttribute('name') ?? ''])
+  first?.focus()
+}
+
+const onSubmit = handleSubmit(
+  async (values) => {
+    busy.value = true
+    try {
+      // A public endpoint: no bearer token to attach, so this goes straight to
+      // the generated client rather than through `useAuthenticatedClient`, which
+      // would throw for the anonymous visitor this page exists for.
+      await client.post<unknown, unknown, true>({
+        url: '/auth/forgot-password',
+        body: values,
+        throwOnError: true,
+      })
+      submittedEmail.value = values.email
+    } catch (error) {
+      // Reached by a rate limit or an outage — never by "no such address".
+      toastApiError(error)
+    } finally {
+      busy.value = false
+    }
+  },
+  ({ errors: invalid }) => {
+    focusFirstInvalid(formRef.value, invalid)
+  },
+)
 
 function startOver() {
   submittedEmail.value = null
-  form.resetForm()
+  resetForm()
 }
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center p-4">
-    <Card class="w-full max-w-md" data-testid="forgot-password-card">
-      <template v-if="submittedEmail">
-        <CardHeader class="space-y-3 text-center">
-          <MailCheckIcon class="mx-auto h-10 w-10 text-primary" />
-          <h1 class="text-xl leading-none font-semibold" data-testid="page-heading">
-            {{ t('auth.forgotPassword.sent.title') }}
-          </h1>
-          <CardDescription data-testid="forgot-password-sent">
-            {{ t('auth.forgotPassword.sent.description', { email: submittedEmail }) }}
-          </CardDescription>
-        </CardHeader>
+  <AuthShell
+    hero="forgotPassword"
+    :icon="submittedEmail ? MailCheckIcon : KeyRoundIcon"
+    :title="submittedEmail ? t('auth.forgotPassword.sent.title') : t('auth.forgotPassword.title')"
+    :description="
+      submittedEmail
+        ? t('auth.forgotPassword.sent.description', { email: submittedEmail })
+        : t('auth.forgotPassword.description')
+    "
+    :description-testid="submittedEmail ? 'forgot-password-sent' : undefined"
+  >
+    <template v-if="submittedEmail">
+      <div class="space-y-4">
+        <p class="text-sm text-muted-foreground">
+          {{ t('auth.forgotPassword.sent.hint') }}
+        </p>
+        <Button
+          class="w-full"
+          variant="outline"
+          data-testid="btn-forgot-password-retry"
+          @click="startOver"
+        >
+          {{ t('auth.forgotPassword.sent.retry') }}
+        </Button>
+        <Button class="w-full" variant="ghost" as-child data-testid="link-back-to-login">
+          <RouterLink :to="{ name: 'login' }">
+            {{ t('auth.forgotPassword.actions.backToLogin') }}
+          </RouterLink>
+        </Button>
+      </div>
+    </template>
 
-        <CardContent class="space-y-4">
-          <p class="text-center text-sm text-muted-foreground">
-            {{ t('auth.forgotPassword.sent.hint') }}
-          </p>
-          <Button
-            class="w-full"
-            variant="outline"
-            data-testid="btn-forgot-password-retry"
-            @click="startOver"
-          >
-            {{ t('auth.forgotPassword.sent.retry') }}
-          </Button>
-          <Button class="w-full" variant="ghost" as-child data-testid="link-back-to-login">
-            <RouterLink :to="{ name: 'login' }">
-              {{ t('auth.forgotPassword.actions.backToLogin') }}
-            </RouterLink>
-          </Button>
-        </CardContent>
-      </template>
+    <template v-else>
+      <form
+        ref="formRef"
+        class="space-y-4"
+        data-testid="forgot-password-form"
+        @submit="onSubmit"
+      >
+        <FormField
+          v-slot="{ componentField }"
+          name="email"
+          :validate-on-model-update="liveValidate('email')"
+        >
+          <FormItem>
+            <FormLabel>{{ t('auth.forgotPassword.fields.email.label') }}</FormLabel>
+            <FormControl>
+              <Input
+                type="email"
+                autocomplete="email"
+                data-testid="input-email"
+                :placeholder="t('auth.forgotPassword.fields.email.placeholder')"
+                v-bind="componentField"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
-      <template v-else>
-        <CardHeader class="space-y-3 text-center">
-          <KeyRoundIcon class="mx-auto h-10 w-10 text-primary" />
-          <h1 class="text-xl leading-none font-semibold" data-testid="page-heading">
-            {{ t('auth.forgotPassword.title') }}
-          </h1>
-          <CardDescription>{{ t('auth.forgotPassword.description') }}</CardDescription>
-        </CardHeader>
+        <Button
+          class="w-full"
+          type="submit"
+          :disabled="busy"
+          data-testid="btn-forgot-password-submit"
+        >
+          <LoaderIcon v-if="busy" class="size-4 animate-spin" />
+          {{
+            busy
+              ? t('auth.forgotPassword.actions.submitting')
+              : t('auth.forgotPassword.actions.submit')
+          }}
+        </Button>
 
-        <CardContent class="space-y-4">
-          <form class="space-y-4" data-testid="forgot-password-form" @submit="onSubmit">
-            <FormField v-slot="{ componentField }" name="email">
-              <FormItem>
-                <FormLabel>{{ t('auth.forgotPassword.fields.email.label') }}</FormLabel>
-                <FormControl>
-                  <Input
-                    type="email"
-                    autocomplete="email"
-                    data-testid="input-email"
-                    :placeholder="t('auth.forgotPassword.fields.email.placeholder')"
-                    v-bind="componentField"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            </FormField>
-
-            <Button
-              class="w-full"
-              type="submit"
-              :disabled="busy"
-              data-testid="btn-forgot-password-submit"
-            >
-              <LoaderIcon v-if="busy" class="h-4 w-4 animate-spin" />
-              {{
-                busy
-                  ? t('auth.forgotPassword.actions.submitting')
-                  : t('auth.forgotPassword.actions.submit')
-              }}
-            </Button>
-          </form>
-
-          <Button class="w-full" variant="ghost" as-child data-testid="link-back-to-login">
-            <RouterLink :to="{ name: 'login' }">
-              {{ t('auth.forgotPassword.actions.backToLogin') }}
-            </RouterLink>
-          </Button>
-        </CardContent>
-      </template>
-    </Card>
-  </div>
+        <Button class="w-full" variant="ghost" as-child data-testid="link-back-to-login">
+          <RouterLink :to="{ name: 'login' }">
+            {{ t('auth.forgotPassword.actions.backToLogin') }}
+          </RouterLink>
+        </Button>
+      </form>
+    </template>
+  </AuthShell>
 </template>

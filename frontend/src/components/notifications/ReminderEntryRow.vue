@@ -68,7 +68,7 @@ function onConfirmRemove() {
     <div
       v-if="!readonly"
       class="flex items-center gap-1.5"
-      :class="{ 'pointer-tasks-none opacity-50': loading }"
+      :class="{ 'pointer-events-none opacity-50': loading }"
     >
       <template v-for="ch in availableChannels" :key="ch">
         <!-- Last remaining channel: looks active, tooltip describes effect, toast on click -->
@@ -148,7 +148,7 @@ function onConfirmRemove() {
       <DropdownMenuTrigger as-child :disabled="loading">
         <button
           :disabled="loading"
-          class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-tasks-none"
+          class="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none"
           :aria-label="t('common.actions.moreActions')"
         >
           <Loader2 v-if="loading" :size="16" class="animate-spin" />
@@ -176,7 +176,7 @@ function onConfirmRemove() {
                   @click.stop="toast.info(t('notifications.reminders.lastChannelHint'))"
                 >
                   <Lock :size="12" class="text-muted-foreground" />
-                  <Switch :model-value="true" class="pointer-tasks-none" />
+                  <Switch :model-value="true" class="pointer-events-none" />
                 </span>
               </TooltipTrigger>
               <TooltipContent>

@@ -892,7 +892,7 @@ onMounted(async () => {
                         : isShiftFull(shift)
                           ? 'opacity-40 cursor-not-allowed'
                           : 'hover:ring-1 hover:ring-primary/40',
-                      busyShiftId === shift.id ? 'opacity-60 pointer-tasks-none' : '',
+                      busyShiftId === shift.id ? 'opacity-60 pointer-events-none' : '',
                     ]"
                     @click="handleShiftClick(shift)"
                   >

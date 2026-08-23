@@ -39,6 +39,7 @@ test.describe('Auth – registration', () => {
     await page.getByTestId('input-name').fill('Registration Test')
     await page.getByTestId('input-email').fill(email)
     await page.getByTestId('input-password').fill(AUTH_TEST_PASSWORD)
+    await page.getByTestId('input-confirm-password').fill(AUTH_TEST_PASSWORD)
     await page.getByTestId('btn-register').click()
 
     // Registration answers with an access token, so there is no "confirm your
@@ -78,6 +79,7 @@ test.describe('Auth – registration', () => {
     await page.getByTestId('input-name').fill('Second Attempt')
     await page.getByTestId('input-email').fill(email)
     await page.getByTestId('input-password').fill(AUTH_TEST_PASSWORD)
+    await page.getByTestId('input-confirm-password').fill(AUTH_TEST_PASSWORD)
     await page.getByTestId('btn-register').click()
 
     // `errorCodes.auth.email_taken` — the problem code the endpoint answers

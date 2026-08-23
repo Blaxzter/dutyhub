@@ -98,8 +98,17 @@
         "warning": "Warnung"
     },
     "validation": {
+        "email": "Das sieht noch nicht nach einer E-Mail-Adresse aus.",
         "endDateBeforeStart": "Das Enddatum muss nach dem Startdatum liegen",
-        "invalidDate": "Bitte wählen Sie ein gültiges Datum",
-        "required": "Dieses Feld ist erforderlich"
+        "invalid": "Bitte sieh dir diese Eingabe noch einmal an.",
+        "invalidDate": "Bitte ein gültiges Datum wählen.",
+        "listMax": "Wähle höchstens {max} aus.",
+        "listMin": "Wähle mindestens {min} aus.",
+        "numberMax": "Höchstens {max}, bitte.",
+        "numberMin": "Mindestens {min}, bitte.",
+        "required": "Bitte noch ausfüllen.",
+        "tooLong": "Etwas zu lang — höchstens {max} Zeichen.",
+        "tooShort": "Etwas kurz — mindestens {min} Zeichen.",
+        "url": "Das sieht noch nicht nach einer Webadresse aus."
     }
 }
