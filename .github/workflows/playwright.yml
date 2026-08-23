@@ -46,6 +46,20 @@ jobs:
             - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
               id: filter
               with:
+                  # On a push, compare against the commit this push replaced.
+                  #
+                  # Left unset, paths-filter compares against the repository's
+                  # DEFAULT branch — which here is `dev`, not `main`. Merges to
+                  # main are fast-forwards from dev, so the two refs are equal
+                  # and that diff is always empty: `changed` came back false,
+                  # the matrix below was skipped, and `allowed-skips` let
+                  # alls-green-playwright report success over a suite that never
+                  # ran. Every main push since the pattern was added reported a
+                  # 15-second green.
+                  #
+                  # On pull_request the default is already right (the PR base),
+                  # so this only overrides the push case.
+                  base: ${{ github.event_name == 'push' && github.event.before || '' }}
                   filters: |
                       changed:
                         - backend/**
@@ -57,7 +71,9 @@ jobs:
     test-playwright:
         needs:
             - changes
-        if: ${{ needs.changes.outputs.changed == 'true' }}
+        # workflow_dispatch has no diff to compute a base from, and a human who
+        # clicked "Run workflow" wants the suite run — not path-filtered away.
+        if: ${{ needs.changes.outputs.changed == 'true' || github.event_name == 'workflow_dispatch' }}
         timeout-minutes: 60
         runs-on: ubuntu-latest
         strategy:
