@@ -1,26 +1,28 @@
 import { computed, markRaw, ref, watch } from 'vue'
 
-import { useAuth0 } from '@auth0/auth0-vue'
-import type { User } from '@auth0/auth0-vue'
 import { defineStore } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
+import { useAuth } from '@/composables/useAuth'
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 import { type Palette, usePalette } from '@/composables/usePalette'
 
 import ActionToast from '@/components/ui/sonner/ActionToast.vue'
 
 import type { EventRead, UserProfile } from '@/client/types.gen'
+import type { AuthUser } from '@/lib/auth-session'
 import type { EventRole } from '@/lib/event-roles'
 import i18n from '@/locales/i18n'
 
-export type { User }
+// `User` is the name the components that render the signed-in identity already
+// import; it now points at our own shape instead of the identity provider's.
+export type { AuthUser, AuthUser as User }
 
 export const useAuthStore = defineStore('auth', () => {
-  const auth0 = useAuth0()
-  const { post, get, put } = useAuthenticatedClient()
+  const session = useAuth()
+  const { get, put } = useAuthenticatedClient()
   const { t } = useI18n()
   const router = useRouter()
   const loading = ref(false)
@@ -28,8 +30,8 @@ export const useAuthStore = defineStore('auth', () => {
   const pendingJoinRequestCount = ref(0)
   let joinRequestToastShown = false
 
-  const isAuthenticated = computed(() => auth0.isAuthenticated.value)
-  const user = computed(() => auth0.user.value)
+  const isAuthenticated = computed(() => session.isAuthenticated.value)
+  const user = computed(() => session.user.value)
   const profile = ref<UserProfile | null>(null)
   const roles = computed(() => profile.value?.roles ?? [])
   /** Platform superadmin — the only global role left. */
@@ -74,31 +76,26 @@ export const useAuthStore = defineStore('auth', () => {
 
   let profilePromise: Promise<UserProfile | null> | null = null
 
-  const logout = () => {
+  /** Revoke the session server-side, drop it locally and leave for the landing page. */
+  const logout = async () => {
     profile.value = null
-    auth0.logout({
-      logoutParams: {
-        returnTo: window.location.origin,
-      },
-    })
+    await session.logout()
   }
 
   const getAccessToken = async () => {
     try {
-      return await auth0.getAccessTokenSilently()
+      return await session.getAccessTokenSilently()
     } catch (error) {
       console.error('Error getting access token:', error)
       throw error
     }
   }
 
-  const updateUser = (userData: Partial<User>) => {
-    console.log('Updating user with data:', userData)
+  const updateUser = (userData: Partial<AuthUser>) => {
+    if (!isAuthenticated.value || !session.user.value) return
 
-    if (!isAuthenticated.value || !auth0.user.value) return
-
-    auth0.user.value = {
-      ...auth0.user.value,
+    session.user.value = {
+      ...session.user.value,
       ...userData,
     }
   }
@@ -132,24 +129,16 @@ export const useAuthStore = defineStore('auth', () => {
 
     profileLoading.value = true
     profilePromise = (async () => {
-      // Send profile data from Auth0 ID token to backend for user initialization
-      const profileInit =
-        auth0.user.value && (auth0.user.value.email || auth0.user.value.name)
-          ? {
-              email: auth0.user.value.email,
-              name: auth0.user.value.name,
-              nickname: auth0.user.value.nickname,
-              picture: auth0.user.value.picture,
-              email_verified: auth0.user.value.email_verified,
-              preferred_language: i18n.global.locale.value,
-            }
-          : null
-
-      const response = await post<{ data: UserProfile }>({
-        url: '/users/me',
-        body: profileInit,
-      })
+      // A plain read. Accounts are created by registering, not by turning up
+      // with a token from somewhere else, so there is nothing to upsert here.
+      const response = await get<{ data: UserProfile }>({ url: '/users/me' })
       profile.value = response.data
+
+      // The session carries an identity only when it was minted by a sign-in.
+      // After a reload it is restored from a cookie, which says who you are to
+      // the server and nothing at all to the browser — so this is where the
+      // shell (name, avatar, verification badge) gets one.
+      session.user.value = response.data
 
       // Apply server-side language preference
       if (response.data.preferred_language) {
@@ -230,7 +219,7 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   return {
-    auth0,
+    session,
     isAuthenticated,
     user,
     profile,

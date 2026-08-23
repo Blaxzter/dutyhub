@@ -1,24 +1,26 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useAuth0 } from '@auth0/auth0-vue'
 import { useColorMode } from '@vueuse/core'
 import { RouterView } from 'vue-router'
 import 'vue-sonner/style.css'
 
-import { usePalette } from '@/composables/usePalette'
-
 import { useAuthStore } from '@/stores/auth'
+
+import { useAuth } from '@/composables/useAuth'
+import { usePalette } from '@/composables/usePalette'
 
 import { Toaster } from '@/components/ui/sonner'
 
 import GlobalDialog from '@/components/utils/GlobalDialog.vue'
 
-const auth0 = useAuth0()
+const { isLoading: sessionLoading } = useAuth()
 const authStore = useAuthStore()
 
-// Show loading when either Auth0 is loading OR profile is being loaded
-const isLoading = computed(() => auth0.isLoading.value || authStore.profileLoading)
+// Both halves of "who is this?" have to answer before anything renders: the
+// session restore at boot, and the profile fetch that follows it. Rendering in
+// between flashes the signed-out shell at someone who is signed in.
+const isLoading = computed(() => sessionLoading.value || authStore.profileLoading)
 
 // Initialize color mode + palette early so the right classes are on <html>
 // before the first render.

@@ -14,6 +14,40 @@ export const zAffectedBookingInfo = z.object({
 })
 
 /**
+ * AuthSessionRead
+ *
+ * One signed-in device, as shown in the Security settings card.
+ *
+ * Nothing secret is exposed: the refresh token hash stays server-side, and
+ * what is left is only enough for the owner to recognise a device they no
+ * longer want signed in.
+ */
+export const zAuthSessionRead = z
+  .object({
+    id: z.uuid(),
+    created_at: z.iso.datetime().register(z.globalRegistry, {
+      description: 'When this device signed in',
+    }),
+    last_used_at: z.iso.datetime().nullish(),
+    expires_at: z.iso.datetime().register(z.globalRegistry, {
+      description: 'When the session lapses without being used',
+    }),
+    user_agent: z.string().nullish(),
+    ip_address: z.string().nullish(),
+    is_current: z
+      .boolean()
+      .register(z.globalRegistry, {
+        description: 'True for the session the current request is authenticated by',
+      })
+      .optional()
+      .default(false),
+  })
+  .register(z.globalRegistry, {
+    description:
+      'One signed-in device, as shown in the Security settings card.\n\nNothing secret is exposed: the refresh token hash stays server-side, and\nwhat is left is only enough for the owner to recognise a device they no\nlonger want signed in.',
+  })
+
+/**
  * AvatarUploadResponse
  */
 export const zAvatarUploadResponse = z.object({
@@ -161,6 +195,29 @@ export const zCategoryBreakdown = z.object({
   confirmed_bookings: z.int(),
   fill_rate: z.number(),
 })
+
+/**
+ * ChangePasswordRequest
+ *
+ * Change the password of the signed-in account.
+ *
+ * The current password is required even though the caller is already
+ * authenticated: it is what stops a borrowed, unlocked browser from becoming a
+ * permanent takeover.
+ */
+export const zChangePasswordRequest = z
+  .object({
+    current_password: z.string().register(z.globalRegistry, {
+      description: 'The password in use right now',
+    }),
+    new_password: z.string().register(z.globalRegistry, {
+      description: 'Replacement password',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description:
+      'Change the password of the signed-in account.\n\nThe current password is required even though the caller is already\nauthenticated: it is what stops a borrowed, unlocked browser from becoming a\npermanent takeover.',
+  })
 
 /**
  * DashboardBookingItem
@@ -548,6 +605,25 @@ export const zFeedTaskItem = z
   })
 
 /**
+ * ForgotPasswordRequest
+ *
+ * Ask for a reset link.
+ *
+ * The endpoint answers 202 whether or not the address exists, so this schema
+ * is also the whole of what an attacker learns from it.
+ */
+export const zForgotPasswordRequest = z
+  .object({
+    email: z.email().register(z.globalRegistry, {
+      description: 'Address to send the reset link to',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description:
+      'Ask for a reset link.\n\nThe endpoint answers 202 whether or not the address exists, so this schema\nis also the whole of what an attacker learns from it.',
+  })
+
+/**
  * GlobalChannelSettingsRead
  */
 export const zGlobalChannelSettingsRead = z.object({
@@ -564,6 +640,24 @@ export const zGlobalChannelSettingsUpdate = z.object({
   notify_push: z.boolean().nullish(),
   notify_telegram: z.boolean().nullish(),
 })
+
+/**
+ * LoginRequest
+ *
+ * Credentials for an existing account.
+ */
+export const zLoginRequest = z
+  .object({
+    email: z.email().register(z.globalRegistry, {
+      description: 'Address the account was registered with',
+    }),
+    password: z.string().register(z.globalRegistry, {
+      description: 'Password as typed; never stored or logged',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description: 'Credentials for an existing account.',
+  })
 
 /**
  * NotificationRead
@@ -697,24 +791,6 @@ export const zOwnershipTransferResult = z
   })
 
 /**
- * ProfileInit
- *
- * Profile data from Auth0 ID token for user initialization.
- */
-export const zProfileInit = z
-  .object({
-    email: z.email().nullish(),
-    name: z.string().nullish(),
-    nickname: z.string().nullish(),
-    picture: z.string().nullish(),
-    email_verified: z.boolean().nullish(),
-    preferred_language: z.string().nullish(),
-  })
-  .register(z.globalRegistry, {
-    description: 'Profile data from Auth0 ID token for user initialization.',
-  })
-
-/**
  * PushSubscriptionCreate
  */
 export const zPushSubscriptionCreate = z.object({
@@ -733,6 +809,70 @@ export const zPushSubscriptionRead = z.object({
   user_agent: z.string().nullish(),
   created_at: z.iso.datetime(),
 })
+
+/**
+ * RefreshResponse
+ *
+ * A fresh access token, minted from the refresh cookie.
+ *
+ * Carries no user object: the client already knows who it is by the time it
+ * refreshes, and re-serialising the full profile on a call that fires every
+ * fifteen minutes would be pure overhead.
+ */
+export const zRefreshResponse = z
+  .object({
+    access_token: z.string().register(z.globalRegistry, {
+      description: 'Short-lived HS256 JWT, bearer token',
+    }),
+    token_type: z
+      .literal('bearer')
+      .register(z.globalRegistry, {
+        description: "Always 'bearer'; present for RFC 6750 clients",
+      })
+      .optional()
+      .default('bearer'),
+    expires_in: z.int().register(z.globalRegistry, {
+      description: 'Seconds until the access token stops being accepted',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description:
+      'A fresh access token, minted from the refresh cookie.\n\nCarries no user object: the client already knows who it is by the time it\nrefreshes, and re-serialising the full profile on a call that fires every\nfifteen minutes would be pure overhead.',
+  })
+
+/**
+ * RegisterRequest
+ *
+ * Everything an account needs, in one round trip.
+ *
+ * Registration is open — anyone who signs up gets an active account, and that
+ * account grants nothing on its own until an event admits them. So there is no
+ * approval field here and nothing that hints at one.
+ */
+export const zRegisterRequest = z
+  .object({
+    email: z.email().register(z.globalRegistry, {
+      description: 'Address that becomes the login credential',
+    }),
+    password: z.string().register(z.globalRegistry, {
+      description: 'Chosen password, hashed before storage',
+    }),
+    name: z.string().min(1).max(100).register(z.globalRegistry, {
+      description: 'Display name shown to other participants',
+    }),
+    preferred_language: z
+      .string()
+      .regex(/^(en|de)$/)
+      .register(z.globalRegistry, {
+        description: 'Language for the verification mail and later notifications',
+      })
+      .optional()
+      .default('en'),
+  })
+  .register(z.globalRegistry, {
+    description:
+      'Everything an account needs, in one round trip.\n\nRegistration is open — anyone who signs up gets an active account, and that\naccount grants nothing on its own until an event admits them. So there is no\napproval field here and nothing that hints at one.',
+  })
 
 /**
  * ReminderOffsetEntry
@@ -792,6 +932,24 @@ export const zReportingOverviewStats = z.object({
   active_volunteers: z.int(),
   total_volunteers: z.int(),
 })
+
+/**
+ * ResetPasswordRequest
+ *
+ * Redeem a reset link and choose a new password.
+ */
+export const zResetPasswordRequest = z
+  .object({
+    token: z.string().min(1).max(255).register(z.globalRegistry, {
+      description: 'Secret from the reset link; only its sha256 is stored server-side',
+    }),
+    password: z.string().register(z.globalRegistry, {
+      description: 'New password',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description: 'Redeem a reset link and choose a new password.',
+  })
 
 /**
  * ScheduleOverride
@@ -1431,8 +1589,8 @@ export const zUserCounts = z.object({
  * UserCreate
  */
 export const zUserCreate = z.object({
-  auth0_sub: z.string().register(z.globalRegistry, {
-    description: 'Auth0 subject identifier',
+  subject: z.string().register(z.globalRegistry, {
+    description: 'Opaque local identity string',
   }),
   email: z.email().nullish(),
   name: z.string().nullish(),
@@ -1549,6 +1707,40 @@ export const zUserProfile = z.object({
 })
 
 /**
+ * TokenResponse
+ *
+ * What a successful register or login hands back.
+ *
+ * The refresh token is *not* in here — it goes out as an httpOnly cookie the
+ * JavaScript can never read. This body holds only what the client is meant to
+ * keep in memory.
+ *
+ * The profile rides along so the app can render a signed-in shell without a
+ * second round trip on the one screen where latency is most visible.
+ */
+export const zTokenResponse = z
+  .object({
+    access_token: z.string().register(z.globalRegistry, {
+      description: 'Short-lived HS256 JWT, bearer token',
+    }),
+    token_type: z
+      .literal('bearer')
+      .register(z.globalRegistry, {
+        description: "Always 'bearer'; present for RFC 6750 clients",
+      })
+      .optional()
+      .default('bearer'),
+    expires_in: z.int().register(z.globalRegistry, {
+      description: 'Seconds until the access token stops being accepted',
+    }),
+    user: zUserProfile,
+  })
+  .register(z.globalRegistry, {
+    description:
+      'What a successful register or login hands back.\n\nThe refresh token is *not* in here — it goes out as an httpOnly cookie the\nJavaScript can never read. This body holds only what the client is meant to\nkeep in memory.\n\nThe profile rides along so the app can render a signed-in shell without a\nsecond round trip on the one screen where latency is most visible.',
+  })
+
+/**
  * UserProfileUpdate
  */
 export const zUserProfileUpdate = z.object({
@@ -1570,7 +1762,7 @@ export const zUserProfileUpdate = z.object({
  */
 export const zUserRead = z.object({
   id: z.uuid(),
-  auth0_sub: z.string(),
+  subject: z.string(),
   email: z.email().nullish(),
   name: z.string().nullish(),
   avatar_etag: z.string().nullish(),
@@ -1608,6 +1800,21 @@ export const zUserUpdate = z.object({
   time_format: z.string().nullish(),
   theme: z.string().nullish(),
 })
+
+/**
+ * VerifyEmailRequest
+ *
+ * Redeem a verification link.
+ */
+export const zVerifyEmailRequest = z
+  .object({
+    token: z.string().min(1).max(255).register(z.globalRegistry, {
+      description: 'Secret from the verification link',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description: 'Redeem a verification link.',
+  })
 
 export const zValidationErrorItem = z.object({
   loc: z.array(z.union([z.string(), z.int()])),
@@ -1667,12 +1874,92 @@ export const zTaskCreateWithShiftsResponseWritable = z.object({
   event: zEventReadWritable.nullish(),
 })
 
+export const zAuthRegisterBody = zRegisterRequest
+
+/**
+ * Successful Response
+ */
+export const zAuthRegisterResponse = zTokenResponse
+
+export const zAuthLoginBody = zLoginRequest
+
+/**
+ * Successful Response
+ */
+export const zAuthLoginResponse = zTokenResponse
+
+/**
+ * Successful Response
+ */
+export const zAuthRefreshResponse = zRefreshResponse
+
+/**
+ * Successful Response
+ */
+export const zAuthLogoutResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zAuthForgotPasswordBody = zForgotPasswordRequest
+
+export const zAuthResetPasswordBody = zResetPasswordRequest
+
+/**
+ * Successful Response
+ */
+export const zAuthResetPasswordResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zAuthVerifyEmailBody = zVerifyEmailRequest
+
+/**
+ * Successful Response
+ */
+export const zAuthVerifyEmailResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zAuthChangePasswordBody = zChangePasswordRequest
+
+/**
+ * Successful Response
+ */
+export const zAuthChangePasswordResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+/**
+ * Response Auth-List Sessions
+ *
+ * Successful Response
+ */
+export const zAuthListSessionsResponse = z.array(zAuthSessionRead).register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zAuthRevokeSessionPath = z.object({
+  session_id: z.uuid(),
+})
+
+/**
+ * Successful Response
+ */
+export const zAuthRevokeSessionResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
 /**
  * Successful Response
  */
 export const zUsersDeleteCurrentUserResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
+
+/**
+ * Successful Response
+ */
+export const zUsersGetCurrentUserProfileResponse = zUserProfile
 
 export const zUsersUpdateUserProfileBody = zUserProfileUpdate
 
@@ -1681,33 +1968,12 @@ export const zUsersUpdateUserProfileBody = zUserProfileUpdate
  */
 export const zUsersUpdateUserProfileResponse = zUserProfile
 
-/**
- * Profile Init
- */
-export const zUsersGetCurrentUserProfileBody = zProfileInit.nullable()
-
-/**
- * Successful Response
- */
-export const zUsersGetCurrentUserProfileResponse = zUserProfile
-
 export const zUsersUpdateSelectedEventBody = zSelectedEventUpdate
 
 /**
  * Successful Response
  */
 export const zUsersUpdateSelectedEventResponse = zUserProfile
-
-/**
- * Response Users-Get Auth0 Management Url
- *
- * Successful Response
- */
-export const zUsersGetAuth0ManagementUrlResponse = z
-  .record(z.string(), z.string())
-  .register(z.globalRegistry, {
-    description: 'Successful Response',
-  })
 
 export const zUsersListUsersQuery = z.object({
   q: z.string().nullish(),

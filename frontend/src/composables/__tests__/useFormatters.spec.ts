@@ -5,7 +5,8 @@ import { useFormatters } from '../useFormatters'
 /**
  * `useFormatters` pulls the active locale out of `vue-i18n` (which requires a
  * live component instance) and the `time_format` preference out of the Pinia
- * auth store (which drags in Auth0, the router and vue-sonner). Both are
+ * auth store (which drags in the session module, the router and vue-sonner).
+ * Both are
  * replaced with the smallest possible stand-ins so the suite stays a pure Node
  * unit test: a mutable `state` object read through getters, so a test can flip
  * the locale / preference and then build a fresh formatter set.

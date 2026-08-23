@@ -6,11 +6,13 @@
  * check compares en/de key sets — it cannot see what the rendered DOM does with
  * a blank value, and the English scan will not catch it either.
  *
- * Forcing German: the app boots its locale from `localStorage.locale`
- * (see `src/locales/i18n.ts`) and then posts that value to `/users/me` as the
- * user's `preferred_language`. The fixtures seed `en` from a context-level init
- * script; a page-level init script runs after it, so writing `de` there and
- * reloading is enough — no API poking, no race with profile loading.
+ * Forcing German takes both halves. The app boots its locale from
+ * `localStorage.locale` (see `src/locales/i18n.ts`), which a page-level init
+ * script can set because it runs after the context-level one the fixtures use
+ * to seed `en`. But `/users/me` is a plain read now, and `stores/auth.ts`
+ * applies the account's own `preferred_language` over the top as soon as the
+ * profile arrives — so the stored preference has to agree, or the page flips
+ * back to English a moment after it renders.
  */
 import { expect, test } from '../../fixtures.js'
 import { expectNoA11yViolations } from '../../helpers/a11y.js'
@@ -29,6 +31,7 @@ test.describe('a11y – locales', () => {
   })
 
   test('dashboard in German', async ({ adminPage: page }) => {
+    await api(page, 'PATCH', '/users/me', { preferred_language: 'de' })
     await page.addInitScript(() => localStorage.setItem('locale', 'de'))
     await page.goto('/app/home')
 

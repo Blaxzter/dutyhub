@@ -103,9 +103,9 @@ async def _make_user(
     roles: list[str] | None = None,
     language: str = "en",
 ) -> User:
-    """Persist an extra user; ``tag`` keeps auth0_sub/email unique per test."""
+    """Persist an extra user; ``tag`` keeps subject/email unique per test."""
     user = User(
-        auth0_sub=f"auth0|{tag}",
+        subject=f"local|{tag}",
         email=f"{tag}@example.com",
         name=f"User {tag}",
         roles=roles if roles is not None else [],

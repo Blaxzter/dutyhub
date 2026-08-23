@@ -50,11 +50,7 @@ function goToDashboard() {
 }
 
 function handleGetStarted() {
-  const redirectUri =
-    import.meta.env.VITE_AUTH0_CALLBACK_URL || `${window.location.origin}/app/home`
-  authStore.auth0.loginWithRedirect({
-    authorizationParams: { redirect_uri: redirectUri },
-  })
+  router.push({ name: 'login' })
 }
 </script>
 

@@ -29,7 +29,7 @@ class PushChannel(NotificationChannel):
             logger.warning("Push channel not configured (missing VAPID keys), skipping")
             return False
 
-        if recipient.auth0_sub.startswith("demo|"):
+        if recipient.subject.startswith("demo|"):
             return False
 
         try:

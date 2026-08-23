@@ -4,11 +4,13 @@ declare const __APP_VERSION__: string
 declare const __APP_VERSION_DATE__: string
 
 interface ImportMetaEnv {
-  readonly VITE_AUTH0_DOMAIN: string
-  readonly VITE_AUTH0_CLIENT_ID: string
-  readonly VITE_AUTH0_API_AUDIENCE: string
-  readonly VITE_AUTH0_CALLBACK_URL?: string
   readonly VITE_API_URL: string
+  /**
+   * `'true'` arms the E2E sign-in bypass. It is only half a gate: the run must
+   * also carry an `e2e_bypass=1` cookie, and identity is still asserted
+   * server-side by the `X-Test-User-Email` header against a TESTING backend.
+   */
+  readonly VITE_E2E_AUTH_BYPASS?: string
 }
 
 interface ImportMeta {

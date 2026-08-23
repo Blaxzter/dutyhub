@@ -145,12 +145,12 @@ class _StubChannel(NotificationChannel):
 def _make_user(
     *,
     email: str | None = "recipient@example.test",
-    auth0_sub: str = "auth0|channel-test",
+    subject: str = "local|channel-test",
     language: str = "en",
 ) -> User:
     """Build an unpersisted user; channels only read plain attributes off it."""
     return User(
-        auth0_sub=auth0_sub,
+        subject=subject,
         email=email,
         name="Channel Test User",
         roles=[],
@@ -334,7 +334,7 @@ class TestEmailChannel:
             patch.object(EmailChannel, "_smtp_send", new_callable=AsyncMock) as smtp,
         ):
             result = await EmailChannel().send(
-                recipient=_make_user(auth0_sub="demo|abc123"),
+                recipient=_make_user(subject="demo|abc123"),
                 title="Title",
                 body="Body",
             )
@@ -463,8 +463,8 @@ class TestEmailChannel:
     async def test_send_batch_returns_false_without_valid_recipients(self) -> None:
         """Test that a batch of only invalid recipients never reaches the transport."""
         recipients = [
-            _make_user(email=None, auth0_sub="auth0|no-email"),
-            _make_user(auth0_sub="demo|demo-user"),
+            _make_user(email=None, subject="local|no-email"),
+            _make_user(subject="demo|demo-user"),
         ]
 
         with (
@@ -481,10 +481,10 @@ class TestEmailChannel:
     async def test_send_batch_bccs_every_valid_recipient(self) -> None:
         """Test that valid recipients are grouped into a single Bcc header."""
         recipients = [
-            _make_user(email="one@example.test", auth0_sub="auth0|one"),
-            _make_user(email="two@example.test", auth0_sub="auth0|two"),
-            _make_user(email=None, auth0_sub="auth0|three"),
-            _make_user(email="demo@example.test", auth0_sub="demo|four"),
+            _make_user(email="one@example.test", subject="local|one"),
+            _make_user(email="two@example.test", subject="local|two"),
+            _make_user(email=None, subject="local|three"),
+            _make_user(email="demo@example.test", subject="demo|four"),
         ]
 
         with (
@@ -645,7 +645,7 @@ class TestPushChannel:
         """Test that demo users never receive a push message."""
         with _push_settings(), patch("pywebpush.webpush") as webpush:
             result = await PushChannel().send(
-                recipient=_make_user(auth0_sub="demo|abc123"),
+                recipient=_make_user(subject="demo|abc123"),
                 title="Title",
                 body="Body",
             )
@@ -941,7 +941,7 @@ class TestTelegramChannel:
 
         with _telegram_settings(), patch("httpx.AsyncClient", transport):
             result = await TelegramChannel().send(
-                recipient=_make_user(auth0_sub="demo|abc123"),
+                recipient=_make_user(subject="demo|abc123"),
                 title="Title",
                 body="Body",
             )

@@ -1,4 +1,4 @@
-"""Extended route tests for User endpoints (admin management, export, auth0 URL)."""
+"""Extended route tests for User endpoints (admin management, profile, export)."""
 
 import uuid
 from typing import Any
@@ -47,7 +47,7 @@ class TestUserAdminRoutes:
         r = await async_client.post(
             "/api/v1/users/",
             json={
-                "auth0_sub": "auth0|created_by_admin",
+                "subject": "local|created_by_admin",
                 "email": "created@example.com",
                 "name": "Created User",
                 "is_active": True,
@@ -62,7 +62,7 @@ class TestUserAdminRoutes:
     ):
         """Test updating a user (admin only)."""
         user = User(
-            auth0_sub="auth0|update_target",
+            subject="local|update_target",
             email="updatetarget@example.com",
             name="Update Target",
             is_active=False,
@@ -84,7 +84,7 @@ class TestUserAdminRoutes:
     ):
         """Test rejecting a user by setting rejection_reason."""
         user = User(
-            auth0_sub="auth0|reject_target",
+            subject="local|reject_target",
             email="reject@example.com",
             name="Reject Target",
             is_active=False,
@@ -129,11 +129,31 @@ class TestUserProfileRoutes:
         assert "is_active" in profile
         assert "created_at" in profile
 
-    async def test_auth0_management_url(self, async_client: AsyncClient):
-        """Test getting the Auth0 management URL."""
-        r = await async_client.get("/api/v1/users/auth0-management-url")
+    async def test_get_own_profile(self, async_client: AsyncClient, test_user: User):
+        """Test that GET /users/me returns the caller's own row.
+
+        This replaced a POST that took the identity provider's ID token in the
+        body and upserted from it. The verb change is the whole point: a plain
+        read cannot invent an account, so ``sub`` here is the ``subject`` column
+        rather than a claim that was echoed back.
+        """
+        r = await async_client.get("/api/v1/users/me")
 
         assert r.status_code == 200
         data = r.json()
-        assert "management_url" in data
-        assert "note" in data
+        assert data["id"] == str(test_user.id)
+        assert data["sub"] == test_user.subject
+        assert data["email"] == test_user.email
+        assert data["is_admin"] is False
+
+    async def test_get_own_profile_rejects_post(self, async_client: AsyncClient):
+        """Test that the old upsert verb is gone rather than merely unused.
+
+        A frontend still calling ``POST /users/me`` must fail loudly. If the
+        route were left registered it would keep provisioning accounts from a
+        request body, which is precisely the just-in-time path local
+        registration replaced.
+        """
+        r = await async_client.post("/api/v1/users/me", json={})
+
+        assert r.status_code == 405

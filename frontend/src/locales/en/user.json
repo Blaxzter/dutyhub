@@ -111,30 +111,41 @@
             "security": "Security"
         },
         "password": {
-            "messages": {
-                "error": {
-                    "emailNotFound": "User email not found.",
-                    "sendFailed": "Failed to send password reset email. Please try again later.",
-                    "title": "Error"
+            "actions": {
+                "submit": "Change password",
+                "submitting": "Saving…"
+            },
+            "fields": {
+                "confirmPassword": {
+                    "label": "Repeat new password",
+                    "mismatch": "The two passwords do not match.",
+                    "placeholder": "Repeat the password"
                 },
-                "success": {
-                    "description": "Password reset email has been sent. Please check your inbox and follow the instructions.",
-                    "title": "Success!"
+                "currentPassword": {
+                    "label": "Current password",
+                    "placeholder": "The password you use now",
+                    "required": "Please enter your current password."
+                },
+                "newPassword": {
+                    "label": "New password",
+                    "placeholder": "Choose a new password",
+                    "unchanged": "That is the password you already have. Choose a different one."
                 }
             },
-            "section": {
-                "button": "Send Password Reset Email",
-                "description": "Click the button below to receive a password reset email. You'll receive an email with instructions to reset your password.",
-                "sending": "Sending...",
-                "title": "Password Reset"
+            "subtitle": "Change the password you sign in with.",
+            "success": {
+                "description": "You stay signed in on this device. Every other device has been signed out and needs the new password.",
+                "title": "Password changed"
             },
-            "subtitle": "Reset your password via email",
-            "title": "Password Reset"
+            "title": "Password"
         },
         "profile": {
             "current": {
+                "actions": {
+                    "resendVerification": "Resend confirmation email",
+                    "resendingVerification": "Sending…"
+                },
                 "fields": {
-                    "authProvider": "Auth Provider",
                     "email": "Email",
                     "name": "Name",
                     "nickname": "Nickname",
@@ -142,7 +153,10 @@
                     "unverified": "Unverified",
                     "verified": "Verified"
                 },
-                "subtitle": "Your current profile information from Auth0",
+                "messages": {
+                    "verificationSent": "We sent a new confirmation link to {email}."
+                },
+                "subtitle": "Your current profile information.",
                 "title": "Current Profile"
             },
             "edit": {
@@ -196,6 +210,30 @@
                 "success": "Profile updated successfully!",
                 "title": "Update Profile"
             }
+        },
+        "sessions": {
+            "actions": {
+                "revoke": "Sign out",
+                "revoking": "Signing out…"
+            },
+            "confirm": {
+                "text": "{device} will be signed out and needs the password to get back in.",
+                "title": "Sign this device out?"
+            },
+            "empty": "No signed-in devices to show.",
+            "fields": {
+                "current": "This device",
+                "deviceOn": "{browser} on {platform}",
+                "ipAddress": "From {ip}",
+                "lastUsed": "Last active on {time}",
+                "signedIn": "Signed in on {time}",
+                "unknownDevice": "Unknown device"
+            },
+            "messages": {
+                "revoked": "That device has been signed out."
+            },
+            "subtitle": "Everywhere this account is currently signed in. Sign out anything you do not recognise.",
+            "title": "Signed-in devices"
         },
         "subtitle": "Manage your account settings and profile information.",
         "timeFormat": {

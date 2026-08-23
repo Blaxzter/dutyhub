@@ -1,8 +1,8 @@
-import { useAuth0 } from '@auth0/auth0-vue'
+import { useSidebarStore } from '@/stores/sidebar'
 
 import { client } from '@/client/client.gen'
 import type { Auth } from '@/client/core/auth.gen'
-import { useSidebarStore } from '@/stores/sidebar'
+import { authSession } from '@/lib/auth-session'
 
 type HttpVerb = 'get' | 'post' | 'put' | 'delete' | 'patch'
 
@@ -15,16 +15,21 @@ const SIDEBAR_AFFECTING_PATH = /\/(bookings|tasks|shifts|events)(\/|$|\?)/
  * Uses the built-in security mechanism of the generated client
  */
 export function useAuthenticatedClient() {
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0()
-
   /**
-   * Get the current auth token
+   * The bearer token for the next request.
+   *
+   * Read straight from the session module rather than from the auth store:
+   * `stores/auth.ts` constructs this composable, so reaching back into the
+   * store would close an import cycle. The module re-mints an access token that
+   * is about to lapse behind this call, which is why it is awaited per request
+   * instead of captured once.
    */
   const getAuthToken = async () => {
-    if (!isAuthenticated.value) {
+    const token = await authSession.getAccessToken()
+    if (!token) {
       throw new Error('User is not authenticated')
     }
-    return await getAccessTokenSilently()
+    return token
   }
 
   /**

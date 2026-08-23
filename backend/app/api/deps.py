@@ -1,16 +1,34 @@
+"""Request-scoped dependencies: the database session and the caller's identity.
+
+Identity used to arrive here as a set of claims validated by a remote issuer.
+It now arrives as an HS256 JWT this application minted itself (see
+``app.core.security``), which changes exactly two things and nothing else:
+
+* verification is local, so there is no JWKS cache to warm and no third-party
+  outage that can lock everyone out; and
+* ``sub`` is the ``users.id`` primary key rather than an opaque external
+  subject string, so resolving a request to a ``User`` is a single primary-key
+  lookup with no second identity path to keep in sync.
+
+Everything downstream — roles, ``EventMembership``, ``logic.permissions`` —
+was already pure database logic and is untouched. This module is the only
+place that knows how a credential becomes a ``User``.
+"""
+
 from collections.abc import AsyncGenerator, Callable, Coroutine, Iterable
 from contextlib import AsyncExitStack
-from typing import Annotated, Any, cast
+from typing import Annotated, Any, Final
 
 from fastapi import Depends, HTTPException, Query, Request, status
-from fastapi_plugin import Auth0FastAPI  # type: ignore[import-untyped]
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.db import async_session
+from app.core.errors import raise_problem
+from app.core.security import AccessClaims, AuthTokenError, decode_access_token
 from app.crud.user import user as crud_user
 from app.models.user import User
-from app.schemas.user import UserCreate
 
 _CurrentUserDep = Callable[..., Coroutine[Any, Any, User]]
 
@@ -46,32 +64,81 @@ async def get_db(request: Request) -> AsyncGenerator[AsyncSession, None]:
 DBDep = Annotated[AsyncSession, Depends(get_db)]
 
 
-auth0 = Auth0FastAPI(
-    domain=settings.AUTH0_DOMAIN,
-    audience=settings.AUTH0_AUDIENCE,
+# The E2E impersonation header. The entire Playwright suite authenticates
+# through it (``frontend/e2e/fixtures.ts``, ``frontend/src/testing``), which is
+# why it survived the move off a remote issuer: in CI the browser origin and
+# ``VITE_API_URL=http://backend:8787`` are genuinely cross-site, so the
+# httpOnly refresh cookie a real login depends on is silently dropped. It is
+# reachable only while ``settings.TESTING`` is true, and ``config.py`` refuses
+# to construct settings with TESTING on in production.
+TEST_USER_EMAIL_HEADER: Final = "X-Test-User-Email"
+
+# RFC 6750 says a 401 on a bearer-protected resource names the scheme. Browsers
+# only pop a credential dialog for ``Basic``, so this is safe to send and lets
+# a client tell "no/!bad token" apart from an authorisation failure.
+_WWW_AUTHENTICATE: Final[dict[str, str]] = {"WWW-Authenticate": "Bearer"}
+
+# ``auto_error=False`` on purpose: the built-in 403 that FastAPI raises for a
+# missing Authorization header is both the wrong status and the wrong body
+# shape. Returning ``None`` lets us decide — a problem+json 401 with an
+# ``auth.*`` code the frontend can switch on, or, under TESTING, the header
+# bypass below.
+_bearer_scheme = HTTPBearer(
+    auto_error=False,
+    description="Access token issued by POST /auth/login or /auth/refresh.",
 )
 
-if settings.TESTING:
-    _real_require_auth = auth0.require_auth
 
-    def _test_aware_require_auth() -> Callable[
-        ..., Coroutine[Any, Any, dict[str, Any]]
-    ]:
-        """Auth dependency that bypasses JWT validation only when
-        the X-Test-User-Email header is present.
-        Real Auth0 tokens still work in local dev.
-        """
-        real_dep = cast(Callable[[Request], Any], _real_require_auth())
+def _decode_bearer_token(token: str) -> AccessClaims:
+    """Validate a raw access token, translating failures into problem+json.
 
-        async def _auth(request: Request) -> dict[str, Any]:
-            if request.headers.get("X-Test-User-Email"):
-                return {"sub": "test|noop"}
-            result: dict[str, Any] = await real_dep(request)
-            return result
+    ``AuthTokenError`` already carries the ``auth.*`` code and a user-facing
+    sentence, so the two failure modes the client must distinguish —
+    ``auth.token_expired`` ("refresh and retry") and ``auth.invalid_token``
+    ("sign in again") — come straight from ``core.security`` rather than being
+    re-derived here from the exception type.
+    """
+    try:
+        return decode_access_token(token)
+    except AuthTokenError as exc:
+        raise_problem(
+            status.HTTP_401_UNAUTHORIZED,
+            code=exc.code,
+            detail=str(exc),
+            headers=_WWW_AUTHENTICATE,
+        )
 
-        return _auth
 
-    auth0.require_auth = _test_aware_require_auth  # type: ignore[assignment]
+def _claims_from_credentials(
+    credentials: HTTPAuthorizationCredentials | None,
+) -> AccessClaims:
+    """Require a bearer token and return its validated claims."""
+    if credentials is None or not credentials.credentials:
+        raise_problem(
+            status.HTTP_401_UNAUTHORIZED,
+            code="auth.invalid_token",
+            detail="Please sign in to continue.",
+            headers=_WWW_AUTHENTICATE,
+        )
+    return _decode_bearer_token(credentials.credentials)
+
+
+async def get_access_claims(
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)
+    ],
+) -> AccessClaims:
+    """Resolve the caller's access-token claims without touching the database.
+
+    Useful where the *session* the request was made with matters and the user
+    row does not — "sign out of every other device" needs the ``jti`` to know
+    which session to spare. Anything that needs the account itself should take
+    ``CurrentUser`` instead, which does this and the lookup in one step.
+    """
+    return _claims_from_credentials(credentials)
+
+
+AccessClaimsDep = Annotated[AccessClaims, Depends(get_access_claims)]
 
 
 def _normalize_required_roles(
@@ -82,81 +149,6 @@ def _normalize_required_roles(
     if isinstance(required_roles, str):
         return [required_roles]
     return list(required_roles)
-
-
-async def get_or_create_user(
-    session: AsyncSession,
-    claims: dict[str, Any],
-    profile_data: dict[str, Any] | None = None,
-) -> User:
-    """Get existing user or create new one with optional profile data from frontend.
-
-    Args:
-        session: Database session
-        claims: Auth0 JWT claims
-        profile_data: Optional profile data from frontend (email, name) for user creation
-    """
-    auth0_sub: str | None = claims.get("sub")
-    if not auth0_sub:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication payload",
-        )
-
-    user = await crud_user.get_by_auth0_sub(session, auth0_sub=auth0_sub)
-    if user:
-        dirty = False
-        # Ensure superadmin emails always have the admin role
-        if user.email and user.email in [str(e) for e in settings.SUPERADMIN_EMAILS]:
-            if "admin" not in user.roles:
-                user.roles = list(user.roles) + ["admin"]
-                dirty = True
-            if not user.is_active:
-                user.is_active = True
-                dirty = True
-        # Sync profile data from Auth0 on each login
-        if profile_data:
-            ev = profile_data.get("email_verified")
-            if ev is not None and bool(ev) != user.email_verified:
-                user.email_verified = bool(ev)
-                dirty = True
-        if dirty:
-            session.add(user)
-            await session.flush()
-        return user
-
-    # Use profile_data from frontend if available, fallback to claims
-    email: str | None = None
-    name: str | None = None
-    email_verified: bool = False
-    preferred_language: str = "en"
-    if profile_data:
-        email = profile_data.get("email")
-        name = profile_data.get("name") or profile_data.get("nickname")
-        email_verified = bool(profile_data.get("email_verified"))
-        preferred_language = profile_data.get("preferred_language") or "en"
-
-    # Fallback to claims if profile_data not provided
-    if not email:
-        email = claims.get("email")
-    if not name:
-        name = claims.get("name") or claims.get("nickname")
-
-    is_superadmin = bool(
-        email and email in [str(e) for e in settings.SUPERADMIN_EMAILS]
-    )
-    # Signup is open: an account by itself grants nothing. Authorisation lives
-    # entirely in per-event membership, so there is no approval queue to sit in.
-    user_in = UserCreate(
-        auth0_sub=auth0_sub,
-        email=email,
-        name=name,
-        email_verified=email_verified,
-        roles=["admin"] if is_superadmin else [],
-        is_active=True,
-        preferred_language=preferred_language,
-    )
-    return await crud_user.create(session, obj_in=user_in)
 
 
 def current_user(
@@ -195,11 +187,15 @@ def current_user(
     async def _current_user(
         request: Request,
         session: DBDep,
-        claims: dict[str, Any] = Depends(auth0.require_auth()),  # type: ignore[assignment]
+        credentials: Annotated[
+            HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)
+        ],
     ) -> User:
-        # In test mode, use X-Test-User-Email header instead of Auth0 claims
+        # In test mode, use X-Test-User-Email header instead of a real token.
+        # Checked before the Authorization header so a stale or fake token in
+        # the E2E harness cannot make an impersonated request fail.
         if settings.TESTING:
-            test_email = request.headers.get("X-Test-User-Email")
+            test_email = request.headers.get(TEST_USER_EMAIL_HEADER)
             if test_email:
                 user = await crud_user.get_by_email(session, email=test_email)
                 if not user:
@@ -215,7 +211,21 @@ def current_user(
                 await _check_roles(session, user)
                 return user
 
-        user = await get_or_create_user(session, claims)
+        claims = _claims_from_credentials(credentials)
+
+        # ``sub`` is the primary key, so this is the whole identity lookup.
+        # There is no just-in-time provisioning any more: an account exists
+        # because someone registered it, and a token naming a row that is gone
+        # (a deleted account whose 15-minute token has not expired yet) is a
+        # credential for nothing.
+        user = await crud_user.get(session, claims.user_id)
+        if user is None:
+            raise_problem(
+                status.HTTP_401_UNAUTHORIZED,
+                code="auth.invalid_token",
+                detail="This account no longer exists. Please sign in again.",
+                headers=_WWW_AUTHENTICATE,
+            )
 
         if require_active and not user.is_active:
             raise HTTPException(
@@ -244,10 +254,16 @@ async def _get_user_from_query_token(
     EventSource doesn't support custom headers, so endpoints like SSE
     pass the token as ``?token=…``.  This dep opens short-lived sessions
     so the caller isn't pinned to one for the life of the connection.
+
+    That last point is the reason this function does not take ``DBDep``: an
+    SSE stream stays open for as long as the user keeps the tab open, and a
+    request-scoped session would hold a pooled connection open for exactly
+    that long. The session here is opened, used and closed before the stream
+    starts producing.
     """
     if settings.TESTING:
         test_email = request.query_params.get("test_email") or request.headers.get(
-            "X-Test-User-Email"
+            TEST_USER_EMAIL_HEADER
         )
         if test_email:
             async with async_session.begin() as session:
@@ -259,20 +275,18 @@ async def _get_user_from_query_token(
                     )
                 return user
 
-    try:
-        claims: dict[str, Any] = await auth0.api_client.verify_request(  # type: ignore[union-attr]
-            headers={"authorization": f"Bearer {token}"},
-            http_method="GET",
-            http_url=str(request.url),
-        )
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-        )
+    claims = _decode_bearer_token(token)
 
     async with async_session.begin() as session:
-        return await get_or_create_user(session, claims)
+        user = await crud_user.get(session, claims.user_id)
+        if user is None:
+            raise_problem(
+                status.HTTP_401_UNAUTHORIZED,
+                code="auth.invalid_token",
+                detail="This account no longer exists. Please sign in again.",
+                headers=_WWW_AUTHENTICATE,
+            )
+        return user
 
 
 QueryTokenUser = Annotated[User, Depends(_get_user_from_query_token)]

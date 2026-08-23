@@ -94,7 +94,7 @@ class TestBookingsRoutes:
         await db_session.refresh(shift)
 
         other_user = User(
-            auth0_sub="auth0|other_user_cap_test",
+            subject="local|other_user_cap_test",
             email="other@example.com",
             name="Other",
             roles=[],

@@ -172,16 +172,6 @@ build tag="latest":
     TAG={{tag}} FRONTEND_ENV=production docker compose -f docker-compose.yml build
 
 
-# ── Auth0 ─────────────────────────────────────────────────────
-
-# Interactively create all Auth0 resources and write values to .env files
-setup-auth0:
-    python scripts/setup_auth0.py
-
-# Delete existing Auth0 resources (by project name) before re-creating
-teardown-auth0:
-    python scripts/setup_auth0.py --teardown
-
 # ── Release ────────────────────────────────────────────────────
 
 # Create a new release: updates version files, commits, tags, and creates a GitHub release

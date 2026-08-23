@@ -6,22 +6,54 @@ Learn more about it below. 👇
 
 ## Authentication & Security Architecture
 
-This project uses **Auth0** as the primary authentication provider, which provides enterprise-grade security features including:
+This project authenticates people itself, against its own database. There is no
+third-party identity provider. `docs/AUTH.md` is the full description; the
+security-relevant properties are:
 
--   **OAuth 2.0 and OpenID Connect** compliance
--   **Multi-factor authentication (MFA)** support
--   **Social login integrations** (Google, GitHub, etc.)
--   **JWT token management** with automatic rotation
--   **Rate limiting** and bot protection
--   **Secure password policies** and breach detection
+-   **Split credentials** — a stateless HS256 access token that lives 15 minutes
+    and is held in memory by the browser, plus an opaque refresh token that lives
+    in an `httpOnly`, host-only, path-scoped cookie. JavaScript can never read
+    the long-lived half.
+-   **Passwords** — bcrypt with a per-hash salt, verified in constant time.
+    Plaintext is never stored or logged.
+-   **Tokens at rest are hashed** — refresh tokens and the email-borne
+    verification and reset links are stored only as SHA-256 digests, so a leaked
+    database dump hands out no live sessions and no live links.
+-   **Rotation with reuse detection** — every refresh replaces the token.
+    Presenting one that has already been spent is treated as theft and revokes
+    every session that account owns.
+-   **Revocation** — sessions are rows. Signing a device out, changing a
+    password or resetting one takes effect immediately, not when a JWT lapses.
+-   **Rate limiting** on login, registration, password reset and verification
+    resends, keyed so that no caller can lock another account out.
 
 ### How Security Works
 
-1. **Frontend Authentication**: The Vue.js frontend handles user authentication through Auth0's Universal Login
-2. **API Protection**: The FastAPI backend validates JWT tokens from Auth0 on protected endpoints
-3. **Token Validation**: All API requests include verification of token signature, expiration, and audience
-4. **Role-Based Access Control**: User permissions are managed through Auth0 roles and claims
-5. **Secure Communication**: All communication uses HTTPS in production environments
+1. **Sign-in**: the Vue frontend posts credentials to `POST /api/v1/auth/login`;
+   the backend verifies the bcrypt hash and issues the token pair.
+2. **API protection**: every protected endpoint resolves the caller through the
+   dependency aliases in `backend/app/api/deps.py`, which verify the access
+   token's HS256 signature and expiry locally and load the user row by primary
+   key.
+3. **Session renewal**: `POST /api/v1/auth/refresh` exchanges the cookie for a
+   fresh access token and a rotated cookie. Nothing else on the API is sent the
+   cookie.
+4. **Authorisation**: permissions are **per event**, decided against
+   `EventMembership` rows by `backend/app/logic/permissions.py`. The one global
+   role is `admin`, the platform superadmin. No permission is carried in a token,
+   so a revoked role takes effect on the next request.
+5. **Secure communication**: all traffic uses HTTPS in deployed environments, and
+   the refresh cookie is marked `Secure` everywhere except local development.
+
+### Operational notes
+
+-   `SECRET_KEY` signs the access tokens. Every environment other than local
+    refuses to start while it still reads `changethis`. Rotating it invalidates
+    outstanding access tokens (at most 15 minutes of disruption) and leaves
+    refresh cookies working.
+-   The `X-Test-User-Email` impersonation header used by the E2E suite is
+    reachable only while `TESTING` is true, and the configuration layer refuses
+    to construct settings with `TESTING` on in production.
 
 ## Versions
 

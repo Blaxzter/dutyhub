@@ -82,10 +82,6 @@ function listTests(): ListReport {
         cwd: FRONTEND_DIR,
         env: {
           ...process.env,
-          // playwright.config.ts branches its project list on this. dotenv does
-          // not override an already-set variable, so pinning it here keeps a
-          // developer's frontend/.env from changing the generated inventory.
-          USE_AUTH0_E2E: 'false',
           // Write the report to a file rather than stdout: dotenv prints a
           // banner to stdout, which would otherwise sit in front of the JSON.
           PLAYWRIGHT_JSON_OUTPUT_NAME: jsonPath,
@@ -197,9 +193,8 @@ function renderHeader(): string[] {
     '`.github/workflows/lint-frontend.yml` regenerates this file on every PR and fails if the',
     'committed copy differs.',
     '',
-    'The listing reflects the default **isolated** mode (the generator pins `USE_AUTH0_E2E=false`,',
-    'so a local `frontend/.env` cannot change the output). Auth0 mode swaps the setup projects for',
-    'real Auth0 logins but runs the same specs — see [README.md](./README.md).',
+    'There is one mode and one project list, so the inventory does not depend on a local',
+    '`frontend/.env` — see [README.md](./README.md).',
     '',
     '## Gaps',
     '',

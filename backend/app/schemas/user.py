@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserCreate(BaseModel):
-    auth0_sub: str = Field(..., description="Auth0 subject identifier")
+    subject: str = Field(..., description="Opaque local identity string")
     email: EmailStr | None = Field(default=None, description="User's email address")
     name: str | None = Field(default=None, description="User's display name")
     email_verified: bool = Field(
@@ -47,7 +47,7 @@ class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    auth0_sub: str
+    subject: str
     email: EmailStr | None = None
     name: str | None = None
     avatar_etag: str | None = None

@@ -6,6 +6,7 @@ This module provides the base SQLModel class and imports for database models.
 
 from sqlmodel import SQLModel
 
+from .auth_session import AuthSession
 from .base import Base  # Import the Base model for common fields and functionality
 from .booking import Booking
 from .booking_reminder import BookingReminder
@@ -27,10 +28,12 @@ from .task import Task
 from .user import User
 from .user_availability import UserAvailability, UserAvailabilityDate
 from .user_avatar import UserAvatar
+from .user_token import UserToken
 
 __all__ = [
     "SQLModel",
     "Base",
+    "AuthSession",
     "Booking",
     "BookingReminder",
     "CalendarFeedToken",
@@ -50,4 +53,5 @@ __all__ = [
     "UserAvailability",
     "UserAvailabilityDate",
     "UserAvatar",
+    "UserToken",
 ]

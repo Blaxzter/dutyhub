@@ -41,14 +41,14 @@ class TestUserRoutes:
         as_admin: None,
     ):
         pending = User(
-            auth0_sub="auth0|pending_filter_test",
+            subject="local|pending_filter_test",
             email="pending-filter@example.com",
             name="Pending Filter",
             is_active=False,
             rejection_reason=None,
         )
         rejected = User(
-            auth0_sub="auth0|rejected_filter_test",
+            subject="local|rejected_filter_test",
             email="rejected-filter@example.com",
             name="Rejected Filter",
             is_active=False,
@@ -78,6 +78,14 @@ class TestUserRoutes:
         assert str(rejected.id) in rejected_ids
         assert str(pending.id) not in rejected_ids
 
+        # "active" is the third branch of the same filter and the one the
+        # moderation screen opens on, so it is asserted rather than assumed.
+        r_active = await async_client.get("/api/v1/users/?status_filter=active")
+        active_ids = {item["id"] for item in r_active.json()["items"]}
+        assert str(pending.id) not in active_ids
+        assert str(rejected.id) not in active_ids
+        assert all(item["is_active"] for item in r_active.json()["items"])
+
     async def test_list_users_pagination(
         self, async_client: AsyncClient, as_admin: None
     ):
@@ -99,7 +107,7 @@ class TestUserRoutes:
 
     async def test_create_user(self, async_client: AsyncClient, as_admin: None):
         payload = {
-            "auth0_sub": "auth0|created123",
+            "subject": "local|created123",
             "email": "created@example.com",
             "name": "Created User",
             "roles": ["user"],
@@ -108,7 +116,7 @@ class TestUserRoutes:
         response = await async_client.post("/api/v1/users/", json=payload)
         assert response.status_code == 201
         data = response.json()
-        assert data["auth0_sub"] == payload["auth0_sub"]
+        assert data["subject"] == payload["subject"]
         assert data["email"] == payload["email"]
         assert data["name"] == payload["name"]
         assert data["roles"] == ["user"]
@@ -142,13 +150,6 @@ class TestUserRoutes:
         deleted = await crud_user.get(db_session, id=test_user.id)
         assert deleted is None
 
-    async def test_get_auth0_management_url(self, async_client: AsyncClient):
-        response = await async_client.get("/api/v1/users/auth0-management-url")
-        assert response.status_code == 200
-        data = response.json()
-        assert "management_url" in data
-        assert "note" in data
-
 
 @pytest.mark.asyncio
 class TestUserRouteHelpers:
@@ -156,39 +157,38 @@ class TestUserRouteHelpers:
         self,
         db_session: AsyncSession,
         test_user: User,
-        mock_auth0_claims: dict[str, str],
     ):
-        from fastapi import BackgroundTasks
+        """The profile is now read straight off the row, with nothing upserted.
 
+        It used to be a POST that took the identity provider's ID token in the
+        body and lazily wrote ``name``/``email`` onto the user, so the natural
+        assertion was against the claims that had been sent in. There are no
+        claims any more: ``sub`` is the account's own ``subject`` column, and
+        every field below is one the database already held.
+        """
         profile = await get_current_user_profile(
             user=test_user,
-            background_tasks=BackgroundTasks(),
-            profile_init=None,
             session=db_session,
         )
-        assert profile.sub == mock_auth0_claims["sub"]
-        assert profile.email == mock_auth0_claims["email"]
+        assert profile.id == test_user.id
+        assert profile.sub == test_user.subject
+        assert profile.email == test_user.email
         assert profile.roles == test_user.roles
         assert profile.is_admin is False
 
     async def test_update_user_profile(
         self,
-        monkeypatch: pytest.MonkeyPatch,
         db_session: AsyncSession,
         test_user: User,
     ):
-        called = {}
+        """``nickname`` now persists instead of being faked into the response.
 
-        async def fake_update_auth0_user(user_id: str, update_data: UserProfileUpdate):
-            called["user_id"] = user_id
-            called["update_data"] = update_data
-            return True
-
-        monkeypatch.setattr(
-            "app.api.routes.users.update_auth0_user",
-            fake_update_auth0_user,
-        )
-
+        Both fields used to live in the identity provider, so this endpoint
+        made a Management API call (monkeypatched out here) and then patched
+        the values back into its own response with ``model_copy`` — the reply
+        looked right and the next profile load lost the edit. Re-reading the
+        row is therefore the assertion that matters.
+        """
         update = UserProfileUpdate(name="Updated Name", nickname="updated")  # type: ignore[reportCallIssue]
         profile = await update_user_profile(
             user_update=update,
@@ -199,3 +199,7 @@ class TestUserRouteHelpers:
         assert profile.name == "Updated Name"
         assert profile.nickname == "updated"
         assert profile.roles == test_user.roles
+
+        await db_session.refresh(test_user)
+        assert test_user.name == "Updated Name"
+        assert test_user.nickname == "updated"

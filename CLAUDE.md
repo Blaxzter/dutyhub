@@ -76,7 +76,7 @@ just generate-client          # or: cd frontend && pnpm run generate-client
 
 ### Stack
 
-- **Backend:** FastAPI + SQLModel (async SQLAlchemy) + PostgreSQL + Auth0 (JWT via `auth0-fastapi-api`)
+- **Backend:** FastAPI + SQLModel (async SQLAlchemy) + PostgreSQL + local JWT auth (bcrypt + PyJWT)
 - **Frontend:** Vue 3 + TypeScript + Vite + Pinia + Vue Router + Tailwind CSS v4 + shadcn-vue
 - **Infra:** Docker Compose + Traefik reverse proxy + GitHub Actions
 
@@ -90,7 +90,7 @@ backend/app/
 ├── api/routes/    # FastAPI routers (one file per domain)
 ├── api/api.py     # Router registration
 ├── logic/         # Business logic / services
-└── core/          # config.py, db.py, auth.py, errors.py
+└── core/          # config.py, db.py, security.py, rate_limit.py, errors.py
 ```
 
 When adding a feature: model → schema → CRUD → route → register in `api/api.py` → Alembic migration.
@@ -105,10 +105,15 @@ participant (`owner` > `admin` > `member`). The single remaining global role is
 
 Identity, from `backend/app/api/deps.py`:
 
-- `CurrentUser` — validates JWT, checks the DB user exists and is active; use for all protected endpoints
+- `CurrentUser` — validates the bearer JWT, loads the DB user, requires `is_active`; use for all protected endpoints
 - `CurrentSuperuser` — platform superadmin only (user management, featuring events)
-- `CurrentUser` + `claims: dict = Depends(auth0.require_auth())` — when you need both DB user and Auth0 profile data (e.g., `/me` endpoints)
-- `auth0.require_auth()` alone — only for Auth0-specific operations with no DB requirement
+- `AnyUser` — same, minus the `is_active` check, so a suspended account can still read or delete its own profile
+- `QueryTokenUser` — SSE only (`EventSource` cannot send headers, so the token arrives as `?token=…`)
+- `AccessClaimsDep` — token claims without a DB hit, for the rare case where the *session* matters and the user row does not
+
+`CurrentUser` **is** the full `User` row. There is no separate claims object and
+no remote profile: the access token carries the user id (`sub`) and the session
+id (`jti`) and nothing else, so identity is one primary-key lookup.
 
 Per-event permission, from `backend/app/logic/permissions.py` — these two are
 the *only* gates, so grepping for them finds every check:
@@ -121,7 +126,18 @@ by. `None` means unrestricted (superadmin only); an **empty list means "nothing"
 and must never be collapsed to `None`** — that would hand a new account the
 whole database.
 
-On first login the frontend calls `POST /users/me` with Auth0 profile data; backend upserts the user.
+Authentication itself lives under `/auth` (`backend/app/api/routes/auth.py` →
+`app/logic/auth/`): register, login, refresh, logout, password reset, email
+verification, session list. Access tokens are HS256, 15 minutes, held in memory
+by the client; refresh tokens are opaque, 30 days, rotated on every use, stored
+hashed in `auth_sessions`, and carried in an httpOnly cookie scoped to
+`/api/v1/auth`. `GET /users/me` is a plain read — registration supplies the
+profile, so there is no upsert on first login. Full description in
+[`docs/AUTH.md`](docs/AUTH.md).
+
+`app/logic/auth/service.py::sync_superadmin_role` is the only mechanism that
+grants the platform `admin` role (from `SUPERADMIN_EMAILS`, on register **and**
+sign-in). Without it a fresh deployment has no administrator.
 
 Getting into an event: its admins invite by email or share a link
 (`/events/{id}/invitations` → `/invitations/{token}/accept`), or someone asks
@@ -167,8 +183,10 @@ Two layouts: `PreAuthLayout` (public pages) and `PostAuthLayout` (authenticated 
 
 - Root `.env` — used by Docker Compose (copy from `.env.example`); restart stack after changes
 - `frontend/.env` — Vite env vars (copy from `frontend/.env.example`)
-- Auth0 is required for any auth flow; set `AUTH0_DOMAIN`, `AUTH0_AUDIENCE`, `AUTH0_CLIENT_ID`, `AUTH0_CLIENT_SECRET` in root `.env` and their `VITE_*` equivalents in `frontend/.env`
-- E2E tests require `E2E_AUTH0_USERNAME` and `E2E_AUTH0_PASSWORD` in `frontend/.env`
+- `SECRET_KEY` in root `.env` signs the access tokens. It defaults to `changethis`, which is fine locally (a warning) and refuses to boot in every other environment. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+- `SUPERADMIN_EMAILS` in root `.env` decides who gets the platform `admin` role on register or sign-in — set it before you expect to reach the admin screens
+- Local mail (verification, password reset) goes to the mailcatcher container on port 1025; its inbox is at `http://localhost:1080`. With no SMTP configured at all, the link is written to the backend log instead
+- E2E tests authenticate through the `X-Test-User-Email` bypass, enabled by `VITE_E2E_AUTH_BYPASS` in `frontend/.env` and gated server-side on `TESTING`
 
 ## Template Cleanup (when starting a new project)
 

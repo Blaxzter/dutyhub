@@ -2,8 +2,8 @@
  * Accessibility scans of the public (pre-auth) pages.
  *
  * These use the plain `page` fixture — no auth bypass — so the scan sees what an
- * anonymous visitor sees. storageState is cleared explicitly so the Auth0-mode
- * project's admin session cannot leak in and change what renders.
+ * anonymous visitor sees. storageState is cleared explicitly so no other
+ * project's session can leak in and change what renders.
  */
 import { expect, test } from '@playwright/test'
 

@@ -1,4 +1,15 @@
 {
+    "auth": {
+        "email_taken": "Für diese E-Mail-Adresse gibt es bereits ein Konto.",
+        "invalid_credentials": "E-Mail-Adresse und Passwort passen nicht zusammen.",
+        "invalid_token": "Dieser Link ist nicht mehr gültig. Bitte einen neuen anfordern.",
+        "no_password_set": "Für dieses Konto ist noch kein Passwort gesetzt. Über „Passwort vergessen?“ lässt sich eines wählen.",
+        "rate_limited": "Zu viele Versuche. Bitte in ein paar Minuten erneut versuchen.",
+        "session_not_found": "Diese Sitzung gibt es nicht mehr.",
+        "session_revoked": "Diese Sitzung wurde aus Sicherheitsgründen beendet. Bitte erneut anmelden.",
+        "token_expired": "Dieser Link ist abgelaufen. Bitte einen neuen anfordern.",
+        "weak_password": "Dieses Passwort ist zu kurz. Bitte ein längeres wählen."
+    },
     "booking": {
         "already_exists": "Sie haben bereits eine Buchung für diese Schicht",
         "forbidden": "Sie können nur Ihre eigenen Buchungen verwalten",

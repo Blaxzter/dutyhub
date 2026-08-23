@@ -8,7 +8,7 @@
  */
 import type { Locator, Page } from '@playwright/test'
 
-import { IS_TESTING, expect, serverApiRaw, test } from '../../fixtures.js'
+import { expect, serverApiRaw, test } from '../../fixtures.js'
 
 /**
  * The fixtures pin the UI locale to English (localStorage `locale` plus the
@@ -33,13 +33,6 @@ const DELETE_ACCOUNT = {
   trigger: 'Delete My Account',
   confirm: 'Yes, delete my account',
 } as const
-
-// These flows need accounts that can be seeded and destroyed at will, which
-// only exists in isolated mode. Auth0 mode has no throwaway users.
-test.beforeEach(() => {
-  // eslint-disable-next-line playwright/no-skipped-test -- Auth0 mode cannot seed or delete disposable users
-  test.skip(!IS_TESTING, 'Destructive flows require the isolated TESTING backend')
-})
 
 /** Open the admin users page and narrow the table down to one user's row. */
 async function findUserRow(page: Page, email: string): Promise<Locator> {
@@ -92,8 +85,10 @@ test.describe('Destructive – account self-deletion', () => {
       )
       .toBe(404)
 
-    // The session is dead too — the identity no longer resolves to a user.
-    const profile = await serverApiRaw('POST', '/users/me', disposableUser.email)
+    // The identity is dead too — it no longer resolves to a user. `/users/me`
+    // is a plain read now; the account that used to be created on first sight
+    // of an unknown caller no longer is.
+    const profile = await serverApiRaw('GET', '/users/me', disposableUser.email)
     expect(profile.status).toBe(401)
 
     // And the SPA can no longer reach an authenticated page.

@@ -22,7 +22,6 @@
     "generate-e2e-coverage": "tsx scripts/generate-e2e-coverage.ts"
   },
   "dependencies": {
-    "@auth0/auth0-vue": "^2.9.0",
     "@hookform/resolvers": "^5.5.7",
     "@internationalized/date": "^3.12.2",
     "@lucide/vue": "^1.28.0",

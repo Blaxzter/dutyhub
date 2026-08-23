@@ -77,25 +77,35 @@ This ensures tests use the exact same database engine and schema as production.
 ### User Fixtures
 
 - `test_user` - Regular active user
-- `test_admin_user` - Admin user with admin role
-- `test_inactive_user` - Inactive user for testing access control
+- `test_admin_user` - Platform superadmin (`roles=["admin"]`)
+- `test_event_admin_user` - Runs the fixture events, holds no global role
+- `test_outsider_user` - Belongs to no event at all
+- `test_inactive_user` - Suspended user for testing access control
+- `test_passwordless_user` - Account whose `password_hash` is NULL
 
-### Project Fixtures
-
-- `test_project` - Project owned by test_user
-- `test_project_without_owner` - Project without an owner
+All of them carry a real bcrypt hash of `tests.fixtures.users.TEST_USER_PASSWORD`
+except the last, which exists to cover the legacy/demo shape.
 
 ### Task Fixtures
 
-- `test_task` - Single task for test_project
-- `multiple_test_tasks` - Five tasks with varying properties
+- `test_task` - Single task in `test_event`
+- `test_draft_task` - Unpublished task
 
-### Mock Auth0 Fixtures
+### Auth Fixtures
 
-- `mock_auth0_claims` - Claims for existing test_user
-- `mock_auth0_admin_claims` - Claims for admin user
-- `mock_auth0_new_user_claims` - Claims for new user (not in DB)
-- `mock_auth0_claims_no_sub` - Invalid claims without 'sub'
+Factories that mint **real** HS256 tokens through `app.core.security`:
+
+- `make_access_token(user, *, session_id=None)` - a valid access token
+- `auth_headers(user, *, session_id=None)` - `{"Authorization": "Bearer …"}`
+- `make_expired_access_token(user)` - correctly signed, `exp` in the past
+- `make_tampered_access_token(user)` - correct claims, wrong signing key
+
+### Client Fixtures
+
+- `async_client` - always signed in as `test_user` (identity is overridden)
+- `unauthenticated_client` - no identity override; `deps.py` runs for real.
+  Required for anything under `/auth`, where being already signed in would
+  make the test meaningless.
 
 ## Test Coverage
 
@@ -115,12 +125,14 @@ The test suite covers:
 
 ### Authentication & Authorization
 
-- User creation on first login
-- Existing user retrieval
+- Password hashing and verification (bcrypt, including its raising edge cases)
+- Access-token minting and validation (HS256, expiry, forged signatures)
+- Refresh-token rotation, revocation and reuse detection
 - Role-based access control
 - Active/inactive user handling
-- Missing authentication payload errors
-- CurrentUser and CurrentSuperuser dependencies
+- Tokens naming an account that no longer exists
+- CurrentUser, CurrentSuperuser and AnyUser dependencies
+- The `X-Test-User-Email` E2E bypass, and that it is inert outside TESTING
 
 ## Adding New Tests
 

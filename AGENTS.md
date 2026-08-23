@@ -37,7 +37,7 @@ Backend
 - FastAPI + Pydantic v2
 - SQLModel (async SQLAlchemy) + Alembic
 - PostgreSQL (psycopg + asyncpg)
-- Auth0 integration via auth0-fastapi-api + JWT (pyjwt)
+- Local, database-backed authentication: bcrypt password hashing + HS256 JWTs (pyjwt)
 - httpx for outbound HTTP
 - Tooling: uv, Ruff, basedpyright, Pytest, pre-commit
 
@@ -83,21 +83,24 @@ Infra
 
 - Root `.env` is used by Docker Compose. See `.env.example` for required keys.
 - Frontend uses `frontend/.env` (see `frontend/.env.example`).
-- Auth0 is required for local auth flows (both backend + frontend).
+- Authentication is built in; no identity-provider account is needed to run the stack.
 
-Backend Auth0 variables (root `.env`):
+Auth-related backend variables (root `.env`) — all have defaults, so a copied
+`.env.example` boots:
 
-- `AUTH0_DOMAIN`
-- `AUTH0_AUDIENCE`
-- `AUTH0_CLIENT_ID`
-- `AUTH0_CLIENT_SECRET`
+- `SECRET_KEY` — signs the HS256 access tokens. Ships as `changethis`, which
+  warns locally and **refuses to boot** in any other environment.
+- `SUPERADMIN_EMAILS` — addresses that receive the platform `admin` role on
+  register or sign-in. This is the only way the first administrator exists.
+- `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS`,
+  `PASSWORD_MIN_LENGTH`, `REFRESH_COOKIE_*`, `EMAIL_*_TOKEN_EXPIRE_HOURS` —
+  optional overrides, documented in `docs/AUTH.md`.
 
-Frontend Auth0 variables (`frontend/.env`):
+Frontend (`frontend/.env`):
 
-- `VITE_AUTH0_DOMAIN`
-- `VITE_AUTH0_CLIENT_ID`
-- `VITE_AUTH0_API_AUDIENCE`
-- `VITE_AUTH0_CALLBACK_URL`
+- `VITE_API_URL`
+- `VITE_E2E_AUTH_BYPASS` — enables the `X-Test-User-Email` impersonation the
+  Playwright suite uses; the backend half is gated on `TESTING`.
 
 ## Backend Development Patterns
 
@@ -118,9 +121,14 @@ Auth pattern (per routes README):
     - Role-based access control
     - Database user object access
 - Use `CurrentSuperuser` for admin-only endpoints (e.g., delete, create users)
-- Use both `CurrentUser` and `claims: dict = Depends(auth0.require_auth())` when you need:
-    - Database validation AND Auth0 profile data (e.g., `/me` endpoints)
-- Use `auth0.require_auth()` alone only for Auth0-specific operations without database requirements
+- Use `AnyUser` when a suspended account must still be served (`GET`/`DELETE /users/me`)
+- Use `QueryTokenUser` for SSE endpoints only — `EventSource` cannot send headers
+- There is no separate claims object: `CurrentUser` is the full `User` row, because
+  the access token carries only the user id and the session id
+
+Authentication endpoints (register, login, refresh, logout, password reset, email
+verification, session management) live in `backend/app/api/routes/auth.py` over
+`backend/app/logic/auth/`. Read `docs/AUTH.md` before touching any of it.
 
 Database migrations:
 
@@ -216,13 +224,13 @@ just clean-template
 
 ### What Remains After Full Cleanup
 
-- Auth0 authentication + user management (model, CRUD, routes, tests)
+- Authentication + user management (model, CRUD, routes, tests)
 - Health endpoints (liveness + readiness)
 - Home page, user settings, landing page, about page, 404 page
 - Base CRUD infrastructure (`CRUDBase`) for building new features
 - All UI components (shadcn-vue), layouts, stores, composables
 - I18n infrastructure (en + de)
-- E2E test infrastructure (Playwright + Auth0 setup)
+- E2E test infrastructure (Playwright + the `X-Test-User-Email` bypass)
 - Docker Compose, Traefik, CI/CD configuration
 
 ## Where to Read More
@@ -230,5 +238,6 @@ just clean-template
 - `README.md` (root)
 - `backend/README.md`
 - `frontend/README.md`
+- `docs/AUTH.md` (authentication: tokens, cookie, rotation, email flows, settings)
 - `development.md`
 - `deployment.md`

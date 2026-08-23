@@ -44,7 +44,7 @@ def _wire_session(mock_async_session: MagicMock) -> MagicMock:
 
 def _user(avatar_etag: str | None = None) -> User:
     return User(
-        auth0_sub="auth0|seed-target",
+        subject="local|seed-target",
         email="seed@example.test",
         name="Seed Target",
         avatar_etag=avatar_etag,

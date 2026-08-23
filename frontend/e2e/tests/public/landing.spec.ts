@@ -4,14 +4,10 @@ test.describe('landing page', () => {
   test('renders main hero and auth actions', async ({ page }) => {
     await page.goto('/')
     await expect(page.getByTestId('page-heading')).toBeVisible()
-    // In E2E bypass mode the fake Auth0 plugin reports isAuthenticated=true,
-    // so the CTA button (sign in/get started) may not be shown.
-    const cta = page.getByTestId('btn-cta-primary')
-    // eslint-disable-next-line playwright/no-conditional-in-test
-    if (await cta.isVisible({ timeout: 2000 }).catch(() => false)) {
-      // eslint-disable-next-line playwright/no-conditional-expect
-      await expect(cta).toBeVisible()
-    }
+    // `btn-cta-primary` is on both branches of the hero — "get started" for an
+    // anonymous visitor, "go to dashboard" for a signed-in one — so it is
+    // present either way and the assertion needs no escape hatch.
+    await expect(page.getByTestId('btn-cta-primary')).toBeVisible()
   })
 
   test('every section the in-page nav links to actually exists', async ({ page }) => {

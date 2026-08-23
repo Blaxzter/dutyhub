@@ -39,7 +39,7 @@ async def owned_event(
 async def transfer_target_user(db_session: AsyncSession) -> User:
     """An active user that can receive ownership."""
     user = User(
-        auth0_sub="auth0|transfer_target",
+        subject="local|transfer_target",
         email="transfer-target@example.com",
         name="Transfer Target",
         roles=[],

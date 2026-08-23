@@ -300,9 +300,10 @@
             "intro": "When you create an account and use WirkSam, we process the following personal data:",
             "items": {
                 "bookings": "Booking data (which duty shifts you signed up for)",
+                "credentials": "Your password, stored only as a salted hash — never in readable form — together with the sign-in sessions on your devices",
                 "email": "Email address",
-                "name": "Name (as provided by your Auth0 login)",
-                "picture": "Profile picture (if provided by your login provider)"
+                "name": "Name (as you enter it when you register)",
+                "picture": "Profile picture (if you upload one)"
             },
             "title": "Data We Collect"
         },
@@ -339,10 +340,6 @@
             "title": "Your Rights"
         },
         "thirdParty": {
-            "auth0": {
-                "description": "We use Auth0 for authentication and login. When you sign in, Auth0 processes your email, name, and profile picture. Auth0 may transfer data to the United States. For details, see the Auth0 privacy policy at auth0.com/privacy.",
-                "title": "Auth0 (Okta, Inc.)"
-            },
             "email": {
                 "description": "We use Proton Mail to send transactional emails such as booking confirmations and notifications. Proton AG is based in Switzerland and subject to Swiss data protection law. Only your email address and the message content are processed.",
                 "title": "Proton Mail (Proton AG)"
@@ -356,7 +353,7 @@
             "items": {
                 "accuracy": "You are responsible for keeping your account information accurate and up to date.",
                 "approval": "Account access may require approval by an administrator. We reserve the right to reject or deactivate accounts.",
-                "registration": "You need to create an account via Auth0 to use WirkSam.",
+                "registration": "You need to create an account with your email address and a password to use WirkSam.",
                 "security": "You are responsible for the security of your account credentials."
             },
             "title": "Your Account"

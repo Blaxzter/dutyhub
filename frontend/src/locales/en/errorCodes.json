@@ -1,4 +1,15 @@
 {
+    "auth": {
+        "email_taken": "An account already exists for this email address.",
+        "invalid_credentials": "That email address and password do not match.",
+        "invalid_token": "This link is not valid any more. Please request a new one.",
+        "no_password_set": "This account has no password yet. Use “Forgot your password?” to choose one.",
+        "rate_limited": "Too many attempts. Please wait a few minutes and try again.",
+        "session_not_found": "That session no longer exists.",
+        "session_revoked": "This session was ended for security reasons. Please sign in again.",
+        "token_expired": "This link has expired. Please request a new one.",
+        "weak_password": "That password is too short. Please choose a longer one."
+    },
     "booking": {
         "already_exists": "You already have a booking for this shift",
         "forbidden": "You can only manage your own bookings",

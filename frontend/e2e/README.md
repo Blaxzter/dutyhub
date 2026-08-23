@@ -2,58 +2,80 @@
 
 ## Overview
 
-E2E tests use [Playwright](https://playwright.dev/) and run in two modes:
+E2E tests use [Playwright](https://playwright.dev/). There is one mode: test
+users are seeded straight into the database and the browser is handed a session
+instead of signing in. There used to be a second mode behind `USE_AUTH0_E2E`
+that drove the hosted Auth0 login; it went with Auth0 itself.
 
-- **Isolated mode** (default): No Auth0 dependency. Tests use a fake Auth0 plugin and seed test users directly in the database via backend API. This is what runs locally and in CI.
-- **Auth0 mode**: Uses real Auth0 login. Set `USE_AUTH0_E2E=true` in `frontend/.env` to enable. Only needed if you want to test the actual Auth0 login flow.
+The four screens that *do* sign in for real — `/login`, `/register`,
+`/forgot-password` and what they link to — are covered by the `auth` project
+under `tests/auth/`, which runs anonymously against the real endpoints.
 
-## How the Auth0 Bypass Works
+## How the sign-in bypass works
 
-The bypass has three layers:
+It survived the move off Auth0 on purpose. In CI the Playwright browser runs in
+a container where the page origin and `VITE_API_URL=http://backend:8787` are
+genuinely cross-site, so the `SameSite=Lax` refresh cookie a real login depends
+on is silently dropped — and `SameSite=None` needs `Secure` needs HTTPS. A suite
+built on real logins would pass on a developer's machine and fail in CI.
 
-### 1. Frontend: Fake Auth0 Plugin
+Three layers, and no two of them work without the third:
 
-When `VITE_E2E_AUTH_BYPASS=true` is set in `frontend/.env`, `main.ts` provides a fake Auth0 plugin instead of the real SDK. This fake plugin:
+### 1. Frontend: a session installed rather than earned
 
-- Reports `isAuthenticated: true` and `isLoading: false`
-- Returns `'fake-test-token'` from `getAccessTokenSilently()`
+When `VITE_E2E_AUTH_BYPASS=true` **and** the run sets an `e2e_bypass=1` cookie,
+`main.ts` calls `installFakeSession()` from `src/testing/fake-session.ts`
+instead of restoring a session from the refresh cookie. That reads the
+impersonated user out of the `wirksam-e2e-user` localStorage entry the fixtures
+plant, hands `lib/auth-session.ts` a session containing the string
+`fake-test-token`, and stubs out `bootstrap()` so the app's own
+`POST /auth/refresh` cannot 401 the planted session away again.
 
-The `authGuard` in `router/index.ts` is replaced with a no-op in bypass mode since the real guard reads from an internal Auth0 SDK singleton that can't be mocked externally.
+`router/index.ts` stands the real navigation guard down under the same two
+gates.
 
-### 2. Backend: Test Auth Middleware
+### 2. Backend: the `X-Test-User-Email` header
 
-When `TESTING=true` (defaults to `true` when `ENVIRONMENT=local`), the backend:
+When `TESTING=true` (which it is whenever `ENVIRONMENT=local`), the backend:
 
-- Monkey-patches `auth0.require_auth()` to a no-op that returns dummy JWT claims
-- Checks for `X-Test-User-Email` header in every authenticated endpoint. If present, looks up the user by email instead of validating a JWT
-- Exposes `POST /testing/seed` and `POST /testing/reset` endpoints for user management
+- resolves the caller from an `X-Test-User-Email` header when one is present,
+  **before** it looks at `Authorization` — which is why the fake token above
+  never has to be a real one
+- exposes `POST /testing/seed` and `POST /testing/reset` for user management
 
-### 3. Playwright Fixtures (`e2e/fixtures.ts`)
+### 3. Playwright fixtures (`e2e/fixtures.ts`)
 
-The custom fixtures handle the glue:
+The custom fixtures are the glue:
 
-- **`adminUser` / `memberUser`** (worker-scoped): Seed a test user per parallel worker via `POST /testing/seed`. Each worker gets unique users like `admin-worker-0@test.example.com`.
-- **`adminPage` / `memberPage`** (test-scoped): Create a fresh browser context with:
-  - `addInitScript` that pre-seeds localStorage (Auth0 SDK cache, locale, changelog)
-  - `page.route()` interception that adds `X-Test-User-Email` header to all API requests
-  - A warm-up navigation to `/app/home` to ensure the profile loads before the test starts
+- **`adminUser` / `memberUser`** (worker-scoped): seed a test user per parallel
+  worker via `POST /testing/seed`. Each worker gets its own addresses, like
+  `admin-worker-0@test.example.com`.
+- **`adminPage` / `memberPage` / `disposablePage`** (test-scoped): a fresh
+  browser context with
+  - the `e2e_bypass=1` cookie
+  - an `addInitScript` planting `wirksam-e2e-user`, the locale and the
+    last-seen-changelog version
+  - a `page.route()` interception adding `X-Test-User-Email` to every API request
+  - a warm-up navigation to `/app/home` so the profile is loaded before the test
+    body runs
 
 ```
 Playwright Worker                    Frontend (Vite)                 Backend (FastAPI)
 ─────────────────                    ───────────────                 ─────────────────
 seed user via POST /testing/seed ──────────────────────────────────► Create user in DB
-                                                                    (auth0_sub = "test|email")
+                                                                    (subject = "test|email")
 create browser context
-├─ addInitScript: pre-seed localStorage
+├─ cookie: e2e_bypass=1
+├─ addInitScript: wirksam-e2e-user, locale, changelog
 ├─ page.route: add X-Test-User-Email header
 └─ goto /app/home (warm-up)
-                                     main.ts sees VITE_E2E_AUTH_BYPASS
-                                     ├─ Provides fake Auth0 plugin
+                                     main.ts sees both gates open
+                                     ├─ installFakeSession()
                                      ├─ authGuard = no-op
-                                     └─ getAccessTokenSilently → "fake-test-token"
+                                     └─ access token = "fake-test-token"
 
-                                     POST /users/me ──────────────► X-Test-User-Email header
-                                     (with fake token)               → look up user by email
+                                     GET /users/me ───────────────► X-Test-User-Email header
+                                     (token ignored)                 → look up user by email
                                                                      → return profile
                                      ◄─ UserProfile (admin, active)
 
@@ -79,8 +101,11 @@ pnpm exec playwright test -g "approval password section is visible"
 # Run with visible browser
 HEADED=true pnpm test:e2e
 
-# Run a specific project (authenticated, member, multi-user, public)
+# Run a specific project (chromium, member, multi-user, public, auth, a11y)
 pnpm exec playwright test --project=chromium
+
+# The sign-in / registration flows, which use no bypass
+pnpm exec playwright test e2e/tests/auth --reporter=list
 ```
 
 ### CI (GitHub Actions)
@@ -102,7 +127,7 @@ Key CI differences:
 // Correct
 import { test, expect } from '../../fixtures.js'
 
-// Wrong — won't have auth bypass
+// Wrong — won't have the fixtures
 import { test, expect } from '@playwright/test'
 ```
 
@@ -134,6 +159,27 @@ test('admin sees member data', async ({ adminPage, memberPage }) => {
 
 Tests under `tests/public/` don't require auth and can import directly from `@playwright/test`.
 
+### Tests under `tests/auth/` sign in for real
+
+The `auth` project is the one place the bypass is deliberately switched off, so
+that the screens a first-time visitor actually meets are exercised somewhere.
+They get away with it in CI, where the page origin and `VITE_API_URL` are
+cross-site, because login and registration answer with the access token in the
+body — only a page *reload* would need the refresh cookie, and these specs never
+reload. Three rules follow:
+
+- `test.use({ storageState: { cookies: [], origins: [] } })` at the top of the
+  file. An authenticated visitor is redirected straight off `/login` and
+  `/register` by the router guard, and the test would then fail on a redirect
+  rather than on what it meant to check.
+- Pin the browser preferences by hand with `pinBrowserPreferences(page)` from
+  `helpers/auth.js` before the first `goto`. There is no fixture planting the
+  locale and the changelog version on these pages.
+- Delete the accounts you create. An account that registered with a password has
+  a `local|…` subject, and `POST /testing/reset` only removes `test|…` ones.
+  `authTestEmail(testInfo)` gives a per-test address that a later run can delete
+  again if a crash ever stops the teardown happening.
+
 ### Test data isolation
 
 Each test should create its own data and clean up after:
@@ -160,12 +206,14 @@ Never assert on global state like "there is exactly 1 event". Each parallel work
 e2e/
 ├── fixtures.ts              # Test fixtures (adminPage, memberPage, user seeding)
 ├── helpers/
-│   └── api.ts               # API helpers (createEvent, bookSlot, etc.)
+│   ├── api.ts               # API helpers (createEvent, bookSlot, etc.)
+│   ├── a11y.ts              # axe-core scans, keyboard/focus helpers
+│   └── auth.ts              # helpers for the specs that sign in for real
 ├── setup/
-│   ├── auth.setup.ts        # Auth0 login setup (Auth0 mode only)
-│   ├── auth-member.setup.ts # Auth0 member login (Auth0 mode only)
-│   └── test-reset.setup.ts  # Reset test data (isolated mode)
+│   └── test-reset.setup.ts  # Reset test data before the test projects run
 ├── tests/
+│   ├── a11y/                # Accessibility scans
+│   ├── auth/                # Sign-in, registration, password recovery (no bypass)
 │   ├── authenticated/       # Admin user tests
 │   ├── member/              # Member (non-admin) tests
 │   ├── multi-user/          # Cross-user interaction tests
@@ -176,19 +224,18 @@ e2e/
 
 ## Environment Variables
 
-| Variable                    | Where                | Purpose                                                                                    |
-| --------------------------- | -------------------- | ------------------------------------------------------------------------------------------ |
-| `VITE_E2E_AUTH_BYPASS`      | `frontend/.env`      | `true` enables fake Auth0 plugin (requires Vite restart)                                   |
-| `USE_AUTH0_E2E`             | `frontend/.env`      | `true` uses real Auth0 login in Playwright config                                          |
-| `TESTING`                   | Backend env / `.env` | `true` enables `/testing/*` endpoints and auth bypass (auto-true when `ENVIRONMENT=local`) |
-| `E2E_AUTH0_USERNAME`        | `frontend/.env`      | Admin email for Auth0 mode                                                                 |
-| `E2E_AUTH0_PASSWORD`        | `frontend/.env`      | Admin password for Auth0 mode                                                              |
-| `E2E_AUTH0_USERNAME_MEMBER` | `frontend/.env`      | Member email for Auth0 mode                                                                |
-| `E2E_AUTH0_PASSWORD_MEMBER` | `frontend/.env`      | Member password for Auth0 mode                                                             |
+| Variable               | Where                | Purpose                                                                                   |
+| ---------------------- | -------------------- | ----------------------------------------------------------------------------------------- |
+| `VITE_E2E_AUTH_BYPASS` | `frontend/.env`      | `true` lets a run install a session instead of signing in (requires a Vite restart)        |
+| `TESTING`              | Backend env / `.env` | `true` enables `/testing/*` and the `X-Test-User-Email` header (auto-true when `ENVIRONMENT=local`) |
+
+`VITE_E2E_AUTH_BYPASS` alone does nothing: the run also has to set an
+`e2e_bypass=1` cookie, which the fixtures do and the `auth` project deliberately
+does not.
 
 ## Troubleshooting
 
-**Tests redirect to Auth0 login**: `VITE_E2E_AUTH_BYPASS` is not `true` or the Vite dev server wasn't restarted after adding it.
+**Tests redirect to `/login`**: `VITE_E2E_AUTH_BYPASS` is not `true`, or the Vite dev server wasn't restarted after adding it. (Expected under `tests/auth/`, which signs in for real.)
 
 **Tests hang on `networkidle`**: The SSE `/notifications/stream` endpoint keeps a connection open. Don't use `waitUntil: 'networkidle'` in test fixtures or tests.
 

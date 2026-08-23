@@ -1,8 +1,7 @@
 /**
  * E2E tests for User Settings page.
  */
-
-import { test, expect } from '../../fixtures.js'
+import { expect, test } from '../../fixtures.js'
 
 test.describe('Settings – navigation', () => {
   test('can navigate to settings page via URL', async ({ adminPage: page }) => {
@@ -33,9 +32,6 @@ test.describe('Settings – page structure', () => {
   })
 
   test('shows security section', async ({ adminPage: page }) => {
-    // Security section is auth0Only — skip in isolated testing mode
-    // eslint-disable-next-line playwright/no-skipped-test
-    test.skip(process.env.USE_AUTH0_E2E?.toLowerCase() !== 'true', 'Security section requires Auth0')
     await page.goto('/app/settings/security')
     await expect(page.getByTestId('section-security')).toBeVisible()
   })

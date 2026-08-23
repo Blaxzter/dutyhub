@@ -300,9 +300,10 @@
             "intro": "Wenn Sie ein Konto erstellen und WirkSam nutzen, verarbeiten wir folgende personenbezogene Daten:",
             "items": {
                 "bookings": "Buchungsdaten (welche Dienstschichten Sie gebucht haben)",
+                "credentials": "Ihr Passwort, gespeichert ausschließlich als gesalzener Hash – niemals im Klartext – sowie die Anmeldesitzungen Ihrer Geräte",
                 "email": "E-Mail-Adresse",
-                "name": "Name (wie von Ihrem Auth0-Login bereitgestellt)",
-                "picture": "Profilbild (sofern von Ihrem Login-Anbieter bereitgestellt)"
+                "name": "Name (wie Sie ihn bei der Registrierung angeben)",
+                "picture": "Profilbild (falls Sie eines hochladen)"
             },
             "title": "Welche Daten wir erheben"
         },
@@ -339,10 +340,6 @@
             "title": "Ihre Rechte"
         },
         "thirdParty": {
-            "auth0": {
-                "description": "Wir verwenden Auth0 zur Authentifizierung und Anmeldung. Beim Login verarbeitet Auth0 Ihre E-Mail-Adresse, Ihren Namen und Ihr Profilbild. Auth0 kann Daten in die Vereinigten Staaten übertragen. Details finden Sie in der Auth0-Datenschutzerklärung unter auth0.com/privacy.",
-                "title": "Auth0 (Okta, Inc.)"
-            },
             "email": {
                 "description": "Wir verwenden Proton Mail zum Versand von Transaktions-E-Mails wie Buchungsbestätigungen und Benachrichtigungen. Die Proton AG hat ihren Sitz in der Schweiz und unterliegt dem Schweizer Datenschutzgesetz. Es werden nur Ihre E-Mail-Adresse und der Nachrichteninhalt verarbeitet.",
                 "title": "Proton Mail (Proton AG)"
@@ -356,7 +353,7 @@
             "items": {
                 "accuracy": "Sie sind dafür verantwortlich, Ihre Kontoinformationen korrekt und aktuell zu halten.",
                 "approval": "Der Kontozugang kann eine Genehmigung durch einen Administrator erfordern. Wir behalten uns das Recht vor, Konten abzulehnen oder zu deaktivieren.",
-                "registration": "Sie müssen ein Konto über Auth0 erstellen, um WirkSam zu nutzen.",
+                "registration": "Sie benötigen ein Konto mit Ihrer E-Mail-Adresse und einem Passwort, um WirkSam zu nutzen.",
                 "security": "Sie sind für die Sicherheit Ihrer Zugangsdaten verantwortlich."
             },
             "title": "Ihr Konto"

@@ -16,7 +16,7 @@ class TestUserCRUD:
     async def test_create_user(self, db_session: AsyncSession):
         """Test creating a new user."""
         user_in = UserCreate(
-            auth0_sub="auth0|newuser789",
+            subject="local|newuser789",
             email="newuser@example.com",
             name="New User",
             roles=["user"],
@@ -24,7 +24,7 @@ class TestUserCRUD:
         )
         user = await crud_user.create(db_session, obj_in=user_in)
 
-        assert user.auth0_sub == "auth0|newuser789"
+        assert user.subject == "local|newuser789"
         assert user.email == "newuser@example.com"
         assert user.name == "New User"
         assert user.roles == ["user"]
@@ -59,23 +59,17 @@ class TestUserCRUD:
         assert exc_info.value.status_code == 404
         assert "User not found" in str(exc_info.value.detail)
 
-    async def test_get_user_by_auth0_sub(
-        self, db_session: AsyncSession, test_user: User
-    ):
-        """Test getting a user by Auth0 sub."""
-        user = await crud_user.get_by_auth0_sub(
-            db_session, auth0_sub=test_user.auth0_sub
-        )
+    async def test_get_user_by_subject(self, db_session: AsyncSession, test_user: User):
+        """Test getting a user by their opaque local identity string."""
+        user = await crud_user.get_by_subject(db_session, subject=test_user.subject)
 
         assert user is not None
         assert user.id == test_user.id
-        assert user.auth0_sub == test_user.auth0_sub
+        assert user.subject == test_user.subject
 
-    async def test_get_user_by_auth0_sub_not_found(self, db_session: AsyncSession):
-        """Test getting a user by non-existent Auth0 sub."""
-        user = await crud_user.get_by_auth0_sub(
-            db_session, auth0_sub="auth0|nonexistent"
-        )
+    async def test_get_user_by_subject_not_found(self, db_session: AsyncSession):
+        """Test getting a user by a subject nobody holds."""
+        user = await crud_user.get_by_subject(db_session, subject="local|nonexistent")
 
         assert user is None
 
@@ -88,11 +82,55 @@ class TestUserCRUD:
         assert user.id == test_user.id
         assert user.email == test_user.email
 
+    async def test_get_user_by_email_is_case_insensitive(
+        self, db_session: AsyncSession, test_user: User
+    ):
+        """Test that the address is matched however the caller happened to type it.
+
+        Email is the login credential now. Nobody types their own address the
+        same way twice, and a case-sensitive lookup would turn
+        ``Test@Example.com`` into "no such account" — which the login form can
+        only render as "wrong password". The comparison is on ``lower(email)``,
+        which is also the expression the partial unique index is built on, so
+        this stays an index lookup rather than a sequential scan.
+        """
+        assert test_user.email is not None
+        user = await crud_user.get_by_email(db_session, email=test_user.email.upper())
+
+        assert user is not None
+        assert user.id == test_user.id
+
+    async def test_get_user_by_email_ignores_surrounding_whitespace(
+        self, db_session: AsyncSession, test_user: User
+    ):
+        """Test that a pasted address with stray spaces still resolves."""
+        assert test_user.email is not None
+        user = await crud_user.get_by_email(db_session, email=f"  {test_user.email}  ")
+
+        assert user is not None
+        assert user.id == test_user.id
+
     async def test_get_user_by_email_not_found(self, db_session: AsyncSession):
         """Test getting a user by non-existent email."""
         user = await crud_user.get_by_email(db_session, email="nonexistent@example.com")
 
         assert user is None
+
+    async def test_get_user_by_email_never_matches_a_null_address(
+        self, db_session: AsyncSession
+    ):
+        """Test that rows with no address are invisible to the credential lookup.
+
+        ``email`` is nullable — demo accounts and anything predating local
+        authentication may have none — and a NULL address is not a credential.
+        The empty string is the value most likely to be posted at this function
+        by a form that submitted a blank field.
+        """
+        no_email = User(subject="demo|no-email", email=None, name="No Email")
+        db_session.add(no_email)
+        await db_session.flush()
+
+        assert await crud_user.get_by_email(db_session, email="") is None
 
     async def test_get_multi_users(
         self, db_session: AsyncSession, test_user: User, test_admin_user: User
@@ -133,7 +171,7 @@ class TestUserCRUD:
         assert updated_user.id == test_user.id
         assert updated_user.name == "Updated Name"
         assert updated_user.email == "updated@example.com"
-        assert updated_user.auth0_sub == test_user.auth0_sub  # Unchanged
+        assert updated_user.subject == test_user.subject  # Unchanged
 
     async def test_update_user_roles(self, db_session: AsyncSession, test_user: User):
         """Test updating user roles."""

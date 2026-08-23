@@ -1,4 +1,4 @@
-"""Coverage gap tests for User endpoints (self-approve, profile-init, delete, export with data)."""
+"""Coverage gap tests for User endpoints (own profile, delete, export with data)."""
 
 from datetime import date, time
 from typing import Any, get_args
@@ -13,63 +13,62 @@ from app.models.booking import Booking
 from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
+from app.models.user_availability import UserAvailability
 
 
 @pytest.mark.asyncio
-class TestProfileInit:
-    """Test POST /me with profile_init data."""
+class TestGetOwnProfile:
+    """``GET /users/me`` — the one endpoint a suspended account may still use.
 
-    async def test_profile_init_syncs_fields(
+    It used to be a POST carrying the identity provider's ID token, which the
+    route wrote onto the row before answering. Registration supplies those
+    fields now, so nothing is upserted and the verb finally matches the work.
+
+    The dependency is ``AnyUser`` rather than ``CurrentUser`` on purpose, and
+    that is what these tests pin down: the profile response is how the UI knows
+    to explain *why* everything else is being refused, so an account that
+    moderation switched off must still be able to read it.
+    """
+
+    async def test_returns_the_callers_own_row(
         self,
-        app: FastAPI,
         async_client: AsyncClient,
         test_user: User,
     ):
-        """Test that profile_init syncs name, email, picture to user."""
-        # Override AnyUser dependency for this test
-        dep: Any = get_args(deps_module.AnyUser)[1].dependency
+        """Test that the profile is served from the database, not from a token."""
+        r = await async_client.get("/api/v1/users/me")
 
-        async def override_any_user():
-            return test_user
+        assert r.status_code == 200
+        data = r.json()
+        assert data["id"] == str(test_user.id)
+        assert data["sub"] == test_user.subject
+        assert data["email"] == test_user.email
 
-        app.dependency_overrides[dep] = override_any_user
-        try:
-            r = await async_client.post(
-                "/api/v1/users/me",
-                json={
-                    "name": "Updated Name",
-                    "email": "updated@example.com",
-                    "picture": "https://example.com/pic.jpg",
-                    "preferred_language": "de",
-                },
-            )
-
-            assert r.status_code == 200
-            data = r.json()
-            assert data["name"] == "Updated Name"
-            assert data["email"] == "updated@example.com"
-        finally:
-            app.dependency_overrides.pop(dep, None)
-
-    async def test_profile_init_no_data(
+    async def test_suspended_account_can_still_read_its_own_profile(
         self,
         app: FastAPI,
         async_client: AsyncClient,
-        test_user: User,
+        db_session: AsyncSession,
+        test_inactive_user: User,
     ):
-        """Test POST /me without profile_init returns profile."""
+        """Test that ``AnyUser`` lets a suspended account see why it is blocked."""
+        test_inactive_user.rejection_reason = "Suspended pending review"
+        db_session.add(test_inactive_user)
+        await db_session.flush()
+
         dep: Any = get_args(deps_module.AnyUser)[1].dependency
 
         async def override_any_user():
-            return test_user
+            return test_inactive_user
 
         app.dependency_overrides[dep] = override_any_user
         try:
-            r = await async_client.post("/api/v1/users/me")
+            r = await async_client.get("/api/v1/users/me")
 
             assert r.status_code == 200
             data = r.json()
-            assert data["sub"] == test_user.auth0_sub
+            assert data["is_active"] is False
+            assert data["rejection_reason"] == "Suspended pending review"
         finally:
             app.dependency_overrides.pop(dep, None)
 
@@ -87,7 +86,7 @@ class TestDeleteCurrentUser:
         """Test deleting the current user's account."""
         # Create a user to delete (don't delete the fixture user)
         deletable_user = User(
-            auth0_sub="auth0|deletable_user",
+            subject="local|deletable_user",
             email="deletable@example.com",
             name="Deletable User",
             is_active=True,
@@ -179,6 +178,30 @@ class TestExportWithData:
         assert len(data["bookings"]) >= 1
         assert any(b["notes"] == "Export test" for b in data["bookings"])
 
+    async def test_export_with_availabilities(
+        self,
+        async_client: AsyncClient,
+        test_user_availability_with_dates: UserAvailability,
+    ):
+        """Test export includes the user's stated availability and its dates.
+
+        The availability block is assembled by a nested loop rather than a
+        single query, so an export written for a user who happens to have none
+        never runs it. GDPR exports are the one response where a silently empty
+        section is a compliance problem rather than a cosmetic one.
+        """
+        r = await async_client.get("/api/v1/users/me/export")
+
+        assert r.status_code == 200
+        availabilities = r.json()["availabilities"]
+        assert len(availabilities) == 1
+        assert availabilities[0]["availability_type"] == "specific_dates"
+        assert availabilities[0]["notes"] == "Only free Wednesday and Thursday"
+        assert sorted(d["date"] for d in availabilities[0]["dates"]) == [
+            "2026-06-10",
+            "2026-06-11",
+        ]
+
 
 @pytest.mark.asyncio
 class TestAdminUserManagement:
@@ -192,7 +215,7 @@ class TestAdminUserManagement:
     ):
         """Reinstating a suspended account flips is_active back on."""
         user = User(
-            auth0_sub="auth0|approve_notif_test",
+            subject="local|approve_notif_test",
             email="approve_notif@example.com",
             name="Approve Notif User",
             is_active=False,
@@ -217,7 +240,7 @@ class TestAdminUserManagement:
     ):
         """Recording a suspension reason is persisted on the account."""
         user = User(
-            auth0_sub="auth0|reject_notif_test",
+            subject="local|reject_notif_test",
             email="reject_notif@example.com",
             name="Reject Notif User",
             is_active=False,
@@ -242,7 +265,7 @@ class TestAdminUserManagement:
     ):
         """Test admin deleting a user by ID."""
         user = User(
-            auth0_sub="auth0|admin_delete_target",
+            subject="local|admin_delete_target",
             email="admin_delete@example.com",
             name="Admin Delete Target",
         )

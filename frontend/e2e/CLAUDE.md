@@ -3,11 +3,11 @@
 `README.md` covers how to run these. This is the short list of things that
 waste an afternoon.
 
-## Run it locally, isolated — no Auth0 needed
+## Run it locally
 
-Default mode (`USE_AUTH0_E2E` unset) seeds users straight into the DB and
-bypasses Auth0. It needs the backend running with `TESTING=true`; Playwright
-starts the frontend itself.
+Users are seeded straight into the DB and the browser is handed a session
+instead of signing in, so nothing external is needed. It wants the backend
+running with `TESTING=true`; Playwright starts the frontend itself.
 
 ```bash
 docker compose up db -d                                   # note: no -f
@@ -16,6 +16,22 @@ cd frontend && pnpm exec playwright test --reporter=list  # list, or it opens a 
 ```
 
 Filter noisy Vite output with `| grep -vE "^\[WebServer\]"`.
+
+`frontend/.env` needs `VITE_E2E_AUTH_BYPASS=true`, and the run also has to set
+an `e2e_bypass=1` cookie — the fixtures do. Without both, every spec that uses
+`adminPage` lands on `/login` instead of the app.
+
+## `tests/auth/` is the exception, on purpose
+
+The `auth` project drives `/login`, `/register` and `/forgot-password` for real:
+no bypass cookie, no seeded session, an anonymous visitor and the actual
+endpoints. It is the only coverage those screens get, since every other spec is
+already signed in before its first line.
+
+Two consequences. Those files clear `storageState` (a signed-in visitor is
+redirected off `/login` before the test can look at it), and they delete their
+own accounts — registering with a password gives an account a `local|…` subject,
+which `POST /testing/reset` deliberately does not touch.
 
 ## Membership is required for almost everything
 

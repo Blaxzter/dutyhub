@@ -241,7 +241,7 @@ async def create_demo_data(
         first = DEMO_FIRST_NAMES[i % len(DEMO_FIRST_NAMES)]
         last = rng.choice(DEMO_LAST_NAMES)
         user = User(
-            auth0_sub=f"demo|{uuid.uuid4().hex[:16]}",
+            subject=f"demo|{uuid.uuid4().hex[:16]}",
             email=f"{first.lower()}.{last.lower()}.{i}@demo.example.com",
             name=f"{DEMO_PREFIX} {first} {last}",
             phone_number=DEMO_PHONE_NUMBERS[i % len(DEMO_PHONE_NUMBERS)],
@@ -436,9 +436,9 @@ async def delete_demo_data(
     for g in demo_groups:
         await db.delete(g)
 
-    # Delete demo users (auth0_sub starts with 'demo|')
+    # Delete demo users (subject starts with 'demo|')
     demo_users = (
-        (await db.execute(select(User).where(col(User.auth0_sub).startswith("demo|"))))
+        (await db.execute(select(User).where(col(User.subject).startswith("demo|"))))
         .scalars()
         .all()
     )

@@ -14,13 +14,12 @@ from app.api.deps import (
     CurrentUser,
     DBDep,
 )
-from app.core.config import settings
 from app.core.errors import raise_problem
 from app.crud.event import event as crud_event
 from app.crud.event_membership import event_membership as crud_membership
 from app.crud.task import task as crud_task
 from app.crud.user import user as crud_user
-from app.logic.auth0.auth0_service import delete_auth0_user, update_auth0_user
+from app.logic.auth.service import build_user_profile
 from app.models.booking import Booking
 from app.models.notification import NotificationSubscription
 from app.models.user import User
@@ -36,7 +35,6 @@ from app.schemas.user import (
     UserUpdate,
 )
 from app.schemas.users import (
-    ProfileInit,
     SelectedEventUpdate,
     UserProfile,
     UserProfileUpdate,
@@ -47,74 +45,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-async def _build_user_profile(user: User, session: Any) -> UserProfile:
-    """Build a UserProfile carrying this user's role in each of their events.
-
-    The frontend decides what to render from ``event_roles`` alone, so it is
-    resolved here once per profile load rather than per view.
-    """
-    roles_by_event = await crud_membership.get_roles_for_user(session, user_id=user.id)
-    profile = UserProfile.model_validate(user)
-    profile.event_roles = {str(k): v for k, v in roles_by_event.items()}
-    return profile
-
-
-@router.post("/me", response_model=UserProfile)
+@router.get("/me", response_model=UserProfile)
 async def get_current_user_profile(
     user: AnyUser,
-    background_tasks: BackgroundTasks,
-    profile_init: ProfileInit | None = None,
     *,
     session: DBDep,
 ) -> UserProfile:
-    """Get current user profile information.
+    """Return the signed-in account's own profile.
 
-    Accepts optional profile data from frontend for user initialization.
-    This allows the frontend to send email/name from Auth0 ID token
-    when the user first logs in.
+    A plain read. This used to be a ``POST`` that accepted the identity
+    provider's ID token in the body and lazily wrote ``name``, ``email`` and
+    ``email_verified`` onto the row, because first login was the only moment
+    those values were known. Registration now supplies them directly, and the
+    superadmin bootstrap that was duplicated here lives in
+    ``app.logic.auth.service.sync_superadmin_role`` — so nothing is left to
+    upsert and the verb finally matches what the endpoint does.
 
-    Does NOT require is_active, so even pending users can retrieve
-    their profile status after registering.
+    Deliberately ``AnyUser`` rather than ``CurrentUser``: a suspended account
+    must still be able to load its own profile, since that response is how the
+    UI knows to explain why everything else is refused.
     """
-    seed_picture_url: str | None = None
-
-    if profile_init:
-        dirty = False
-        for field in (
-            "name",
-            "email",
-            "email_verified",
-            "preferred_language",
-        ):
-            value = getattr(profile_init, field, None)
-            if value is not None and getattr(user, field) != value:
-                setattr(user, field, value)
-                dirty = True
-
-        # The Auth0 picture URL is captured here only to seed a local avatar
-        # the first time a user signs in; we never persist the URL itself.
-        if profile_init.picture and user.avatar_etag is None:
-            seed_picture_url = profile_init.picture
-
-        # Auto-activate superadmin emails that were created before email was synced
-        if user.email and user.email in [str(e) for e in settings.SUPERADMIN_EMAILS]:
-            if "admin" not in user.roles:
-                user.roles = list(user.roles) + ["admin"]
-                dirty = True
-            if not user.is_active:
-                user.is_active = True
-                dirty = True
-
-        if dirty:
-            session.add(user)
-            await session.flush()
-
-    if seed_picture_url:
-        from app.logic.avatar_seed import seed_avatar_from_url
-
-        background_tasks.add_task(seed_avatar_from_url, user.id, seed_picture_url)
-
-    return await _build_user_profile(user, session)
+    return await build_user_profile(session, user)
 
 
 @router.patch("/me", response_model=UserProfile)
@@ -124,48 +75,40 @@ async def update_user_profile(
     *,
     session: DBDep,
 ) -> UserProfile:
-    """Update current user profile fields stored in Auth0 (name, nickname, bio)
-    plus locally-stored fields (phone_number, preferred_language).
+    """Update the signed-in account's own profile.
+
+    Every field below is a column on ``users``. That is new: ``name``,
+    ``nickname`` and ``bio`` used to live in the identity provider, so this
+    endpoint made a Management API call and then patched those three values
+    back into its own response with ``model_copy``, because no local column
+    held them. The response looked right and the next profile load lost the
+    edit. All three now persist like everything else.
+
+    ``None`` means "not supplied", not "clear it" — a field left out of the
+    body keeps its current value. Setting a nullable column back to NULL is
+    therefore not expressible here, which is the same contract this endpoint
+    has always had; an empty string is the closest a caller can get.
 
     Avatar changes go through the dedicated /users/me/avatar endpoints.
     """
-    auth0_sub = current_user.auth0_sub
+    updates: dict[str, object] = {
+        "name": user_update.name,
+        "nickname": user_update.nickname,
+        "bio": user_update.bio,
+        "phone_number": user_update.phone_number,
+        "preferred_language": user_update.preferred_language,
+        "time_format": user_update.time_format,
+        "theme": user_update.theme,
+        "show_event_switcher_in_nav": user_update.show_event_switcher_in_nav,
+    }
+    for field, value in updates.items():
+        if value is not None:
+            setattr(current_user, field, value)
 
-    # In test mode, skip Auth0 Management API call
-    if not settings.TESTING:
-        success = await update_auth0_user(auth0_sub, user_update)
-        if not success:
-            raise HTTPException(
-                status_code=500, detail="Failed to update user profile in Auth0"
-            )
+    session.add(current_user)
+    await session.flush()
 
-    if user_update.phone_number is not None:
-        current_user.phone_number = user_update.phone_number
-
-    if user_update.preferred_language is not None:
-        current_user.preferred_language = user_update.preferred_language
-
-    if user_update.time_format is not None:
-        current_user.time_format = user_update.time_format
-
-    if user_update.theme is not None:
-        current_user.theme = user_update.theme
-
-    if user_update.show_event_switcher_in_nav is not None:
-        current_user.show_event_switcher_in_nav = user_update.show_event_switcher_in_nav
-
-    profile = await _build_user_profile(current_user, session)
-    return profile.model_copy(
-        update={
-            k: v
-            for k, v in {
-                "name": user_update.name,
-                "bio": user_update.bio,
-                "nickname": user_update.nickname,
-            }.items()
-            if v is not None
-        }
-    )
+    return await build_user_profile(session, current_user)
 
 
 @router.put("/me/selected-event", response_model=UserProfile)
@@ -193,18 +136,7 @@ async def update_selected_event(
     session.add(current_user)
     await session.flush()
     await session.refresh(current_user)
-    return await _build_user_profile(current_user, session)
-
-
-@router.get("/auth0-management-url")
-async def get_auth0_management_url(
-    _: CurrentUser,
-) -> dict[str, str]:
-    """Get the Auth0 management URL for advanced account settings."""
-    return {
-        "management_url": f"https://{settings.AUTH0_DOMAIN}/login",
-        "note": "For email and password changes, please use Auth0's account management",
-    }
+    return await build_user_profile(session, current_user)
 
 
 @router.get("/", response_model=UserListResponse)
@@ -372,26 +304,24 @@ async def delete_current_user(
 ) -> None:
     """Delete the currently authenticated user's account.
 
-    Does NOT require is_active so that pending users can revoke
-    their approval request before being activated.
+    Does NOT require is_active, so a suspended account can still erase itself.
 
-    This will:
-    1. Delete the user from Auth0
-    2. Delete the user record and cascaded data from the database
+    Deleting the row is now the whole operation. It used to have to succeed
+    against the identity provider first, and that call was skipped under
+    ``settings.TESTING`` — which is why the E2E suite never exercised the path
+    that mattered in production. Nothing outside this database holds the
+    account any more.
+
+    ``auth_sessions`` and ``user_tokens`` both carry ``ondelete="CASCADE"`` on
+    their user FK, so every credential that could reach this account goes in
+    the same statement. The browser keeps its refresh cookie, but the row it
+    names no longer exists, so the next renewal 401s and the client returns to
+    the sign-in screen.
     """
-    # Delete user from Auth0 first — if this fails, we abort to keep things consistent
-    if not settings.TESTING:
-        auth0_deleted = await delete_auth0_user(user.auth0_sub)
-        if not auth0_deleted:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to delete account from authentication provider",
-            )
-
     await session.delete(user)
     await session.commit()
 
-    logger.info("User account deleted: %s", user.auth0_sub)
+    logger.info("User account deleted: %s", user.id)
 
 
 async def _get_valid_transfer_target(
@@ -525,8 +455,6 @@ async def delete_user(
             transfer_to_user_id,
         )
 
-    # Also delete from Auth0
-    await delete_auth0_user(user.auth0_sub)
     await session.delete(user)
     await session.commit()
     return user

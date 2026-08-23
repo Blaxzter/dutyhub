@@ -4,7 +4,7 @@ This module imports all fixtures from the fixtures/ subdirectory.
 Fixtures are organized by domain for better maintainability:
 - database.py: Database setup and session fixtures
 - users.py: User fixtures (test_user, test_admin_user, etc.)
-- auth.py: Auth0 mock claims fixtures
+- auth.py: Access-token and Authorization-header factories
 - client.py: FastAPI app and HTTP client fixtures
 """
 
@@ -12,11 +12,10 @@ Fixtures are organized by domain for better maintainability:
 # ruff: noqa: F401
 # pyright: reportUnusedImport=false
 from tests.fixtures.auth import (
-    mock_auth0_admin_claims,
-    mock_auth0_claims,
-    mock_auth0_claims_no_sub,
-    mock_auth0_new_user_claims,
-    mock_request,
+    auth_headers,
+    make_access_token,
+    make_expired_access_token,
+    make_tampered_access_token,
 )
 from tests.fixtures.bookings import test_booking
 from tests.fixtures.client import (
@@ -25,6 +24,8 @@ from tests.fixtures.client import (
     as_event_admin,
     as_outsider,
     async_client,
+    unauthenticated_app,
+    unauthenticated_client,
 )
 from tests.fixtures.database import db_session, test_db_setup, test_engine
 from tests.fixtures.events import (
@@ -41,5 +42,6 @@ from tests.fixtures.users import (
     test_event_admin_user,
     test_inactive_user,
     test_outsider_user,
+    test_passwordless_user,
     test_user,
 )

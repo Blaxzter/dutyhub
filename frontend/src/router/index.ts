@@ -1,15 +1,23 @@
-import { authGuard as _authGuard } from '@auth0/auth0-vue'
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
 import type { BreadcrumbItem } from '@/stores/breadcrumb'
 
-// In E2E bypass mode, skip Auth0's authGuard entirely since the fake plugin
-// doesn't set the module-level client ref that authGuard reads.
-const authGuard =
+import { authGuard as sessionAuthGuard } from '@/composables/useAuth'
+
+import { authSession } from '@/lib/auth-session'
+
+/**
+ * E2E signs in by installing a session directly rather than by logging in, so
+ * both halves of the real flow have to stand aside here: the guard, and the
+ * bootstrap below. The bootstrap is the dangerous one — its `POST /auth/refresh`
+ * would answer 401 for a browser that holds no refresh cookie, and a 401 clears
+ * the session, including the one the bypass just installed.
+ */
+const isE2eBypass =
   import.meta.env.VITE_E2E_AUTH_BYPASS === 'true' && document.cookie.includes('e2e_bypass=1')
-    ? () => true
-    : _authGuard
+
+const authGuard = isE2eBypass ? () => true : sessionAuthGuard
 
 // Extend route meta to include breadcrumbs and layout
 declare module 'vue-router' {
@@ -336,6 +344,38 @@ const router = createRouter({
           name: 'account-suspended',
           component: () => import('@/views/AccountSuspendedView.vue'),
         },
+        // The five public auth screens. They live under `NoLayout` rather than
+        // in the pre-auth shell on purpose: a page asking for a password should
+        // not also carry a navigation bar full of places to go instead. The only
+        // links each of them offers belong to the flow it is part of.
+        {
+          path: 'login',
+          name: 'login',
+          component: () => import('@/views/auth/LoginView.vue'),
+        },
+        {
+          path: 'register',
+          name: 'register',
+          component: () => import('@/views/auth/RegisterView.vue'),
+        },
+        {
+          path: 'forgot-password',
+          name: 'forgot-password',
+          component: () => import('@/views/auth/ForgotPasswordView.vue'),
+        },
+        // Both of these carry their secret in `?token=`, matching the links the
+        // backend mails out. A route param would put the token in the URL a
+        // breadcrumb or a referrer header could carry off.
+        {
+          path: 'reset-password',
+          name: 'reset-password',
+          component: () => import('@/views/auth/ResetPasswordView.vue'),
+        },
+        {
+          path: 'verify-email',
+          name: 'verify-email',
+          component: () => import('@/views/auth/VerifyEmailView.vue'),
+        },
       ],
     },
     {
@@ -381,15 +421,34 @@ const SELECTED_EVENT_EXEMPT_ROUTES = new Set<string>([
   'account-suspended',
   'changelog',
   'preauth-changelog',
+  // The auth screens, for the same reason: an account that was created a second
+  // ago has no selected event, and bouncing a verification link into the event
+  // picker would swallow the token it was carrying.
+  'login',
+  'register',
+  'forgot-password',
+  'reset-password',
+  'verify-email',
 ])
+
+/**
+ * Auth screens that make no sense to somebody who is already signed in.
+ *
+ * `reset-password` and `verify-email` are deliberately absent: both carry a
+ * one-shot token that has to be redeemable in whichever browser the mail was
+ * opened in, signed in or not.
+ */
+const SIGNED_IN_REDIRECT_ROUTES = new Set<string>(['login', 'register'])
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
+  const routeName = typeof to.name === 'string' ? to.name : ''
 
-  // Wait for Auth0 to finish loading before checking authentication
-  while (authStore.auth0.isLoading) {
-    await new Promise((resolve) => setTimeout(resolve, 100))
-  }
+  // Await the one-shot session restore instead of polling a loading flag. The
+  // first navigation routinely beats the app's own `bootstrap()` to the punch,
+  // and deciding this guard against a session that has not been restored yet
+  // signs everybody out on every reload.
+  if (!isE2eBypass) await authSession.bootstrap()
 
   if (authStore.isAuthenticated) {
     try {
@@ -411,8 +470,13 @@ router.beforeEach(async (to) => {
       return { name: 'home' }
     }
 
+    // A bookmarked /login or a stale tab should not present a sign-in form to
+    // somebody who is already signed in.
+    if (SIGNED_IN_REDIRECT_ROUTES.has(routeName)) {
+      return { name: 'home' }
+    }
+
     // Selected-event gate: force users without a valid selection into the picker
-    const routeName = typeof to.name === 'string' ? to.name : ''
     const isExempt = SELECTED_EVENT_EXEMPT_ROUTES.has(routeName)
     if (authStore.isActive && !isExempt) {
       if (!authStore.selectedEventId) {

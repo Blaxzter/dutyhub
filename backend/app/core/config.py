@@ -35,8 +35,6 @@ class Settings(BaseSettings):
         extra="ignore",
     )
     API_V1_STR: str = "/api/v1"
-    # 60 minutes * 24 hours * 8 days = 8 days
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5555"
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
     TESTING: bool | None = None
@@ -95,16 +93,68 @@ class Settings(BaseSettings):
             raise ValueError("TESTING=true is not allowed in production")
         return self
 
-    # Auth0 configuration
-    AUTH0_DOMAIN: str
-    AUTH0_AUDIENCE: str
+    # Authentication
+    #
+    # Access tokens are short-lived HS256 JWTs the client holds in memory;
+    # refresh tokens are opaque, rotated on every use, and stored only as a
+    # SHA-256 hash in `auth_sessions`. SECRET_KEY signs the access tokens.
+    #
+    # SECRET_KEY deliberately defaults to the sentinel "changethis" rather than
+    # to a freshly minted `secrets.token_urlsafe(32)`. The image runs
+    # `fastapi run --workers 4` (backend/Dockerfile), so a per-process random
+    # default would hand four workers four different signing keys and roughly
+    # three requests in four would fail verification — intermittently, and only
+    # in production. It also has to have *some* default: four CI workflows do
+    # `cp .env.example .env` before booting the backend, and a required field
+    # with no default kills all four with a validation error before a single
+    # test runs. The sentinel is caught instead by _enforce_non_default_secrets
+    # at the bottom of this class, which warns locally and refuses to boot
+    # anywhere else.
+    SECRET_KEY: str = "changethis"
+    # An access token cannot be revoked, so the only lever against a stolen one
+    # is how long it stays useful. Fifteen minutes; the refresh token below
+    # carries the long-lived, revocable half of the session.
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
+    PASSWORD_MIN_LENGTH: int = 8
 
-    # Auth0 Management API configuration (for updating user profiles)
-    AUTH0_CLIENT_ID: str | None = None
-    AUTH0_CLIENT_SECRET: str | None = None
-    AUTH0_MANAGEMENT_AUDIENCE: str | None = None
+    # Refresh-token cookie
+    #
+    # The cookie is host-only (no Domain attribute) and scoped to
+    # f"{API_V1_STR}/auth". Do not add a Domain setting to "fix" a cross-site
+    # deployment: the apex that hosts the API also hosts unrelated
+    # applications, and a Domain cookie is sent to every one of them.
+    REFRESH_COOKIE_NAME: str = "wirksam_refresh"
+    REFRESH_COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+    # None means "derive from ENVIRONMENT" (see _resolve_cookie_secure). Local
+    # development is plain HTTP, where a Secure cookie is dropped without a
+    # word; every deployed environment sits behind TLS at Traefik. An explicit
+    # True or False in the env file still wins.
+    REFRESH_COOKIE_SECURE: bool | None = None
 
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
+    @model_validator(mode="after")
+    def _resolve_cookie_secure(self) -> Self:
+        if self.REFRESH_COOKIE_SECURE is None:
+            self.REFRESH_COOKIE_SECURE = self.ENVIRONMENT != "local"  # type: ignore[reportConstantRedefinition]
+        # Browsers reject SameSite=None without Secure outright. Left
+        # unchecked, the combination yields a refresh cookie that is never
+        # stored and a session that silently ends at the first refresh — a
+        # failure that looks like a backend bug from every angle except this
+        # one. Fail at startup instead.
+        if self.REFRESH_COOKIE_SAMESITE == "none" and not self.REFRESH_COOKIE_SECURE:
+            raise ValueError(
+                "REFRESH_COOKIE_SAMESITE=none requires REFRESH_COOKIE_SECURE=True"
+            )
+        return self
+
+    # Email-borne auth tokens
+    #
+    # A reset link is a password sitting in an inbox, so it expires within the
+    # hour. A verification link grants nothing on its own — login is not
+    # blocked on an unverified address — and is often opened a day later on
+    # another device, so it gets the generous window.
+    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 1
+    EMAIL_VERIFY_TOKEN_EXPIRE_HOURS: int = 48
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -139,6 +189,33 @@ class Settings(BaseSettings):
                 warnings.warn(message, stacklevel=1)
             else:
                 raise ValueError(message)
+
+    @model_validator(mode="after")
+    def _enforce_non_default_secrets(self) -> Self:
+        # `SECRET_KEY=changethis` is what four CI workflows get from
+        # .env.example, so locally it may only be noisy. A deployment signing
+        # its access tokens with a value published in this repository would let
+        # anyone mint a token for any user, so outside local this refuses to
+        # boot rather than warns.
+        self._check_default_secret("SECRET_KEY", self.SECRET_KEY)
+
+        # RFC 7518 §3.2: an HMAC key for HS256 must be at least as long as the
+        # hash output, 32 bytes. PyJWT only warns, and a warning in a worker
+        # process is a warning nobody reads — so a deployment whose key is
+        # merely short (rather than literally "changethis") would sign tokens
+        # that are cheaper to brute-force than the algorithm implies. Local
+        # keeps the warning so .env.example still boots.
+        if len(self.SECRET_KEY.encode("utf-8")) < 32:
+            message = (
+                "SECRET_KEY must be at least 32 bytes for HS256 (RFC 7518 3.2). "
+                'Generate one with: python -c "import secrets; '
+                'print(secrets.token_urlsafe(32))"'
+            )
+            if self.ENVIRONMENT == "local":
+                warnings.warn(message, stacklevel=1)
+            else:
+                raise ValueError(message)
+        return self
 
 
 settings = Settings()  # type: ignore[call-arg]

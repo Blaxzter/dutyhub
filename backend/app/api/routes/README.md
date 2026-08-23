@@ -1,102 +1,124 @@
 # API Routes
 
-This directory is where you should create your FastAPI route modules to organize your application's REST API endpoints.
+This directory holds the FastAPI routers, one file per domain. Each is
+registered in `app/api/api.py`.
 
 ## Tech Stack
 
 -   **FastAPI** routers and dependency injection
--   **Auth0** auth via `app.api.deps.auth0`
+-   **Local, database-backed auth** via the identity aliases in `app.api.deps`
 -   **SQLModel + AsyncSession** via `DBDep`
 -   **Pydantic** schemas for request/response models
 
 ## Route Structure Guidelines
 
-Each route file should follow this structure:
-
 ```python
-from fastapi import APIRouter, Depends
-from app.api.deps import DBDep, auth0
+from fastapi import APIRouter, status
+
+from app.api.deps import CurrentUser, DBDep
+from app.core.errors import raise_problem
 
 router = APIRouter(prefix="/your-prefix", tags=["your-tag"])
 
 
-@router.get("/")
-async def your_endpoint(session: DBDep, claims: dict = Depends(auth0.require_auth())):
-    """Your endpoint description"""
-    # Your logic here - user info available in claims dict
-    user_id = claims.get("sub")  # Auth0 user ID
-    user_email = claims.get("email")  # User email
-    pass
+@router.get("/", response_model=ThingRead)
+async def get_thing(
+    current_user: CurrentUser,
+    session: DBDep,
+) -> ThingRead:
+    """One sentence on what this returns, then *why* anything non-obvious."""
+    thing = await crud_thing.get(session, id=..., raise_404_error=True)
+    if thing.owner_id != current_user.id:
+        raise_problem(
+            status.HTTP_403_FORBIDDEN,
+            code="thing.not_yours",
+            detail="This item belongs to someone else.",
+        )
+    return thing
 ```
 
-## Essential Route Files to Create
+`current_user` is a fully loaded `User` row — id, email, roles, everything. There
+is no separate "claims" object to consult and no profile living somewhere else:
+the access token carries the user id and nothing more, precisely so that a
+single primary-key lookup answers the whole identity question.
 
-### `login.py` (Required)
+## Authentication Patterns
 
-Authentication endpoints for user login and token management.
+Take identity through the aliases in `app/api/deps.py` and nowhere else:
 
-**Recommended Endpoints:**
+- **`CurrentUser`** — the default. Validates the bearer token, loads the row,
+  requires `is_active`.
+- **`CurrentSuperuser`** — additionally requires the platform `admin` role. For
+  user management and other install-wide operations only.
+- **`AnyUser`** — same as `CurrentUser` but does *not* require `is_active`, so a
+  suspended account can still read or delete its own profile.
+- **`QueryTokenUser`** — for SSE endpoints only. `EventSource` cannot send
+  headers, so the token arrives as `?token=…`.
+- **`AccessClaimsDep`** — claims without a database hit, for the rare case where
+  the *session* matters and the user row does not (e.g. sparing the caller's own
+  session when signing the others out).
 
-### `users.py` (Recommended)
+Per-event authorisation is **not** done here. It goes through
+`app/logic/permissions.py`:
 
-User management endpoints.
+- `require_event_role(user, session, event_id, minimum=...)` for mutations — 403
+- `require_event_visible(user, session, event)` for reads — **404**, so a private
+  event cannot be probed by id
 
-**Typical Endpoints:**
+Grepping those two names must keep finding every check, so do not inline an
+equivalent condition.
 
-- `GET /users/me` - Get current user profile
-- `PATCH /users/me` - Update profile
-- `PATCH /users/me/password` - Change password
-- `POST /users/signup` - User registration
-- Admin endpoints for user management (if needed)
-
-### Your Domain-Specific Routes
-
-Create additional route files based on your application's needs:
-
-- `products.py` for e-commerce
-- `posts.py` for blog/social features
-- `orders.py` for order management
-- `analytics.py` for reporting endpoints
-- etc.
+Authentication itself — register, login, refresh, logout, password reset, email
+verification, session management — lives in `auth.py` under its own `/auth`
+prefix. See `docs/AUTH.md`. Keep it there: `GET /users/{user_id}` in `users.py`
+is a catch-all, and a literal `/users/<something>` route registered after it is
+shadowed silently.
 
 ## Best Practices
 
 ### Route Organization
 
 - One route file per logical domain/resource
-- Use descriptive prefixes and tags
-- Group related endpoints together
-- Keep authentication logic in `login.py`
+- Use descriptive prefixes and tags — `custom_generate_unique_id` builds the
+  operation id as `{tag}-{function_name}`, which becomes the **generated
+  frontend client's method name**. Renaming a function here renames a method in
+  the Vue app.
+- Register the router in `app/api/api.py`
 
-### Authentication Patterns
+### Errors
 
-- Use `claims: dict = Depends(auth0.require_auth())` for authenticated endpoints
-- Access user information through the `claims` dict containing Auth0 user data
-- Implement proper error handling with HTTPException
+- `raise_problem(status, code="domain.reason", detail="A human sentence.")` from
+  `app/core/errors.py` for anything the frontend should be able to switch on. The
+  code is translated through the frontend's `errorCodes` i18n namespace; a code
+  with no entry renders as the raw string on screen.
+- A bare `HTTPException` carries no code at all. It survives in older routes;
+  prefer `raise_problem` in new ones.
 
-### Common Dependencies
+### Transactions
 
-- `DBDep` for database operations
-- `claims: dict = Depends(auth0.require_auth())` for authenticated routes
-- Custom dependencies for specific validation logic
+- Routes and CRUD **flush**, they do not commit. `deps.get_db` owns the
+  transaction and commits *before* the response is sent, so a client's immediate
+  follow-up request cannot race its own write.
+- Side effects that must not block the response (mail, notifications) go through
+  `BackgroundTasks`. They run after the commit, which is exactly the ordering a
+  token-bearing mail needs.
 
 ### Response Models
 
-- Define Pydantic models for request/response validation
-- Use appropriate HTTP status codes
-- Include proper error responses
+- Declare the model **both** as `response_model=` and as the return annotation
+- Use the appropriate status code; `status.HTTP_*` constants, not integers
 
 ## Registration
 
-Remember to register your routes in `api/main.py`:
-
 ```python
-from app.api.routes import login, users, your_routes
+# app/api/api.py
+from app.api.routes import auth, users, your_routes
 
 api_router = APIRouter()
-api_router.include_router(login.router)
+api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(your_routes.router)
 ```
 
-This ensures your routes are included in the main application with the API version prefix.
+After any change to the OpenAPI surface, regenerate the typed frontend client
+with `just generate-client` — never hand-edit `frontend/src/client/`.

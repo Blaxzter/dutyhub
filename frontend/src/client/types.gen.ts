@@ -69,6 +69,58 @@ export type AffectedBookingInfo = {
 }
 
 /**
+ * AuthSessionRead
+ *
+ * One signed-in device, as shown in the Security settings card.
+ *
+ * Nothing secret is exposed: the refresh token hash stays server-side, and
+ * what is left is only enough for the owner to recognise a device they no
+ * longer want signed in.
+ */
+export type AuthSessionRead = {
+  /**
+   * Id
+   */
+  id: string
+  /**
+   * Created At
+   *
+   * When this device signed in
+   */
+  created_at: string
+  /**
+   * Last Used At
+   *
+   * Last token refresh through this session
+   */
+  last_used_at?: string | null
+  /**
+   * Expires At
+   *
+   * When the session lapses without being used
+   */
+  expires_at: string
+  /**
+   * User Agent
+   *
+   * Browser and platform reported at sign-in
+   */
+  user_agent?: string | null
+  /**
+   * Ip Address
+   *
+   * Client address at sign-in
+   */
+  ip_address?: string | null
+  /**
+   * Is Current
+   *
+   * True for the session the current request is authenticated by
+   */
+  is_current?: boolean
+}
+
+/**
  * AvatarUploadResponse
  */
 export type AvatarUploadResponse = {
@@ -385,6 +437,30 @@ export type CategoryBreakdown = {
    * Fill Rate
    */
   fill_rate: number
+}
+
+/**
+ * ChangePasswordRequest
+ *
+ * Change the password of the signed-in account.
+ *
+ * The current password is required even though the caller is already
+ * authenticated: it is what stops a borrowed, unlocked browser from becoming a
+ * permanent takeover.
+ */
+export type ChangePasswordRequest = {
+  /**
+   * Current Password
+   *
+   * The password in use right now
+   */
+  current_password: string
+  /**
+   * New Password
+   *
+   * Replacement password
+   */
+  new_password: string
 }
 
 /**
@@ -1243,6 +1319,23 @@ export type FeedTaskItem = {
 }
 
 /**
+ * ForgotPasswordRequest
+ *
+ * Ask for a reset link.
+ *
+ * The endpoint answers 202 whether or not the address exists, so this schema
+ * is also the whole of what an attacker learns from it.
+ */
+export type ForgotPasswordRequest = {
+  /**
+   * Email
+   *
+   * Address to send the reset link to
+   */
+  email: string
+}
+
+/**
  * GlobalChannelSettingsRead
  */
 export type GlobalChannelSettingsRead = {
@@ -1276,6 +1369,26 @@ export type GlobalChannelSettingsUpdate = {
    * Notify Telegram
    */
   notify_telegram?: boolean | null
+}
+
+/**
+ * LoginRequest
+ *
+ * Credentials for an existing account.
+ */
+export type LoginRequest = {
+  /**
+   * Email
+   *
+   * Address the account was registered with
+   */
+  email: string
+  /**
+   * Password
+   *
+   * Password as typed; never stored or logged
+   */
+  password: string
 }
 
 /**
@@ -1581,38 +1694,6 @@ export type OwnershipTransferResult = {
 }
 
 /**
- * ProfileInit
- *
- * Profile data from Auth0 ID token for user initialization.
- */
-export type ProfileInit = {
-  /**
-   * Email
-   */
-  email?: string | null
-  /**
-   * Name
-   */
-  name?: string | null
-  /**
-   * Nickname
-   */
-  nickname?: string | null
-  /**
-   * Picture
-   */
-  picture?: string | null
-  /**
-   * Email Verified
-   */
-  email_verified?: boolean | null
-  /**
-   * Preferred Language
-   */
-  preferred_language?: string | null
-}
-
-/**
  * PushSubscriptionCreate
  */
 export type PushSubscriptionCreate = {
@@ -1654,6 +1735,72 @@ export type PushSubscriptionRead = {
    * Created At
    */
   created_at: string
+}
+
+/**
+ * RefreshResponse
+ *
+ * A fresh access token, minted from the refresh cookie.
+ *
+ * Carries no user object: the client already knows who it is by the time it
+ * refreshes, and re-serialising the full profile on a call that fires every
+ * fifteen minutes would be pure overhead.
+ */
+export type RefreshResponse = {
+  /**
+   * Access Token
+   *
+   * Short-lived HS256 JWT, bearer token
+   */
+  access_token: string
+  /**
+   * Token Type
+   *
+   * Always 'bearer'; present for RFC 6750 clients
+   */
+  token_type?: 'bearer'
+  /**
+   * Expires In
+   *
+   * Seconds until the access token stops being accepted
+   */
+  expires_in: number
+}
+
+/**
+ * RegisterRequest
+ *
+ * Everything an account needs, in one round trip.
+ *
+ * Registration is open — anyone who signs up gets an active account, and that
+ * account grants nothing on its own until an event admits them. So there is no
+ * approval field here and nothing that hints at one.
+ */
+export type RegisterRequest = {
+  /**
+   * Email
+   *
+   * Address that becomes the login credential
+   */
+  email: string
+  /**
+   * Password
+   *
+   * Chosen password, hashed before storage
+   */
+  password: string
+  /**
+   * Name
+   *
+   * Display name shown to other participants
+   */
+  name: string
+  /**
+   * Preferred Language
+   *
+   * Language for the verification mail and later notifications
+   */
+  preferred_language?: string
 }
 
 /**
@@ -1747,6 +1894,26 @@ export type ReportingResponse = {
    * Task Fill Rates
    */
   task_fill_rates: Array<TaskFillRate>
+}
+
+/**
+ * ResetPasswordRequest
+ *
+ * Redeem a reset link and choose a new password.
+ */
+export type ResetPasswordRequest = {
+  /**
+   * Token
+   *
+   * Secret from the reset link; only its sha256 is stored server-side
+   */
+  token: string
+  /**
+   * Password
+   *
+   * New password
+   */
+  password: string
 }
 
 /**
@@ -2796,6 +2963,43 @@ export type TestUserSeed = {
 }
 
 /**
+ * TokenResponse
+ *
+ * What a successful register or login hands back.
+ *
+ * The refresh token is *not* in here — it goes out as an httpOnly cookie the
+ * JavaScript can never read. This body holds only what the client is meant to
+ * keep in memory.
+ *
+ * The profile rides along so the app can render a signed-in shell without a
+ * second round trip on the one screen where latency is most visible.
+ */
+export type TokenResponse = {
+  /**
+   * Access Token
+   *
+   * Short-lived HS256 JWT, bearer token
+   */
+  access_token: string
+  /**
+   * Token Type
+   *
+   * Always 'bearer'; present for RFC 6750 clients
+   */
+  token_type?: 'bearer'
+  /**
+   * Expires In
+   *
+   * Seconds until the access token stops being accepted
+   */
+  expires_in: number
+  /**
+   * Profile of the account just signed in
+   */
+  user: UserProfile
+}
+
+/**
  * TopVolunteer
  */
 export type TopVolunteer = {
@@ -3022,11 +3226,11 @@ export type UserCounts = {
  */
 export type UserCreate = {
   /**
-   * Auth0 Sub
+   * Subject
    *
-   * Auth0 subject identifier
+   * Opaque local identity string
    */
-  auth0_sub: string
+  subject: string
   /**
    * Email
    *
@@ -3281,9 +3485,9 @@ export type UserRead = {
    */
   id: string
   /**
-   * Auth0 Sub
+   * Subject
    */
-  auth0_sub: string
+  subject: string
   /**
    * Email
    */
@@ -3386,6 +3590,20 @@ export type UserUpdate = {
    * Selected color palette
    */
   theme?: string | null
+}
+
+/**
+ * VerifyEmailRequest
+ *
+ * Redeem a verification link.
+ */
+export type VerifyEmailRequest = {
+  /**
+   * Token
+   *
+   * Secret from the verification link
+   */
+  token: string
 }
 
 export type ValidationErrorItem = {
@@ -3614,6 +3832,594 @@ export type HealthReadinessCheckResponses = {
   200: unknown
 }
 
+export type AuthRegisterData = {
+  body: RegisterRequest
+  path?: never
+  query?: never
+  url: '/api/v1/auth/register'
+}
+
+export type AuthRegisterErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthRegisterError = AuthRegisterErrors[keyof AuthRegisterErrors]
+
+export type AuthRegisterResponses = {
+  /**
+   * Successful Response
+   */
+  201: TokenResponse
+}
+
+export type AuthRegisterResponse = AuthRegisterResponses[keyof AuthRegisterResponses]
+
+export type AuthLoginData = {
+  body: LoginRequest
+  path?: never
+  query?: never
+  url: '/api/v1/auth/login'
+}
+
+export type AuthLoginErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthLoginError = AuthLoginErrors[keyof AuthLoginErrors]
+
+export type AuthLoginResponses = {
+  /**
+   * Successful Response
+   */
+  200: TokenResponse
+}
+
+export type AuthLoginResponse = AuthLoginResponses[keyof AuthLoginResponses]
+
+export type AuthRefreshData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/auth/refresh'
+}
+
+export type AuthRefreshErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthRefreshError = AuthRefreshErrors[keyof AuthRefreshErrors]
+
+export type AuthRefreshResponses = {
+  /**
+   * Successful Response
+   */
+  200: RefreshResponse
+}
+
+export type AuthRefreshResponse = AuthRefreshResponses[keyof AuthRefreshResponses]
+
+export type AuthLogoutData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/auth/logout'
+}
+
+export type AuthLogoutErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthLogoutError = AuthLogoutErrors[keyof AuthLogoutErrors]
+
+export type AuthLogoutResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type AuthLogoutResponse = AuthLogoutResponses[keyof AuthLogoutResponses]
+
+export type AuthForgotPasswordData = {
+  body: ForgotPasswordRequest
+  path?: never
+  query?: never
+  url: '/api/v1/auth/forgot-password'
+}
+
+export type AuthForgotPasswordErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthForgotPasswordError = AuthForgotPasswordErrors[keyof AuthForgotPasswordErrors]
+
+export type AuthForgotPasswordResponses = {
+  /**
+   * Successful Response
+   */
+  202: unknown
+}
+
+export type AuthResetPasswordData = {
+  body: ResetPasswordRequest
+  path?: never
+  query?: never
+  url: '/api/v1/auth/reset-password'
+}
+
+export type AuthResetPasswordErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthResetPasswordError = AuthResetPasswordErrors[keyof AuthResetPasswordErrors]
+
+export type AuthResetPasswordResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type AuthResetPasswordResponse = AuthResetPasswordResponses[keyof AuthResetPasswordResponses]
+
+export type AuthVerifyEmailData = {
+  body: VerifyEmailRequest
+  path?: never
+  query?: never
+  url: '/api/v1/auth/verify-email'
+}
+
+export type AuthVerifyEmailErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthVerifyEmailError = AuthVerifyEmailErrors[keyof AuthVerifyEmailErrors]
+
+export type AuthVerifyEmailResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type AuthVerifyEmailResponse = AuthVerifyEmailResponses[keyof AuthVerifyEmailResponses]
+
+export type AuthResendVerificationData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/auth/resend-verification'
+}
+
+export type AuthResendVerificationErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthResendVerificationError =
+  AuthResendVerificationErrors[keyof AuthResendVerificationErrors]
+
+export type AuthResendVerificationResponses = {
+  /**
+   * Successful Response
+   */
+  202: unknown
+}
+
+export type AuthChangePasswordData = {
+  body: ChangePasswordRequest
+  path?: never
+  query?: never
+  url: '/api/v1/auth/change-password'
+}
+
+export type AuthChangePasswordErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthChangePasswordError = AuthChangePasswordErrors[keyof AuthChangePasswordErrors]
+
+export type AuthChangePasswordResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type AuthChangePasswordResponse =
+  AuthChangePasswordResponses[keyof AuthChangePasswordResponses]
+
+export type AuthListSessionsData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/auth/sessions'
+}
+
+export type AuthListSessionsErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthListSessionsError = AuthListSessionsErrors[keyof AuthListSessionsErrors]
+
+export type AuthListSessionsResponses = {
+  /**
+   * Response Auth-List Sessions
+   *
+   * Successful Response
+   */
+  200: Array<AuthSessionRead>
+}
+
+export type AuthListSessionsResponse = AuthListSessionsResponses[keyof AuthListSessionsResponses]
+
+export type AuthRevokeSessionData = {
+  body?: never
+  path: {
+    /**
+     * Session Id
+     */
+    session_id: string
+  }
+  query?: never
+  url: '/api/v1/auth/sessions/{session_id}'
+}
+
+export type AuthRevokeSessionErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthRevokeSessionError = AuthRevokeSessionErrors[keyof AuthRevokeSessionErrors]
+
+export type AuthRevokeSessionResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type AuthRevokeSessionResponse = AuthRevokeSessionResponses[keyof AuthRevokeSessionResponses]
+
 export type UsersDeleteCurrentUserData = {
   body?: never
   path?: never
@@ -3668,6 +4474,61 @@ export type UsersDeleteCurrentUserResponses = {
 
 export type UsersDeleteCurrentUserResponse =
   UsersDeleteCurrentUserResponses[keyof UsersDeleteCurrentUserResponses]
+
+export type UsersGetCurrentUserProfileData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/users/me'
+}
+
+export type UsersGetCurrentUserProfileErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type UsersGetCurrentUserProfileError =
+  UsersGetCurrentUserProfileErrors[keyof UsersGetCurrentUserProfileErrors]
+
+export type UsersGetCurrentUserProfileResponses = {
+  /**
+   * Successful Response
+   */
+  200: UserProfile
+}
+
+export type UsersGetCurrentUserProfileResponse =
+  UsersGetCurrentUserProfileResponses[keyof UsersGetCurrentUserProfileResponses]
 
 export type UsersUpdateUserProfileData = {
   body: UserProfileUpdate
@@ -3724,64 +4585,6 @@ export type UsersUpdateUserProfileResponses = {
 export type UsersUpdateUserProfileResponse =
   UsersUpdateUserProfileResponses[keyof UsersUpdateUserProfileResponses]
 
-export type UsersGetCurrentUserProfileData = {
-  /**
-   * Profile Init
-   */
-  body?: ProfileInit | null
-  path?: never
-  query?: never
-  url: '/api/v1/users/me'
-}
-
-export type UsersGetCurrentUserProfileErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type UsersGetCurrentUserProfileError =
-  UsersGetCurrentUserProfileErrors[keyof UsersGetCurrentUserProfileErrors]
-
-export type UsersGetCurrentUserProfileResponses = {
-  /**
-   * Successful Response
-   */
-  200: UserProfile
-}
-
-export type UsersGetCurrentUserProfileResponse =
-  UsersGetCurrentUserProfileResponses[keyof UsersGetCurrentUserProfileResponses]
-
 export type UsersUpdateSelectedEventData = {
   body: SelectedEventUpdate
   path?: never
@@ -3836,65 +4639,6 @@ export type UsersUpdateSelectedEventResponses = {
 
 export type UsersUpdateSelectedEventResponse =
   UsersUpdateSelectedEventResponses[keyof UsersUpdateSelectedEventResponses]
-
-export type UsersGetAuth0ManagementUrlData = {
-  body?: never
-  path?: never
-  query?: never
-  url: '/api/v1/users/auth0-management-url'
-}
-
-export type UsersGetAuth0ManagementUrlErrors = {
-  /**
-   * Bad Request
-   */
-  400: ProblemDetails
-  /**
-   * Unauthorized
-   */
-  401: ProblemDetails
-  /**
-   * Forbidden
-   */
-  403: ProblemDetails
-  /**
-   * Not Found
-   */
-  404: ProblemDetails
-  /**
-   * Conflict
-   */
-  409: ProblemDetails
-  /**
-   * Validation Error
-   */
-  422: ProblemDetails
-  /**
-   * Too Many Requests
-   */
-  429: ProblemDetails
-  /**
-   * Internal Server Error
-   */
-  500: ProblemDetails
-}
-
-export type UsersGetAuth0ManagementUrlError =
-  UsersGetAuth0ManagementUrlErrors[keyof UsersGetAuth0ManagementUrlErrors]
-
-export type UsersGetAuth0ManagementUrlResponses = {
-  /**
-   * Response Users-Get Auth0 Management Url
-   *
-   * Successful Response
-   */
-  200: {
-    [key: string]: string
-  }
-}
-
-export type UsersGetAuth0ManagementUrlResponse =
-  UsersGetAuth0ManagementUrlResponses[keyof UsersGetAuth0ManagementUrlResponses]
 
 export type UsersListUsersData = {
   body?: never

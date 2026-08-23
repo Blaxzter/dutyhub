@@ -31,10 +31,10 @@ class TestUserSeed(BaseModel):
 async def seed_test_user(body: TestUserSeed, session: DBDep) -> User:
     """Create or update a test user directly in the database.
 
-    Generates a deterministic auth0_sub from the email so re-seeding
+    Generates a deterministic subject from the email so re-seeding
     is idempotent.
     """
-    auth0_sub = f"{TEST_SUB_PREFIX}{body.email}"
+    subject = f"{TEST_SUB_PREFIX}{body.email}"
 
     existing = await crud_user.get_by_email(session, email=body.email)
     if existing:
@@ -42,14 +42,14 @@ async def seed_test_user(body: TestUserSeed, session: DBDep) -> User:
         existing.roles = body.roles
         existing.is_active = body.is_active
         existing.preferred_language = body.preferred_language
-        existing.auth0_sub = auth0_sub
+        existing.subject = subject
         session.add(existing)
         await session.flush()
         await session.refresh(existing)
         return existing
 
     user_in = UserCreate(
-        auth0_sub=auth0_sub,
+        subject=subject,
         email=body.email,
         name=body.name,
         roles=body.roles,
@@ -62,12 +62,12 @@ async def seed_test_user(body: TestUserSeed, session: DBDep) -> User:
 
 @router.post("/reset")
 async def reset_test_data(session: DBDep) -> dict[str, int]:
-    """Delete all test users (auth0_sub starting with 'test|') and their data.
+    """Delete all test users (subject starting with 'test|') and their data.
 
     Dependent rows are cleaned up by ON DELETE CASCADE / SET NULL constraints.
     """
     result = await session.execute(
-        select(col(User.id)).where(col(User.auth0_sub).startswith(TEST_SUB_PREFIX))
+        select(col(User.id)).where(col(User.subject).startswith(TEST_SUB_PREFIX))
     )
     test_user_ids = list(result.scalars().all())
     if not test_user_ids:

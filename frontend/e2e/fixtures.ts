@@ -1,10 +1,25 @@
 /**
- * Playwright fixtures for isolated E2E testing without Auth0.
+ * Playwright fixtures that sign a browser in without a password.
  *
  * Requires the backend to run with TESTING=true so that:
  * - POST /testing/seed creates test users directly in the DB
  * - POST /testing/reset cleans up test users
- * - X-Test-User-Email header bypasses Auth0 JWT validation
+ * - the X-Test-User-Email header names the caller instead of a bearer token
+ *
+ * The bypass outlived Auth0 on purpose. In CI the browser origin and
+ * `VITE_API_URL=http://backend:8787` are genuinely cross-site, so the
+ * `SameSite=Lax` refresh cookie a real login depends on is silently dropped —
+ * a suite built on real logins would pass on a developer's machine and fail in
+ * CI. The real forms are exercised by `e2e/tests/auth/`, which signs in
+ * anonymously and gets away with it because login and registration answer with
+ * the access token in the body — only a *reload* would need the cookie, and
+ * those specs never reload. Everything else takes the shortcut.
+ *
+ * Two halves, and neither works alone: the page believes it is signed in
+ * because `src/testing/fake-session.ts` installs a session from the
+ * `wirksam-e2e-user` localStorage entry seeded below, and the *server* believes
+ * it because every `/api/v1/**` request carries the header injected by
+ * `setupApiInterception`.
  *
  * Each parallel Playwright worker gets its own admin and member user,
  * so tests never interfere with each other.
@@ -144,43 +159,26 @@ export async function joinEvent(
 }
 
 /**
- * Pre-seed Auth0 SDK localStorage cache so the SDK (initialised with
- * test-client-id / test-audience in bypass mode) finds a cached token
- * and reports isAuthenticated=true without making any network calls.
+ * Tell the SPA who it is signed in as, before any of its own code runs.
+ *
+ * `src/testing/fake-session.ts` reads this entry and installs a session from
+ * it, so no token is minted and no request is made. Only `email` and `name` are
+ * written — everything else on the identity is derived or defaulted there, and
+ * the address is the only field that has to agree with the one the header
+ * bypass sends, because that is what the server resolves the caller by.
+ *
+ * The other two keys decide whether the suite can see the app at all: the
+ * "What's New" dialog opens over the whole UI the first time a browser meets a
+ * new version and swallows every click behind it, and specs assert English copy
+ * that a German-configured machine would otherwise never render.
  */
 function setupAuthBypass(context: BrowserContext, user: TestUser) {
   return context.addInitScript(
     (userInfo) => {
-      // Key must match the clientId + audience used in main.ts bypass mode
-      const key = '@@auth0spajs@@::test-client-id::test-audience::openid profile email'
-      const value = {
-        body: {
-          access_token: 'fake-test-token',
-          token_type: 'Bearer',
-          expires_in: 86400,
-          scope: 'openid profile email',
-          client_id: 'test-client-id',
-          audience: 'test-audience',
-          decodedToken: {
-            user: {
-              sub: `test|${userInfo.email}`,
-              email: userInfo.email,
-              name: userInfo.name,
-              email_verified: true,
-              picture: '',
-            },
-            claims: {
-              sub: `test|${userInfo.email}`,
-              aud: 'test-audience',
-              iss: 'https://test.auth0.local/',
-              exp: Math.floor(Date.now() / 1000) + 86400,
-              iat: Math.floor(Date.now() / 1000),
-            },
-          },
-        },
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
-      }
-      localStorage.setItem(key, JSON.stringify(value))
+      localStorage.setItem(
+        'wirksam-e2e-user',
+        JSON.stringify({ email: userInfo.email, name: userInfo.name }),
+      )
       localStorage.setItem('wirksam-last-seen-changelog', '99.99.99')
       localStorage.setItem('locale', 'en')
     },
@@ -264,8 +262,6 @@ function disposableEmail(testInfo: TestInfo, seq: number): string {
   return `disposable-${id}-w${testInfo.workerIndex}${suffix}@test.example.com`
 }
 
-export const IS_TESTING = process.env.USE_AUTH0_E2E?.toLowerCase() !== 'true'
-
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 export const test = base.extend<
@@ -284,10 +280,6 @@ export const test = base.extend<
   // Worker-scoped: each parallel worker seeds its own admin user
   adminUser: [
     async ({}, use, workerInfo) => {
-      if (!IS_TESTING) {
-        await use({ email: '', name: '', roles: [] })
-        return
-      }
       const email = `admin-worker-${workerInfo.workerIndex}@test.example.com`
       const name = `Test Admin ${workerInfo.workerIndex}`
       await seedUser(email, name, ['admin'])
@@ -299,10 +291,6 @@ export const test = base.extend<
   // Worker-scoped: each parallel worker seeds its own member user
   memberUser: [
     async ({}, use, workerInfo) => {
-      if (!IS_TESTING) {
-        await use({ email: '', name: '', roles: [] })
-        return
-      }
       const email = `member-worker-${workerInfo.workerIndex}@test.example.com`
       const name = `Test Member ${workerInfo.workerIndex}`
       await seedUser(email, name, [])
@@ -316,10 +304,6 @@ export const test = base.extend<
   // so the router guard doesn't bounce authenticated pages to /select-event.
   workerEvent: [
     async ({ adminUser, memberUser }, use, workerInfo) => {
-      if (!IS_TESTING) {
-        await use({ id: '', name: '', start_date: '', end_date: '' })
-        return
-      }
       // Public so the Discover tab has something to show, and so the event can
       // be featured. Creating it makes adminUser its owner automatically.
       const event = await serverApi<WorkerEvent>('POST', '/events/', adminUser.email, {
@@ -341,17 +325,14 @@ export const test = base.extend<
   adminPage: async ({ browser, adminUser, workerEvent }, use) => {
     void workerEvent // ensure event + selected_event_id are set before the page boots
     const context = await browser.newContext()
-    if (IS_TESTING) {
-      // Set bypass cookie so main.ts and router activate the fake Auth0 plugin
-      await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
-      await setupAuthBypass(context, adminUser)
-    }
+    // The build flag alone does nothing: `main.ts` and the router both also
+    // require this cookie before they stand the real session flow down.
+    await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
+    await setupAuthBypass(context, adminUser)
     const page = await context.newPage()
-    if (IS_TESTING) {
-      await setupApiInterception(page, adminUser.email)
-      await page.goto('/app/home')
-      await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
-    }
+    await setupApiInterception(page, adminUser.email)
+    await page.goto('/app/home')
+    await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
     await use(page)
     await context.close()
   },
@@ -360,16 +341,12 @@ export const test = base.extend<
   memberPage: async ({ browser, memberUser, workerEvent }, use) => {
     void workerEvent
     const context = await browser.newContext()
-    if (IS_TESTING) {
-      await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
-      await setupAuthBypass(context, memberUser)
-    }
+    await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
+    await setupAuthBypass(context, memberUser)
     const page = await context.newPage()
-    if (IS_TESTING) {
-      await setupApiInterception(page, memberUser.email)
-      await page.goto('/app/home')
-      await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
-    }
+    await setupApiInterception(page, memberUser.email)
+    await page.goto('/app/home')
+    await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
     await use(page)
     await context.close()
   },
@@ -402,9 +379,6 @@ export const test = base.extend<
       const roles = options.roles ?? []
       const isActive = options.isActive ?? true
       const joinWorkerEvent = options.joinWorkerEvent ?? true
-      if (!IS_TESTING) {
-        return { id: '', email: '', name: '', roles, isActive }
-      }
       const email = disposableEmail(testInfo, seq)
       const name = `Disposable User ${testInfo.workerIndex}-${seq}`
       // Always seed active first: PUT /users/me/selected-event rejects inactive
@@ -450,18 +424,14 @@ export const test = base.extend<
   /** Test-scoped: a page pre-configured as the disposable user. */
   disposablePage: async ({ browser, disposableUser }, use) => {
     const context = await browser.newContext()
-    if (IS_TESTING) {
-      await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
-      await setupAuthBypass(context, disposableUser)
-    }
+    await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
+    await setupAuthBypass(context, disposableUser)
     const page = await context.newPage()
-    if (IS_TESTING) {
-      await setupApiInterception(page, disposableUser.email)
-      // An account in no event is redirected to the picker rather than the
-      // dashboard; both render a `page-heading`, so one wait covers either.
-      await page.goto('/app/home')
-      await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
-    }
+    await setupApiInterception(page, disposableUser.email)
+    // An account in no event is redirected to the picker rather than the
+    // dashboard; both render a `page-heading`, so one wait covers either.
+    await page.goto('/app/home')
+    await page.getByTestId('page-heading').waitFor({ timeout: 15_000 })
     await use(page)
     await context.close()
   },

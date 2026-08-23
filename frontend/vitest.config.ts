@@ -90,9 +90,12 @@ export default defineConfig({
           lines: 90,
         },
 
-        // Exception: auth — Auth0 session, roles and the /users/me upsert. The
-        // largest single gap at 109 statements; needs @auth0/auth0-vue stubbed
-        // end to end, which is a mocking decision rather than just a spec file.
+        // Exception: auth — the roles, selected-event and profile store. The
+        // largest single gap; it constructs `useAuthenticatedClient`, `useI18n`
+        // and `useRouter` at setup time, so covering it means standing all
+        // three up together — a mocking decision rather than just a spec file.
+        // (The session half it used to wrap now lives in `src/lib/auth-session`
+        // and `src/composables/useAuth`, both covered.)
         'src/stores/**/!(auth).ts': {
           statements: 90,
           branches: 90,

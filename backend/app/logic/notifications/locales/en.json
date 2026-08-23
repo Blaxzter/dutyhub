@@ -31,10 +31,26 @@
     "title": "New Event Published",
     "body": "Task group \"{event_name}\" has been published."
   },
+  "auth.verify_email": {
+    "title": "Confirm your email address",
+    "body": "One last step to finish setting up your {project_name} account: confirm that this address belongs to you.\n\nThe link expires in {expires_in}. If you did not create an account, you can ignore this email."
+  },
+  "auth.reset_password": {
+    "title": "Reset your password",
+    "body": "Someone asked to set a new password for your {project_name} account.\n\nThe link expires in {expires_in}. If that wasn't you, ignore this email — your current password stays valid."
+  },
   "email": {
     "view_details": "View Details",
     "footer_text": "You received this because of your notification settings.",
-    "manage_preferences": "Manage preferences"
+    "manage_preferences": "Manage preferences",
+    "greeting": "Hi {name},",
+    "greeting_no_name": "Hi,",
+    "expiry_hour": "1 hour",
+    "expiry_hours": "{hours} hours",
+    "verify_cta": "Confirm email",
+    "reset_cta": "Set a new password",
+    "action_url_fallback": "If the button does not work, copy this link into your browser:",
+    "transactional_footer": "You received this email because it was requested for this address. If that wasn't you, no action is needed."
   },
   "event.invitation": {
     "title": "Event Invitation",

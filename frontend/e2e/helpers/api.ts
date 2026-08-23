@@ -1,13 +1,13 @@
 /**
  * Shared E2E API helpers — used by both single-user and multi-user test files.
  */
-
 import type { Page } from '@playwright/test'
+
 import type {
   BookingRead,
+  EventRead,
   ShiftRead,
   TaskCreateWithShiftsResponse,
-  EventRead,
   TaskRead,
 } from '../../src/client/types.gen.js'
 
@@ -28,43 +28,44 @@ export function futureDate(daysFromNow: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-/** Extract the Auth0 access token from localStorage. */
-export async function getToken(page: Page): Promise<string> {
-  return page.evaluate(() => {
-    const key = Object.keys(localStorage).find((k) => k.startsWith('@@auth0spajs@@'))
-    if (!key) return ''
-    try {
-      const raw = JSON.parse(localStorage.getItem(key) ?? '{}')
-      return (raw as { body?: { access_token?: string } })?.body?.access_token ?? ''
-    } catch {
-      return ''
-    }
-  })
-}
-
-/** Make an authenticated API call inside the browser context. */
-export async function api<T = unknown>(page: Page, method: string, path: string, body?: object): Promise<T> {
-  const token = await getToken(page)
+/**
+ * Make an API call as the page's own user, from inside the browser context.
+ *
+ * There is no token to attach. Identity comes from the `X-Test-User-Email`
+ * header that `fixtures.ts::setupApiInterception` adds to every `/api/v1/**`
+ * request the page makes, and the backend's TESTING branch answers to that
+ * header before it ever looks at `Authorization`. This helper used to send a
+ * bearer token as well; it was the string `'fake-test-token'`, read back out of
+ * the Auth0 SDK's localStorage cache, and it authenticated nothing — the header
+ * was already doing the work.
+ *
+ * The corollary: this only works on a page built by one of the `*Page`
+ * fixtures. A bare `page` makes anonymous calls.
+ */
+export async function api<T = unknown>(
+  page: Page,
+  method: string,
+  path: string,
+  body?: object,
+): Promise<T> {
   const result = await page.evaluate(
-    async ({ url, method, body, token }) => {
+    async ({ url, method, body }) => {
       const res = await fetch(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : undefined,
       })
       if (res.status === 204) return { __status: 204, __ok: true, __body: null }
       const json = await res.json()
       return { __status: res.status, __ok: res.ok, __body: json }
     },
-    { url: `${API}${path}`, method, body, token },
+    { url: `${API}${path}`, method, body },
   )
   if (!result.__ok) {
-    const detail = typeof result.__body === 'object' && result.__body !== null
-      ? JSON.stringify(result.__body)
-      : String(result.__body)
+    const detail =
+      typeof result.__body === 'object' && result.__body !== null
+        ? JSON.stringify(result.__body)
+        : String(result.__body)
     throw new Error(`API ${method} ${path} failed with ${result.__status}: ${detail}`)
   }
   return result.__body as T
@@ -83,20 +84,16 @@ export async function apiStatus(
   path: string,
   body?: object,
 ): Promise<number> {
-  const token = await getToken(page)
   return page.evaluate(
-    async ({ url, method, body, token }) => {
+    async ({ url, method, body }) => {
       const res = await fetch(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: body ? JSON.stringify(body) : undefined,
       })
       return res.status
     },
-    { url: `${API}${path}`, method, body, token },
+    { url: `${API}${path}`, method, body },
   )
 }
 
@@ -139,11 +136,7 @@ export async function addMember(
 }
 
 /** Remove someone from an event. */
-export async function removeMember(
-  page: Page,
-  eventId: string,
-  userId: string,
-): Promise<void> {
+export async function removeMember(page: Page, eventId: string, userId: string): Promise<void> {
   await api(page, 'DELETE', `/events/${eventId}/members/${userId}`)
 }
 
@@ -210,7 +203,7 @@ export async function createTaskWithShifts(
   if (opts.eventId !== undefined) {
     eventId = opts.eventId
   } else {
-    const profile = await api<{ selected_event_id: string | null }>(page, 'POST', '/users/me')
+    const profile = await api<{ selected_event_id: string | null }>(page, 'GET', '/users/me')
     eventId = profile.selected_event_id ?? null
   }
 
@@ -248,7 +241,11 @@ export async function publishTask(page: Page, id: string): Promise<TaskRead> {
 
 /** List duty shifts for a task. */
 export async function listShifts(page: Page, eventId: string): Promise<ShiftRead[]> {
-  const res = await api<{ items: ShiftRead[] }>(page, 'GET', `/shifts/?task_id=${eventId}&limit=200`)
+  const res = await api<{ items: ShiftRead[] }>(
+    page,
+    'GET',
+    `/shifts/?task_id=${eventId}&limit=200`,
+  )
   return res.items
 }
 

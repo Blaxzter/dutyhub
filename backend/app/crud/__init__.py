@@ -1,3 +1,4 @@
+from app.crud.auth_session import auth_session
 from app.crud.booking import booking
 from app.crud.booking_reminder import booking_reminder
 from app.crud.event import event
@@ -8,8 +9,10 @@ from app.crud.shift import shift
 from app.crud.task import task
 from app.crud.user import user
 from app.crud.user_availability import user_availability
+from app.crud.user_token import user_token
 
 __all__ = [
+    "auth_session",
     "booking",
     "booking_reminder",
     "shift",
@@ -20,4 +23,5 @@ __all__ = [
     "event_membership",
     "user",
     "user_availability",
+    "user_token",
 ]

@@ -1,13 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
-import process from 'node:process'
-
+import dotenv from 'dotenv'
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
 import { dirname, resolve } from 'node:path'
+import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import dotenv from 'dotenv'
 
 // Always load frontend/.env regardless of CWD (VS Code may run from workspace root)
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -54,92 +53,67 @@ export default defineConfig({
     launchOptions: process.env.HEADED ? { slowMo: 500 } : {},
   },
 
-  // Default to isolated mode (no Auth0). Set USE_AUTH0_E2E=true to use real Auth0 login.
-  projects: process.env.USE_AUTH0_E2E?.toLowerCase() !== 'true'
-    ? [
-        // ── Isolated mode (TESTING=true): no Auth0 dependency ────────────
-        // Reset test data before all tests
-        { name: 'test-reset', testMatch: '**/setup/test-reset.setup.ts' },
+  /**
+   * One mode, always.
+   *
+   * There used to be a second project list behind `USE_AUTH0_E2E=true` that
+   * drove the hosted Auth0 login form and wrote a `storageState` file. It went
+   * with Auth0 itself. Identity now comes from the `X-Test-User-Email` header
+   * the fixtures inject (see `e2e/fixtures.ts`), against a backend running with
+   * `TESTING=true` — no storageState, no shared session between projects.
+   */
+  projects: [
+    // Reset test data before all tests
+    { name: 'test-reset', testMatch: '**/setup/test-reset.setup.ts' },
 
-        // Public tests — no auth needed
-        { name: 'public', testMatch: '**/tests/public/**/*.spec.ts' },
+    // Public tests — no auth needed
+    { name: 'public', testMatch: '**/tests/public/**/*.spec.ts' },
 
-        // Authenticated tests (admin context)
-        {
-          name: 'chromium',
-          use: { ...devices['Desktop Chrome'] },
-          dependencies: ['test-reset'],
-          testMatch: '**/tests/authenticated/**/*.spec.ts',
-        },
+    // The sign-in, registration and password-recovery screens. These are the
+    // one corner of the suite that does *not* use the header bypass: they drive
+    // the real forms against the real endpoints, as an anonymous visitor, so
+    // the flows a first-time user meets are actually exercised somewhere.
+    {
+      name: 'auth',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['test-reset'],
+      testMatch: '**/tests/auth/**/*.spec.ts',
+    },
 
-        // Member tests
-        {
-          name: 'member',
-          use: { ...devices['Desktop Chrome'] },
-          dependencies: ['test-reset'],
-          testMatch: '**/tests/member/**/*.spec.ts',
-        },
+    // Authenticated tests (admin context)
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['test-reset'],
+      testMatch: '**/tests/authenticated/**/*.spec.ts',
+    },
 
-        // Multi-user tests
-        {
-          name: 'multi-user',
-          use: { ...devices['Desktop Chrome'] },
-          dependencies: ['test-reset'],
-          testMatch: '**/tests/multi-user/**/*.spec.ts',
-        },
+    // Member tests
+    {
+      name: 'member',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['test-reset'],
+      testMatch: '**/tests/member/**/*.spec.ts',
+    },
 
-        // Accessibility tests (axe-core scans + keyboard/focus behaviour).
-        // Own project so it can be run and sharded independently:
-        //   pnpm exec playwright test --project=a11y
-        {
-          name: 'a11y',
-          use: { ...devices['Desktop Chrome'] },
-          dependencies: ['test-reset'],
-          testMatch: '**/tests/a11y/**/*.spec.ts',
-        },
-      ]
-    : [
-        // ── Auth0 mode (default): real Auth0 login ───────────────────────
-        // Auth setup — split so member failure doesn't block admin tests
-        { name: 'auth-admin', testMatch: '**/setup/auth.setup.ts' },
-        { name: 'auth-member', testMatch: '**/setup/auth-member.setup.ts' },
+    // Multi-user tests
+    {
+      name: 'multi-user',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['test-reset'],
+      testMatch: '**/tests/multi-user/**/*.spec.ts',
+    },
 
-        // Public tests — no auth needed
-        { name: 'public', testMatch: '**/tests/public/**/*.spec.ts' },
-
-        // Authenticated tests (admin context) — only depends on admin auth
-        {
-          name: 'chromium',
-          use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/user.json' },
-          dependencies: ['auth-admin'],
-          testMatch: '**/tests/authenticated/**/*.spec.ts',
-        },
-
-        // Member tests — depends on member auth
-        {
-          name: 'member',
-          use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/member.json' },
-          dependencies: ['auth-member'],
-          testMatch: '**/tests/member/**/*.spec.ts',
-        },
-
-        // Multi-user tests — depends on both
-        {
-          name: 'multi-user',
-          use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/user.json' },
-          dependencies: ['auth-admin', 'auth-member'],
-          testMatch: '**/tests/multi-user/**/*.spec.ts',
-        },
-
-        // Accessibility tests — scan both roles, so both logins are required.
-        // The public-page scans clear storageState per file.
-        {
-          name: 'a11y',
-          use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/user.json' },
-          dependencies: ['auth-admin', 'auth-member'],
-          testMatch: '**/tests/a11y/**/*.spec.ts',
-        },
-      ],
+    // Accessibility tests (axe-core scans + keyboard/focus behaviour).
+    // Own project so it can be run and sharded independently:
+    //   pnpm exec playwright test --project=a11y
+    {
+      name: 'a11y',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['test-reset'],
+      testMatch: '**/tests/a11y/**/*.spec.ts',
+    },
+  ],
 
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   // outputDir: 'test-results/',

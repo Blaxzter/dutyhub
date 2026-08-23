@@ -103,11 +103,10 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { ref, watch } from 'vue'
 
-import type { User } from '@auth0/auth0-vue'
-import { toTypedSchema } from '@vee-validate/zod'
 import { EditIcon, LoaderIcon, SaveIcon } from '@lucide/vue'
+import { toTypedSchema } from '@vee-validate/zod'
 import { useForm } from 'vee-validate'
 import { useI18n } from 'vue-i18n'
 import { toast } from 'vue-sonner'
@@ -127,13 +126,15 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
-import AvatarPicker from './AvatarPicker.vue'
-
 import type { UserProfileUpdate } from '@/client/types.gen'
 import { zUserProfileUpdate } from '@/client/zod.gen'
+import { toastApiError } from '@/lib/api-errors'
+import type { AuthUser } from '@/lib/auth-session'
+
+import AvatarPicker from './AvatarPicker.vue'
 
 interface Props {
-  user: User | undefined
+  user: AuthUser | undefined
 }
 
 interface Emits {
@@ -160,17 +161,27 @@ const form = useForm({
   },
 })
 
-onMounted(() => {
-  if (props.user) {
-    const userRecord = props.user as Record<string, string>
-    form.setValues({
-      name: props.user.name || '',
-      nickname: props.user.nickname || '',
-      bio: userRecord.bio || '',
-      phone_number: userRecord.phone_number || '',
-    })
-  }
-})
+/**
+ * Copy the account into the form.
+ *
+ * `nickname` and `bio` are read straight off the user now: they are columns on
+ * our own table rather than fields borrowed from an identity provider's profile
+ * and cast out of an untyped bag.
+ */
+const seedFromUser = () => {
+  if (!props.user) return
+  form.setValues({
+    name: props.user.name || '',
+    nickname: props.user.nickname || '',
+    bio: props.user.bio || '',
+    phone_number: props.user.phone_number || '',
+  })
+}
+
+// Watched rather than seeded once on mount: the identity is filled in by the
+// profile load, which can land after this form is created — and a form seeded
+// from an absent user stays blank and then saves those blanks over real data.
+watch(() => props.user, seedFromUser, { immediate: true })
 
 const onSubmit = form.handleSubmit(async (values) => {
   if (!props.user) {
@@ -190,22 +201,13 @@ const onSubmit = form.handleSubmit(async (values) => {
     toast.success(t('user.settings.profile.edit.success'))
     emit('profile-updated', values)
   } catch (error) {
-    console.error('Error updating profile:', error)
-    toast.error(t('user.settings.profile.edit.error'))
+    toastApiError(error, t('user.settings.profile.edit.error'))
   } finally {
     isSubmitting.value = false
   }
 })
 
 const resetForm = () => {
-  if (props.user) {
-    const userRecord = props.user as Record<string, string>
-    form.setValues({
-      name: props.user.name || '',
-      nickname: props.user.nickname || '',
-      bio: userRecord.bio || '',
-      phone_number: userRecord.phone_number || '',
-    })
-  }
+  seedFromUser()
 }
 </script>

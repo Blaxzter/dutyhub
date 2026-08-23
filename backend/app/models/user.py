@@ -10,13 +10,52 @@ from app.schemas.booking_reminder import ReminderOffsetEntry
 
 
 class User(Base, table=True):
-    """Database model for application users."""
+    """Database model for application users.
+
+    ``subject`` is this application's own opaque identity string, minted at
+    registration as ``local|<uuid4hex>``. Two other prefixes are behavioural
+    rather than cosmetic and must survive any future rework of this column:
+    ``demo|`` marks the fake accounts ``/demo-data`` generates, which all three
+    notification channels refuse to send to, and ``test|`` marks the accounts
+    ``POST /testing/reset`` is allowed to delete.
+    """
 
     __tablename__ = "users"  # type: ignore[assignment]
 
-    auth0_sub: str = Field(
+    # Email is the login credential, so it has to be unique — but it is also
+    # nullable (demo accounts, rows migrated from Auth0 that never had one) and
+    # it is matched case-insensitively, because no one types their address the
+    # same way twice. A partial unique index on ``lower(email)`` is the only
+    # shape that satisfies all three; a plain ``unique=True`` on the column
+    # would be case-sensitive and would index the NULLs for no benefit.
+    #
+    # It is declared here, and not only in the migration, because ``alembic
+    # check`` gates CI: PostgreSQL reflects expression indexes, so an index the
+    # database has and this metadata does not would read as drift forever.
+    __table_args__ = (
+        sa.Index(
+            "ix_users_email_lower",
+            sa.text("lower(email)"),
+            unique=True,
+            postgresql_where=sa.text("email IS NOT NULL"),
+        ),
+    )
+
+    subject: str = Field(
         sa_column=sa.Column(sa.String, unique=True, index=True),
-        description="Auth0 subject identifier",
+        description=(
+            "Opaque local identity, e.g. 'local|<uuid4hex>'; the 'demo|' and "
+            "'test|' prefixes are behavioural — see the class docstring"
+        ),
+    )
+    password_hash: str | None = Field(
+        default=None,
+        sa_column=sa.Column(sa.String, nullable=True),
+        description=(
+            "bcrypt hash of this account's password. NULL means the account has "
+            "no password at all — demo and test accounts never get one, and "
+            "neither did any account provisioned before local auth existed"
+        ),
     )
     email: str | None = Field(
         default=None,
@@ -24,6 +63,16 @@ class User(Base, table=True):
         description="User's email address",
     )
     name: str | None = Field(default=None, description="User's display name")
+    nickname: str | None = Field(
+        default=None,
+        sa_column=sa.Column(sa.String(50), nullable=True),
+        description="Shorter, informal name the user prefers to be called",
+    )
+    bio: str | None = Field(
+        default=None,
+        sa_column=sa.Column(sa.Text, nullable=True),
+        description="Free-text self description shown on the user's profile",
+    )
     avatar_etag: str | None = Field(
         default=None,
         sa_column=sa.Column(sa.String(64), nullable=True),

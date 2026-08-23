@@ -13,15 +13,31 @@ UserStatus = Literal["all", "active", "pending", "rejected"]
 
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
-    async def get_by_auth0_sub(
-        self, db: AsyncSession, *, auth0_sub: str
-    ) -> User | None:
-        result = await db.execute(select(User).where(col(User.auth0_sub) == auth0_sub))
+    async def get_by_subject(self, db: AsyncSession, *, subject: str) -> User | None:
+        result = await db.execute(select(User).where(col(User.subject) == subject))
         return result.scalars().first()
 
     async def get_by_email(self, db: AsyncSession, *, email: str) -> User | None:
-        result = await db.execute(select(User).where(col(User.email) == email))
-        return result.scalars().first()
+        """Find an account by address, without caring how it was typed.
+
+        Email is the login credential now, and nobody types their own address
+        the same way twice — a form that rejects ``Anna@Example.com`` because
+        the account was created as ``anna@example.com`` reads as "wrong
+        password". The comparison is therefore on ``lower(email)``, which is
+        also exactly the expression the partial unique index
+        ``ix_users_email_lower`` is built on, so this stays an index lookup.
+
+        ``scalar_one_or_none`` rather than ``first``: that index makes two
+        accounts sharing an address impossible, and if it were ever dropped, an
+        arbitrary row winning a *login* lookup would decide whose account a
+        password opens. Failing loudly is the only acceptable behaviour there.
+        Rows with a NULL email never match, which is correct — a NULL address
+        is not a credential.
+        """
+        result = await db.execute(
+            select(User).where(func.lower(col(User.email)) == email.strip().lower())
+        )
+        return result.scalar_one_or_none()
 
     @staticmethod
     def _q_clauses(q: str | None) -> list[ColumnElement[bool]]:

@@ -27,7 +27,7 @@ class EmailChannel(NotificationChannel):
                 f"No email for user {recipient.id}, skipping email notification"
             )
             return False
-        if recipient.auth0_sub.startswith("demo|"):
+        if recipient.subject.startswith("demo|"):
             logger.debug(f"Skipping email for demo user {recipient.id}")
             return False
         return True

@@ -74,7 +74,7 @@ Create events step-by-step: details, dates, schedule configuration, and a live s
 
 ## Technology Stack
 
-- **Backend:** [FastAPI](https://fastapi.tiangolo.com) + [SQLModel](https://sqlmodel.tiangolo.com) (async SQLAlchemy) + [PostgreSQL](https://www.postgresql.org) + [Alembic](https://alembic.sqlalchemy.org/) migrations + [Auth0](https://auth0.com) JWT authentication
+- **Backend:** [FastAPI](https://fastapi.tiangolo.com) + [SQLModel](https://sqlmodel.tiangolo.com) (async SQLAlchemy) + [PostgreSQL](https://www.postgresql.org) + [Alembic](https://alembic.sqlalchemy.org/) migrations + built-in JWT authentication ([docs/AUTH.md](docs/AUTH.md))
 - **Frontend:** [Vue 3](https://vuejs.org) + TypeScript + [Vite](https://vite.dev) + [Pinia](https://pinia.vuejs.org) + [Vue Router](https://router.vuejs.org) + [Tailwind CSS v4](https://tailwindcss.com) + [shadcn-vue](https://www.shadcn-vue.com/) + [Vue I18n](https://vue-i18n.intlify.dev) (EN/DE)
 - **Testing:** [Pytest](https://pytest.org) (backend) + [Playwright](https://playwright.dev) (E2E)
 - **Infra:** [Docker Compose](https://www.docker.com) + [Traefik](https://traefik.io) reverse proxy + GitHub Actions CI/CD

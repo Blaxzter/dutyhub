@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    auth,
     avatars,
     booking_reminders,
     bookings,
@@ -21,6 +22,10 @@ from app.core.config import settings
 api_router = APIRouter()
 
 api_router.include_router(health.router)
+# Under its own /auth prefix, so it never competes with the catch-all
+# `GET /users/{user_id}` — a literal path registered under /users after that
+# route would be shadowed by it, silently.
+api_router.include_router(auth.router)
 api_router.include_router(users.router)
 api_router.include_router(avatars.router)
 api_router.include_router(tasks.router)

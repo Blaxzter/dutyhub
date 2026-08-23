@@ -1,8 +1,7 @@
 /**
  * E2E smoke tests for individual Settings sections.
  */
-
-import { test, expect } from '../../fixtures.js'
+import { expect, test } from '../../fixtures.js'
 
 test.describe('Settings – profile section', () => {
   test('can navigate to profile section', async ({ adminPage: page }) => {
@@ -16,19 +15,20 @@ test.describe('Settings – profile section', () => {
   })
 })
 
+// Both of these used to be skipped unless `USE_AUTH0_E2E=true`: the section was
+// a link out to Auth0's own password page and had nothing of its own to show.
+// It is now two cards this app renders and owns.
 test.describe('Settings – security section', () => {
   test('can navigate to security section', async ({ adminPage: page }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
-    test.skip(process.env.USE_AUTH0_E2E?.toLowerCase() !== 'true', 'Security section requires Auth0')
     await page.goto('/app/settings/security')
     await expect(page).toHaveURL(/\/app\/settings\/security/)
   })
 
   test('shows security section content', async ({ adminPage: page }) => {
-    // eslint-disable-next-line playwright/no-skipped-test
-    test.skip(process.env.USE_AUTH0_E2E?.toLowerCase() !== 'true', 'Security section requires Auth0')
     await page.goto('/app/settings/security')
     await expect(page.getByTestId('section-security')).toBeVisible()
+    await expect(page.getByTestId('change-password-card')).toBeVisible()
+    await expect(page.getByTestId('active-sessions-card')).toBeVisible()
   })
 })
 

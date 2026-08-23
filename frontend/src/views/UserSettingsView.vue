@@ -8,7 +8,8 @@
       </template>
 
       <template v-if="id === 'security'">
-        <PasswordResetCard />
+        <ChangePasswordCard />
+        <ActiveSessionsCard />
       </template>
 
       <template v-if="id === 'event'">
@@ -123,24 +124,23 @@ import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carouse
 import type { UnwrapRefCarouselApi } from '@/components/ui/carousel/interface'
 
 import ActiveEventCard from '@/components/account/user/ActiveEventCard.vue'
+import ActiveSessionsCard from '@/components/account/user/ActiveSessionsCard.vue'
 import AppearanceCard from '@/components/account/user/AppearanceCard.vue'
 import CalendarSyncCard from '@/components/account/user/CalendarSyncCard.vue'
+import ChangePasswordCard from '@/components/account/user/ChangePasswordCard.vue'
 import CurrentProfileCard from '@/components/account/user/CurrentProfileCard.vue'
 import DataExportCard from '@/components/account/user/DataExportCard.vue'
 import DeleteAccountCard from '@/components/account/user/DeleteAccountCard.vue'
 import EditProfileForm from '@/components/account/user/EditProfileForm.vue'
 import LanguageSettingsCard from '@/components/account/user/LanguageSettingsCard.vue'
 import NotificationSettingsCard from '@/components/account/user/NotificationSettingsCard.vue'
-import PasswordResetCard from '@/components/account/user/PasswordResetCard.vue'
 import TimeFormatCard from '@/components/account/user/TimeFormatCard.vue'
-import { useAuthProvider } from '@/components/account/user/useAuthProvider.ts'
 import ChipNav from '@/components/utils/ChipNav.vue'
 
 interface NavItem {
   id: string
   label: string
   icon: Component
-  auth0Only?: boolean
 }
 
 // Store & router
@@ -155,14 +155,10 @@ const [DefineSectionContent, SectionContent] = createReusableTemplate<{ id: stri
 // Computed properties
 const user = computed(() => authStore.user)
 
-// Determine auth provider (used to gate the security/password section,
-// since password reset only makes sense for Auth0-managed identities).
-const authProvider = useAuthProvider(user.value)
-
 // Navigation items
 const navItems = computed<NavItem[]>(() => [
   { id: 'profile', label: t('user.settings.nav.profile'), icon: UserIcon },
-  { id: 'security', label: t('user.settings.nav.security'), icon: KeyRound, auth0Only: true },
+  { id: 'security', label: t('user.settings.nav.security'), icon: KeyRound },
   { id: 'event', label: t('user.settings.nav.event'), icon: CalendarRange },
   { id: 'notifications', label: t('user.settings.nav.notifications'), icon: Bell },
   { id: 'calendar', label: t('user.settings.nav.calendar'), icon: CalendarDays },
@@ -171,9 +167,11 @@ const navItems = computed<NavItem[]>(() => [
   { id: 'dataPrivacy', label: t('user.settings.nav.dataPrivacy'), icon: ShieldIcon },
 ])
 
-const visibleNavItems = computed(() =>
-  navItems.value.filter((item) => !item.auth0Only || authProvider.value.isAuth0),
-)
+// Every section is available to every account now that passwords are ours: the
+// Security section used to be gated on the identity provider, read once and
+// never re-read, so it vanished for anyone whose user object had not loaded by
+// the time this component was created.
+const visibleNavItems = computed(() => navItems.value)
 
 const chipItems = computed(() =>
   visibleNavItems.value.map((item) => ({ label: item.label, icon: item.icon })),

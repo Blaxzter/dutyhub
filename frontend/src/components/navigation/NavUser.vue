@@ -31,7 +31,7 @@ const authStore = useAuthStore()
 const mode = useColorMode()
 useI18n()
 
-// Get user data from Auth0
+// Identity comes from the auth store (backed by our own session)
 const user = computed(() => authStore.user)
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
@@ -43,7 +43,7 @@ const displayName = computed(
 // Create display email
 const displayEmail = computed(() => user.value?.email || '')
 
-// Avatar lives on our profile (UserProfile) rather than on the Auth0 user.
+// Avatar lives on our profile (UserProfile) rather than on the identity object.
 const avatarUrl = useAvatarUrl(() => authStore.profile)
 
 // Create initials for fallback

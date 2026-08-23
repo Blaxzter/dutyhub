@@ -31,10 +31,26 @@
     "title": "Neue Taskgruppe veröffentlicht",
     "body": "Die Taskgruppe „{event_name}“ wurde veröffentlicht."
   },
+  "auth.verify_email": {
+    "title": "Bestätige deine E-Mail-Adresse",
+    "body": "nur noch ein Schritt, um dein {project_name}-Konto einzurichten: bestätige, dass diese Adresse dir gehört.\n\nDer Link ist {expires_in} gültig. Falls du kein Konto erstellt hast, kannst du diese E-Mail ignorieren."
+  },
+  "auth.reset_password": {
+    "title": "Passwort zurücksetzen",
+    "body": "für dein {project_name}-Konto wurde ein neues Passwort angefordert.\n\nDer Link ist {expires_in} gültig. Falls du das nicht warst, ignoriere diese E-Mail — dein aktuelles Passwort bleibt gültig."
+  },
   "email": {
     "view_details": "Details anzeigen",
     "footer_text": "Sie haben diese Nachricht aufgrund Ihrer Benachrichtigungseinstellungen erhalten.",
-    "manage_preferences": "Einstellungen verwalten"
+    "manage_preferences": "Einstellungen verwalten",
+    "greeting": "Hallo {name},",
+    "greeting_no_name": "Hallo,",
+    "expiry_hour": "1 Stunde",
+    "expiry_hours": "{hours} Stunden",
+    "verify_cta": "E-Mail bestätigen",
+    "reset_cta": "Neues Passwort setzen",
+    "action_url_fallback": "Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:",
+    "transactional_footer": "Du erhältst diese E-Mail, weil sie für diese Adresse angefordert wurde. Falls du das nicht warst, musst du nichts tun."
   },
   "event.invitation": {
     "title": "Einladung zu einem Event",

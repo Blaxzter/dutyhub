@@ -17,9 +17,8 @@ no web server and no browser, so it needs neither a running stack nor installed 
 `.github/workflows/lint-frontend.yml` regenerates this file on every PR and fails if the
 committed copy differs.
 
-The listing reflects the default **isolated** mode (the generator pins `USE_AUTH0_E2E=false`,
-so a local `frontend/.env` cannot change the output). Auth0 mode swaps the setup projects for
-real Auth0 logins but runs the same specs — see [README.md](./README.md).
+There is one mode and one project list, so the inventory does not depend on a local
+`frontend/.env` — see [README.md](./README.md).
 
 ## Gaps
 
@@ -44,12 +43,13 @@ Not yet covered, and not currently tracked by an issue:
 | Project      | Spec files | Tests   |
 | ------------ | ---------- | ------- |
 | `a11y`       | 5          | 28      |
+| `auth`       | 4          | 14      |
 | `chromium`   | 22         | 200     |
 | `member`     | 2          | 18      |
 | `multi-user` | 4          | 54      |
 | `public`     | 5          | 12      |
 | `test-reset` | 1          | 1       |
-| **Total**    | **39**     | **313** |
+| **Total**    | **43**     | **327** |
 
 ## Inventory
 
@@ -105,6 +105,38 @@ Not yet covered, and not currently tracked by an issue:
   - landing page volunteer journey has no serious or critical violations
   - privacy page has no serious or critical violations
   - the screenshot viewer has no serious or critical violations
+
+### Project `auth` — 4 files, 14 tests
+
+#### `frontend/e2e/tests/auth/forgot-password.spec.ts` — 2 tests
+
+- **Auth – forgot password** (2)
+  - a known and an unknown address get the same answer
+  - the confirmation is reachable from the sign-in form
+
+#### `frontend/e2e/tests/auth/login-page.spec.ts` — 7 tests
+
+- **Auth – the sign-in screen when signed out** (7)
+  - is reachable by URL and asks for an address and a password
+  - offers the way on to registration
+  - keeps the password hidden until it is asked for
+  - can be filled in from the keyboard alone
+  - has no serious or critical accessibility violations
+  - the registration screen has none either
+  - nor does the password-recovery screen
+
+#### `frontend/e2e/tests/auth/login.spec.ts` — 3 tests
+
+- **Auth – sign in** (3)
+  - the right password signs in and opens the app
+  - a wrong password is refused and the visitor stays on the form
+  - an address with no account is refused the same way
+
+#### `frontend/e2e/tests/auth/register.spec.ts` — 2 tests
+
+- **Auth – registration** (2)
+  - a new account signs straight in and lands in the app
+  - registering twice with the same address is refused
 
 ### Project `chromium` — 22 files, 200 tests
 

@@ -65,6 +65,7 @@ const controllerBlock = computed(() => {
         <ul class="list-disc pl-6 space-y-1 text-muted-foreground">
           <li>{{ $t('preauth.privacy.dataCollected.items.name') }}</li>
           <li>{{ $t('preauth.privacy.dataCollected.items.email') }}</li>
+          <li>{{ $t('preauth.privacy.dataCollected.items.credentials') }}</li>
           <li>{{ $t('preauth.privacy.dataCollected.items.picture') }}</li>
           <li>{{ $t('preauth.privacy.dataCollected.items.bookings') }}</li>
         </ul>
@@ -91,16 +92,6 @@ const controllerBlock = computed(() => {
       <section class="space-y-3">
         <h2 class="text-2xl font-semibold">{{ $t('preauth.privacy.thirdParty.title') }}</h2>
         <div class="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{{ $t('preauth.privacy.thirdParty.auth0.title') }}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p class="text-sm text-muted-foreground">
-                {{ $t('preauth.privacy.thirdParty.auth0.description') }}
-              </p>
-            </CardContent>
-          </Card>
           <Card>
             <CardHeader>
               <CardTitle>{{ $t('preauth.privacy.thirdParty.email.title') }}</CardTitle>

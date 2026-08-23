@@ -10,14 +10,11 @@ Covers:
 """
 
 from datetime import date, time, timedelta
-from typing import Any, get_args
 
 import pytest
-from fastapi import FastAPI
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api import deps as deps_module
 from app.crud.event_membership import event_membership as crud_membership
 from app.logic.event_scope import get_user_event_scope
 from app.models.booking import Booking
@@ -207,7 +204,6 @@ class TestUpdateSelectedEvent:
 
     async def test_profile_exposes_selected_event_id(
         self,
-        app: FastAPI,
         async_client: AsyncClient,
         db_session: AsyncSession,
         test_user: User,
@@ -217,18 +213,9 @@ class TestUpdateSelectedEvent:
         db_session.add(test_user)
         await db_session.flush()
 
-        dep: Any = get_args(deps_module.AnyUser)[1].dependency
-
-        async def override_any_user():
-            return test_user
-
-        app.dependency_overrides[dep] = override_any_user
-        try:
-            r = await async_client.post("/api/v1/users/me")
-            assert r.status_code == 200
-            assert r.json()["selected_event_id"] == str(test_event.id)
-        finally:
-            app.dependency_overrides.pop(dep, None)
+        r = await async_client.get("/api/v1/users/me")
+        assert r.status_code == 200
+        assert r.json()["selected_event_id"] == str(test_event.id)
 
 
 @pytest.mark.asyncio

@@ -111,30 +111,41 @@
             "security": "Sicherheit"
         },
         "password": {
-            "messages": {
-                "error": {
-                    "emailNotFound": "Benutzer-E-Mail nicht gefunden.",
-                    "sendFailed": "Fehler beim Senden der E-Mail zum Passwort zurücksetzen. Bitte versuchen Sie es später erneut.",
-                    "title": "Fehler"
+            "actions": {
+                "submit": "Passwort ändern",
+                "submitting": "Wird gespeichert…"
+            },
+            "fields": {
+                "confirmPassword": {
+                    "label": "Neues Passwort wiederholen",
+                    "mismatch": "Die beiden Passwörter stimmen nicht überein.",
+                    "placeholder": "Passwort wiederholen"
                 },
-                "success": {
-                    "description": "E-Mail zum Passwort zurücksetzen wurde gesendet. Bitte überprüfen Sie Ihren Posteingang und folgen Sie den Anweisungen.",
-                    "title": "Erfolgreich!"
+                "currentPassword": {
+                    "label": "Aktuelles Passwort",
+                    "placeholder": "Das bisherige Passwort",
+                    "required": "Bitte das aktuelle Passwort eingeben."
+                },
+                "newPassword": {
+                    "label": "Neues Passwort",
+                    "placeholder": "Neues Passwort wählen",
+                    "unchanged": "Das ist das bisherige Passwort. Bitte ein anderes wählen."
                 }
             },
-            "section": {
-                "button": "E-Mail zum Passwort zurücksetzen senden",
-                "description": "Klicken Sie auf die Schaltfläche unten, um eine E-Mail zum Zurücksetzen des Passworts zu erhalten. Sie erhalten eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts.",
-                "sending": "Wird gesendet...",
-                "title": "Passwort zurücksetzen"
+            "subtitle": "Das Passwort für die Anmeldung ändern.",
+            "success": {
+                "description": "Auf diesem Gerät bleibt die Anmeldung bestehen. Alle anderen Geräte wurden abgemeldet und brauchen das neue Passwort.",
+                "title": "Passwort geändert"
             },
-            "subtitle": "Setzen Sie Ihr Passwort per E-Mail zurück",
-            "title": "Passwort zurücksetzen"
+            "title": "Passwort"
         },
         "profile": {
             "current": {
+                "actions": {
+                    "resendVerification": "Bestätigungs-E-Mail erneut senden",
+                    "resendingVerification": "Wird gesendet…"
+                },
                 "fields": {
-                    "authProvider": "Auth-Anbieter",
                     "email": "E-Mail",
                     "name": "Name",
                     "nickname": "Spitzname",
@@ -142,7 +153,10 @@
                     "unverified": "Nicht verifiziert",
                     "verified": "Verifiziert"
                 },
-                "subtitle": "Ihre aktuellen Profilinformationen von Auth0",
+                "messages": {
+                    "verificationSent": "Wir haben einen neuen Bestätigungslink an {email} geschickt."
+                },
+                "subtitle": "Ihre aktuellen Profilinformationen.",
                 "title": "Aktuelles Profil"
             },
             "edit": {
@@ -196,6 +210,30 @@
                 "success": "Profil erfolgreich aktualisiert!",
                 "title": "Profil aktualisieren"
             }
+        },
+        "sessions": {
+            "actions": {
+                "revoke": "Abmelden",
+                "revoking": "Wird abgemeldet…"
+            },
+            "confirm": {
+                "text": "{device} wird abgemeldet und braucht das Passwort, um wieder hereinzukommen.",
+                "title": "Dieses Gerät abmelden?"
+            },
+            "empty": "Keine angemeldeten Geräte vorhanden.",
+            "fields": {
+                "current": "Dieses Gerät",
+                "deviceOn": "{browser} auf {platform}",
+                "ipAddress": "Von {ip}",
+                "lastUsed": "Zuletzt aktiv am {time}",
+                "signedIn": "Angemeldet am {time}",
+                "unknownDevice": "Unbekanntes Gerät"
+            },
+            "messages": {
+                "revoked": "Das Gerät wurde abgemeldet."
+            },
+            "subtitle": "Überall, wo dieses Konto gerade angemeldet ist. Unbekannte Geräte hier abmelden.",
+            "title": "Angemeldete Geräte"
         },
         "subtitle": "Verwalten Sie Ihre Kontoeinstellungen und Profilinformationen.",
         "timeFormat": {

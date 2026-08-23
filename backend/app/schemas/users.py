@@ -1,21 +1,10 @@
 import uuid
 from typing import Literal
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field
 
 TimeFormat = Literal["locale", "h12", "h24"]
 Theme = Literal["default", "classic"]
-
-
-class ProfileInit(BaseModel):
-    """Profile data from Auth0 ID token for user initialization."""
-
-    email: EmailStr | None = None
-    name: str | None = None
-    nickname: str | None = None
-    picture: str | None = None
-    email_verified: bool | None = None
-    preferred_language: str | None = None
 
 
 class UserProfileUpdate(BaseModel):
@@ -41,7 +30,7 @@ class UserProfile(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: uuid.UUID
-    sub: str = Field(validation_alias=AliasChoices("sub", "auth0_sub"))
+    sub: str = Field(validation_alias=AliasChoices("sub", "subject"))
     name: str | None = None
     nickname: str | None = None
     email: str | None = None

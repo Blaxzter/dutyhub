@@ -10,48 +10,70 @@ Fixtures are organized by domain for better maintainability and easier navigatio
 
 Database setup and session fixtures:
 
-- `test_db_setup` - Sets up the test database (session scope)
+- `test_db_setup` - Drops and recreates `app_test`, then runs `alembic upgrade head` (session scope)
 - `test_engine` - Creates a test database engine
 - `db_session` - Creates a test database session with transaction rollback
 
 ### `users.py`
 
-User-related fixtures:
+User-related fixtures. All of them are ordinary local accounts — a `local|`
+subject, a verified address and a real bcrypt hash of `TEST_USER_PASSWORD`, so
+they can be signed in as and not merely read:
 
 - `test_user` - Regular test user (non-admin)
-- `test_admin_user` - Admin test user
-- `test_inactive_user` - Inactive test user
+- `test_admin_user` - Platform superadmin (`roles=["admin"]`)
+- `test_event_admin_user` - Runs the fixture events, holds no global role
+- `test_outsider_user` - Belongs to no event at all
+- `test_inactive_user` - Suspended account; keeps its password
+- `test_passwordless_user` - `password_hash` is NULL (demo/legacy shape)
+- `TEST_USER_PASSWORD` / `TEST_USER_PASSWORD_HASH` - module constants, not fixtures
 
-### `projects.py`
+The hash is computed once at import. bcrypt costs about a quarter of a second
+per call and `test_user` is pulled in by almost every test in the suite, so
+hashing per fixture call would add minutes of CPU to every run.
 
-Project-related fixtures:
+### `events.py`
 
-- `test_project` - Test project owned by `test_user`
-- `test_project_without_owner` - Orphan project without an owner
+Event-related fixtures (each seeds the memberships its tests rely on):
 
-### `tasks.py`
+- `test_event` - Published, public event
+- `test_draft_event` - Unpublished event
+- `test_private_event` - Invitation-only event
+- `test_user_availability` / `test_user_availability_with_dates`
 
-Task-related fixtures:
+### `tasks.py` / `shifts.py` / `bookings.py`
 
-- `test_task` - Single test task in `test_project`
-- `multiple_test_tasks` - List of 5 test tasks in `test_project`
+- `test_task`, `test_draft_task`
+- `test_shift`
+- `test_booking`
 
 ### `auth.py`
 
-Auth0 mock claims fixtures:
+Factories for the hand-rolled authentication stack. These mint **real** HS256
+tokens through `app.core.security`, so a test using them exercises exactly the
+code path a browser's token takes:
 
-- `mock_auth0_claims` - Standard Auth0 JWT claims
-- `mock_auth0_admin_claims` - Admin Auth0 JWT claims
-- `mock_auth0_new_user_claims` - New user Auth0 JWT claims
-- `mock_auth0_claims_no_sub` - Auth0 claims without sub field
+- `make_access_token(user, *, session_id=None)` - a valid access token
+- `auth_headers(user, *, session_id=None)` - `{"Authorization": "Bearer …"}`
+- `make_expired_access_token(user)` - correctly signed, `exp` in the past
+- `make_tampered_access_token(user)` - correct claims, wrong signing key
 
 ### `client.py`
 
 FastAPI app and HTTP client fixtures:
 
-- `app` - FastAPI app with dependency overrides for testing
-- `async_client` - Async HTTP client for making requests
-- `as_admin` - Context fixture to temporarily switch the current user to admin
+- `app` - FastAPI app with `get_db` + identity dependency overrides
+- `async_client` - HTTP client that is always signed in as `test_user`
+- `unauthenticated_app` / `unauthenticated_client` - the app with **no** identity
+  override, so `deps.py` runs for real
+- `as_admin` / `as_event_admin` / `as_outsider` - temporarily swap the identity
+
+Pick the right client. `async_client` pins `CurrentUser`, which is what makes
+route tests about the route rather than about authentication — but it also means
+a request it sends is *already signed in*, so a login or register test written
+against it would pass while the whole credential path was broken. Use
+`unauthenticated_client` (with `auth_headers` when a credential is wanted) for
+anything under `/auth`.
 
 ## Usage
 
@@ -69,10 +91,25 @@ async def test_something(
     pass
 ```
 
+Signing in for real:
+
+```python
+async def test_authenticated_route(
+    unauthenticated_client: AsyncClient,
+    auth_headers: AuthHeadersFactory,
+    test_user: User,
+):
+    r = await unauthenticated_client.get(
+        "/api/v1/users/me", headers=auth_headers(test_user)
+    )
+    assert r.status_code == 200
+```
+
 ## Adding New Fixtures
 
 When adding new fixtures:
 
 1. Add them to the appropriate domain file (or create a new one if needed)
-2. Import them in `conftest.py` to make them available to tests
+2. Import them in `conftest.py` to make them available to tests — fixtures never
+   live in `conftest.py` itself, which only re-exports
 3. Update this README with the new fixture name and description
