@@ -67,6 +67,7 @@ services:
             - SMTP_USER=${SMTP_USER}
             - SMTP_PASSWORD=${SMTP_PASSWORD}
             - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
+            - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
             - POSTGRES_SERVER=db
             - POSTGRES_PORT=5432
             - POSTGRES_DB=${POSTGRES_DB}
@@ -97,6 +98,7 @@ services:
             - SMTP_USER=${SMTP_USER}
             - SMTP_PASSWORD=${SMTP_PASSWORD}
             - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
+            - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
             - POSTGRES_SERVER=db
             - POSTGRES_PORT=5432
             - POSTGRES_DB=${POSTGRES_DB}
@@ -143,6 +145,7 @@ services:
             - LEGAL_CITY=${LEGAL_CITY:-}
             - LEGAL_EMAIL=${LEGAL_EMAIL:-}
             - LEGAL_PHONE=${LEGAL_PHONE:-}
+            - TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY:-}
         networks:
             - traefik-net
             - default

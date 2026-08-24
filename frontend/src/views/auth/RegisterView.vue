@@ -19,10 +19,12 @@ import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { z } from 'zod'
 
+import { useAppConfig } from '@/composables/useAppConfig'
 import { useAuth } from '@/composables/useAuth'
 
 import AuthShell from '@/components/auth/AuthShell.vue'
 import PasswordRequirement from '@/components/auth/PasswordRequirement.vue'
+import TurnstileWidget from '@/components/auth/TurnstileWidget.vue'
 import { Button } from '@/components/ui/button'
 import {
   FormControl,
@@ -67,6 +69,23 @@ const { register } = useAuth()
 const busy = ref(false)
 const showPassword = ref(false)
 const formRef = ref<HTMLFormElement | null>(null)
+
+/**
+ * The bot check, present only where the deployment configured one.
+ *
+ * The site key is runtime config rather than a build-time `VITE_` variable, so
+ * one image can serve a staging deployment with Turnstile off and production
+ * with it on. An empty key means the widget never renders and the submit button
+ * is gated on nothing — which is also what local development and the E2E suite
+ * see, and matches the server, where enforcement hangs off the *secret* being
+ * set (`app/core/turnstile.py`).
+ */
+const turnstileSiteKey = useAppConfig().TURNSTILE_SITE_KEY
+const turnstileToken = ref<string | null>(null)
+const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
+
+/** True while the challenge is configured but not yet solved. */
+const awaitingChallenge = computed(() => Boolean(turnstileSiteKey) && !turnstileToken.value)
 
 /** Same-origin paths only — see the note in `LoginView.vue`. */
 const redirectTarget = computed<RouteLocationRaw>(() => {
@@ -157,11 +176,20 @@ const onSubmit = handleSubmit(
         // which of the two verification mails is sent, and it seeds the
         // account's notification language for everything afterwards.
         preferred_language: locale.value,
+        // Omitted rather than sent as null when there is no challenge, so the
+        // request looks exactly as it did before Turnstile existed.
+        ...(turnstileToken.value ? { turnstile_token: turnstileToken.value } : {}),
       })
       toast.success(t('auth.register.success'))
       toast.info(t('auth.register.verificationSent', { email: formValues.email }))
       await router.replace(redirectTarget.value)
     } catch (error) {
+      // Every failure resets the challenge, not just a rejected one. A
+      // Turnstile token is single-use and Cloudflare answers
+      // `timeout-or-duplicate` the second time it sees one — so after a
+      // duplicate-email 409 the *next* attempt would be refused for a reason
+      // that has nothing to do with the address the person just corrected.
+      turnstileRef.value?.reset()
       toastApiError(error)
     } finally {
       busy.value = false
@@ -299,10 +327,38 @@ const onSubmit = handleSubmit(
         </FormItem>
       </FormField>
 
-      <Button class="w-full" type="submit" :disabled="busy" data-testid="btn-register">
+      <TurnstileWidget
+        v-if="turnstileSiteKey"
+        ref="turnstileRef"
+        :site-key="turnstileSiteKey"
+        action="register"
+        @update:token="turnstileToken = $event"
+      />
+
+      <!--
+        Disabled until the challenge is solved, and captioned underneath. A
+        button that is grey for an unexplained reason reads as a broken page;
+        Turnstile usually resolves itself within a second, so the caption is
+        mostly seen by whoever needs it — someone the challenge decided to
+        actually ask.
+      -->
+      <Button
+        class="w-full"
+        type="submit"
+        :disabled="busy || awaitingChallenge"
+        data-testid="btn-register"
+      >
         <LoaderIcon v-if="busy" class="size-4 animate-spin" />
         {{ busy ? t('auth.register.actions.submitting') : t('auth.register.actions.submit') }}
       </Button>
+      <p
+        v-if="awaitingChallenge"
+        class="text-center text-sm text-muted-foreground"
+        aria-live="polite"
+        data-testid="register-awaiting-check"
+      >
+        {{ t('auth.register.securityCheck.pending') }}
+      </p>
     </form>
 
     <template #footer>

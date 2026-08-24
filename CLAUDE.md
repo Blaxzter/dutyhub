@@ -185,6 +185,10 @@ Two layouts: `PreAuthLayout` (public pages) and `PostAuthLayout` (authenticated 
 - `frontend/.env` — Vite env vars (copy from `frontend/.env.example`)
 - `SECRET_KEY` in root `.env` signs the access tokens. It defaults to `changethis`, which is fine locally (a warning) and refuses to boot in every other environment. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(32))"`
 - `SUPERADMIN_EMAILS` in root `.env` decides who gets the platform `admin` role on register or sign-in — set it before you expect to reach the admin screens
+- `TURNSTILE_SECRET_KEY` in root `.env` turns on the Cloudflare Turnstile bot check in front of
+  registration; unset (the default) disables it, which is what local dev and the E2E suite run with.
+  The matching public site key is `TURNSTILE_SITE_KEY`, served to the browser as runtime config —
+  see [`docs/AUTH.md`](docs/AUTH.md) for the test keys that let you exercise it locally
 - Local mail (verification, password reset) goes to the mailcatcher container on port 1025; its inbox is at `http://localhost:1080`. With no SMTP configured at all, the link is written to the backend log instead
 - E2E tests authenticate through the `X-Test-User-Email` bypass, enabled by `VITE_E2E_AUTH_BYPASS` in `frontend/.env` and gated server-side on `TESTING`
 

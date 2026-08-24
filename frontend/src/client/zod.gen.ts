@@ -868,6 +868,7 @@ export const zRegisterRequest = z
       })
       .optional()
       .default('en'),
+    turnstile_token: z.string().nullish(),
   })
   .register(z.globalRegistry, {
     description:

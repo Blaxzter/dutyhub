@@ -15,6 +15,7 @@ const EMPTY = {
   LEGAL_CITY: '',
   LEGAL_EMAIL: '',
   LEGAL_PHONE: '',
+  TURNSTILE_SITE_KEY: '',
 }
 
 afterEach(() => {
@@ -33,10 +34,21 @@ describe('useAppConfig', () => {
       LEGAL_CITY: '12345 Musterstadt',
       LEGAL_EMAIL: 'kontakt@example.org',
       LEGAL_PHONE: '+49 123 456789',
+      TURNSTILE_SITE_KEY: '0x4AAAAAAA',
     }
     window.__APP_CONFIG__ = injected
 
     expect(useAppConfig()).toEqual(injected)
+  })
+
+  it('fills in keys an older config.js predates', () => {
+    // The realistic shape of a stale deploy: a config written before Turnstile
+    // existed. Every field it does carry has to survive, and the one it does
+    // not has to read as "switched off" rather than as `undefined` — which
+    // would render a widget against a broken key and wedge the register form.
+    window.__APP_CONFIG__ = { LEGAL_NAME: 'WirkSam e.V.' }
+
+    expect(useAppConfig()).toEqual({ ...EMPTY, LEGAL_NAME: 'WirkSam e.V.' })
   })
 
   it('reads the global on every call rather than caching it', () => {

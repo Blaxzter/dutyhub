@@ -170,6 +170,20 @@ class Settings(BaseSettings):
 
     SUPERADMIN_EMAILS: list[EmailStr] = []
 
+    # Cloudflare Turnstile — the bot check in front of the open registration
+    # form. The site key is public and lives on the frontend
+    # (`window.__APP_CONFIG__`, from frontend/docker-entrypoint.sh); only the
+    # secret belongs here. Leaving it unset disables enforcement outright, which
+    # is what keeps local development and the test suite from needing a
+    # Cloudflare account — see app/core/turnstile.py for why that gate is the
+    # secret rather than ENVIRONMENT.
+    TURNSTILE_SECRET_KEY: str | None = None
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def turnstile_enabled(self) -> bool:
+        return bool(self.TURNSTILE_SECRET_KEY)
+
     # Web Push (VAPID) configuration
     VAPID_PRIVATE_KEY: str | None = None
     VAPID_PUBLIC_KEY: str | None = None

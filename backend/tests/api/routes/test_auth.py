@@ -232,11 +232,14 @@ async def _register(
     password: str = NEW_PASSWORD,
     name: str = "New Comer",
     preferred_language: str | None = None,
+    turnstile_token: str | None = None,
 ) -> Response:
     """POST /auth/register with the fields a registration form would send."""
     body: dict[str, Any] = {"email": email, "password": password, "name": name}
     if preferred_language is not None:
         body["preferred_language"] = preferred_language
+    if turnstile_token is not None:
+        body["turnstile_token"] = turnstile_token
     return await client.post(f"{AUTH}/register", json=body)
 
 
@@ -487,6 +490,169 @@ class TestRegister:
         assert response.status_code == 201, response.text
         assert response.json()["user"]["roles"] == []
         assert response.json()["user"]["event_roles"] == {}
+
+
+@pytest.mark.asyncio
+class TestRegisterTurnstile:
+    """The bot check in front of the one endpoint that creates accounts.
+
+    ``verify_turnstile`` itself is covered in ``tests/core/test_turnstile.py``;
+    what matters here is the wiring around it — that the gate is the *secret*
+    and not the environment, that a refusal is a translatable 403 rather than a
+    422 about a field nobody typed, and above all that a rejected challenge
+    leaves no account behind. A check that blocks the response but has already
+    written the row protects nothing.
+    """
+
+    @pytest.fixture
+    def turnstile_verdict(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> Callable[[bool], list[str | None]]:
+        """Configure a secret and pin what Cloudflare would have answered."""
+
+        def install(passes: bool) -> list[str | None]:
+            tokens: list[str | None] = []
+
+            async def fake_verify(token: str | None) -> bool:
+                tokens.append(token)
+                return passes
+
+            monkeypatch.setattr(settings, "TURNSTILE_SECRET_KEY", "test-secret")
+            monkeypatch.setattr(auth_routes, "verify_turnstile", fake_verify)
+            return tokens
+
+        return install
+
+    async def test_is_skipped_when_no_secret_is_configured(
+        self, unauthenticated_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that a deployment without Turnstile registers as it always did.
+
+        This is the default everywhere but production: no Cloudflare account is
+        needed to run the stack locally, and the E2E suite registers through the
+        real form without solving anything.
+        """
+        monkeypatch.setattr(settings, "TURNSTILE_SECRET_KEY", None)
+
+        response = await _register(
+            unauthenticated_client, email="nocaptcha@example.com"
+        )
+
+        assert response.status_code == 201, response.text
+
+    async def test_lets_a_solved_challenge_through(
+        self,
+        unauthenticated_client: AsyncClient,
+        turnstile_verdict: Callable[[bool], list[str | None]],
+    ) -> None:
+        """Test that the token from the form is the one that gets verified."""
+        tokens = turnstile_verdict(True)
+
+        response = await _register(
+            unauthenticated_client,
+            email="solved@example.com",
+            turnstile_token="a-solved-token",
+        )
+
+        assert response.status_code == 201, response.text
+        assert tokens == ["a-solved-token"]
+
+    async def test_refuses_a_failed_challenge_with_a_translatable_code(
+        self,
+        unauthenticated_client: AsyncClient,
+        turnstile_verdict: Callable[[bool], list[str | None]],
+    ) -> None:
+        """Test that a rejection is a 403 carrying ``auth.captcha_failed``.
+
+        403 rather than 422: nothing the person typed is wrong. The frontend
+        renders the code through its ``errorCodes`` namespace, so a code with no
+        entry there would surface as a raw string on the registration form.
+        """
+        turnstile_verdict(False)
+
+        response = await _register(
+            unauthenticated_client,
+            email="blocked@example.com",
+            turnstile_token="a-forged-token",
+        )
+
+        assert response.status_code == 403, response.text
+        assert response.json()["code"] == "auth.captcha_failed"
+
+    async def test_refuses_a_request_that_carries_no_token_at_all(
+        self,
+        unauthenticated_client: AsyncClient,
+        turnstile_verdict: Callable[[bool], list[str | None]],
+    ) -> None:
+        """Test that omitting the field is a refusal, not a bypass.
+
+        The schema allows the field to be absent so that deployments without
+        Turnstile need not invent one — which would be a hole if the route read
+        "absent" as "not applicable". It asks the verifier either way, and the
+        verifier refuses an empty token.
+        """
+        tokens = turnstile_verdict(False)
+
+        response = await _register(unauthenticated_client, email="silent@example.com")
+
+        assert response.status_code == 403, response.text
+        assert tokens == [None]
+
+    async def test_creates_no_account_when_the_challenge_fails(
+        self,
+        unauthenticated_client: AsyncClient,
+        db_session: AsyncSession,
+        outbox: list[SentMail],
+        turnstile_verdict: Callable[[bool], list[str | None]],
+    ) -> None:
+        """Test that a blocked registration leaves nothing behind.
+
+        Not just no row: no verification mail either. Registration is the one
+        endpoint that will send a message to any address a stranger names, and
+        an account created before the check would still be an account.
+        """
+        turnstile_verdict(False)
+
+        response = await _register(
+            unauthenticated_client, email="ghost@example.com", turnstile_token="nope"
+        )
+
+        assert response.status_code == 403
+        assert (
+            await crud_user.get_by_email(db_session, email="ghost@example.com") is None
+        )
+        assert outbox == []
+
+    async def test_the_rate_limit_still_applies_underneath(
+        self,
+        unauthenticated_client: AsyncClient,
+        monkeypatch: pytest.MonkeyPatch,
+        turnstile_verdict: Callable[[bool], list[str | None]],
+    ) -> None:
+        """Test that Turnstile is a second gate, not a replacement for the first.
+
+        The limiter runs first and is cheap; a caller that solves challenges
+        (a headless browser will) still cannot mint accounts without a ceiling.
+        """
+        turnstile_verdict(True)
+        monkeypatch.setattr(settings, "TESTING", False)
+        register_limiter.reset()
+
+        for index in range(register_limiter.limit):
+            allowed = await _register(
+                unauthenticated_client,
+                email=f"burst{index}@example.com",
+                turnstile_token="solved",
+            )
+            assert allowed.status_code == 201, allowed.text
+
+        refused = await _register(
+            unauthenticated_client,
+            email="one-too-many@example.com",
+            turnstile_token="solved",
+        )
+        assert refused.status_code == 429
+        assert refused.json()["code"] == "auth.rate_limited"
 
 
 # ── Sign-in ───────────────────────────────────────────────────────

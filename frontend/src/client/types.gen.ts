@@ -1801,6 +1801,12 @@ export type RegisterRequest = {
    * Language for the verification mail and later notifications
    */
   preferred_language?: string
+  /**
+   * Turnstile Token
+   *
+   * Token from the Cloudflare Turnstile challenge on the registration form. Required when the deployment has Turnstile configured; ignored when it does not.
+   */
+  turnstile_token?: string | null
 }
 
 /**

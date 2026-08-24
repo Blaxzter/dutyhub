@@ -111,6 +111,20 @@ class RegisterRequest(BaseModel):
         pattern="^(en|de)$",
         description="Language for the verification mail and later notifications",
     )
+    # Optional in the schema, required by the route whenever the deployment has
+    # a Turnstile secret configured. Making it mandatory here instead would be
+    # the wrong shape twice over: a 422 listing a field no human filled in is
+    # not an answer a form can render next to an input, and every deployment
+    # without Turnstile — local development included — would have to invent a
+    # value to satisfy a check nobody is running.
+    turnstile_token: str | None = Field(
+        default=None,
+        description=(
+            "Token from the Cloudflare Turnstile challenge on the registration "
+            "form. Required when the deployment has Turnstile configured; "
+            "ignored when it does not."
+        ),
+    )
 
 
 class LoginRequest(BaseModel):

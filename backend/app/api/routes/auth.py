@@ -29,6 +29,7 @@ from fastapi import APIRouter, BackgroundTasks, Request, Response, status
 
 from app.api.deps import CurrentUser, DBDep
 from app.core.config import settings
+from app.core.errors import raise_problem
 from app.core.logger import get_logger
 from app.core.rate_limit import (
     client_ip,
@@ -39,6 +40,7 @@ from app.core.rate_limit import (
     reset_password_limiter,
 )
 from app.core.security import AuthTokenError, decode_access_token
+from app.core.turnstile import verify_turnstile
 from app.logic.auth import service
 from app.logic.auth.emails import send_password_reset_email, send_verify_email
 from app.models.auth_session import AuthSession
@@ -179,6 +181,13 @@ async def register(
     exactly the ordering a token-bearing mail needs.
     """
     await register_limiter.check(client_ip(request))
+
+    # Both gates, in the order that costs least. The rate limit is a dict
+    # lookup and rejects the flood; Turnstile is a network round trip to
+    # Cloudflare and rejects the script that stayed under the limit. Neither
+    # replaces the other, and this one runs before a single row is written.
+    if settings.turnstile_enabled and not await verify_turnstile(body.turnstile_token):
+        raise_problem(status.HTTP_403_FORBIDDEN, code="auth.captcha_failed")
 
     user_agent, ip_address = _client_labels(request)
     registered = await service.register_user(

@@ -1,5 +1,6 @@
 {
     "auth": {
+        "captcha_failed": "The security check did not go through. Please try again — reload the page if it keeps happening.",
         "email_taken": "An account already exists for this email address.",
         "invalid_credentials": "That email address and password do not match.",
         "invalid_token": "This link is not valid any more. Please request a new one.",

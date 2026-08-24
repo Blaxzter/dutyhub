@@ -252,6 +252,57 @@ the API sits behind Traefik and `request.client.host` is the proxy's address for
 every caller. That header is client-supplied and spoofable — build nothing but
 rate-limit keys on it.
 
+## Bot protection on registration
+
+Rate limiting caps how *fast* accounts can be created; it cannot tell a person
+from a script. A bot that registers five accounts an hour and then waits is
+inside every ceiling above. So `POST /auth/register` — the only endpoint that
+turns an anonymous caller into a row in `users` and a message to an arbitrary
+address — sits behind a [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/)
+challenge as well.
+
+The browser solves the challenge, the form posts the resulting token as
+`turnstile_token`, and `app/core/turnstile.py` asks Cloudflare's `siteverify`
+whether that token is one it issued. A refusal is **403 `auth.captcha_failed`**,
+raised before anything is written — no user row, no verification mail.
+
+Four properties are deliberate:
+
+- **Enforcement is opt-in, gated on `TURNSTILE_SECRET_KEY` alone.** Unset means
+  no check at all, which is what local development, the test suite and the E2E
+  stack run with — no Cloudflare account required to work on this repository.
+  It is *not* gated on `ENVIRONMENT`, so a staging deployment that configures
+  the key exercises the real path.
+- **It fails closed.** A missing token, a rejected token, a malformed reply and
+  an unreachable `siteverify` all count as "not human". Treating an outage as
+  "must be human" would turn a Cloudflare incident into an open door, and would
+  let an attacker who can *cause* that outage choose when it opens.
+- **`remoteip` is not sent.** Cloudflare requires it to match the address that
+  solved the challenge, and a dual-stack client routinely solves over IPv6 and
+  posts over IPv4 — which would reject a real person. The token is already
+  bound to the client that solved it.
+- **The token is single-use.** Cloudflare answers `timeout-or-duplicate` the
+  second time it sees one, so `RegisterView.vue` resets its widget after *any*
+  failed submission. Without that, the retry after a "this address is taken"
+  error would be refused for a reason unrelated to what the person just fixed.
+
+The site key is public and reaches the browser as runtime config
+(`window.__APP_CONFIG__.TURNSTILE_SITE_KEY`, written by
+`frontend/docker-entrypoint.sh` from `TURNSTILE_SITE_KEY`); an empty value means
+the widget never renders. Both halves come from one widget in the Cloudflare
+dashboard — it is free, and needs no DNS change, so the domain does not have to
+be on Cloudflare.
+
+To exercise the real path locally, use Cloudflare's
+[test keys](https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
+They must be set as a pair — a dummy secret rejects real tokens and a real
+secret rejects dummy ones:
+
+| Behaviour | Site key | Secret key |
+|---|---|---|
+| always passes | `1x00000000000000000000AA` | `1x0000000000000000000000000000000AA` |
+| always fails | `2x00000000000000000000AB` | `2x0000000000000000000000000000000AA` |
+
 ## Settings
 
 All in `backend/app/core/config.py`; every one has a default, so `.env.example`
@@ -269,6 +320,7 @@ is enough to boot.
 | `EMAIL_RESET_TOKEN_EXPIRE_HOURS` | `1` | |
 | `EMAIL_VERIFY_TOKEN_EXPIRE_HOURS` | `48` | |
 | `SUPERADMIN_EMAILS` | `[]` | See below. |
+| `TURNSTILE_SECRET_KEY` | `None` | Unset disables the registration bot check entirely. See above. |
 
 `SECRET_KEY` deliberately does **not** default to a freshly minted random value.
 The image runs four workers, so a per-process random default would hand them

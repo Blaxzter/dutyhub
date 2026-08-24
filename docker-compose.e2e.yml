@@ -68,6 +68,14 @@ services:
       - SMTP_TLS=False
       - SMTP_SSL=False
       - FRONTEND_HOST=http://localhost:5555
+      # Blanked on purpose. `env_file: .env` above pulls in whatever the
+      # developer running this has configured, and a real Turnstile secret
+      # there would make the registration spec fail on a challenge the
+      # Playwright browser never solved — the frontend built here ships an
+      # empty site key, so no widget renders and no token exists to send.
+      # Enforcement hangs off this secret alone (app/core/turnstile.py), so
+      # emptying it is what restores the pre-Turnstile behaviour.
+      - TURNSTILE_SECRET_KEY=
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8787/api/v1/healthz"]
       interval: 5s
