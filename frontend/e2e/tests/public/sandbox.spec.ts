@@ -21,13 +21,23 @@ async function startDemo(page: import('@playwright/test').Page, role: 'helper' |
   await page.waitForURL(/\/app\//, { timeout: 30_000 })
 }
 
-/** Tear the demo down, so the suite does not rely on the TTL sweep to tidy up. */
-async function exitDemo(page: import('@playwright/test').Page) {
-  // A running tour puts an overlay over the whole page; close it first.
+/**
+ * Close the guided tour if it is running.
+ *
+ * It starts on its own and its overlay swallows pointer events, so anything
+ * that clicks the app itself has to get it out of the way first.
+ */
+async function dismissTour(page: import('@playwright/test').Page) {
   await page
     .locator('.driver-popover-close-btn')
-    .click({ timeout: 3000 })
+    .click({ timeout: 5000 })
     .catch(() => {})
+  await expect(page.locator('.driver-popover')).toBeHidden()
+}
+
+/** Tear the demo down, so the suite does not rely on the TTL sweep to tidy up. */
+async function exitDemo(page: import('@playwright/test').Page) {
+  await dismissTour(page)
   await page.getByTestId('btn-sandbox-exit').click()
   await page.getByTestId('btn-dialog-confirm').click()
   await page.waitForURL(/\/$/, { timeout: 15_000 })
@@ -99,10 +109,24 @@ test.describe('demo session', () => {
     // exists to prevent it, so assert the data actually arrived.
     await startDemo(page, 'helper')
 
-    await page.goto('/app/tasks')
+    // Navigated by clicking, not by `page.goto`. A hard load drops the access
+    // token — it is held in memory by design — and the app rebuilds the session
+    // from the refresh cookie, which is `SameSite=Lax`. In CI the page is served
+    // from `localhost:4173` while the API is `http://backend:8787`, and those
+    // are two different sites, so the browser withholds the cookie and the
+    // bootstrap refresh 401s straight to the sign-in screen.
+    //
+    // That split is a property of the compose topology, not of the product:
+    // production serves the app and the API from one domain and local dev from
+    // one host, so a demo survives F5 in both. Do not "fix" a failure here by
+    // loosening the cookie to `SameSite=None`; it would weaken every real
+    // session to make a test-only topology work.
+    await dismissTour(page)
+
+    await page.getByTestId('sidebar-link-tasks').click()
     await expect(page.getByTestId('task-row').first()).toBeVisible()
 
-    await page.goto('/app/bookings')
+    await page.getByTestId('sidebar-link-my-bookings').click()
     await expect(page.getByTestId('booking-card').first()).toBeVisible()
 
     await exitDemo(page)
