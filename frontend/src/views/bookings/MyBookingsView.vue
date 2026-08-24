@@ -373,6 +373,7 @@ onMounted(loadBookings)
           <Card
             v-for="booking in event.bookings"
             :key="booking.id"
+            data-testid="booking-card"
             :class="[booking.status === 'cancelled' ? 'opacity-75 border-destructive/30' : '']"
           >
             <CardHeader class="pb-3">

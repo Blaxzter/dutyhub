@@ -161,7 +161,10 @@ watch(
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-lg border bg-card transition-colors hover:bg-muted/30">
+  <div
+    data-testid="task-row"
+    class="overflow-hidden rounded-lg border bg-card transition-colors hover:bg-muted/30"
+  >
     <div class="flex flex-col md:flex-row md:min-h-[260px]">
       <!-- Top/Left: Task Info -->
       <div

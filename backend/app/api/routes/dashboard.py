@@ -250,7 +250,12 @@ async def dashboard_sidebar(
     scoped_event_id = get_user_event_scope(current_user)
 
     groups = await _sidebar_events(
-        session, today, effective_status, managed_group_ids, visible_event_ids
+        session,
+        today,
+        effective_status,
+        managed_group_ids,
+        visible_event_ids,
+        viewer_id=current_user.id,
     )
     tasks = await _sidebar_tasks(
         session,
@@ -282,11 +287,22 @@ async def _sidebar_events(  # noqa: ANN001
     status: str | None,
     managed_group_ids: list[uuid.UUID] | None = None,
     visible_event_ids: list[uuid.UUID] | None = None,
+    viewer_id: uuid.UUID | None = None,
 ) -> list[SidebarEvent]:
     """The user's events whose end_date >= today, limit 5."""
     query = (
         select(col(Event.id), col(Event.name), col(Event.status))
         .where(col(Event.end_date) >= today)
+        .where(
+            # ``visible_event_ids`` is None for the superadmin, so it cannot be
+            # what keeps demos out of their sidebar - this has to stand on its
+            # own. The guest still sees their own, which is the entire point of
+            # the second clause.
+            or_(
+                col(Event.is_sandbox).is_(False),
+                col(Event.created_by_id) == viewer_id,
+            )
+        )
         .order_by(col(Event.start_date))
         .limit(5)
     )

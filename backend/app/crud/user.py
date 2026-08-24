@@ -78,6 +78,11 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     ) -> tuple[Sequence[User], dict[str, int]]:
         q_clauses = self._q_clauses(q)
         status_clauses = self._status_clauses(status)
+        # Guest accounts are an implementation detail of the demo, not people.
+        # They would otherwise crowd this list out on a busy day, and every
+        # action it offers - suspend, promote, reject - means nothing for a row
+        # that deletes itself within the hour.
+        q_clauses = [*q_clauses, col(User.is_sandbox).is_(False)]
 
         items_query = (
             select(User)

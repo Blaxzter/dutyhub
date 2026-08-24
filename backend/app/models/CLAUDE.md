@@ -45,6 +45,16 @@ If a row genuinely must outlive its user, denormalise the display value onto
 the row (as `bookings.cancelled_shift_title` does) rather than reaching for
 SET NULL.
 
+## Denormalised `is_sandbox` on `tasks`
+
+`tasks.is_sandbox` duplicates `events.is_sandbox` on purpose. `tasks.event_id`
+is `ON DELETE SET NULL` and `Event.tasks` has no `delete-orphan` cascade, so a
+task can outlive its event with a NULL `event_id` — and a NULL matches no
+`IN (...)`, which is the shape of every event-scoped filter in this application.
+An orphan produced that way would be visible to everyone and manageable by
+nobody. The flag survives the SET NULL and keeps the exclusion in the `WHERE`
+clause. See `docs/SANDBOX.md`.
+
 ## Unique + indexed renders as one index
 
 `Field(sa_column=sa.Column(..., unique=True, index=True))` produces a single

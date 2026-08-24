@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 import { InfoIcon, LayoutGridIcon, UsersIcon, WorkflowIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import { useAuthStore } from '@/stores/auth'
+import { useSandboxStore } from '@/stores/sandbox'
 
 import LandingAbout from '@/components/landing/LandingAbout.vue'
 import LandingAudience from '@/components/landing/LandingAudience.vue'
@@ -14,6 +15,8 @@ import LandingFeatures from '@/components/landing/LandingFeatures.vue'
 import LandingHero from '@/components/landing/LandingHero.vue'
 import LandingJourney from '@/components/landing/LandingJourney.vue'
 import LandingSectionNav from '@/components/landing/LandingSectionNav.vue'
+import SandboxExpiredDialog from '@/components/sandbox/SandboxExpiredDialog.vue'
+import SandboxStartDialog from '@/components/sandbox/SandboxStartDialog.vue'
 
 /**
  * The single pre-auth marketing page.
@@ -23,8 +26,11 @@ import LandingSectionNav from '@/components/landing/LandingSectionNav.vue'
  * sections below, so there is one story in one place.
  */
 const authStore = useAuthStore()
+const sandboxStore = useSandboxStore()
 const router = useRouter()
 const { t } = useI18n()
+
+const demoDialogOpen = ref(false)
 
 const sections = computed(() => [
   { id: 'audience', label: t('preauth.landing.nav.audience'), icon: UsersIcon },
@@ -40,14 +46,20 @@ function signIn() {
 function goToDashboard() {
   router.push({ name: 'home' })
 }
+
+function openDemo() {
+  demoDialogOpen.value = true
+}
 </script>
 
 <template>
   <div>
     <LandingHero
       :is-authenticated="authStore.isAuthenticated"
+      :demo-enabled="sandboxStore.enabled"
       @sign-in="signIn"
       @dashboard="goToDashboard"
+      @demo="openDemo"
     />
 
     <LandingSectionNav :items="sections" />
@@ -59,8 +71,16 @@ function goToDashboard() {
 
     <LandingCta
       :is-authenticated="authStore.isAuthenticated"
+      :demo-enabled="sandboxStore.enabled"
       @sign-in="signIn"
       @dashboard="goToDashboard"
+      @demo="openDemo"
     />
+
+    <SandboxStartDialog v-model:open="demoDialogOpen" />
+
+    <!-- Only ever opens for somebody whose demo was swept away while they were
+         using it; it reads the breadcrumb `lib/auth-session.ts` leaves behind. -->
+    <SandboxExpiredDialog @start-another="openDemo" />
   </div>
 </template>

@@ -47,6 +47,21 @@ Event-related fixtures (each seeds the memberships its tests rely on):
 - `test_shift`
 - `test_booking`
 
+### `sandbox.py`
+
+The throwaway demo behind the "try a test event" button, minted through
+`logic.sandbox.service` — the same call `POST /auth/sandbox` makes:
+
+- `make_sandbox(*, role="helper", language="en")` - factory; several tests need
+  two demos side by side
+- `test_sandbox` - one helper-role demo, already seeded
+- `SandboxSetup` - what comes back: `.event`, `.guest`, `.session`
+
+Deliberately no manager-role fixture. Seeding `role="manager"` currently raises
+(see the xfails in `tests/logic/test_sandbox_seed.py`), and a fixture that
+raises is a setup *error* that no `xfail` marker can absorb — the tests that
+need that variant call the factory in their own body.
+
 ### `auth.py`
 
 Factories for the hand-rolled authentication stack. These mint **real** HS256

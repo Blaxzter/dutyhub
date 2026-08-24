@@ -16,9 +16,19 @@
         "forbidden": "Sie können nur Ihre eigenen Buchungen verwalten",
         "slot_full": "Diese Dienstschicht ist ausgebucht"
     },
+    "event": {
+        "sandbox_not_featurable": "Eine Demo-Veranstaltung kann nicht auf der Startseite hervorgehoben werden."
+    },
     "not_found": "Die angeforderte Ressource wurde nicht gefunden",
     "project": {
         "not_found": "Das angeforderte Projekt wurde nicht gefunden"
+    },
+    "sandbox": {
+        "capacity_reached": "Gerade laufen zu viele Demos. Bitte in ein paar Minuten noch einmal versuchen.",
+        "disabled": "Demo-Veranstaltungen sind auf dieser Seite abgeschaltet.",
+        "forbidden": "Das ist kein Demo-Konto — es gibt also keine Demo zu beenden.",
+        "invitations_disabled": "Eine Demo-Veranstaltung kann niemanden einladen — alle darin sind erfunden.",
+        "not_available": "Das geht in der Demo nicht. Lege dafür ein richtiges Konto an."
     },
     "shift": {
         "not_found": "Dienstschicht nicht gefunden"

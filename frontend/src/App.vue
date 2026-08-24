@@ -12,6 +12,7 @@ import { usePalette } from '@/composables/usePalette'
 
 import { Toaster } from '@/components/ui/sonner'
 
+import SandboxBanner from '@/components/sandbox/SandboxBanner.vue'
 import GlobalDialog from '@/components/utils/GlobalDialog.vue'
 
 const { isLoading: sessionLoading } = useAuth()
@@ -31,6 +32,11 @@ usePalette()
 <template>
   <Toaster />
   <GlobalDialog />
+
+  <!-- Above the loading/outlet pair, not inside it: this is the only node that
+       outlives every layout, and anywhere lower would be unmounted on the first
+       navigation, resetting the countdown it is there to show. -->
+  <SandboxBanner />
 
   <!-- Loading state -->
   <div v-if="isLoading" class="min-h-screen flex items-center justify-center bg-background">

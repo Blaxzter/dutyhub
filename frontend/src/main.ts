@@ -6,6 +6,7 @@ import { client } from '@/client/client.gen'
 import { authSession } from '@/lib/auth-session'
 import i18n from '@/locales/i18n.ts'
 import { installFakeSession } from '@/testing/fake-session'
+import { installTour } from '@/tour/install'
 
 import App from './App.vue'
 import './index.css'
@@ -41,6 +42,13 @@ if (import.meta.env.VITE_E2E_AUTH_BYPASS === 'true' && document.cookie.includes(
 app.use(createPinia())
 app.use(router)
 app.use(i18n)
+
+// The guided tour hangs off `router.afterEach` and a window event, so it has to
+// be wired after the router exists and before the first navigation settles.
+// Deliberately after i18n as well: the popover reads its copy from the same
+// singleton, and after mount would be too late for a tour restored from
+// `sessionStorage` by a reload.
+installTour(router)
 
 app.mount('#app')
 

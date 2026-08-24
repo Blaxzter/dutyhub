@@ -502,6 +502,8 @@ export const zEventRead = z.object({
   id: z.uuid(),
   created_by_id: z.uuid().nullish(),
   is_featured: z.boolean().optional().default(false),
+  is_sandbox: z.boolean().optional().default(false),
+  sandbox_expires_at: z.iso.datetime().nullish(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
   my_role: z.enum(['owner', 'admin', 'member']).nullish(),
@@ -950,6 +952,39 @@ export const zResetPasswordRequest = z
   })
   .register(z.globalRegistry, {
     description: 'Redeem a reset link and choose a new password.',
+  })
+
+/**
+ * SandboxCreate
+ *
+ * Ask for a demo session.
+ *
+ * Deliberately tiny and entirely anonymous: no address, no password, nothing
+ * to verify. The language is carried so the seeded event reads in the same
+ * language as the page the visitor clicked from — a German landing page that
+ * opens an English demo is a jarring first impression.
+ */
+export const zSandboxCreate = z
+  .object({
+    role: z
+      .enum(['helper', 'manager'])
+      .register(z.globalRegistry, {
+        description:
+          "'helper' joins the demo event as a member and sees the volunteer side; 'manager' owns it and sees the organiser side",
+      })
+      .optional()
+      .default('helper'),
+    language: z
+      .enum(['en', 'de'])
+      .register(z.globalRegistry, {
+        description: 'UI language the visitor is currently reading',
+      })
+      .optional()
+      .default('en'),
+  })
+  .register(z.globalRegistry, {
+    description:
+      'Ask for a demo session.\n\nDeliberately tiny and entirely anonymous: no address, no password, nothing\nto verify. The language is carried so the seeded event reads in the same\nlanguage as the page the visitor clicked from — a German landing page that\nopens an English demo is a jarring first impression.',
   })
 
 /**
@@ -1705,7 +1740,58 @@ export const zUserProfile = z.object({
     })
     .optional(),
   selected_event_id: z.uuid().nullish(),
+  is_sandbox: z
+    .boolean()
+    .register(z.globalRegistry, {
+      description:
+        "This is a throwaway guest account from the 'try a test event' button, not a real registration",
+    })
+    .optional()
+    .default(false),
+  sandbox_expires_at: z.iso.datetime().nullish(),
 })
+
+/**
+ * SandboxSessionResponse
+ *
+ * A real signed-in session, pointed at a demo that will not outlive the day.
+ *
+ * Extends the normal login response rather than inventing a parallel one, so
+ * the client installs it through exactly the same code path — the demo is not
+ * a special rendering mode, it is an ordinary session that happens to belong
+ * to a guest.
+ */
+export const zSandboxSessionResponse = z
+  .object({
+    access_token: z.string().register(z.globalRegistry, {
+      description: 'Short-lived HS256 JWT, bearer token',
+    }),
+    token_type: z
+      .literal('bearer')
+      .register(z.globalRegistry, {
+        description: "Always 'bearer'; present for RFC 6750 clients",
+      })
+      .optional()
+      .default('bearer'),
+    expires_in: z.int().register(z.globalRegistry, {
+      description: 'Seconds until the access token stops being accepted',
+    }),
+    user: zUserProfile,
+    event_id: z.uuid().register(z.globalRegistry, {
+      description: "The seeded event, already set as the guest's selection",
+    }),
+    role: z.enum(['helper', 'manager']).register(z.globalRegistry, {
+      description: 'Which side of the app was requested',
+    }),
+    expires_at: z.iso.datetime().register(z.globalRegistry, {
+      description:
+        'Naive UTC instant at which the sweep may purge this demo. The banner counts down to it; the server does not enforce it early.',
+    }),
+  })
+  .register(z.globalRegistry, {
+    description:
+      'A real signed-in session, pointed at a demo that will not outlive the day.\n\nExtends the normal login response rather than inventing a parallel one, so\nthe client installs it through exactly the same code path — the demo is not\na special rendering mode, it is an ordinary session that happens to belong\nto a guest.',
+  })
 
 /**
  * TokenResponse
@@ -1848,6 +1934,8 @@ export const zEventReadWritable = z.object({
   id: z.uuid(),
   created_by_id: z.uuid().nullish(),
   is_featured: z.boolean().optional().default(false),
+  is_sandbox: z.boolean().optional().default(false),
+  sandbox_expires_at: z.iso.datetime().nullish(),
   created_at: z.iso.datetime(),
   updated_at: z.iso.datetime(),
   my_role: z.enum(['owner', 'admin', 'member']).nullish(),
@@ -1900,6 +1988,20 @@ export const zAuthRefreshResponse = zRefreshResponse
 export const zAuthLogoutResponse = z.void().register(z.globalRegistry, {
   description: 'Successful Response',
 })
+
+/**
+ * Successful Response
+ */
+export const zAuthExitSandboxResponse = z.void().register(z.globalRegistry, {
+  description: 'Successful Response',
+})
+
+export const zAuthSandboxBody = zSandboxCreate
+
+/**
+ * Successful Response
+ */
+export const zAuthSandboxResponse = zSandboxSessionResponse
 
 export const zAuthForgotPasswordBody = zForgotPasswordRequest
 

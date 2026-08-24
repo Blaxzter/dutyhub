@@ -37,6 +37,14 @@ import type {
 const REFRESH_LEEWAY_MS = 60_000
 
 /**
+ * Breadcrumb saying a demo session ended without being asked to.
+ *
+ * `SandboxExpiredDialog` on the landing page reads and removes it. Exported so
+ * the two halves cannot drift apart over a typo in a string literal.
+ */
+export const SANDBOX_ENDED_KEY = 'wirksam-sandbox-expired'
+
+/**
  * The identity the shell renders from — name, avatar, verification badge.
  *
  * It is the backend's `UserProfile` with every field optional, because the
@@ -61,6 +69,17 @@ interface SessionPayload extends AccessTokenPayload {
   user?: AuthUser
 }
 
+export interface ClearOptions {
+  /**
+   * True when the visitor asked for this — a sign-out, or leaving the demo.
+   *
+   * Only an *unasked-for* teardown leaves the demo breadcrumb behind. Somebody
+   * who just pressed "Exit demo" does not need the landing page to tell them
+   * their demo is over.
+   */
+  deliberate?: boolean
+}
+
 export interface AuthSession {
   /** The current access token, or null when nobody is signed in. */
   accessToken: Ref<string | null>
@@ -78,7 +97,7 @@ export interface AuthSession {
   refresh: () => Promise<string | null>
   getAccessToken: () => Promise<string | null>
   setSession: (payload: SessionPayload) => void
-  clear: () => void
+  clear: (options?: ClearOptions) => void
 }
 
 const accessToken = ref<string | null>(null)
@@ -108,8 +127,37 @@ function applyToken(payload: AccessTokenPayload): void {
   isAuthenticated.value = true
 }
 
+/**
+ * Remember that a demo session ended on its own.
+ *
+ * The sweep that reaps expired guests deletes the user row; `auth_sessions`
+ * cascades with it, the next `/auth/refresh` answers 401, and that 401 lands in
+ * `clear()` below. With no note left behind, the visitor is simply dumped on
+ * the landing page mid-click with no explanation — so `SandboxExpiredDialog`
+ * reads this and offers them another demo or a real account.
+ *
+ * `sessionStorage` rather than `localStorage`: the note belongs to the tab that
+ * lost the demo and should die with it, not resurface a week later somewhere
+ * else. Guarded because this module is loaded in Node by the unit tests, where
+ * there is no `sessionStorage` at all, and because a browser set to block site
+ * data throws on access rather than answering null.
+ */
+function rememberSandboxEnded(): void {
+  try {
+    sessionStorage.setItem(SANDBOX_ENDED_KEY, '1')
+  } catch {
+    // Losing the note costs an explanatory dialog and nothing else.
+  }
+}
+
 /** Forget the session locally. Says nothing to the server — see `logout()`. */
-function clear(): void {
+function clear(options: ClearOptions = {}): void {
+  // Necessarily before the identity below is dropped: `user` is the only thing
+  // that knows this was a demo. The stale-refresh guard in `requestRefresh()`
+  // has already decided whether this teardown is the current session's, so
+  // reaching here at all means the note is about a session that really ended.
+  if (!options.deliberate && user.value?.is_sandbox) rememberSandboxEnded()
+
   epoch += 1
   accessToken.value = null
   expiresAt.value = null
@@ -275,7 +323,7 @@ async function logout(): Promise<void> {
   } catch {
     // Deliberately swallowed — see above.
   } finally {
-    clear()
+    clear({ deliberate: true })
   }
 }
 

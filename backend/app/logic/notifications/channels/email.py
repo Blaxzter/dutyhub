@@ -5,7 +5,10 @@ from pathlib import Path
 
 from app.core.config import settings
 from app.core.logger import get_logger
-from app.logic.notifications.channels.base import NotificationChannel
+from app.logic.notifications.channels.base import (
+    NotificationChannel,
+    is_undeliverable,
+)
 from app.logic.notifications.messages import get_email_strings
 from app.models.user import User
 from app.schemas.notification import NotificationData
@@ -27,8 +30,8 @@ class EmailChannel(NotificationChannel):
                 f"No email for user {recipient.id}, skipping email notification"
             )
             return False
-        if recipient.subject.startswith("demo|"):
-            logger.debug(f"Skipping email for demo user {recipient.id}")
+        if is_undeliverable(recipient):
+            logger.debug(f"Skipping email for placeholder account {recipient.id}")
             return False
         return True
 

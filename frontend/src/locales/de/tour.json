@@ -1,0 +1,101 @@
+{
+    "common": {
+        "back": "Zurück",
+        "done": "Fertig",
+        "next": "Weiter",
+        "progress": "Schritt {current} von {total}",
+        "skip": "Tour beenden"
+    },
+    "helper": {
+        "availability": {
+            "body": "Statt nach Schichten zu suchen, die zufällig passen, trägst du ein, wann du Zeit hast. Die Organisation sieht das beim Planen und bietet dir die Vormittage gar nicht erst an, an denen du sowieso nicht kannst.",
+            "title": "Sag, wann du kannst"
+        },
+        "availabilityModes": {
+            "body": "Das ganze Wochenende, jeden Tag dieselben Stunden oder ein paar einzelne Termine. Nimm, was zu deiner Woche passt, die Felder darunter ändern sich mit.",
+            "title": "Drei Arten zu antworten"
+        },
+        "bookShift": {
+            "body": "Wenn du eine Schicht öffnest, siehst du, wer schon dabei ist und worum es geht. Ein Klick, und du bist eingetragen: kein Formular, keine Freigabe. Absagen geht genauso schnell, und der Platz ist sofort wieder frei.",
+            "title": "Eine Schicht übernehmen"
+        },
+        "finish": {
+            "body": "Schicht finden, übernehmen, und eintragen, wann du Zeit hast. Schau dich von hier aus in Ruhe weiter um. Die Demo gehört dir, bis sie abläuft, und nichts davon erreicht jemand anderen.",
+            "title": "So sieht die Helferseite aus"
+        },
+        "myBookings": {
+            "body": "Deine Schichten an einem Ort, vergangene wie kommende, mit allem, was du am Tag selbst brauchst. Hier sagst du auch ab, wenn etwas dazwischenkommt, und je früher das passiert, desto leichter ist die Lücke zu füllen.",
+            "title": "Alles, wozu du Ja gesagt hast"
+        },
+        "navigation": {
+            "body": "Alle Aufgaben der Veranstaltung hängen hinter diesem einen Link. Auf dieser Seite verbringen Helfende fast ihre ganze Zeit, deshalb steht sie am Anfang.",
+            "title": "Hier liegt die Arbeit"
+        },
+        "shiftChips": {
+            "body": "Jedes Kästchen ist eine Schicht mit Anfang, Ende und einer Anzahl Plätze. Wie voll es aussieht, so voll ist es auch. Die Lücken siehst du also, ohne irgendetwas zu öffnen.",
+            "title": "Eine Schicht auf einen Blick"
+        },
+        "taskList": {
+            "body": "Jede Zeile ist etwas, das erledigt werden muss, zum Beispiel ein Empfang oder eine Kaffeeausgabe, und die kleinen Kästchen darunter sind die Schichten dazu, Tag für Tag. Ein Blick nach unten zeigt dir, wo noch Leute fehlen.",
+            "title": "Eine Zeile pro Aufgabe"
+        },
+        "welcome": {
+            "body": "Das hier ist wirksam mit einem kompletten Wochenendfestival darin, das Helfende sucht. Die Daten gehören niemandem und räumen sich von allein weg, also geh ruhig grob damit um. Diese Tour zeigt, was Helfende wirklich tun: eine Schicht finden, sie übernehmen und eintragen, wann sie Zeit haben.",
+            "title": "Du bist in einer echten Veranstaltung"
+        }
+    },
+    "manager": {
+        "createTask": {
+            "body": "Hier beginnt eine neue Aufgabe. Du beschreibst sie einmal, und die Schichten dazu werden für dich ausgerechnet, statt dass du sie einzeln eintippst.",
+            "title": "Eine Aufgabe anlegen"
+        },
+        "dashboard": {
+            "body": "Der Kalender sammelt alle Schichten und Buchungen der Veranstaltung. Die Frage, die du immer zuerst hast, ob heute etwas ansteht, für das noch niemand eingetragen ist, beantwortet er, bevor du suchen gehst.",
+            "title": "Die Woche auf einen Blick"
+        },
+        "finish": {
+            "body": "Aufgabe beschreiben, wirksam daraus Schichten machen lassen, beim Füllen zusehen und hinterher nachlesen, wie es lief. Schau dich von hier aus weiter um. Die Demo gehört dir, bis sie abläuft, und keine echte Veranstaltung ist davon betroffen.",
+            "title": "So sieht die Organisationsseite aus"
+        },
+        "generateShifts": {
+            "body": "Gib das tägliche Zeitfenster an, wie lang eine Schicht sein soll und wie viele Leute sie braucht. Daraus entstehen die Schichten, inklusive der halben Stunde, die am Ende übrig bleibt.",
+            "title": "Wie der Tag aufgeteilt wird"
+        },
+        "invitations": {
+            "body": "Normalerweise trägst du hier E-Mail-Adressen ein oder teilst einen Link, und die Eingeladenen landen direkt in deiner Veranstaltung. Die Demo verschickt gar nichts, deshalb ist das die einzige Stelle hier, die du nur ansehen kannst. Alles andere funktioniert wirklich.",
+            "title": "Einladungen, in der Demo abgeschaltet"
+        },
+        "members": {
+            "body": "Alle, die dabei sind, und was sie jeweils dürfen: Mitglieder übernehmen Schichten, Admins planen zusätzlich mit, und wem die Veranstaltung gehört, kann sie ganz abgeben. Beitrittsanfragen landen ebenfalls hier, zum Annehmen oder Ablehnen.",
+            "title": "Die Leute in deiner Veranstaltung"
+        },
+        "reporting": {
+            "body": "Geleistete Stunden, wer am meisten übernommen hat und welche Tageszeiten am schwersten zu besetzen sind, dazu ein Tabellen-Export für alle, die lieber selbst weiterrechnen. Nützlich in der Woche danach und noch nützlicher ein Jahr später.",
+            "title": "Wie es tatsächlich gelaufen ist"
+        },
+        "shiftPreview": {
+            "body": "Alle Schichten, die aus deinen Einstellungen entstehen würden, bevor eine einzige gespeichert ist. Einen Zweistundenblock zu korrigieren, der eine Stunde hätte sein sollen, kostet hier nichts und später, wenn vierzig Leute darin gebucht sind, sehr viel.",
+            "title": "Erst prüfen, dann speichern"
+        },
+        "staffing": {
+            "body": "Zurück in der Liste siehst du jetzt, wie sich die Schichten jeder Aufgabe füllen. Die dünn besetzten sind die, denen noch Leute fehlen, und genau das ist deine Liste für die Woche vor der Veranstaltung.",
+            "title": "Wer sich eingetragen hat"
+        },
+        "taskDates": {
+            "body": "Ein einzelner Tag, mehrere Tage am Stück oder ein paar verstreute Termine. Alles, was du danach einstellst, gilt für jeden Tag, den du hier auswählst.",
+            "title": "An welchen Tagen"
+        },
+        "taskDetails": {
+            "body": "Nenn die Aufgabe so, wie Helfende sie am Tag selbst wiedererkennen, und schreib dazu, wo man hinkommt und was man vorher wissen oder mitbringen sollte.",
+            "title": "Worum es geht"
+        },
+        "tasks": {
+            "body": "Eine Aufgabe ist etwas, das über einen Zeitraum abgedeckt sein muss: ein Empfang übers ganze Wochenende, eine Kaffeeausgabe am Samstag. wirksam macht daraus einzelne Schichten, die Freiwillige übernehmen können.",
+            "title": "Die Aufgaben, für die du Leute brauchst"
+        },
+        "welcome": {
+            "body": "Das hier ist wirksam mit einem fertigen Wochenendfestival darin: vier Aufgaben, ein Schichtplan und ein paar Freiwillige. Die Veranstaltung gehört niemandem und räumt sich von allein weg, du kannst hier also nichts kaputt machen. Diese Tour folgt der Arbeit der Person, die das Ganze organisiert.",
+            "title": "Du leitest diese Veranstaltung"
+        }
+    }
+}

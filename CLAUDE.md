@@ -126,6 +126,13 @@ by. `None` means unrestricted (superadmin only); an **empty list means "nothing"
 and must never be collapsed to `None`** — that would hand a new account the
 whole database.
 
+A visitor can also skip all of this: **`POST /auth/sandbox`** mints a throwaway
+guest account plus one seeded event dated around today, opens the app straight
+on the dashboard with the event preselected, and hard-deletes the lot on a TTL
+sweep. Sandbox rows are invisible to every other account *including the
+superadmin*, and the deletion order in `app/logic/sandbox/cleanup.py` is
+load-bearing — read [`docs/SANDBOX.md`](docs/SANDBOX.md) before touching it.
+
 Authentication itself lives under `/auth` (`backend/app/api/routes/auth.py` →
 `app/logic/auth/`): register, login, refresh, logout, password reset, email
 verification, session list. Access tokens are HS256, 15 minutes, held in memory
@@ -189,6 +196,10 @@ Two layouts: `PreAuthLayout` (public pages) and `PostAuthLayout` (authenticated 
   registration; unset (the default) disables it, which is what local dev and the E2E suite run with.
   The matching public site key is `TURNSTILE_SITE_KEY`, served to the browser as runtime config —
   see [`docs/AUTH.md`](docs/AUTH.md) for the test keys that let you exercise it locally
+- `SANDBOX_ENABLED` (default on), `SANDBOX_TTL_MINUTES` (60) and
+  `SANDBOX_MAX_ACTIVE` (25) tune the "check out a test event" demo. The first is
+  also served to the browser as runtime config, so the landing page never shows
+  a button the backend would refuse — see [`docs/SANDBOX.md`](docs/SANDBOX.md)
 - Local mail (verification, password reset) goes to the mailcatcher container on port 1025; its inbox is at `http://localhost:1080`. With no SMTP configured at all, the link is written to the backend log instead
 - E2E tests authenticate through the `X-Test-User-Email` bypass, enabled by `VITE_E2E_AUTH_BYPASS` in `frontend/.env` and gated server-side on `TESTING`
 

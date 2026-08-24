@@ -885,6 +885,7 @@ onMounted(async () => {
                   <Card
                     v-for="shift in shifts"
                     :key="shift.id"
+                    :data-testid="'shift-card-' + shift.id"
                     class="event relative cursor-pointer select-none transition-all"
                     :class="[
                       myBookedShiftIds.has(shift.id)

@@ -74,6 +74,14 @@ class NotificationService:
                 logger.warning(f"Recipient {recipient_id} not found, skipping")
                 continue
 
+            # Skipped before the row is written, not merely before it is
+            # delivered. The per-channel guards further down stop the send but
+            # still leave an in-app notification and an SSE unread bump behind,
+            # which is noise in a demo and rows to clean up afterwards.
+            if recipient.is_sandbox:
+                logger.debug(f"Skipping notification for sandbox user {recipient_id}")
+                continue
+
             # Resolve localized title/body
             if message_factory:
                 resolved_title, resolved_body = message_factory(

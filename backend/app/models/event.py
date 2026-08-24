@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, time
+from datetime import date, datetime, time
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
@@ -46,6 +46,25 @@ class Event(Base, table=True):
             sa.Boolean, nullable=False, server_default=sa.text("false"), index=True
         ),
         description="Superadmin-curated: surfaced on the home screen",
+    )
+    is_sandbox: bool = Field(
+        default=False,
+        sa_column=sa.Column(
+            sa.Boolean, nullable=False, server_default=sa.text("false"), index=True
+        ),
+        description=(
+            "Throwaway event behind the 'try a test event' button. It belongs to "
+            "one guest account, is hidden from every listing including the "
+            "superadmin's, and is hard-deleted once sandbox_expires_at passes."
+        ),
+    )
+    sandbox_expires_at: datetime | None = Field(
+        default=None,
+        sa_column=sa.Column(sa.DateTime, nullable=True, index=True),
+        description=(
+            "Naive UTC deadline after which the sweep purges this event and its "
+            "guest. NULL on every real event — the column is meaningless there."
+        ),
     )
     created_by_id: uuid.UUID | None = Field(
         default=None,

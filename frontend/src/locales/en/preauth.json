@@ -165,6 +165,7 @@
         },
         "finalCta": {
             "button": "Start an event",
+            "demoButton": "Try a demo event",
             "eyebrow": "Get started",
             "lede": "Sign in, create your event, and invite your team. Nobody has to approve you first.",
             "title": "Ready to plan your next event?"
@@ -186,6 +187,7 @@
                 "taskName": "Welcome Desk",
                 "you": "You"
             },
+            "ctaDemo": "Try a demo event",
             "ctaPrimary": "Start an event",
             "ctaSecondary": "I have an invitation",
             "eyebrow": "Free for volunteer teams",

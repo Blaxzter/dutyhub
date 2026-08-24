@@ -6,6 +6,7 @@ Fixtures are organized by domain for better maintainability:
 - users.py: User fixtures (test_user, test_admin_user, etc.)
 - auth.py: Access-token and Authorization-header factories
 - client.py: FastAPI app and HTTP client fixtures
+- sandbox.py: Seeded "try a test event" demos
 """
 
 # Import all fixtures so they are available to tests
@@ -34,6 +35,12 @@ from tests.fixtures.events import (
     test_private_event,
     test_user_availability,
     test_user_availability_with_dates,
+)
+from tests.fixtures.sandbox import (
+    SandboxFactory,
+    SandboxSetup,
+    make_sandbox,
+    test_sandbox,
 )
 from tests.fixtures.shifts import test_shift
 from tests.fixtures.tasks import test_draft_task, test_task

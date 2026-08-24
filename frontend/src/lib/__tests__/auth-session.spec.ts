@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { AuthSession } from '../auth-session'
 
@@ -57,6 +57,20 @@ function unauthorized() {
     response: { status: 401 },
   })
 }
+
+/**
+ * A `sessionStorage` to watch, since these specs run in Node where there is
+ * none at all — which is itself one of the cases the breadcrumb has to survive.
+ */
+function stubSessionStorage() {
+  const setItem = vi.fn()
+  vi.stubGlobal('sessionStorage', { setItem, getItem: vi.fn(), removeItem: vi.fn() })
+  return setItem
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('auth-session', () => {
   describe('bootstrap', () => {
@@ -318,6 +332,59 @@ describe('auth-session', () => {
       await expect(token).resolves.toBeNull()
       expect(session.isAuthenticated.value).toBe(true)
       expect(session.accessToken.value).toBe('newer')
+    })
+  })
+
+  /**
+   * The demo is reaped server-side on a timer, so the browser only learns of it
+   * when a refresh comes back 401 — mid-click, with no explanation. The note
+   * left here is what lets the landing page turn that into an offer instead of
+   * an unexplained sign-out.
+   */
+  describe('the breadcrumb a demo session leaves behind', () => {
+    it('is written when a demo guest is signed out without asking', async () => {
+      const setItem = stubSessionStorage()
+      const session = await loadSession()
+      session.setSession({ access_token: 'demo', expires_in: 900, user: { is_sandbox: true } })
+
+      session.clear()
+
+      expect(setItem).toHaveBeenCalledWith('wirksam-sandbox-expired', '1')
+    })
+
+    it('is not written when the visitor asked to leave', async () => {
+      const setItem = stubSessionStorage()
+      const session = await loadSession()
+      session.setSession({ access_token: 'demo', expires_in: 900, user: { is_sandbox: true } })
+
+      session.clear({ deliberate: true })
+
+      expect(setItem).not.toHaveBeenCalled()
+    })
+
+    it('is not written for a signing-out of a real account', async () => {
+      const setItem = stubSessionStorage()
+      const session = await loadSession()
+      post.mockResolvedValue(sessionResponse('minted'))
+      await session.login({ email: 'ada@example.com', password: 'hunter2hunter2' })
+      post.mockResolvedValue({ data: undefined })
+
+      await session.logout()
+
+      expect(setItem).not.toHaveBeenCalled()
+    })
+
+    it('survives a browser with no usable session storage', async () => {
+      vi.stubGlobal('sessionStorage', {
+        setItem: () => {
+          throw new Error('site data blocked')
+        },
+      })
+      const session = await loadSession()
+      session.setSession({ access_token: 'demo', expires_in: 900, user: { is_sandbox: true } })
+
+      expect(() => session.clear()).not.toThrow()
+      expect(session.isAuthenticated.value).toBe(false)
     })
   })
 })

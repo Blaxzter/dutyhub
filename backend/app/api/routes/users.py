@@ -123,6 +123,14 @@ async def update_selected_event(
         event = await crud_event.get(
             session, body.selected_event_id, raise_404_error=True
         )
+        # The membership test below lets ``is_admin`` straight through, which
+        # would let the superadmin adopt a stranger's demo as their dashboard
+        # scope. A sandbox belongs to its guest alone, so it is refused here —
+        # and with 404 rather than 403, matching ``require_event_visible``,
+        # because whether someone else's demo exists is not a fact this
+        # endpoint should confirm.
+        if event.is_sandbox and event.created_by_id != current_user.id:
+            raise_problem(404, code="event.not_found", detail="Event not found")
         # You can only work inside an event you belong to.
         if not current_user.is_admin and not await crud_membership.get(
             session, user_id=current_user.id, event_id=event.id

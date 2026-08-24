@@ -165,6 +165,7 @@
         },
         "finalCta": {
             "button": "Veranstaltung starten",
+            "demoButton": "Demo-Veranstaltung ansehen",
             "eyebrow": "Loslegen",
             "lede": "Melde dich an, leg deine Veranstaltung an und lade dein Team ein. Niemand muss dich vorher freischalten.",
             "title": "Bereit für eure nächste Veranstaltung?"
@@ -186,6 +187,7 @@
                 "taskName": "Empfang",
                 "you": "Du"
             },
+            "ctaDemo": "Demo-Veranstaltung ansehen",
             "ctaPrimary": "Veranstaltung starten",
             "ctaSecondary": "Ich habe eine Einladung",
             "eyebrow": "Kostenlos für ehrenamtliche Teams",

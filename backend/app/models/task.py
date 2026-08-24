@@ -47,6 +47,20 @@ class Task(Base, table=True):
             index=True,
         ),
     )
+    is_sandbox: bool = Field(
+        default=False,
+        sa_column=sa.Column(
+            sa.Boolean, nullable=False, server_default=sa.text("false"), index=True
+        ),
+        description=(
+            "Mirrors Event.is_sandbox, denormalised on purpose. ``event_id`` is "
+            "ON DELETE SET NULL, so a task can outlive its event with a NULL "
+            "event_id — and a NULL never matches the ``IN (...)`` that every "
+            "event-scoped filter is built from, which would make such a row "
+            "visible to everyone. This flag survives that and keeps the "
+            "exclusion in the WHERE clause."
+        ),
+    )
 
     # Generation config fields (stored for re-generation)
     location: str | None = Field(

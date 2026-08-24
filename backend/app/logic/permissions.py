@@ -83,6 +83,12 @@ async def require_event_visible(
     public *published* events, and gets a 404 rather than a 403 for private
     ones — a stranger should not be able to probe which private events exist.
     """
+    # Before the role check, not after: ``get_event_role`` reports the
+    # platform superadmin as "owner" of every event, so a test placed below
+    # this line would leave them able to read any visitor's demo by id.
+    if event.is_sandbox and event.created_by_id != user.id:
+        raise_problem(404, code="event.not_found", detail="Event not found")
+
     role = await get_event_role(user, session, event.id)
     if role is not None:
         return role

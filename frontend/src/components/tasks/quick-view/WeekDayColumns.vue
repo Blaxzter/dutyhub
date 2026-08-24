@@ -172,6 +172,7 @@ defineExpose({ totalHidden, maxShiftCount })
             <Button
               v-for="shift in visibleShifts(day)"
               :key="shift.slotId"
+              :data-testid="'shift-chip-' + shift.slotId"
               variant="outline"
               size="sm"
               class="h-auto w-full px-1.5 py-1 text-xs"

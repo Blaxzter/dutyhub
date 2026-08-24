@@ -1,3 +1,4 @@
+import datetime as dt
 import uuid
 from typing import Literal
 
@@ -60,6 +61,21 @@ class UserProfile(BaseModel):
     selected_event_id: uuid.UUID | None = Field(
         default=None,
         description="Event currently selected as the user's dashboard scope",
+    )
+    is_sandbox: bool = Field(
+        default=False,
+        description=(
+            "This is a throwaway guest account from the 'try a test event' "
+            "button, not a real registration"
+        ),
+    )
+    sandbox_expires_at: dt.datetime | None = Field(
+        default=None,
+        description=(
+            "When this guest's demo is purged, in naive UTC. Resolved from the "
+            "sandbox event rather than stored on the user, so the countdown "
+            "survives a page reload without a second request."
+        ),
     )
 
 

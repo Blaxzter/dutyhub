@@ -1,0 +1,47 @@
+{
+    "banner": {
+        "aria": "Demo session",
+        "exit": "Exit demo",
+        "expired": "This demo has ended",
+        "label": "Demo",
+        "remaining": "{time} left",
+        "restartTour": "Restart tour",
+        "role": {
+            "helper": "as a helper",
+            "manager": "as an organiser"
+        }
+    },
+    "cta": {
+        "note": "No sign-up, no email address.",
+        "picker": "Or look around a demo event first"
+    },
+    "exit": {
+        "cancel": "Stay in the demo",
+        "confirm": "Delete and leave",
+        "message": "The demo event, its shifts and everything you booked in it are deleted straight away. None of it can be brought back.",
+        "title": "End the demo?"
+    },
+    "expired": {
+        "createAccount": "Create a real account",
+        "message": "Demo events only live for an hour, and yours has just been deleted along with everything in it. You can look around a fresh one, or make a real account and keep what you plan.",
+        "startAnother": "Start another demo",
+        "title": "Your demo has ended"
+    },
+    "startDialog": {
+        "cancel": "Cancel",
+        "helper": {
+            "description": "Book yourself into shifts, say when you are free, and see what you have signed up for.",
+            "title": "As a helper"
+        },
+        "intro": "We will set up an example event for you — tasks, shifts, a few teammates — and take you straight to it. Nothing in it is real, and the whole thing is deleted again after an hour.",
+        "manager": {
+            "description": "Plan the tasks and shifts, see which places are still open, and handle invitations and requests to join.",
+            "title": "As an organiser"
+        },
+        "question": "Which side would you like to see?",
+        "signedInWarning": "Starting the demo signs you out of your account. Your own events are untouched — sign back in whenever you like.",
+        "start": "Start the demo",
+        "starting": "Setting up your demo…",
+        "title": "Look around a demo event"
+    }
+}

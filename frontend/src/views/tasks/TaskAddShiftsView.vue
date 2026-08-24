@@ -323,7 +323,7 @@ onMounted(loadTask)
       </div>
 
       <!-- Batch Details (location / category) -->
-      <Card>
+      <Card data-testid="section-batch">
         <CardHeader>
           <CardTitle>{{ t('duties.tasks.addShiftsView.sections.batch') }}</CardTitle>
           <CardDescription>{{
@@ -345,7 +345,7 @@ onMounted(loadTask)
       </Card>
 
       <!-- Dates -->
-      <Card>
+      <Card data-testid="section-task-dates">
         <CardHeader>
           <div class="flex items-center gap-3">
             <CalendarDays class="h-5 w-5 text-primary" />
@@ -448,7 +448,7 @@ onMounted(loadTask)
       </Card>
 
       <!-- Schedule -->
-      <Card>
+      <Card data-testid="section-schedule">
         <CardHeader>
           <div class="flex items-center gap-3">
             <Clock class="h-5 w-5 text-primary" />
@@ -478,7 +478,7 @@ onMounted(loadTask)
       </Card>
 
       <!-- Preview -->
-      <Card>
+      <Card data-testid="section-preview">
         <CardHeader>
           <div class="flex items-center justify-between">
             <div>

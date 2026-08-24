@@ -24,8 +24,10 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import col
 
 from app.core.config import settings
 from app.core.errors import raise_problem
@@ -44,6 +46,7 @@ from app.logic.auth.tokens import (
     rotate_refresh_session,
 )
 from app.models.auth_session import AuthSession
+from app.models.event import Event
 from app.models.user import User
 from app.schemas.auth import ChangePasswordRequest, LoginRequest, RegisterRequest
 from app.schemas.user import UserCreate
@@ -171,6 +174,22 @@ async def build_user_profile(db: AsyncSession, user: User) -> UserProfile:
     roles_by_event = await crud_membership.get_roles_for_user(db, user_id=user.id)
     profile = UserProfile.model_validate(user)
     profile.event_roles = {str(k): v for k, v in roles_by_event.items()}
+    if user.is_sandbox:
+        # The demo banner counts down to this. Resolving it here — rather than
+        # duplicating the deadline onto the user row — keeps one source of
+        # truth for when the sweep will take the event away.
+        profile.sandbox_expires_at = (
+            (
+                await db.execute(
+                    select(col(Event.sandbox_expires_at)).where(
+                        col(Event.is_sandbox).is_(True),
+                        col(Event.created_by_id) == user.id,
+                    )
+                )
+            )
+            .scalars()
+            .first()
+        )
     return profile
 
 
@@ -198,6 +217,28 @@ async def _sign_in(
         refresh_token=issued.raw_token,
         session_id=issued.session.id,
     )
+
+
+async def sign_in_user(
+    db: AsyncSession,
+    *,
+    user: User,
+    user_agent: str | None = None,
+    ip_address: str | None = None,
+) -> SignedInSession:
+    """Open a session for a user this module did not authenticate itself.
+
+    The one supported caller is ``logic.sandbox``, which mints a guest account
+    and needs it signed in without a credential to check — there is none, and
+    there never will be: sandbox rows carry a NULL ``password_hash``, which
+    ``verify_password`` folds to a failed comparison.
+
+    It exists so that path goes through the same session machinery as every
+    other login rather than reaching for ``issue_refresh_session`` and
+    ``create_access_token`` on its own. Anything that reimplements those two
+    will eventually disagree with them about expiry, rotation or revocation.
+    """
+    return await _sign_in(db, user=user, user_agent=user_agent, ip_address=ip_address)
 
 
 async def register_user(

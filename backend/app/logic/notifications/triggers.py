@@ -215,8 +215,18 @@ async def dispatch_task_published(
     task_id: uuid.UUID,
     task_name: str,
     event_id: uuid.UUID | None = None,
+    is_sandbox: bool = False,
 ) -> None:
-    """Notify all active users that a task was published."""
+    """Notify all active users that a task was published.
+
+    ``is_sandbox`` is a hard stop rather than a filter on the recipient list.
+    This fans out to *every active account on the installation*, and a demo
+    guest flipping a seeded task from draft to published - which the manager
+    tour walks them through - would otherwise put the name of their throwaway
+    task in front of the entire user base.
+    """
+    if is_sandbox:
+        return
     try:
         from sqlalchemy import select
         from sqlmodel import col

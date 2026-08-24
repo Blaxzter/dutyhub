@@ -47,9 +47,9 @@ Not yet covered, and not currently tracked by an issue:
 | `chromium`   | 22         | 201     |
 | `member`     | 2          | 18      |
 | `multi-user` | 4          | 54      |
-| `public`     | 5          | 12      |
+| `public`     | 7          | 22      |
 | `test-reset` | 1          | 1       |
-| **Total**    | **43**     | **328** |
+| **Total**    | **45**     | **338** |
 
 ## Inventory
 
@@ -588,7 +588,7 @@ Not yet covered, and not currently tracked by an issue:
   - member books shift, admin sees updated count
   - admin-created task visible to member in tasks list
 
-### Project `public` — 5 files, 12 tests
+### Project `public` — 7 files, 22 tests
 
 #### `frontend/e2e/tests/public/how-it-works.spec.ts` — 2 tests
 
@@ -618,6 +618,24 @@ Not yet covered, and not currently tracked by an issue:
   - loads and shows content
 - **Impressum page** (1)
   - loads and shows content
+
+#### `frontend/e2e/tests/public/sandbox-tour.spec.ts` — 3 tests
+
+- **guided tour** (3)
+  - the helper track starts on its own and runs to the end across routes
+  - the organiser track covers the management screens
+  - the banner can restart a tour that was closed
+
+#### `frontend/e2e/tests/public/sandbox.spec.ts` — 7 tests
+
+- **demo session** (7)
+  - the landing page offers a demo to an anonymous visitor
+  - opens the app directly, without ever showing the event picker
+  - shows a banner with a live countdown and a way out
+  - a helper sees the volunteer side and none of the management screens
+  - an organiser sees the management screens
+  - the seeded event has work in it on every screen the tour visits
+  - leaving the demo signs the visitor out and takes the app back
 
 #### `frontend/e2e/tests/public/vue.spec.ts` — 1 test
 

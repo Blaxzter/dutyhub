@@ -99,6 +99,12 @@ services:
             - SMTP_PASSWORD=${SMTP_PASSWORD}
             - EMAILS_FROM_EMAIL=${EMAILS_FROM_EMAIL}
             - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
+            # The demo-session knobs. SANDBOX_ENABLED is also handed to the
+            # frontend service below, which serves it to the browser — the two
+            # have to agree or the landing page offers a button the API refuses.
+            - SANDBOX_ENABLED=${SANDBOX_ENABLED:-true}
+            - SANDBOX_TTL_MINUTES=${SANDBOX_TTL_MINUTES:-60}
+            - SANDBOX_MAX_ACTIVE=${SANDBOX_MAX_ACTIVE:-25}
             - POSTGRES_SERVER=db
             - POSTGRES_PORT=5432
             - POSTGRES_DB=${POSTGRES_DB}
@@ -146,6 +152,9 @@ services:
             - LEGAL_EMAIL=${LEGAL_EMAIL:-}
             - LEGAL_PHONE=${LEGAL_PHONE:-}
             - TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY:-}
+            # Reaches the browser through docker-entrypoint.sh; must match the
+            # backend's copy above, which is what actually enforces it.
+            - SANDBOX_ENABLED=${SANDBOX_ENABLED:-true}
         networks:
             - traefik-net
             - default

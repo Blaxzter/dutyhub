@@ -65,6 +65,8 @@ class EventRead(EventBase):
     id: uuid.UUID
     created_by_id: uuid.UUID | None = None
     is_featured: bool = False
+    is_sandbox: bool = False
+    sandbox_expires_at: dt.datetime | None = None
     created_at: dt.datetime
     updated_at: dt.datetime
 

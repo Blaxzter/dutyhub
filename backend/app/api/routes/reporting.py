@@ -4,6 +4,7 @@ import csv
 import datetime as dt
 import io
 import uuid
+from typing import Any
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
@@ -99,6 +100,8 @@ async def reporting_export(
     )
     if task_ids_filter is not None:
         query = query.where(col(Task.id).in_(task_ids_filter))
+    else:
+        query = query.where(col(Task.id).notin_(_non_sandbox_tasks()))
     query = _apply_shift_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
@@ -192,6 +195,18 @@ async def _get_managed_task_ids(
     return list(group_tasks_result.scalars().all())
 
 
+def _non_sandbox_tasks() -> Any:
+    """Subquery of every task that belongs to a demo.
+
+    Reporting is the one place where a caller may legitimately have no event
+    filter at all - the platform superadmin sees the whole installation - so
+    the sandbox exclusion cannot ride along on an event scope the way it does
+    everywhere else. It has to be its own clause, applied exactly where the
+    scope filter would otherwise have gone.
+    """
+    return select(col(Task.id)).where(col(Task.is_sandbox).is_(True))
+
+
 async def _overview_stats(  # noqa: ANN001
     session,
     date_from: dt.date | None,
@@ -210,6 +225,10 @@ async def _overview_stats(  # noqa: ANN001
     )
     if task_ids_filter is not None:
         booking_query = booking_query.where(col(Shift.task_id).in_(task_ids_filter))
+    else:
+        booking_query = booking_query.where(
+            col(Shift.task_id).notin_(_non_sandbox_tasks())
+        )
     booking_query = _apply_shift_date_filters(booking_query, date_from, date_to)
     result = await session.execute(booking_query)
     row = result.one()
@@ -224,6 +243,8 @@ async def _overview_stats(  # noqa: ANN001
     task_query = select(func.count()).select_from(Task)
     if task_ids_filter is not None:
         task_query = task_query.where(col(Task.id).in_(task_ids_filter))
+    else:
+        task_query = task_query.where(col(Task.id).notin_(_non_sandbox_tasks()))
     if date_from:
         task_query = task_query.where(col(Task.end_date) >= date_from)
     if date_to:
@@ -238,6 +259,8 @@ async def _overview_stats(  # noqa: ANN001
     ).select_from(Shift)
     if task_ids_filter is not None:
         slot_query = slot_query.where(col(Shift.task_id).in_(task_ids_filter))
+    else:
+        slot_query = slot_query.where(col(Shift.task_id).notin_(_non_sandbox_tasks()))
     if date_from:
         slot_query = slot_query.where(col(Shift.date) >= date_from)
     if date_to:
@@ -261,6 +284,10 @@ async def _overview_stats(  # noqa: ANN001
     filled_query = select(func.count()).select_from(Shift).where(confirmed_count_sq > 0)
     if task_ids_filter is not None:
         filled_query = filled_query.where(col(Shift.task_id).in_(task_ids_filter))
+    else:
+        filled_query = filled_query.where(
+            col(Shift.task_id).notin_(_non_sandbox_tasks())
+        )
     if date_from:
         filled_query = filled_query.where(col(Shift.date) >= date_from)
     if date_to:
@@ -313,6 +340,8 @@ async def _bookings_trend(  # noqa: ANN001
     )
     if task_ids_filter is not None:
         query = query.where(col(Shift.task_id).in_(task_ids_filter))
+    else:
+        query = query.where(col(Shift.task_id).notin_(_non_sandbox_tasks()))
     query = _apply_shift_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
@@ -345,6 +374,8 @@ async def _top_volunteers(  # noqa: ANN001
     )
     if task_ids_filter is not None:
         query = query.where(col(Shift.task_id).in_(task_ids_filter))
+    else:
+        query = query.where(col(Shift.task_id).notin_(_non_sandbox_tasks()))
     query = _apply_shift_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
@@ -388,6 +419,8 @@ async def _category_breakdown(  # noqa: ANN001
     )
     if task_ids_filter is not None:
         query = query.where(col(Shift.task_id).in_(task_ids_filter))
+    else:
+        query = query.where(col(Shift.task_id).notin_(_non_sandbox_tasks()))
     if date_from:
         query = query.where(col(Shift.date) >= date_from)
     if date_to:
@@ -434,6 +467,8 @@ async def _bookings_by_hour(  # noqa: ANN001
     )
     if task_ids_filter is not None:
         query = query.where(col(Shift.task_id).in_(task_ids_filter))
+    else:
+        query = query.where(col(Shift.task_id).notin_(_non_sandbox_tasks()))
     query = _apply_shift_date_filters(query, date_from, date_to)
 
     result = await session.execute(query)
@@ -473,6 +508,8 @@ async def _task_fill_rates(  # noqa: ANN001
     )
     if task_ids_filter is not None:
         query = query.where(col(Task.id).in_(task_ids_filter))
+    else:
+        query = query.where(col(Task.id).notin_(_non_sandbox_tasks()))
     if date_from:
         query = query.where(col(Shift.date) >= date_from)
     if date_to:

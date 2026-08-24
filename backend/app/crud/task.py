@@ -37,6 +37,12 @@ class CRUDTask(CRUDBase[Task, TaskCreate, TaskUpdate]):
             # filter. None means unrestricted; an empty list means nothing is
             # visible, and must not silently degrade to unrestricted.
             query = query.where(col(Task.event_id).in_(restrict_to_event_ids))
+        else:
+            # Unrestricted means the platform superadmin. Demo tasks are still
+            # excluded - and the flag is read from the task rather than from
+            # its event because ``tasks.event_id`` is ON DELETE SET NULL, so a
+            # task can outlive its event and a NULL matches no ``IN`` list.
+            query = query.where(col(Task.is_sandbox).is_(False))
         if event_id is not None:
             query = query.where(col(Task.event_id) == event_id)
         if search:

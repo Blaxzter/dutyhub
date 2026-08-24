@@ -38,11 +38,13 @@ from app.core.rate_limit import (
     register_limiter,
     resend_verification_limiter,
     reset_password_limiter,
+    sandbox_limiter,
 )
 from app.core.security import AuthTokenError, decode_access_token
 from app.core.turnstile import verify_turnstile
 from app.logic.auth import service
 from app.logic.auth.emails import send_password_reset_email, send_verify_email
+from app.logic.sandbox import service as sandbox_service
 from app.models.auth_session import AuthSession
 from app.schemas.auth import (
     AuthSessionRead,
@@ -55,6 +57,7 @@ from app.schemas.auth import (
     TokenResponse,
     VerifyEmailRequest,
 )
+from app.schemas.sandbox import SandboxCreate, SandboxSessionResponse
 
 logger = get_logger(__name__)
 
@@ -283,6 +286,76 @@ async def logout(
     _clear_refresh_cookie(response)
 
 
+# ── The demo session ──────────────────────────────────────────────
+#
+# These two live in this file, and must keep living in it, for one unglamorous
+# reason: the refresh cookie is scoped to REFRESH_COOKIE_PATH, which is this
+# router's prefix. A sandbox endpoint mounted under any other prefix would set
+# a cookie the browser never sends back to /auth/refresh, and the demo would
+# die silently at the first fifteen-minute token renewal — long after the
+# visitor stopped watching, and with no error anywhere to explain it.
+
+
+@router.post("/sandbox", response_model=SandboxSessionResponse, status_code=201)
+async def sandbox(
+    body: SandboxCreate,
+    request: Request,
+    response: Response,
+    session: DBDep,
+) -> SandboxSessionResponse:
+    """Hand an anonymous visitor a throwaway account and an event to play in.
+
+    This is the only endpoint in the application that writes on behalf of a
+    caller who has not identified themselves, so it is fenced in three ways:
+    a deployment-level switch, a per-IP rate limit, and a hard ceiling counted
+    against live rows. See ``logic.sandbox.service`` for why all three, and why
+    the rate limiter is the weakest of them.
+
+    What comes back is an ordinary sign-in response. The demo is not a special
+    rendering mode — it is a real session belonging to an account that will be
+    deleted within the hour, which is what lets every screen in the app work
+    against it unmodified.
+    """
+    await sandbox_limiter.check(client_ip(request))
+
+    user_agent, ip_address = _client_labels(request)
+    signed_in, event = await sandbox_service.create_sandbox(
+        session,
+        role=body.role,
+        language=body.language,
+        user_agent=user_agent,
+        ip_address=ip_address,
+    )
+    _set_refresh_cookie(response, signed_in.refresh_token)
+
+    assert event.sandbox_expires_at is not None  # set by create_sandbox
+    return SandboxSessionResponse(
+        access_token=signed_in.access_token,
+        expires_in=signed_in.expires_in,
+        user=await service.build_user_profile(session, signed_in.user),
+        event_id=event.id,
+        role=body.role,
+        expires_at=event.sandbox_expires_at,
+    )
+
+
+@router.delete("/sandbox", status_code=status.HTTP_204_NO_CONTENT)
+async def exit_sandbox(
+    current_user: CurrentUser,
+    response: Response,
+    session: DBDep,
+) -> None:
+    """End the demo now and delete everything it created.
+
+    The TTL sweep would get there eventually; this is for the visitor who is
+    done and would rather not leave their fake bookings lying around. Refuses a
+    real account with 403 — this deletes an event and its members, and must
+    never be reachable for one that matters.
+    """
+    await sandbox_service.end_sandbox(session, user=current_user)
+    _clear_refresh_cookie(response)
+
+
 # ── Password reset ────────────────────────────────────────────────
 
 
@@ -370,6 +443,12 @@ async def resend_verification(
     address is already confirmed, or the account has none). There is nothing
     for the caller to do differently and nothing worth a different screen.
     """
+    if current_user.is_sandbox:
+        raise_problem(
+            403,
+            code="sandbox.not_available",
+            detail="Account settings are not part of the demo",
+        )
     await resend_verification_limiter.check(str(current_user.id))
 
     token = await service.issue_verification(session, user=current_user)
@@ -400,6 +479,16 @@ async def change_password(
     The caller's own session survives — being signed out of the tab you just
     used reads as an error, and the devices worth ejecting are the other ones.
     """
+    if current_user.is_sandbox:
+        # A guest has no password to change, and the generic error for that
+        # ("no password set, use the reset link") sends them to a flow that
+        # answers 202 and mails nothing, because the account has no address.
+        # Refusing here is the only way out of that loop.
+        raise_problem(
+            403,
+            code="sandbox.not_available",
+            detail="Account settings are not part of the demo",
+        )
     revoked = await service.change_password(
         session,
         user=current_user,

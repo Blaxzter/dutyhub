@@ -16,8 +16,14 @@ class User(Base, table=True):
     registration as ``local|<uuid4hex>``. Two other prefixes are behavioural
     rather than cosmetic and must survive any future rework of this column:
     ``demo|`` marks the fake accounts ``/demo-data`` generates, which all three
-    notification channels refuse to send to, and ``test|`` marks the accounts
-    ``POST /testing/reset`` is allowed to delete.
+    notification channels refuse to send to, ``test|`` marks the accounts
+    ``POST /testing/reset`` is allowed to delete, and ``sandbox|`` marks the
+    guest accounts minted by the "try a test event" button, which are purged
+    together with their event when its TTL runs out.
+
+    The ``sandbox|`` prefix and the ``is_sandbox`` column are not redundant: the
+    prefix is what the notification channels grep for, the column is what every
+    ``WHERE`` clause filters on — a prefix cannot be indexed usefully.
     """
 
     __tablename__ = "users"  # type: ignore[assignment]
@@ -44,8 +50,20 @@ class User(Base, table=True):
     subject: str = Field(
         sa_column=sa.Column(sa.String, unique=True, index=True),
         description=(
-            "Opaque local identity, e.g. 'local|<uuid4hex>'; the 'demo|' and "
-            "'test|' prefixes are behavioural — see the class docstring"
+            "Opaque local identity, e.g. 'local|<uuid4hex>'; the 'demo|', "
+            "'test|' and 'sandbox|' prefixes are behavioural — see the class "
+            "docstring"
+        ),
+    )
+    is_sandbox: bool = Field(
+        default=False,
+        sa_column=sa.Column(
+            sa.Boolean, nullable=False, server_default=sa.text("false"), index=True
+        ),
+        description=(
+            "Throwaway guest behind the 'try a test event' button. Never "
+            "listed in user search, never sent a notification, and deleted "
+            "with its sandbox event."
         ),
     )
     password_hash: str | None = Field(

@@ -1,17 +1,20 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import { AlertTriangle } from '@lucide/vue'
+import { AlertTriangle, FlaskConicalIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { useAuthStore } from '@/stores/auth'
+import { useSandboxStore } from '@/stores/sandbox'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import Badge from '@/components/ui/badge/Badge.vue'
+import { Button } from '@/components/ui/button'
 
+import SandboxStartDialog from '@/components/sandbox/SandboxStartDialog.vue'
 import EventPickerList, { type PickerTab } from '@/components/select-event/EventPickerList.vue'
 import NotificationSetupStep from '@/components/select-event/NotificationSetupStep.vue'
 import SelectEventHeroPane, {
@@ -27,7 +30,14 @@ const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const sandboxStore = useSandboxStore()
 const { get, post, patch } = useAuthenticatedClient()
+
+// Offered here as well as on the landing page: the picker is where a brand-new
+// account lands with nothing in it, and "look at a finished one first" answers
+// that better than an empty list does. The dialog says out loud that starting a
+// demo signs them out of the account they just made.
+const demoDialogOpen = ref(false)
 
 const selectMode = computed<SelectEventMode>(() => {
   const raw = route.query.mode
@@ -317,6 +327,16 @@ onMounted(async () => {
                 {{ t('duties.selectEvent.pick.title') }}
               </h1>
               <p class="text-muted-foreground">{{ t('duties.selectEvent.pick.subtitle') }}</p>
+              <Button
+                v-if="sandboxStore.enabled"
+                data-testid="btn-sandbox-start-picker"
+                variant="link"
+                class="h-auto gap-1.5 p-0 text-muted-foreground"
+                @click="demoDialogOpen = true"
+              >
+                <FlaskConicalIcon class="size-4" />
+                {{ t('sandbox.cta.picker') }}
+              </Button>
               <div
                 v-if="onboarding"
                 class="flex flex-wrap items-center gap-x-2 gap-y-1 pt-2 text-xs text-muted-foreground"
@@ -415,5 +435,7 @@ onMounted(async () => {
         </div>
       </main>
     </div>
+
+    <SandboxStartDialog v-model:open="demoDialogOpen" />
   </div>
 </template>

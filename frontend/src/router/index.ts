@@ -5,7 +5,7 @@ import type { BreadcrumbItem } from '@/stores/breadcrumb'
 
 import { authGuard as sessionAuthGuard } from '@/composables/useAuth'
 
-import { authSession } from '@/lib/auth-session'
+import { SANDBOX_ENDED_KEY, authSession } from '@/lib/auth-session'
 
 /**
  * E2E signs in by installing a session directly rather than by logging in, so
@@ -466,6 +466,22 @@ const SELECTED_EVENT_EXEMPT_ROUTES = new Set<string>([
  */
 const SIGNED_IN_REDIRECT_ROUTES = new Set<string>(['login', 'register'])
 
+/**
+ * Whether this browser is carrying "your demo just ended".
+ *
+ * Peeked at, never consumed — `SandboxExpiredDialog` on the landing page is
+ * what removes it, and removing it here would mean the explanation is thrown
+ * away by the very redirect that exists to deliver it.
+ */
+function sandboxJustEnded(): boolean {
+  try {
+    return sessionStorage.getItem(SANDBOX_ENDED_KEY) !== null
+  } catch {
+    // A browser that blocks site data. Nothing to route on.
+    return false
+  }
+}
+
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
   const routeName = typeof to.name === 'string' ? to.name : ''
@@ -502,6 +518,14 @@ router.beforeEach(async (to) => {
       return { name: 'home' }
     }
 
+    // A demo guest belongs to exactly one event and the picker is the door out
+    // of it — switching away, or asking to join something else, would strand
+    // them in an app with nothing left to show. Their event is already
+    // selected, so the picker has nothing to offer them either way.
+    if (authStore.profile?.is_sandbox && routeName === 'select-event') {
+      return { name: 'home' }
+    }
+
     // Selected-event gate: force users without a valid selection into the picker
     const isExempt = SELECTED_EVENT_EXEMPT_ROUTES.has(routeName)
     if (authStore.isActive && !isExempt) {
@@ -514,7 +538,18 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if (!authStore.isAuthenticated) return true
+  if (!authStore.isAuthenticated) {
+    // The sign-in screen is the wrong answer for a demo guest whose session was
+    // just swept away: they never had a password, so the form in front of them
+    // is unusable. `authGuard` cannot know that — it sends every dead session
+    // to `login` — so the redirect it starts is caught here on its way past and
+    // sent to the landing page, which carries the explanation and the offer of
+    // another demo.
+    if (routeName === 'login' && sandboxJustEnded()) {
+      return { name: 'landing' }
+    }
+    return true
+  }
 
   // Pages that only make sense to someone who runs at least one event. The
   // per-event decision still belongs to the view and the API; this just keeps

@@ -213,7 +213,10 @@ const navigateToBooking = () => {
 
 <template>
   <Dialog v-model:open="dialogOpen">
-    <DialogContent class="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+    <DialogContent
+      data-testid="dialog-shift-detail"
+      class="sm:max-w-lg max-h-[85vh] overflow-y-auto"
+    >
       <DialogHeader>
         <div class="flex items-center justify-between gap-2 pr-6">
           <DialogTitle>{{ t('duties.shifts.detail.title') }}</DialogTitle>
@@ -363,11 +366,18 @@ const navigateToBooking = () => {
 
           <div class="flex-1" />
 
-          <Button v-if="canBook" size="sm" :disabled="bookingInProgress" @click="handleBook">
+          <Button
+            v-if="canBook"
+            data-testid="btn-book-shift"
+            size="sm"
+            :disabled="bookingInProgress"
+            @click="handleBook"
+          >
             {{ t('duties.shifts.book') }}
           </Button>
           <Button
             v-if="resolvedMyBooking"
+            data-testid="btn-cancel-shift-booking"
             variant="destructive"
             size="sm"
             :disabled="bookingInProgress"

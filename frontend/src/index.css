@@ -1,6 +1,10 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'flag-icons/css/flag-icons.min.css';
+/* The guided tour's overlay and popover. Unlayered, like every import above it,
+   so Tailwind's `base` layer cannot reach in and reset the popover out of
+   existence. Themed to the palette further down, under "Guided tour". */
+@import 'driver.js/dist/driver.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -484,6 +488,136 @@ input:-webkit-autofill {
   [data-hero-motion] * {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Guided tour
+   driver.js ships a self-contained white card with its own font stack and a
+   hard-coded `#2d2d2d` on the text — fine on its own, wrong in a themed app
+   and unreadable in dark mode. Everything here repaints it in palette
+   variables, which flip under `.dark` and under `.palette-classic` on their
+   own, so there is no second block for the dark theme.
+
+   `src/tour/engine.ts` puts `.wirksam-tour` on every popover it renders. That
+   class is what carries the extra specificity: driver's own selectors are
+   single-class, so `.wirksam-tour .driver-popover-*` beats them without a
+   single `!important`.
+   ───────────────────────────────────────────────────────────────────────── */
+.driver-popover.wirksam-tour {
+  font-family: inherit;
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 10px 30px -10px oklch(0 0 0 / 35%),
+    0 2px 8px -2px oklch(0 0 0 / 20%);
+  padding: 1rem 1.125rem;
+  max-width: 21rem;
+}
+
+/* The arrow is a border triangle: the base rule paints all four borders, and
+   driver's per-side class makes three of them transparent. So only the one
+   remaining visible side may be recoloured here — repainting the shorthand
+   would turn the arrow into a diamond. */
+.wirksam-tour .driver-popover-arrow-side-top {
+  border-top-color: var(--popover);
+}
+.wirksam-tour .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--popover);
+}
+.wirksam-tour .driver-popover-arrow-side-left {
+  border-left-color: var(--popover);
+}
+.wirksam-tour .driver-popover-arrow-side-right {
+  border-right-color: var(--popover);
+}
+
+.wirksam-tour .driver-popover-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  /* Room for the close button, which is absolutely positioned over this row. */
+  padding-right: 1.5rem;
+}
+
+.wirksam-tour .driver-popover-description {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-top: 0.375rem;
+}
+
+.wirksam-tour .driver-popover-progress-text {
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.wirksam-tour .driver-popover-close-btn {
+  color: var(--muted-foreground);
+  border-radius: var(--radius-sm);
+}
+
+.wirksam-tour .driver-popover-close-btn:hover,
+.wirksam-tour .driver-popover-close-btn:focus-visible {
+  color: var(--foreground);
+}
+
+.wirksam-tour .driver-popover-footer-btn {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.3125rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.wirksam-tour .driver-popover-footer-btn:hover {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.wirksam-tour .driver-popover-next-btn {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.wirksam-tour .driver-popover-next-btn:hover {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  opacity: 0.9;
+}
+
+.wirksam-tour .driver-popover-footer-btn:focus-visible,
+.wirksam-tour .driver-popover-close-btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Driver disables the Back button on the first step by adding a class from a
+   two-class selector of its own; this one needs three to stay on top of the
+   button colours above. */
+.wirksam-tour .driver-popover-footer .driver-popover-btn-disabled {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  border-color: var(--border);
+  opacity: 0.6;
+}
+
+/* Same reasoning as the hero pane above: somebody who asked for less motion
+   should not have the overlay and popover fade in on every one of a dozen
+   steps. The tour still works — only the transition goes. */
+@media (prefers-reduced-motion: reduce) {
+  .driver-fade .driver-overlay,
+  .driver-fade .driver-popover {
+    animation: none !important;
   }
 }
 

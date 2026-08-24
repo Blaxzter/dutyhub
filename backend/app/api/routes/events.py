@@ -292,6 +292,28 @@ async def update_event(
     return await decorate_event(session, current_user, updated)
 
 
+async def _refuse_if_sandbox(session: DBDep, event_id: uuid.UUID) -> None:
+    """Block anything that would send real mail on behalf of a demo.
+
+    A guest is seeded as ``owner`` of their sandbox so the manager tour can
+    show them the screens an organiser uses. That role passes
+    ``require_event_role(minimum="admin")``, which means the invitation
+    endpoints would happily post an email to any address an anonymous visitor
+    typed in. The existing ``demo|`` guard does not help here: it tests the
+    *recipient*, and the recipient of an invitation is whoever was named.
+
+    The tour visits these screens deliberately and explains that sending is
+    switched off in the demo, so this is the enforcement behind that sentence.
+    """
+    event = await crud_event.get(session, event_id, raise_404_error=True)
+    if event.is_sandbox:
+        raise_problem(
+            403,
+            code="sandbox.invitations_disabled",
+            detail="Invitations cannot be sent from a demo event",
+        )
+
+
 class FeaturedUpdate(BaseModel):
     is_featured: bool
 
@@ -309,6 +331,12 @@ async def set_event_featured(
     the whole of the superadmin's remaining editorial role.
     """
     db_event = await crud_event.get(session, event_id, raise_404_error=True)
+    if body.is_featured and db_event.is_sandbox:
+        raise_problem(
+            422,
+            code="event.sandbox_not_featurable",
+            detail="Demo events cannot be featured",
+        )
     if body.is_featured and db_event.visibility != "public":
         raise_problem(
             422,
@@ -813,6 +841,7 @@ async def create_event_invitation(
     """Invite one person by email, or mint a shareable link (omit ``email``)."""
     await crud_event.get(session, event_id, raise_404_error=True)
     await require_event_role(current_user, session, event_id, minimum="admin")
+    await _refuse_if_sandbox(session, event_id)
 
     if body.email:
         existing_user = await crud_user.get_by_email(session, email=str(body.email))
@@ -876,6 +905,7 @@ async def create_event_invitations_bulk(
     """
     await crud_event.get(session, event_id, raise_404_error=True)
     await require_event_role(current_user, session, event_id, minimum="admin")
+    await _refuse_if_sandbox(session, event_id)
 
     created: list[EventInvitationRead] = []
     skipped_members: list[str] = []

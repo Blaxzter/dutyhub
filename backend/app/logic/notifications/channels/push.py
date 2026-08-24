@@ -4,7 +4,10 @@ import json
 
 from app.core.config import settings
 from app.core.logger import get_logger
-from app.logic.notifications.channels.base import NotificationChannel
+from app.logic.notifications.channels.base import (
+    NotificationChannel,
+    is_undeliverable,
+)
 from app.models.user import User
 from app.schemas.notification import NotificationData
 
@@ -29,7 +32,7 @@ class PushChannel(NotificationChannel):
             logger.warning("Push channel not configured (missing VAPID keys), skipping")
             return False
 
-        if recipient.subject.startswith("demo|"):
+        if is_undeliverable(recipient):
             return False
 
         try:

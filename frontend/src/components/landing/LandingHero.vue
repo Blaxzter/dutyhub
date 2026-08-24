@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { ArrowRightIcon, MailOpenIcon } from '@lucide/vue'
+import { ArrowRightIcon, FlaskConicalIcon, MailOpenIcon } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import { Button } from '@/components/ui/button'
 
 import ShiftBoardConcept from './ShiftBoardConcept.vue'
 
-defineProps<{ isAuthenticated: boolean }>()
-const emit = defineEmits<{ signIn: []; dashboard: [] }>()
+defineProps<{
+  isAuthenticated: boolean
+  /** Whether the deployment offers demo sessions at all — see `stores/sandbox.ts`. */
+  demoEnabled: boolean
+}>()
+const emit = defineEmits<{ signIn: []; dashboard: []; demo: [] }>()
 
 const { t } = useI18n()
 
@@ -57,8 +61,10 @@ const proofPoints = ['free', 'noInstall', 'privacy'] as const
           {{ t('preauth.landing.hero.subtitle') }}
         </p>
 
+        <!-- `sm:flex-wrap`: three buttons is one more than this row was built
+             for, and the hero column is narrower than the viewport from `lg`. -->
         <div
-          class="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start"
+          class="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start"
         >
           <Button
             v-if="isAuthenticated"
@@ -92,7 +98,26 @@ const proofPoints = ['free', 'noInstall', 'privacy'] as const
               {{ t('preauth.landing.hero.ctaSecondary') }}
             </Button>
           </template>
+
+          <!-- Offered in both states, unlike its neighbours: someone already
+               signed in is exactly who might want to show the app to a team
+               without handing over their own event. -->
+          <Button
+            v-if="demoEnabled"
+            data-testid="btn-cta-demo"
+            variant="outline"
+            size="lg"
+            class="w-full gap-2 sm:w-auto"
+            @click="emit('demo')"
+          >
+            <FlaskConicalIcon class="size-4" />
+            {{ t('preauth.landing.hero.ctaDemo') }}
+          </Button>
         </div>
+
+        <p v-if="demoEnabled" class="mt-3 text-sm text-muted-foreground">
+          {{ t('sandbox.cta.note') }}
+        </p>
 
         <ul
           class="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground lg:justify-start"

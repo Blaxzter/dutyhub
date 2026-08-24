@@ -181,3 +181,10 @@ reset_password_limiter = RateLimiter(limit=10, window_seconds=60 * 60)
 # 3 per hour, keyed by user id — this route is authenticated, so the caller is
 # known and their IP is irrelevant.
 resend_verification_limiter = RateLimiter(limit=3, window_seconds=60 * 60)
+
+# 3 per hour, keyed by IP. Anonymous *and* write-heavy: one call seeds an event,
+# a dozen tasks, a few hundred shifts and a handful of accounts. Treat this as
+# a courtesy speed bump only — the ceiling that actually protects the database
+# is SANDBOX_MAX_ACTIVE, counted in SQL, because these counters are per worker
+# process and this method returns immediately under TESTING.
+sandbox_limiter = RateLimiter(limit=3, window_seconds=60 * 60)

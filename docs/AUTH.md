@@ -176,6 +176,8 @@ is `authLogin()`. Renaming a function here renames a method in the frontend.
 | POST | `/auth/verify-email` | — | 204 |
 | POST | `/auth/resend-verification` | `CurrentUser` | 202 always |
 | POST | `/auth/change-password` | `CurrentUser` | 204, revokes all *other* sessions |
+| POST | `/auth/sandbox` | — | 201 `SandboxSessionResponse`, sets cookie, seeds a demo |
+| DELETE | `/auth/sandbox` | `CurrentUser` | 204, purges the demo, clears cookie |
 | GET | `/auth/sessions` | `CurrentUser` | `list[AuthSessionRead]` |
 | DELETE | `/auth/sessions/{id}` | `CurrentUser` | 204 |
 
@@ -187,7 +189,9 @@ Failures are RFC 7807 problems (`raise_problem`) carrying an `auth.*` code the
 frontend translates through its `errorCodes` i18n namespace: `auth.invalid_credentials`,
 `auth.email_taken`, `auth.invalid_token`, `auth.token_expired`, `auth.rate_limited`,
 `auth.weak_password`, `auth.no_password_set`, `auth.session_revoked`,
-`auth.session_not_found`. A code with
+`auth.session_not_found` — plus, from the two demo endpoints,
+`sandbox.disabled`, `sandbox.capacity_reached`, `sandbox.forbidden` and
+`sandbox.not_available`. A code with
 no i18n entry renders as the raw string on screen, and a bare `HTTPException`
 carries no code at all.
 
@@ -197,7 +201,9 @@ carries no code at all.
   renamed in place from the identity-provider column it replaced; the
   `20260823_0001` migration has the details. The prefixes are behavioural, not
   cosmetic: `demo|` accounts are
-  the ones every notification channel refuses to send mail to, `test|` accounts
+  the ones every notification channel refuses to send mail to, `sandbox|`
+  accounts are the throwaway guests behind the "try a test event" button and are
+  refused the same way (see [`SANDBOX.md`](SANDBOX.md)), `test|` accounts
   are the ones `POST /testing/reset` is allowed to delete, and password accounts
   get `local|<uuid4hex>`.
 - **`users.password_hash`** — bcrypt, nullable. Null means the account has no

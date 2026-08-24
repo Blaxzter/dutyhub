@@ -6,9 +6,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import CurrentUser, DBDep
 from app.core.errors import raise_problem
 from app.crud.booking import booking as crud_booking
+from app.crud.event import event as crud_event
 from app.crud.shift import shift as crud_shift
 from app.crud.task import task as crud_task
-from app.logic.permissions import get_event_role, require_event_role
+from app.logic.event_scope import get_visible_event_ids
+from app.logic.permissions import (
+    get_event_role,
+    require_event_role,
+    require_event_visible,
+)
 from app.models.shift import Shift
 from app.schemas.booking import ShiftBookingEntry
 from app.schemas.shift import (
@@ -60,6 +66,12 @@ async def list_shifts(
                 403, code="task.not_published", detail="Task is not published"
             )
 
+    # Without a task_id this route used to enumerate every shift in the
+    # database - the check above only runs when one is supplied. The scope is
+    # applied unconditionally now, so the unfiltered form answers with the
+    # caller's own events rather than with everyone's.
+    visible_event_ids = await get_visible_event_ids(session, current_user)
+
     items = await crud_shift.get_multi_filtered(
         session,
         skip=skip,
@@ -67,10 +79,15 @@ async def list_shifts(
         task_id=task_id,
         category=category,
         search=search,
+        restrict_to_event_ids=visible_event_ids,
     )
     enriched = [await _enrich_shift(session, s, user_id=current_user.id) for s in items]
     total = await crud_shift.get_count_filtered(
-        session, task_id=task_id, category=category, search=search
+        session,
+        task_id=task_id,
+        category=category,
+        search=search,
+        restrict_to_event_ids=visible_event_ids,
     )
     return ShiftListResponse(items=enriched, total=total, skip=skip, limit=limit)
 
@@ -85,6 +102,15 @@ async def get_shift(
         raise_problem(400, code="invalid_request", detail="slot_id is required")
 
     shift = await crud_shift.get(session, slot_id, raise_404_error=True)
+    # This route had no permission check at all: any signed-in account could
+    # read any shift in the installation by id. Resolving the task and running
+    # the standard visibility gate is what also keeps demo shifts private,
+    # since that gate is where the sandbox test lives.
+    db_task = await crud_task.get(session, str(shift.task_id), raise_404_error=True)
+    if db_task.event_id is None:
+        raise_problem(404, code="task.not_found", detail="Task not found")
+    event = await crud_event.get(session, db_task.event_id, raise_404_error=True)
+    await require_event_visible(_current_user, session, event)
     return await _enrich_shift(session, shift, user_id=_current_user.id)
 
 

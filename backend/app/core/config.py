@@ -184,6 +184,28 @@ class Settings(BaseSettings):
     def turnstile_enabled(self) -> bool:
         return bool(self.TURNSTILE_SECRET_KEY)
 
+    # Sandbox demo — the "check out a test event" button.
+    #
+    # A sandbox is a throwaway guest account plus one seeded event, both hard-
+    # deleted once SANDBOX_TTL_MINUTES have passed. Three knobs, because the
+    # feature writes to the database on behalf of anonymous callers and each
+    # one closes a different hole:
+    #
+    # * SANDBOX_ENABLED switches the endpoint off entirely (404). The frontend
+    #   reads the same value through window.__APP_CONFIG__ so the landing page
+    #   does not render a button that cannot work.
+    # * SANDBOX_TTL_MINUTES is how long a demo lives. It is also the only thing
+    #   standing between the feature and an ever-growing table, since the sweep
+    #   is what actually reclaims the rows.
+    # * SANDBOX_MAX_ACTIVE is a hard ceiling counted in the database. The rate
+    #   limiter cannot serve as that ceiling: its counters are per worker
+    #   process and it returns immediately when TESTING is set, so under four
+    #   workers it permits four times the intended rate and under pytest it
+    #   permits everything.
+    SANDBOX_ENABLED: bool = True
+    SANDBOX_TTL_MINUTES: int = 60
+    SANDBOX_MAX_ACTIVE: int = 25
+
     # Web Push (VAPID) configuration
     VAPID_PRIVATE_KEY: str | None = None
     VAPID_PUBLIC_KEY: str | None = None

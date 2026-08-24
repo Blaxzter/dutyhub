@@ -40,7 +40,12 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         that a future caller could forget to apply.
         """
         if scope == "all":
-            return query
+            # "Everything" still stops short of the demos. A sandbox event
+            # belongs to exactly one guest and is not part of the installation
+            # in any meaningful sense - showing it to the superadmin would put
+            # a stranger's throwaway data in the admin event list, where the
+            # only available action on it is to break it.
+            return query.where(col(Event.is_sandbox).is_(False))
 
         if scope == "mine":
             if not member_event_ids:
@@ -49,9 +54,15 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
                 return query.where(false())
             return query.where(col(Event.id).in_(member_event_ids))
 
+        # ``mine`` above is membership-scoped and therefore already correct
+        # for a guest looking at their own demo. Discover and Featured are the
+        # opposite case: they list events to people who are not in them, so the
+        # exclusion has to be explicit. Sandboxes are also seeded private,
+        # which makes this the second of two locks rather than the only one.
         public_and_live = and_(
             col(Event.visibility) == "public",
             col(Event.status) == "published",
+            col(Event.is_sandbox).is_(False),
         )
         if scope == "featured":
             return query.where(and_(public_and_live, col(Event.is_featured).is_(True)))

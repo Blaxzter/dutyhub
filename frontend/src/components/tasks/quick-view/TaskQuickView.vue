@@ -93,7 +93,7 @@ onBeforeUnmount(() => {
     {{ t('duties.tasks.empty') }}
   </div>
 
-  <div v-else class="space-y-3">
+  <div v-else data-testid="task-list" class="space-y-3">
     <TaskQuickViewCard
       v-for="item in visibleTasks"
       :key="item.id"

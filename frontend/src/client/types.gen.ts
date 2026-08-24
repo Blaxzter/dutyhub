@@ -1089,6 +1089,14 @@ export type EventRead = {
    */
   is_featured?: boolean
   /**
+   * Is Sandbox
+   */
+  is_sandbox?: boolean
+  /**
+   * Sandbox Expires At
+   */
+  sandbox_expires_at?: string | null
+  /**
    * Created At
    */
   created_at: string
@@ -1920,6 +1928,84 @@ export type ResetPasswordRequest = {
    * New password
    */
   password: string
+}
+
+/**
+ * SandboxCreate
+ *
+ * Ask for a demo session.
+ *
+ * Deliberately tiny and entirely anonymous: no address, no password, nothing
+ * to verify. The language is carried so the seeded event reads in the same
+ * language as the page the visitor clicked from — a German landing page that
+ * opens an English demo is a jarring first impression.
+ */
+export type SandboxCreate = {
+  /**
+   * Role
+   *
+   * 'helper' joins the demo event as a member and sees the volunteer side; 'manager' owns it and sees the organiser side
+   */
+  role?: 'helper' | 'manager'
+  /**
+   * Language
+   *
+   * UI language the visitor is currently reading
+   */
+  language?: 'en' | 'de'
+}
+
+/**
+ * SandboxSessionResponse
+ *
+ * A real signed-in session, pointed at a demo that will not outlive the day.
+ *
+ * Extends the normal login response rather than inventing a parallel one, so
+ * the client installs it through exactly the same code path — the demo is not
+ * a special rendering mode, it is an ordinary session that happens to belong
+ * to a guest.
+ */
+export type SandboxSessionResponse = {
+  /**
+   * Access Token
+   *
+   * Short-lived HS256 JWT, bearer token
+   */
+  access_token: string
+  /**
+   * Token Type
+   *
+   * Always 'bearer'; present for RFC 6750 clients
+   */
+  token_type?: 'bearer'
+  /**
+   * Expires In
+   *
+   * Seconds until the access token stops being accepted
+   */
+  expires_in: number
+  /**
+   * Profile of the account just signed in
+   */
+  user: UserProfile
+  /**
+   * Event Id
+   *
+   * The seeded event, already set as the guest's selection
+   */
+  event_id: string
+  /**
+   * Role
+   *
+   * Which side of the app was requested
+   */
+  role: 'helper' | 'manager'
+  /**
+   * Expires At
+   *
+   * Naive UTC instant at which the sweep may purge this demo. The banner counts down to it; the server does not enforce it early.
+   */
+  expires_at: string
 }
 
 /**
@@ -3426,6 +3512,18 @@ export type UserProfile = {
    * Event currently selected as the user's dashboard scope
    */
   selected_event_id?: string | null
+  /**
+   * Is Sandbox
+   *
+   * This is a throwaway guest account from the 'try a test event' button, not a real registration
+   */
+  is_sandbox?: boolean
+  /**
+   * Sandbox Expires At
+   *
+   * When this guest's demo is purged, in naive UTC. Resolved from the sandbox event rather than stored on the user, so the countdown survives a page reload without a second request.
+   */
+  sandbox_expires_at?: string | null
 }
 
 /**
@@ -3698,6 +3796,14 @@ export type EventReadWritable = {
    * Is Featured
    */
   is_featured?: boolean
+  /**
+   * Is Sandbox
+   */
+  is_sandbox?: boolean
+  /**
+   * Sandbox Expires At
+   */
+  sandbox_expires_at?: string | null
   /**
    * Created At
    */
@@ -4049,6 +4155,112 @@ export type AuthLogoutResponses = {
 }
 
 export type AuthLogoutResponse = AuthLogoutResponses[keyof AuthLogoutResponses]
+
+export type AuthExitSandboxData = {
+  body?: never
+  path?: never
+  query?: never
+  url: '/api/v1/auth/sandbox'
+}
+
+export type AuthExitSandboxErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthExitSandboxError = AuthExitSandboxErrors[keyof AuthExitSandboxErrors]
+
+export type AuthExitSandboxResponses = {
+  /**
+   * Successful Response
+   */
+  204: void
+}
+
+export type AuthExitSandboxResponse = AuthExitSandboxResponses[keyof AuthExitSandboxResponses]
+
+export type AuthSandboxData = {
+  body: SandboxCreate
+  path?: never
+  query?: never
+  url: '/api/v1/auth/sandbox'
+}
+
+export type AuthSandboxErrors = {
+  /**
+   * Bad Request
+   */
+  400: ProblemDetails
+  /**
+   * Unauthorized
+   */
+  401: ProblemDetails
+  /**
+   * Forbidden
+   */
+  403: ProblemDetails
+  /**
+   * Not Found
+   */
+  404: ProblemDetails
+  /**
+   * Conflict
+   */
+  409: ProblemDetails
+  /**
+   * Validation Error
+   */
+  422: ProblemDetails
+  /**
+   * Too Many Requests
+   */
+  429: ProblemDetails
+  /**
+   * Internal Server Error
+   */
+  500: ProblemDetails
+}
+
+export type AuthSandboxError = AuthSandboxErrors[keyof AuthSandboxErrors]
+
+export type AuthSandboxResponses = {
+  /**
+   * Successful Response
+   */
+  201: SandboxSessionResponse
+}
+
+export type AuthSandboxResponse = AuthSandboxResponses[keyof AuthSandboxResponses]
 
 export type AuthForgotPasswordData = {
   body: ForgotPasswordRequest

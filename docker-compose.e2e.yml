@@ -76,6 +76,15 @@ services:
       # Enforcement hangs off this secret alone (app/core/turnstile.py), so
       # emptying it is what restores the pre-Turnstile behaviour.
       - TURNSTILE_SECRET_KEY=
+      # Demo sessions stay on: the suite exercises the landing-page button.
+      # SANDBOX_MAX_ACTIVE is the one that has to be raised — the production
+      # default of 25 is a ceiling on *live* demos, and a locally parallel run
+      # (`workers: undefined` outside CI, so one per core) leaves a trail of
+      # them behind until the TTL sweep catches up. A number that cannot be
+      # reached is what keeps a spec from failing on a 503 somebody else caused.
+      - SANDBOX_ENABLED=true
+      - SANDBOX_TTL_MINUTES=60
+      - SANDBOX_MAX_ACTIVE=500
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8787/api/v1/healthz"]
       interval: 5s
