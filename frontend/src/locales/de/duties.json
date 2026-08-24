@@ -123,7 +123,25 @@
         "reasonPlaceholder": "z.B. Veranstaltung verschoben, nicht mehr benötigt..."
     },
     "events": {
-        "create": "Veranstaltungsgruppe erstellen",
+        "create": "Veranstaltung erstellen",
+        "createView": {
+            "descriptionHint": "Optional. Ein, zwei Sätze helfen anderen zu verstehen, worum es geht.",
+            "duration": "{days} Tag | {days} Tage",
+            "namePlaceholder": "z. B. Sommerfest 2026",
+            "optional": "Optional",
+            "sections": {
+                "basics": "Das Wichtigste",
+                "basicsHint": "Was andere sehen, wenn sie diese Veranstaltung suchen.",
+                "dates": "Zeitraum",
+                "datesHint": "Die Tage, an denen die Veranstaltung läuft. Aufgaben lassen sich nur innerhalb dieses Zeitraums planen.",
+                "visibilityHint": "Sie können das später in den Einstellungen der Veranstaltung ändern."
+            },
+            "submit": "Veranstaltung erstellen",
+            "subtitle": "Ein Name und ein Zeitraum genügen — alles andere lässt sich später ändern.",
+            "timesEmpty": "Nicht gesetzt — die Verfügbarkeit umfasst den ganzen Tag",
+            "timesSummary": "{start} bis {end}",
+            "title": "Veranstaltung erstellen"
+        },
         "created": "Veranstaltung erstellt",
         "delete": "Veranstaltungsgruppe löschen",
         "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",

@@ -139,6 +139,20 @@ const router = createRouter({
           },
         },
         {
+          // Deliberately not `requiresEventManager`: running your first event
+          // is how you become a manager, and the picker offers this to a
+          // brand-new account.
+          path: 'events/create',
+          name: 'event-create',
+          component: () => import('@/views/events/EventCreateView.vue'),
+          meta: {
+            breadcrumbs: [
+              { title: 'Home', titleKey: 'navigation.breadcrumbs.home', to: { name: 'home' } },
+              { title: 'Create Event', titleKey: 'duties.events.createView.title' },
+            ],
+          },
+        },
+        {
           path: 'tasks',
           name: 'tasks',
           component: () => import('@/views/tasks/TasksView.vue'),
@@ -420,6 +434,9 @@ const normalizeRoles = (roles: string | string[]) => (Array.isArray(roles) ? rol
 const SELECTED_EVENT_EXEMPT_ROUTES = new Set<string>([
   'select-event',
   'my-events',
+  // Creating an event is the way out of having none, so it cannot sit behind
+  // the gate that demands one.
+  'event-create',
   'event-settings',
   'admin-users',
   'admin-demo-data',

@@ -44,12 +44,12 @@ Not yet covered, and not currently tracked by an issue:
 | ------------ | ---------- | ------- |
 | `a11y`       | 5          | 28      |
 | `auth`       | 4          | 14      |
-| `chromium`   | 22         | 200     |
+| `chromium`   | 22         | 201     |
 | `member`     | 2          | 18      |
 | `multi-user` | 4          | 54      |
 | `public`     | 5          | 12      |
 | `test-reset` | 1          | 1       |
-| **Total**    | **43**     | **327** |
+| **Total**    | **43**     | **328** |
 
 ## Inventory
 
@@ -138,9 +138,9 @@ Not yet covered, and not currently tracked by an issue:
   - a new account signs straight in and lands in the app
   - registering twice with the same address is refused
 
-### Project `chromium` — 22 files, 200 tests
+### Project `chromium` — 22 files, 201 tests
 
-#### `frontend/e2e/tests/authenticated/admin-events.spec.ts` — 12 tests
+#### `frontend/e2e/tests/authenticated/admin-events.spec.ts` — 13 tests
 
 - **Admin Events – navigation** (4)
   - sidebar shows Manage Events link (admin)
@@ -153,9 +153,10 @@ Not yet covered, and not currently tracked by an issue:
   - row exposes edit and delete actions
   - search filters the list by name
   - clicking edit navigates to /app/event-settings with eventId
-- **Admin Events – create & delete** (3)
+- **Admin Events – create & delete** (4)
   - Create button is visible for admin
-  - admin can open the create event dialog
+  - create button opens the create event page
+  - admin can create an event from the create page
   - admin can delete an event via trash icon
 
 #### `frontend/e2e/tests/authenticated/admin-user-actions.spec.ts` — 2 tests

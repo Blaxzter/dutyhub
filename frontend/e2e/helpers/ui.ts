@@ -1,4 +1,4 @@
-import type { Locator } from '@playwright/test'
+import { type Locator, expect } from '@playwright/test'
 
 /**
  * Pick a date from a shadcn-vue/reka-ui DatePicker (popover calendar).
@@ -10,13 +10,17 @@ export async function pickDate(trigger: Locator, dateStr: string) {
   const month = parseInt(monthStr, 10)
   const day = parseInt(dayStr, 10)
 
-  // Open the popover
-  await trigger.click()
-
-  // The calendar appears inside the popover
   const page = trigger.page()
   const calendar = page.locator('[data-slot="calendar"]')
-  await calendar.waitFor()
+
+  // A picker opened a moment ago is still mounted while its popover animates
+  // out, and two calendars in the DOM make every locator below ambiguous.
+  // Picking a start date and then an end date is exactly that case.
+  await expect(calendar).toHaveCount(0)
+
+  // Open the popover; the calendar appears inside it
+  await trigger.click()
+  await expect(calendar).toHaveCount(1)
 
   // Navigate to the correct month/year via the native <select> dropdowns
   const selects = calendar.locator('select')

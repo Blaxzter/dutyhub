@@ -124,6 +124,24 @@
     },
     "events": {
         "create": "Create Event",
+        "createView": {
+            "descriptionHint": "Optional. A sentence or two helps people know what they are signing up for.",
+            "duration": "{days} day | {days} days",
+            "namePlaceholder": "e.g. Summer Festival 2026",
+            "optional": "Optional",
+            "sections": {
+                "basics": "The basics",
+                "basicsHint": "What people will see when they look for this event.",
+                "dates": "Dates",
+                "datesHint": "The days the event runs. Tasks can only be scheduled inside this range.",
+                "visibilityHint": "You can change this later in the event settings."
+            },
+            "submit": "Create event",
+            "subtitle": "A name and a date range is all it takes — everything else can change later.",
+            "timesEmpty": "Not set — availability covers the whole day",
+            "timesSummary": "{start} until {end}",
+            "title": "Create an event"
+        },
         "created": "Event created",
         "delete": "Delete Event",
         "deleteConfirm": "Are you sure you want to delete this event? All related availability data will be lost.",

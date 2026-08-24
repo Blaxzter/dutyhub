@@ -10,8 +10,10 @@ import {
   type EventRead,
   createEvent,
   deleteEvent,
+  futureDate,
   uniqueName,
 } from '../../helpers/api.js'
+import { pickDate } from '../../helpers/ui.js'
 
 // ── navigation ────────────────────────────────────────────────────────────────
 
@@ -105,16 +107,42 @@ test.describe('Admin Events – create & delete', () => {
     await expect(page.getByTestId('btn-create-event')).toBeVisible()
   })
 
-  test('admin can open the create event dialog', async ({ adminPage: page }) => {
+  test('create button opens the create event page', async ({ adminPage: page }) => {
     await page.goto('/app/events')
     await page.getByTestId('btn-create-event').click()
-    const dialog = page.getByRole('dialog')
-    await expect(dialog).toBeVisible()
-    await expect(dialog.locator('input').first()).toBeVisible()
-    await expect(dialog.getByRole('button', { name: /create|erstellen/i })).toBeVisible()
 
-    await dialog.getByRole('button', { name: /cancel|abbrechen/i }).click()
-    await expect(dialog).toBeHidden()
+    await expect(page).toHaveURL(/\/app\/events\/create/)
+    await expect(page.getByTestId('input-event-name')).toBeVisible()
+    // Nothing filled in yet, so there is nothing to submit.
+    await expect(page.getByTestId('btn-submit-create-event')).toBeDisabled()
+
+    await page.getByTestId('btn-cancel-create-event').click()
+    await expect(page).toHaveURL(/\/app\/events$/)
+  })
+
+  test('admin can create an event from the create page', async ({ adminPage: page }) => {
+    const name = uniqueName('E2E Created From View')
+    await page.goto('/app/events/create')
+
+    await page.getByTestId('input-event-name').fill(name)
+    await pickDate(page.getByTestId('picker-start-date').getByRole('button'), futureDate(30))
+    await pickDate(page.getByTestId('picker-end-date').getByRole('button'), futureDate(34))
+    await expect(page.getByTestId('btn-submit-create-event')).toBeEnabled()
+
+    const [response] = await Promise.all([
+      page.waitForResponse(
+        (r) => r.url().includes('/events/') && r.request().method() === 'POST',
+      ),
+      page.getByTestId('btn-submit-create-event').click(),
+    ])
+    const created = (await response.json()) as EventRead
+
+    // Lands back on the list with the new event in it.
+    await expect(page).toHaveURL(/\/app\/events$/)
+    await page.getByTestId('input-search').fill(name)
+    await expect(page.getByTestId('admin-event-row').filter({ hasText: name })).toBeVisible()
+
+    await deleteEvent(page, created.id).catch(() => {})
   })
 
   test('admin can delete an event via trash icon', async ({ adminPage: page }) => {

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 
-import type { DateValue } from '@internationalized/date'
 import { ChevronDown, ChevronRight, Plus, Search } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -15,18 +14,8 @@ import { useDialog } from '@/composables/useDialog'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { DatePicker } from '@/components/ui/date-picker'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import Input from '@/components/ui/input/Input.vue'
-import Label from '@/components/ui/label/Label.vue'
 import {
   Pagination,
   PaginationContent,
@@ -37,7 +26,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import Textarea from '@/components/ui/textarea/Textarea.vue'
 
 import AdminEventRow from '@/components/admin/AdminEventRow.vue'
 import AdminEventRowSkeleton from '@/components/admin/AdminEventRowSkeleton.vue'
@@ -51,7 +39,7 @@ const SEARCH_DEBOUNCE_MS = 300
 const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
-const { get, post, patch, delete: del } = useAuthenticatedClient()
+const { get, patch, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 
 const selectedEventId = computed(() => authStore.selectedEventId)
@@ -78,12 +66,6 @@ const loadingExpired = ref(false)
 const expiredOpen = ref(false)
 const expiredLoaded = ref(false)
 const expiredPages = computed(() => Math.max(1, Math.ceil(expiredTotal.value / PAGE_SIZE)))
-
-// === Create dialog state ===
-const showCreateDialog = ref(false)
-const createForm = ref({ name: '', description: '' })
-const startDate = ref<DateValue>()
-const endDate = ref<DateValue>()
 
 async function handleVisibleMonth(range: { from: string; to: string }) {
   try {
@@ -208,30 +190,6 @@ watch(expiredPage, () => {
   if (expiredOpen.value) loadExpired()
 })
 
-const handleCreate = async () => {
-  if (!startDate.value || !endDate.value) return
-  try {
-    await post({
-      url: '/events/',
-      body: {
-        name: createForm.value.name,
-        description: createForm.value.description || undefined,
-        start_date: startDate.value.toString(),
-        end_date: endDate.value.toString(),
-      },
-    })
-    showCreateDialog.value = false
-    createForm.value = { name: '', description: '' }
-    startDate.value = undefined
-    endDate.value = undefined
-    toast.success(t('duties.events.create'))
-    activePage.value = 1
-    await loadActive()
-  } catch (error) {
-    toastApiError(error)
-  }
-}
-
 const handleDelete = async (event: EventRead) => {
   const confirmed = await confirmDestructive(t('duties.events.deleteConfirm'))
   if (!confirmed) return
@@ -254,6 +212,12 @@ const handleEdit = (event: EventRead) => {
   router.push({ name: 'event-settings', params: { eventId: event.id } })
 }
 
+// Creating an event is a page of its own — the form never fitted a dialog on
+// a phone. It comes back here once the event exists.
+const goToCreate = () => {
+  router.push({ name: 'event-create' })
+}
+
 onMounted(loadActive)
 </script>
 
@@ -266,7 +230,7 @@ onMounted(loadActive)
         </h1>
         <p class="text-muted-foreground">{{ t('admin.events.subtitle') }}</p>
       </div>
-      <Button data-testid="btn-create-event" class="max-xl:hidden" @click="showCreateDialog = true">
+      <Button data-testid="btn-create-event" class="max-xl:hidden" @click="goToCreate">
         <Plus class="mr-2 h-4 w-4" />
         {{ t('duties.events.create') }}
       </Button>
@@ -477,47 +441,12 @@ onMounted(loadActive)
       </CollapsibleContent>
     </Collapsible>
 
-    <Dialog v-model:open="showCreateDialog">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{{ t('duties.events.create') }}</DialogTitle>
-          <DialogDescription>{{ t('duties.events.subtitle') }}</DialogDescription>
-        </DialogHeader>
-        <form class="space-y-4" @submit.prevent="handleCreate">
-          <div class="space-y-2">
-            <Label>{{ t('duties.events.fields.name') }}</Label>
-            <Input v-model="createForm.name" required />
-          </div>
-          <div class="space-y-2">
-            <Label>{{ t('duties.events.fields.description') }}</Label>
-            <Textarea v-model="createForm.description" />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <Label>{{ t('duties.events.fields.startDate') }}</Label>
-              <DatePicker v-model="startDate" :placeholder="t('duties.events.pickDate')" />
-            </div>
-            <div class="space-y-2">
-              <Label>{{ t('duties.events.fields.endDate') }}</Label>
-              <DatePicker v-model="endDate" :placeholder="t('duties.events.pickDate')" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" @click="showCreateDialog = false">
-              {{ t('common.actions.cancel') }}
-            </Button>
-            <Button type="submit">{{ t('common.actions.create') }}</Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-
     <Button
       size="icon"
       class="xl:hidden fixed bottom-24 md:bottom-6 right-6 z-40 h-14 w-14 rounded-full shadow-lg"
       data-testid="fab-create-event"
       :aria-label="t('duties.events.create')"
-      @click="showCreateDialog = true"
+      @click="goToCreate"
     >
       <Plus class="size-7" :stroke-width="2.5" />
     </Button>

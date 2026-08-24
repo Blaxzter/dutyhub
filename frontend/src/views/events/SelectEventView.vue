@@ -12,9 +12,6 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import Badge from '@/components/ui/badge/Badge.vue'
 
-import CreateEventDialog, {
-  type CreateEventPayload,
-} from '@/components/select-event/CreateEventDialog.vue'
 import EventPickerList, { type PickerTab } from '@/components/select-event/EventPickerList.vue'
 import NotificationSetupStep from '@/components/select-event/NotificationSetupStep.vue'
 import SelectEventHeroPane, {
@@ -60,7 +57,6 @@ const eventStats = ref<Record<string, EventStats>>({})
 const loading = ref(true)
 const discoverLoading = ref(false)
 const discoverLoaded = ref(false)
-const showCreateDialog = ref(false)
 const submitting = ref(false)
 const requestingId = ref<string | null>(null)
 const tab = ref<PickerTab>('mine')
@@ -204,24 +200,16 @@ function handleNotifBack() {
   phase.value = 'main'
 }
 
-async function handleCreate(payload: CreateEventPayload) {
-  submitting.value = true
-  try {
-    const res = await post<{ data: EventRead }>({
-      url: '/events/',
-      body: { ...payload, status: 'published' },
-    })
-    showCreateDialog.value = false
-    // The creator owns what they just made, so land them back on "My events".
-    tab.value = 'mine'
-    await loadEvents()
-    pendingSelectionId.value = res.data.id
-    toast.success(t('duties.events.created'))
-  } catch (error) {
-    toastApiError(error)
-  } finally {
-    submitting.value = false
-  }
+/**
+ * Creating an event is its own page, not a dialog: the form is too tall to
+ * fit a phone screen. The mode travels with it so cancelling comes back to
+ * the picker in the state it was left in.
+ */
+function openCreate() {
+  router.push({
+    name: 'event-create',
+    query: { returnTo: 'select-event', mode: selectMode.value },
+  })
 }
 
 async function savePhone() {
@@ -263,8 +251,16 @@ watch(
  * themselves, their choice stands.
  */
 onMounted(async () => {
+  const createdId = typeof route.query.created === 'string' ? route.query.created : null
   await loadEvents()
-  if (events.value.length === 0) {
+  if (createdId) {
+    // Back from the create page: stage what was just made so it comes up
+    // already highlighted, then drop the marker so a reload does not repeat it.
+    pendingSelectionId.value = createdId
+    const query = { ...route.query }
+    delete query.created
+    void router.replace({ query })
+  } else if (events.value.length === 0) {
     tab.value = 'discover'
   }
 })
@@ -354,7 +350,7 @@ onMounted(async () => {
               @commit="handleCommitSelection"
               @cancel="handleCancel"
               @back="phase = 'intro'"
-              @open-create="showCreateDialog = true"
+              @open-create="openCreate"
               @request-join="handleRequestJoin"
             />
           </div>
@@ -419,11 +415,5 @@ onMounted(async () => {
         </div>
       </main>
     </div>
-
-    <CreateEventDialog
-      v-model:open="showCreateDialog"
-      :submitting="submitting"
-      @submit="handleCreate"
-    />
   </div>
 </template>
