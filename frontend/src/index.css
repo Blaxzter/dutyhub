@@ -603,12 +603,15 @@ input:-webkit-autofill {
 
 /* Driver disables the Back button on the first step by adding a class from a
    two-class selector of its own; this one needs three to stay on top of the
-   button colours above. */
+   button colours above. `tour/engine.ts` reuses the same class for the pair of
+   buttons it greys out while the next step is still being opened, so this is
+   also what "the tour is busy, your click will not count" looks like. */
 .wirksam-tour .driver-popover-footer .driver-popover-btn-disabled {
   background-color: var(--muted);
   color: var(--muted-foreground);
   border-color: var(--border);
   opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Same reasoning as the hero pane above: somebody who asked for less motion

@@ -47,9 +47,9 @@ Not yet covered, and not currently tracked by an issue:
 | `chromium`   | 22         | 201     |
 | `member`     | 2          | 18      |
 | `multi-user` | 4          | 54      |
-| `public`     | 7          | 22      |
+| `public`     | 7          | 23      |
 | `test-reset` | 1          | 1       |
-| **Total**    | **45**     | **338** |
+| **Total**    | **45**     | **339** |
 
 ## Inventory
 
@@ -588,7 +588,7 @@ Not yet covered, and not currently tracked by an issue:
   - member books shift, admin sees updated count
   - admin-created task visible to member in tasks list
 
-### Project `public` — 7 files, 22 tests
+### Project `public` — 7 files, 23 tests
 
 #### `frontend/e2e/tests/public/how-it-works.spec.ts` — 2 tests
 
@@ -619,11 +619,12 @@ Not yet covered, and not currently tracked by an issue:
 - **Impressum page** (1)
   - loads and shows content
 
-#### `frontend/e2e/tests/public/sandbox-tour.spec.ts` — 3 tests
+#### `frontend/e2e/tests/public/sandbox-tour.spec.ts` — 4 tests
 
-- **guided tour** (3)
+- **guided tour** (4)
   - the helper track starts on its own and runs to the end across routes
   - the organiser track covers the management screens
+  - presses land one step at a time while a step is still opening
   - the banner can restart a tour that was closed
 
 #### `frontend/e2e/tests/public/sandbox.spec.ts` — 7 tests

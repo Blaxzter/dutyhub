@@ -21,6 +21,16 @@
  * skipping would make the "step 4 of 9" counter lie about a tour that is one
  * anchor short. `waitForElement` gives up after `ANCHOR_TIMEOUT_MS` and the
  * tour carries on either way.
+ *
+ * ── Why Next goes dead between steps ─────────────────────────────────────────
+ * Preparing a step is not instant — it can push a route, run a `before()` hook
+ * that clicks a dialog open, and then wait for an anchor inside it. The popover
+ * the visitor is looking at throughout still belongs to the step *before*, and
+ * its Next button is live. So `preparing` holds from the first line of `show()`
+ * to the last, `advance()` and `retreat()` drop anything that arrives while it
+ * is set, and `syncNavigationButtons` greys the two buttons out so the refusal
+ * is visible rather than a click that vanished. Only the close button stays
+ * live: whatever else is going on, the visitor can leave.
  */
 import { type DriveStep, type Driver, driver } from 'driver.js'
 import type { RouteLocationNormalized, Router } from 'vue-router'
@@ -182,8 +192,61 @@ export function createTourController(router: Router): TourController {
    * was waiting on a navigation or an anchor — drops what it was doing.
    */
   let renderToken = 0
+  /**
+   * Set for as long as a step is being *prepared* — navigating, running its
+   * `before()` hook, waiting for the anchor to turn up.
+   *
+   * The popover on screen during all of that still belongs to the step before
+   * it, and its Next button is a live control pointing at `advance()`. A step
+   * whose `before()` has to click something open takes a second or two to
+   * arrive, which is easily long enough for a second click, and each one walks
+   * the store forward again — so the step being prepared is skipped without
+   * ever having been shown. `syncNavigationButtons` greys the buttons out to
+   * say the tour is busy; this flag is what makes that true rather than
+   * cosmetic, because a click can still land in the frame before the styling
+   * does, and Enter on a focused button never touches the styling at all.
+   */
+  let preparing = false
 
   const routeName = () => String(router.currentRoute.value.name ?? '')
+
+  /**
+   * Put the live popover's Next and Back buttons into the right state.
+   *
+   * Reaching into rendered DOM rather than going through driver's
+   * `disableButtons`, because that option is only read when a popover is
+   * *built*: the one that needs disabling here was built for the previous step
+   * and driver has no idea a newer one is on its way. The class is driver's
+   * own, so a button disabled from here looks exactly like the Back button
+   * driver disables itself on step one.
+   *
+   * The close button is deliberately left alone. Whatever else is happening,
+   * the visitor can always get out.
+   */
+  function syncNavigationButtons() {
+    const popover = document.querySelector('.driver-popover')
+    if (!popover) return
+
+    const store = useTourStore()
+    const states: [selector: string, disabled: boolean][] = [
+      ['.driver-popover-next-btn', preparing],
+      ['.driver-popover-prev-btn', preparing || store.isFirstStep],
+    ]
+
+    for (const [selector, disabled] of states) {
+      const button = popover.querySelector<HTMLButtonElement>(selector)
+      if (!button) continue
+      button.disabled = disabled
+      button.classList.toggle('driver-popover-btn-disabled', disabled)
+      button.setAttribute('aria-disabled', String(disabled))
+    }
+  }
+
+  function setPreparing(value: boolean) {
+    if (preparing === value) return
+    preparing = value
+    syncNavigationButtons()
+  }
 
   function teardown() {
     if (!instance) return
@@ -207,6 +270,12 @@ export function createTourController(router: Router): TourController {
   }
 
   async function advance() {
+    // Dropped, not queued: the visitor pressed Next at a popover that is on its
+    // way out, so the only honest reading of the click is the one they can
+    // already see happening. Queueing it would turn an impatient double-click
+    // into two steps, which is the thing this exists to stop.
+    if (preparing) return
+
     const store = useTourStore()
     if (store.isLastStep) {
       finish()
@@ -217,6 +286,8 @@ export function createTourController(router: Router): TourController {
   }
 
   async function retreat() {
+    if (preparing) return
+
     const store = useTourStore()
     if (store.isFirstStep) return
     store.previous()
@@ -238,6 +309,19 @@ export function createTourController(router: Router): TourController {
 
   async function show({ navigate }: { navigate: boolean }): Promise<void> {
     const token = ++renderToken
+    setPreparing(true)
+    try {
+      await prepare(token, navigate)
+    } finally {
+      // Only the newest render may put the buttons back. An older one returning
+      // from an `await` it was superseded during would otherwise re-enable Next
+      // in the middle of the render that overtook it — which is the same open
+      // door, one layer down.
+      if (token === renderToken) setPreparing(false)
+    }
+  }
+
+  async function prepare(token: number, navigate: boolean): Promise<void> {
     const store = useTourStore()
     const step = store.currentStep
 
@@ -288,6 +372,12 @@ export function createTourController(router: Router): TourController {
 
   function render(step: TourStep, element: HTMLElement | null) {
     const store = useTourStore()
+    // The close button stays live while a step is being prepared, so the tour
+    // can be dismissed halfway through resolving one. Without this, the render
+    // that preparation was working towards would arrive a second later and put
+    // the popover back on a visitor who had just closed it.
+    if (!store.isRunning) return
+
     const route = routeName()
 
     if (instance && instanceRoute !== route) teardown()
