@@ -464,27 +464,115 @@ export type ChangePasswordRequest = {
 }
 
 /**
- * DashboardBookingItem
+ * DashboardAttention
  *
- * Booking with inline shift info for calendar display — avoids N+1.
+ * The organiser's to-do list, counted rather than listed.
+ *
+ * Only populated for someone who administers the event in scope; a plain
+ * member gets ``None`` and never sees the block.
  */
-export type DashboardBookingItem = {
+export type DashboardAttention = {
   /**
-   * Id
+   * Pending Join Requests
    */
-  id: string
+  pending_join_requests?: number
   /**
-   * Slot Id
+   * Draft Tasks
    */
-  slot_id: string
+  draft_tasks?: number
   /**
-   * Date
+   * Empty Shifts Soon
    */
-  date: string
+  empty_shifts_soon?: number
+  /**
+   * Short Shifts Soon
+   */
+  short_shifts_soon?: number
+  /**
+   * Horizon Days
+   */
+  horizon_days?: number
+}
+
+/**
+ * DashboardFeedResponse
+ *
+ * Everything /app/home renders, in one request.
+ */
+export type DashboardFeedResponse = {
+  /**
+   * Event Id
+   */
+  event_id?: string | null
+  /**
+   * Event Name
+   */
+  event_name?: string | null
+  /**
+   * My Shifts
+   */
+  my_shifts: Array<DashboardShift>
+  /**
+   * My Shift Count
+   */
+  my_shift_count: number
+  /**
+   * My Minutes
+   */
+  my_minutes: number
+  /**
+   * Open Shifts
+   */
+  open_shifts: Array<DashboardOpenShift>
+  /**
+   * Open Shift Count
+   */
+  open_shift_count: number
+  /**
+   * Open Places
+   */
+  open_places: number
+  attention?: DashboardAttention | null
+  /**
+   * Pending Join Request Count
+   */
+  pending_join_request_count?: number
+}
+
+/**
+ * DashboardOpenShift
+ *
+ * A shift that still has room, offered to the user to pick up.
+ */
+export type DashboardOpenShift = {
+  /**
+   * Shift Id
+   */
+  shift_id: string
+  /**
+   * Task Id
+   */
+  task_id: string
+  /**
+   * Task Name
+   */
+  task_name: string
+  /**
+   * Event Id
+   */
+  event_id?: string | null
+  /**
+   * Event Name
+   */
+  event_name?: string | null
   /**
    * Title
    */
   title: string
+  /**
+   * Date
+   */
+  date: string
   /**
    * Start Time
    */
@@ -493,96 +581,82 @@ export type DashboardBookingItem = {
    * End Time
    */
   end_time?: string | null
-}
-
-/**
- * DashboardEvent
- *
- * Slim event for the dashboard calendar.
- */
-export type DashboardEvent = {
-  /**
-   * Id
-   */
-  id: string
-  /**
-   * Name
-   */
-  name: string
-  /**
-   * Start Date
-   */
-  start_date: string
-  /**
-   * End Date
-   */
-  end_date: string
-}
-
-/**
- * DashboardFeedResponse
- */
-export type DashboardFeedResponse = {
-  /**
-   * Tasks
-   */
-  tasks: Array<DashboardTask>
-  /**
-   * Task Count
-   */
-  task_count: number
-  /**
-   * Events
-   */
-  events: Array<DashboardEvent>
-  /**
-   * Bookings
-   */
-  bookings: Array<DashboardBookingItem>
-  /**
-   * Booking Count
-   */
-  booking_count: number
-  /**
-   * Pending Join Request Count
-   */
-  pending_join_request_count?: number
-}
-
-/**
- * DashboardTask
- *
- * Slim task for the dashboard calendar.
- */
-export type DashboardTask = {
-  /**
-   * Id
-   */
-  id: string
-  /**
-   * Name
-   */
-  name: string
-  /**
-   * Status
-   */
-  status: string
-  /**
-   * Description
-   */
-  description?: string | null
   /**
    * Location
    */
   location?: string | null
   /**
-   * Start Date
+   * Taken
    */
-  start_date: string
+  taken: number
   /**
-   * End Date
+   * Capacity
    */
-  end_date: string
+  capacity: number
+  /**
+   * Places Left
+   */
+  places_left: number
+}
+
+/**
+ * DashboardShift
+ *
+ * A shift the signed-in user has already committed to.
+ */
+export type DashboardShift = {
+  /**
+   * Booking Id
+   */
+  booking_id: string
+  /**
+   * Shift Id
+   */
+  shift_id: string
+  /**
+   * Task Id
+   */
+  task_id: string
+  /**
+   * Task Name
+   */
+  task_name: string
+  /**
+   * Event Id
+   */
+  event_id?: string | null
+  /**
+   * Event Name
+   */
+  event_name?: string | null
+  /**
+   * Title
+   */
+  title: string
+  /**
+   * Date
+   */
+  date: string
+  /**
+   * Start Time
+   */
+  start_time?: string | null
+  /**
+   * End Time
+   */
+  end_time?: string | null
+  /**
+   * Location
+   */
+  location?: string | null
+  /**
+   * Taken
+   */
+  taken: number
+  /**
+   * Capacity
+   */
+  capacity: number
 }
 
 /**

@@ -203,9 +203,9 @@ export const useAuthStore = defineStore('auth', () => {
     toast.custom(markRaw(ActionToast), {
       duration: Infinity,
       componentProps: {
-        message: t('dashboard.home.stats.joinRequests.pendingToast', { count }, count),
-        actionLabel: t('dashboard.home.stats.joinRequests.pendingAction'),
-        dismissLabel: t('dashboard.home.stats.joinRequests.pendingDismiss'),
+        message: t('dashboard.home.joinRequestToast.message', { count }, count),
+        actionLabel: t('dashboard.home.joinRequestToast.action'),
+        dismissLabel: t('dashboard.home.joinRequestToast.dismiss'),
         onAction: () => router.push({ name: 'my-events', query: { tab: 'requests' } }),
       },
     })

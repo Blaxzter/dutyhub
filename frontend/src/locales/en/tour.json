@@ -50,8 +50,8 @@
             "title": "Adding a job"
         },
         "dashboard": {
-            "body": "The calendar gathers every shift and every booking in the event. The first question you ever have, whether anything is happening today that still has nobody on it, is answered before you go looking.",
-            "title": "The week at a glance"
+            "body": "Every shift still short of somebody, soonest first, so the gap you need to chase is the first thing you read. Anything urgent in the coming week is called out above it, along with anyone waiting to be let in.",
+            "title": "Where people are still missing"
         },
         "finish": {
             "body": "Describe a job, let wirksam cut it into shifts, watch them fill, and read afterwards how it went. Keep exploring from here. The demo is yours until it expires, and no real event is touched by anything you do in it.",

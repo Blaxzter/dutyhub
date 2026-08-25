@@ -4,7 +4,7 @@ export interface DateRange {
   to: string // YYYY-MM-DD
 }
 
-/** Minimal task shape used by the calendar — works with both CalendarTask and DashboardTask. */
+/** Minimal task shape used by the calendar — structurally satisfied by `TaskRead`. */
 export interface CalendarTask {
   id: string
   name: string

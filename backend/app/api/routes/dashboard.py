@@ -3,14 +3,13 @@
 import datetime as dt
 import uuid
 
+import sqlalchemy as sa
 from fastapi import APIRouter
 from sqlalchemy import and_, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
 from app.api.deps import CurrentUser, DBDep
-from app.crud.event import event as crud_event
-from app.crud.event_membership import event_membership as crud_membership
-from app.crud.task import task as crud_task
 from app.logic.event_scope import (
     get_manageable_event_ids,
     get_user_event_scope,
@@ -23,10 +22,10 @@ from app.models.shift import Shift
 from app.models.task import Task
 from app.models.user import User
 from app.schemas.dashboard import (
-    DashboardBookingItem,
-    DashboardEvent,
+    DashboardAttention,
     DashboardFeedResponse,
-    DashboardTask,
+    DashboardOpenShift,
+    DashboardShift,
 )
 from app.schemas.sidebar import (
     SidebarBooking,
@@ -37,10 +36,368 @@ from app.schemas.sidebar import (
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
+#: How many rows of each list the dashboard actually draws.
+PAGE_SIZE = 6
+
+#: How far a single feed request will scan to reach its totals. Both lists are
+#: bounded by real-world size - a volunteer's future commitments, and the open
+#: shifts of one event - so this is a runaway guard, not a page size.
+SCAN_LIMIT = 500
+
+#: The window "needs your attention" reports on. A week is long enough to still
+#: do something about a gap and short enough that everything in it is urgent.
+ATTENTION_HORIZON_DAYS = 7
+
+
+@router.get("/feed", response_model=DashboardFeedResponse)
+async def dashboard_feed(
+    session: DBDep,
+    current_user: CurrentUser,
+) -> DashboardFeedResponse:
+    """Everything /app/home draws, in one request.
+
+    Two different scopes on purpose. *My shifts* ignores the selected event: a
+    duty you have promised to turn up to should not disappear because the event
+    switcher is pointing somewhere else. Everything else - the open shifts, the
+    organiser's counts - is about the event in view.
+    """
+    now = dt.datetime.now()
+    today = now.date()
+
+    visible_event_ids = await get_visible_event_ids(session, current_user)
+    manageable_event_ids = await get_manageable_event_ids(session, current_user)
+    scope_event_id = _effective_scope(current_user, visible_event_ids)
+
+    my_shifts, my_shift_count, my_minutes = await _load_my_shifts(
+        session, current_user.id, today, now.time()
+    )
+    open_shifts, open_shift_count, open_places = await _load_open_shifts(
+        session,
+        current_user.id,
+        today,
+        now.time(),
+        scope_event_id,
+        visible_event_ids,
+    )
+    attention = await _load_attention(
+        session, today, scope_event_id, manageable_event_ids
+    )
+
+    return DashboardFeedResponse(
+        event_id=scope_event_id,
+        event_name=await _event_name(session, scope_event_id),
+        my_shifts=my_shifts[:PAGE_SIZE],
+        my_shift_count=my_shift_count,
+        my_minutes=my_minutes,
+        open_shifts=open_shifts[:PAGE_SIZE],
+        open_shift_count=open_shift_count,
+        open_places=open_places,
+        attention=attention,
+        pending_join_request_count=await _count_pending_join_requests(
+            session, manageable_event_ids
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Feed sections
+# ---------------------------------------------------------------------------
+
+
+async def _load_my_shifts(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    today: dt.date,
+    now_time: dt.time,
+) -> tuple[list[DashboardShift], int, int]:
+    """The user's upcoming confirmed bookings, soonest first.
+
+    Returns the rows, how many there are and how many minutes they add up to.
+    A shift with no clock times counts as zero minutes rather than guessing.
+    """
+    query = (
+        select(
+            col(Booking.id).label("booking_id"),
+            col(Shift.id).label("shift_id"),
+            col(Shift.title),
+            col(Shift.date),
+            col(Shift.start_time),
+            col(Shift.end_time),
+            col(Shift.location),
+            col(Shift.max_bookings),
+            col(Task.id).label("task_id"),
+            col(Task.name).label("task_name"),
+            col(Event.id).label("event_id"),
+            col(Event.name).label("event_name"),
+            _confirmed_count_sq().label("taken"),
+        )
+        .join(Shift, col(Booking.shift_id) == col(Shift.id))
+        .join(Task, col(Shift.task_id) == col(Task.id))
+        .join(Event, col(Task.event_id) == col(Event.id), isouter=True)
+        .where(
+            col(Booking.user_id) == user_id,
+            col(Booking.status) == "confirmed",
+            _future_shift_condition(today, now_time),
+        )
+        .order_by(col(Shift.date), col(Shift.start_time), col(Shift.title))
+        .limit(SCAN_LIMIT)
+    )
+    rows = (await session.execute(query)).all()
+
+    items = [
+        DashboardShift(
+            booking_id=r.booking_id,
+            shift_id=r.shift_id,
+            task_id=r.task_id,
+            task_name=r.task_name,
+            event_id=r.event_id,
+            event_name=r.event_name,
+            title=r.title,
+            date=r.date,
+            start_time=r.start_time,
+            end_time=r.end_time,
+            location=r.location,
+            taken=r.taken or 0,
+            capacity=r.max_bookings,
+        )
+        for r in rows
+    ]
+    minutes = sum(_duration_minutes(i.start_time, i.end_time) for i in items)
+    return items, len(items), minutes
+
+
+async def _load_open_shifts(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+    today: dt.date,
+    now_time: dt.time,
+    scope_event_id: uuid.UUID | None,
+    visible_event_ids: list[uuid.UUID] | None,
+) -> tuple[list[DashboardOpenShift], int, int]:
+    """Upcoming shifts that still have room, soonest first.
+
+    Published tasks only: a draft is the organiser's workbench, not something
+    to offer a volunteer. Shifts the user is already on are left out - those
+    are on the other list, and offering them again reads as a bug.
+    """
+    taken_sq = _confirmed_count_sq()
+    mine_sq = (
+        select(col(Booking.id))
+        .where(
+            col(Booking.shift_id) == col(Shift.id),
+            col(Booking.user_id) == user_id,
+            col(Booking.status) == "confirmed",
+        )
+        .correlate(Shift)
+        .exists()
+    )
+
+    query = (
+        select(
+            col(Shift.id).label("shift_id"),
+            col(Shift.title),
+            col(Shift.date),
+            col(Shift.start_time),
+            col(Shift.end_time),
+            col(Shift.location),
+            col(Shift.max_bookings),
+            col(Task.id).label("task_id"),
+            col(Task.name).label("task_name"),
+            col(Event.id).label("event_id"),
+            col(Event.name).label("event_name"),
+            taken_sq.label("taken"),
+        )
+        .join(Task, col(Shift.task_id) == col(Task.id))
+        .join(Event, col(Task.event_id) == col(Event.id), isouter=True)
+        .where(
+            _future_shift_condition(today, now_time),
+            col(Task.status) == "published",
+            col(Shift.max_bookings) > taken_sq,
+            ~mine_sq,
+            _visible_tasks_condition(scope_event_id, visible_event_ids),
+        )
+        .order_by(col(Shift.date), col(Shift.start_time), col(Shift.title))
+        .limit(SCAN_LIMIT)
+    )
+    rows = (await session.execute(query)).all()
+
+    items = [
+        DashboardOpenShift(
+            shift_id=r.shift_id,
+            task_id=r.task_id,
+            task_name=r.task_name,
+            event_id=r.event_id,
+            event_name=r.event_name,
+            title=r.title,
+            date=r.date,
+            start_time=r.start_time,
+            end_time=r.end_time,
+            location=r.location,
+            taken=r.taken or 0,
+            capacity=r.max_bookings,
+            places_left=max(r.max_bookings - (r.taken or 0), 0),
+        )
+        for r in rows
+    ]
+    return items, len(items), sum(i.places_left for i in items)
+
+
+async def _load_attention(
+    session: AsyncSession,
+    today: dt.date,
+    scope_event_id: uuid.UUID | None,
+    manageable_event_ids: list[uuid.UUID] | None,
+) -> DashboardAttention | None:
+    """The organiser's counts, or ``None`` for somebody who runs nothing.
+
+    ``manageable_event_ids`` is ``None`` for the platform superadmin, meaning
+    unrestricted - the one case where an empty list and ``None`` must not be
+    confused.
+    """
+    if manageable_event_ids is not None and not manageable_event_ids:
+        return None
+    if (
+        scope_event_id is not None
+        and manageable_event_ids is not None
+        and scope_event_id not in manageable_event_ids
+    ):
+        # A plain member of the event in view, even though they administer a
+        # different one. None of this is theirs to act on here.
+        return None
+
+    scope = _visible_tasks_condition(scope_event_id, manageable_event_ids)
+    horizon = today + dt.timedelta(days=ATTENTION_HORIZON_DAYS)
+    taken_sq = _confirmed_count_sq()
+
+    draft_tasks = await _scalar(
+        session,
+        select(func.count())
+        .select_from(Task)
+        .where(col(Task.status) == "draft", col(Task.end_date) >= today, scope),
+    )
+
+    async def count_shifts(extra) -> int:  # noqa: ANN001
+        return await _scalar(
+            session,
+            select(func.count())
+            .select_from(Shift)
+            .join(Task, col(Shift.task_id) == col(Task.id))
+            .where(
+                col(Shift.date) >= today,
+                col(Shift.date) <= horizon,
+                col(Task.status) == "published",
+                scope,
+                extra,
+            ),
+        )
+
+    return DashboardAttention(
+        pending_join_requests=await _count_pending_join_requests(
+            session, manageable_event_ids, scope_event_id
+        ),
+        draft_tasks=draft_tasks,
+        empty_shifts_soon=await count_shifts(taken_sq == 0),
+        short_shifts_soon=await count_shifts(
+            and_(taken_sq > 0, taken_sq < col(Shift.max_bookings))
+        ),
+        horizon_days=ATTENTION_HORIZON_DAYS,
+    )
+
+
+async def _count_pending_join_requests(
+    session: AsyncSession,
+    manageable_event_ids: list[uuid.UUID] | None,
+    scope_event_id: uuid.UUID | None = None,
+) -> int:
+    """Join requests awaiting a decision, across every event this user runs.
+
+    ``scope_event_id`` narrows it to the event in view. The top-level count on
+    the feed leaves it off, because the toast it drives is about anything
+    waiting on the user, wherever it is.
+    """
+    query = (
+        select(func.count())
+        .select_from(EventJoinRequest)
+        .where(col(EventJoinRequest.status) == "pending")
+    )
+    if manageable_event_ids is not None:
+        if not manageable_event_ids:
+            return 0
+        query = query.where(col(EventJoinRequest.event_id).in_(manageable_event_ids))
+    if scope_event_id is not None:
+        query = query.where(col(EventJoinRequest.event_id) == scope_event_id)
+    return await _scalar(session, query)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _effective_scope(
+    user: User, visible_event_ids: list[uuid.UUID] | None
+) -> uuid.UUID | None:
+    """The user's selected event, if they may actually still see it.
+
+    A selection can outlive the membership that justified it - being removed
+    from an event does not reach into the profile pointing at it - so this
+    drops a stale one instead of filtering the whole dashboard down to nothing.
+    """
+    selected = get_user_event_scope(user)
+    if selected is None or visible_event_ids is None:
+        return selected
+    return selected if selected in visible_event_ids else None
+
+
+def _visible_tasks_condition(
+    scope_event_id: uuid.UUID | None,
+    event_ids: list[uuid.UUID] | None,
+):  # noqa: ANN202
+    """Restrict a Task-joined query to what this user may see.
+
+    ``event_ids`` of ``None`` means unrestricted (platform superadmin); an
+    empty list means the user is in no events, and that has to come back as
+    "nothing" rather than collapsing into "everything".
+    """
+    conditions = []
+    if event_ids is None:
+        # Sandbox demos are hidden from the superadmin too, and their tasks can
+        # outlive their event with a NULL event_id, so this cannot lean on the
+        # event filter to keep them out.
+        conditions.append(col(Task.is_sandbox).is_(False))
+    elif not event_ids:
+        return sa.false()
+    else:
+        conditions.append(col(Task.event_id).in_(event_ids))
+
+    if scope_event_id is not None and (
+        event_ids is None or scope_event_id in event_ids
+    ):
+        conditions.append(col(Task.event_id) == scope_event_id)
+    return and_(*conditions)
+
+
+def _confirmed_count_sq():  # noqa: ANN202
+    """Confirmed bookings on the Shift row of the enclosing query."""
+    return (
+        select(func.count())
+        .select_from(Booking)
+        .where(
+            col(Booking.shift_id) == col(Shift.id),
+            col(Booking.status) == "confirmed",
+        )
+        .correlate(Shift)
+        .scalar_subquery()
+    )
+
+
+async def _scalar(session: AsyncSession, query) -> int:  # noqa: ANN001
+    return (await session.execute(query)).scalar_one()
+
 
 async def _get_visibility_filters(
-    session,
-    user: User,  # noqa: ANN001
+    session: AsyncSession,
+    user: User,
 ) -> tuple[str | None, list[uuid.UUID] | None, list[uuid.UUID] | None]:
     """Return (effective_status, manageable_ids, visible_event_ids).
 
@@ -50,165 +407,27 @@ async def _get_visibility_filters(
     visible = await get_visible_event_ids(session, user)
     if visible is None:
         return None, None, None
-    manageable = await crud_membership.list_event_ids_for_user(
-        session, user_id=user.id, minimum_role="admin"
-    )
+    manageable = await get_manageable_event_ids(session, user)
     return "published", manageable or None, visible
 
 
-@router.get("/feed", response_model=DashboardFeedResponse)
-async def dashboard_feed(
-    session: DBDep,
-    current_user: CurrentUser,
-) -> DashboardFeedResponse:
-    """Single endpoint powering the /app/home dashboard."""
-    (
-        effective_status,
-        managed_group_ids,
-        visible_event_ids,
-    ) = await _get_visibility_filters(session, current_user)
-    now = dt.datetime.now()
-    today = now.date()
-
-    # Tasks + count (only current/future)
-    tasks_list, task_count, groups_list = await _load_tasks_and_groups(
-        session, effective_status, today, now, managed_group_ids, visible_event_ids
-    )
-
-    # User's upcoming confirmed bookings with shift info (single query, no N+1)
-    bookings, booking_count = await _load_bookings(
-        session, current_user.id, today, now.time()
-    )
-
-    # Join requests waiting on this user, across every event they manage.
-    # Replaces the old platform-wide approval queue: with open signup there is
-    # nothing to approve at the account level, only at the event level.
-    pending_join_request_count = await _count_pending_join_requests(
-        session, current_user
-    )
-
-    return DashboardFeedResponse(
-        tasks=[DashboardTask.model_validate(e) for e in tasks_list],
-        task_count=task_count,
-        events=[DashboardEvent.model_validate(g) for g in groups_list],
-        bookings=bookings,
-        booking_count=booking_count,
-        pending_join_request_count=pending_join_request_count,
-    )
+async def _event_name(session: AsyncSession, event_id: uuid.UUID | None) -> str | None:
+    if event_id is None:
+        return None
+    query = select(col(Event.name)).where(col(Event.id) == event_id)
+    return (await session.execute(query)).scalar_one_or_none()
 
 
-async def _load_tasks_and_groups(  # noqa: ANN001, ANN202
-    session,
-    effective_status,
-    today: dt.date,
-    now: dt.datetime,
-    managed_group_ids: list[uuid.UUID] | None = None,
-    visible_event_ids: list[uuid.UUID] | None = None,
-):
-    tasks_list = await crud_task.get_multi_filtered(
-        session,
-        limit=100,
-        status=effective_status,
-        date_from=today,
-        has_future_shifts=now,
-        also_include_group_ids=managed_group_ids,
-        restrict_to_event_ids=visible_event_ids,
-    )
-    task_count = await crud_task.get_count_filtered(
-        session,
-        status=effective_status,
-        date_from=today,
-        has_future_shifts=now,
-        also_include_group_ids=managed_group_ids,
-        restrict_to_event_ids=visible_event_ids,
-    )
-    groups_list = await crud_event.get_multi_filtered(
-        session,
-        limit=100,
-        scope="all" if visible_event_ids is None else "mine",
-        member_event_ids=visible_event_ids or [],
-        status=effective_status,
-        also_include_ids=managed_group_ids,
-    )
-    return tasks_list, task_count, groups_list
+def _duration_minutes(start: dt.time | None, end: dt.time | None) -> int:
+    """Minutes between two wall-clock times, 0 when either is missing.
 
-
-async def _load_bookings(
-    session,
-    user_id,
-    today: dt.date,
-    now_time: dt.time,  # noqa: ANN001
-) -> tuple[list[DashboardBookingItem], int]:
-    """Fetch upcoming confirmed bookings joined with shift data in a single query."""
-    future_cond = _future_shift_condition(today, now_time)
-    query = (
-        select(
-            col(Booking.id),
-            col(Shift.id).label("slot_id"),
-            col(Shift.date),
-            col(Shift.title),
-            col(Shift.start_time),
-            col(Shift.end_time),
-        )
-        .join(Shift, col(Booking.shift_id) == col(Shift.id))
-        .where(
-            col(Booking.user_id) == user_id,
-            col(Booking.status) == "confirmed",
-            future_cond,
-        )
-        .order_by(col(Shift.date), col(Shift.start_time))
-        .limit(200)
-    )
-    result = await session.execute(query)
-    rows = result.all()
-    items = [
-        DashboardBookingItem(
-            id=row.id,
-            slot_id=row.slot_id,
-            date=row.date,
-            title=row.title,
-            start_time=row.start_time,
-            end_time=row.end_time,
-        )
-        for row in rows
-    ]
-
-    # Count (also only upcoming)
-    count_query = (
-        select(func.count())
-        .select_from(Booking)
-        .join(Shift, col(Booking.shift_id) == col(Shift.id))
-        .where(
-            col(Booking.user_id) == user_id,
-            col(Booking.status) == "confirmed",
-            future_cond,
-        )
-    )
-    count_result = await session.execute(count_query)
-    total = count_result.scalar_one()
-
-    return items, total
-
-
-async def _count_pending_join_requests(session, user: User) -> int:  # noqa: ANN001
-    """Join requests awaiting a decision in events this user administers."""
-    manageable = await get_manageable_event_ids(session, user)
-    query = (
-        select(func.count())
-        .select_from(EventJoinRequest)
-        .where(col(EventJoinRequest.status) == "pending")
-    )
-    if manageable is not None:
-        if not manageable:
-            return 0
-        query = query.where(col(EventJoinRequest.event_id).in_(manageable))
-    result = await session.execute(query)
-    return result.scalar_one()
-
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
+    An end before the start is read as running past midnight, which is what a
+    22:00-02:00 shift means to whoever is standing there.
+    """
+    if start is None or end is None:
+        return 0
+    minutes = (end.hour * 60 + end.minute) - (start.hour * 60 + start.minute)
+    return minutes if minutes >= 0 else minutes + 24 * 60
 
 
 def _future_shift_condition(today: dt.date, now_time: dt.time | None = None):  # noqa: ANN202

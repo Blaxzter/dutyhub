@@ -44,12 +44,12 @@ Not yet covered, and not currently tracked by an issue:
 | ------------ | ---------- | ------- |
 | `a11y`       | 5          | 28      |
 | `auth`       | 4          | 14      |
-| `chromium`   | 22         | 201     |
+| `chromium`   | 22         | 206     |
 | `member`     | 2          | 18      |
 | `multi-user` | 4          | 54      |
 | `public`     | 7          | 23      |
 | `test-reset` | 1          | 1       |
-| **Total**    | **45**     | **339** |
+| **Total**    | **45**     | **344** |
 
 ## Inventory
 
@@ -138,7 +138,7 @@ Not yet covered, and not currently tracked by an issue:
   - a new account signs straight in and lands in the app
   - registering twice with the same address is refused
 
-### Project `chromium` — 22 files, 201 tests
+### Project `chromium` — 22 files, 206 tests
 
 #### `frontend/e2e/tests/authenticated/admin-events.spec.ts` — 13 tests
 
@@ -246,19 +246,26 @@ Not yet covered, and not currently tracked by an issue:
   - can access public changelog page
   - public changelog shows heading
 
-#### `frontend/e2e/tests/authenticated/dashboard-full.spec.ts` — 12 tests
+#### `frontend/e2e/tests/authenticated/dashboard-full.spec.ts` — 17 tests
 
-- **Dashboard – stats cards** (5)
-  - shows Tasks stat card
-  - shows My Bookings stat card
-  - shows the join-requests stat card to someone who runs an event
-  - Tasks card navigates to tasks
-  - My Bookings card navigates to bookings
-- **Dashboard – calendar** (2)
-  - shows calendar section
-  - Filter button is visible
-- **Dashboard – quick actions** (5)
+- **Dashboard – page structure** (3)
+  - leads with the next-shift card
+  - shows the shifts that still need people
   - shows Quick Actions section
+- **Dashboard – shifts that need people** (4)
+  - lists a shift from a freshly published job
+  - a shift nobody has taken is marked as such
+  - pressing a row opens the shift
+  - Browse shifts goes to the task list
+- **Dashboard – what you have said yes to** (3)
+  - a booked shift becomes the headline and leaves the offer list
+  - the headline opens the shift it names
+  - a second booking lands in the list under the headline
+- **Dashboard – the organiser view** (3)
+  - an organiser is told which shifts have nobody on them
+  - the gap link leads to the task list
+  - somebody who only helps out sees none of it
+- **Dashboard – quick actions** (4)
   - shows Browse Tasks button
   - shows My Bookings button
   - Browse Tasks navigates to tasks page

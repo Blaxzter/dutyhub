@@ -1,41 +1,55 @@
 {
     "home": {
-        "calendar": {
-            "filter": "Filter",
-            "filterTooltip": "{count} category hidden | {count} categories hidden",
-            "filterTooltipNone": "Filter calendar items",
-            "filters": {
-                "bookings": "My Bookings",
-                "groups": "Events",
-                "tasks": "Tasks"
+        "attention": {
+            "draftTasks": "1 job is still a draft | {count} jobs are still drafts",
+            "emptyShifts": "1 shift in the next {days} days has nobody on it | {count} shifts in the next {days} days have nobody on them",
+            "joinRequests": "1 person is waiting to join | {count} people are waiting to join",
+            "shortShifts": "1 shift in the next {days} days is short of people | {count} shifts in the next {days} days are short of people",
+            "title": "Needs your attention"
+        },
+        "joinRequestToast": {
+            "action": "Review",
+            "dismiss": "Later",
+            "message": "1 person is waiting to join | {count} people are waiting to join"
+        },
+        "mine": {
+            "all": "All my bookings",
+            "more": "and 1 more | and {count} more",
+            "summaryCount": "1 shift coming up | {count} shifts coming up",
+            "summaryHours": "{hours} h in total",
+            "title": "After that"
+        },
+        "next": {
+            "empty": {
+                "action": "Find a shift",
+                "bodyNone": "Nothing is short of people right now. Look again once the schedule grows.",
+                "bodyOpen": "1 place is still waiting for somebody. | {count} places are still waiting for somebody.",
+                "title": "Nothing in your diary"
             },
-            "hiddenCount": "{count} category hidden | {count} categories hidden",
-            "title": "Calendar"
+            "eyebrow": "Your next shift",
+            "open": "Open shift",
+            "withOthers": "on your own | with 1 other person | with {count} other people"
+        },
+        "open": {
+            "browse": "Browse shifts",
+            "emptyBody": "Nothing here is short of people right now.",
+            "emptySummary": "Every shift is covered",
+            "emptyTitle": "Everything is covered",
+            "more": "and 1 more | and {count} more",
+            "nobodyYet": "Nobody yet",
+            "placesLeft": "1 place left | {count} places left",
+            "summaryPlaces": "1 place open | {count} places open",
+            "summaryShifts": "in 1 shift | across {count} shifts",
+            "title": "Still needs people"
         },
         "quickActions": {
-            "browseTasks": "Browse Tasks",
-            "howItWorks": "How It Works",
-            "myBookings": "My Bookings",
-            "title": "Quick Actions"
+            "browseTasks": "Browse jobs",
+            "howItWorks": "How it works",
+            "myBookings": "My bookings",
+            "title": "Anything else"
         },
-        "stats": {
-            "bookings": {
-                "description": "Your confirmed duty bookings",
-                "title": "My Bookings"
-            },
-            "joinRequests": {
-                "description": "People waiting to join your events",
-                "pendingAction": "Review",
-                "pendingDismiss": "Later",
-                "pendingToast": "1 person is waiting to join | {count} people are waiting to join",
-                "title": "Requests"
-            },
-            "tasks": {
-                "description": "Available tasks to browse",
-                "title": "Tasks"
-            }
-        },
-        "subtitle": "Welcome back! Here's your duty overview.",
+        "subtitle": "What you have said yes to, and where help is still needed.",
+        "subtitleEvent": "What you have said yes to, and where {event} still needs people.",
         "title": "Dashboard"
     }
 }

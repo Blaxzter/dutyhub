@@ -61,6 +61,28 @@ export function useFormatters() {
     return new Date(dateStr).toLocaleDateString(locale.value)
   }
 
+  /**
+   * "Today", "Tomorrow", "in 3 days" — and a plain date once that stops being
+   * the useful answer.
+   *
+   * `Intl.RelativeTimeFormat` with `numeric: 'auto'` is what turns -1/0/1 into
+   * words, in whichever language is loaded, so this needs no message keys of
+   * its own. Beyond a week "in 9 days" is harder to act on than the date, so
+   * that is where it hands over.
+   */
+  const formatRelativeDay = (
+    dateStr: string,
+    options: Intl.DateTimeFormatOptions = { weekday: 'short', month: 'short', day: 'numeric' },
+  ): string => {
+    const target = new Date(dateStr + 'T00:00:00')
+    if (Number.isNaN(target.getTime())) return ''
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const days = Math.round((target.getTime() - today.getTime()) / 86_400_000)
+    if (Math.abs(days) > 6) return formatDateLabel(dateStr, options)
+    return new Intl.RelativeTimeFormat(locale.value, { numeric: 'auto' }).format(days, 'day')
+  }
+
   const formatDateWithTime = (d: {
     slot_date: string
     start_time?: string | null
@@ -68,9 +90,10 @@ export function useFormatters() {
   }): string => {
     let label = formatDate(d.slot_date)
     if (d.start_time || d.end_time) {
-      const parts = [d.start_time ? formatTime(d.start_time) : '', d.end_time ? formatTime(d.end_time) : ''].filter(
-        Boolean,
-      )
+      const parts = [
+        d.start_time ? formatTime(d.start_time) : '',
+        d.end_time ? formatTime(d.end_time) : '',
+      ].filter(Boolean)
       label += ` (${parts.join(' – ')})`
     }
     return label
@@ -93,6 +116,7 @@ export function useFormatters() {
     formatTimeRange,
     formatDateLabel,
     formatDate,
+    formatRelativeDay,
     formatDateWithTime,
     formatDateTime,
     hour12,

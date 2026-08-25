@@ -82,6 +82,16 @@ function isoDate(offset: number): string {
 const EVENT_START_OFFSET = 1
 const EVENT_DAYS = 5
 
+/**
+ * How many shifts the organiser takes on herself.
+ *
+ * The dashboard leads with "your next shift", so an organiser who has booked
+ * nothing captures an empty state — accurate, but a poor description of the
+ * screen. Somebody who both runs an event and helps at it is the ordinary
+ * case, and three shifts across three jobs is what that looks like.
+ */
+const ORGANISER_SHIFTS = 3
+
 interface SeededTask {
   seed: TaskSeed
   id: string
@@ -161,6 +171,7 @@ async function seedWorld(): Promise<SeededWorld> {
   }
 
   await fillRoster(tasks, organiserEmail)
+  await bookOrganiser(tasks, organiserEmail)
 
   const featured = tasks.find((t) => t.seed.key === 'welcome') ?? tasks[0]
   return { organiserEmail, eventId: event.id, tasks, featuredTaskId: featured.id }
@@ -218,6 +229,55 @@ async function fillRoster(tasks: SeededTask[], organiserEmail: string): Promise<
   }
 
   console.log(`  booked ${bookings.length} places`)
+}
+
+/**
+ * Put the organiser on a handful of shifts of her own, one per job.
+ *
+ * Runs after `fillRoster`, so it can only take places the volunteers left, and
+ * it re-reads occupancy rather than assuming any: a job whose shifts all
+ * filled up is skipped instead of collecting 409s.
+ */
+async function bookOrganiser(tasks: SeededTask[], organiserEmail: string): Promise<void> {
+  interface ShiftRow {
+    id: string
+    date: string
+    start_time: string
+    end_time: string
+    current_bookings: number
+    max_bookings: number
+  }
+
+  const mine: { start: number; end: number }[] = []
+  let booked = 0
+
+  for (const task of tasks) {
+    if (booked >= ORGANISER_SHIFTS) break
+
+    const { items } = await apiAs<{ items: ShiftRow[] }>(
+      'GET',
+      `/shifts/?task_id=${task.id}&limit=200`,
+      organiserEmail,
+    )
+    const open = items
+      .filter((shift) => shift.current_bookings < shift.max_bookings)
+      .sort((a, b) => `${a.date}${a.start_time}`.localeCompare(`${b.date}${b.start_time}`))
+
+    for (const shift of open) {
+      const start = Date.parse(`${shift.date}T${shift.start_time}`)
+      const end = Date.parse(`${shift.date}T${shift.end_time}`)
+      if (mine.some((slot) => start < slot.end && end > slot.start)) continue
+      const accepted = await apiAs('POST', '/bookings/', organiserEmail, { shift_id: shift.id })
+        .then(() => true)
+        .catch(() => false)
+      if (!accepted) continue
+      mine.push({ start, end })
+      booked += 1
+      break
+    }
+  }
+
+  console.log(`  organiser is on ${booked} shifts herself`)
 }
 
 // ── Browser setup ────────────────────────────────────────────────────────────

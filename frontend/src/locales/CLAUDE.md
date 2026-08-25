@@ -69,5 +69,7 @@ node scripts/pre-commit/check_locale_parity.js   # en/de symmetry
 just check-locales                               # same, via the justfile
 ```
 
-Two keys are known-missing and pre-date the current work
-(`dashboard.home.calendar.filters.events`, `duties.tasks.createView.eventDateHint`).
+One key is known-missing and pre-dates the current work
+(`duties.tasks.createView.eventDateHint`). The other,
+`dashboard.home.calendar.filters.events`, went with the dashboard calendar it
+belonged to.

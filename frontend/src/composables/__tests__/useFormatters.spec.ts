@@ -268,6 +268,55 @@ describe('useFormatters', () => {
     })
   })
 
+  describe('formatRelativeDay', () => {
+    /**
+     * Every assertion here is relative to "now", so the clock is pinned. Local
+     * noon rather than a UTC instant: the function compares local midnights,
+     * and a UTC-midnight fake would land on the previous day west of
+     * Greenwich and shift every expectation by one.
+     */
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date(2026, 2, 15, 12, 0, 0))
+      return () => vi.useRealTimers()
+    })
+
+    it('names the days either side of today in words', () => {
+      const { formatRelativeDay } = setup({ locale: 'en' })
+      expect(formatRelativeDay('2026-03-15')).toBe('today')
+      expect(formatRelativeDay('2026-03-16')).toBe('tomorrow')
+      expect(formatRelativeDay('2026-03-14')).toBe('yesterday')
+    })
+
+    it('translates those words with the locale', () => {
+      const { formatRelativeDay } = setup({ locale: 'de' })
+      expect(formatRelativeDay('2026-03-15')).toBe('heute')
+      expect(formatRelativeDay('2026-03-16')).toBe('morgen')
+    })
+
+    it('counts the days out to the end of the week', () => {
+      const { formatRelativeDay } = setup({ locale: 'en' })
+      expect(formatRelativeDay('2026-03-18')).toBe('in 3 days')
+      expect(formatRelativeDay('2026-03-21')).toBe('in 6 days')
+    })
+
+    it('hands over to a plain date once counting stops helping', () => {
+      const { formatRelativeDay, formatDateLabel } = setup({ locale: 'en' })
+      expect(formatRelativeDay('2026-03-24')).toBe(formatDateLabel('2026-03-24'))
+      expect(formatRelativeDay('2026-03-01')).toBe(formatDateLabel('2026-03-01'))
+    })
+
+    it('passes custom date options through to the fallback', () => {
+      const { formatRelativeDay, formatDateLabel } = setup({ locale: 'en' })
+      const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric' }
+      expect(formatRelativeDay('2026-03-24', options)).toBe(formatDateLabel('2026-03-24', options))
+    })
+
+    it('renders nothing for unparseable input', () => {
+      expect(setup({ locale: 'en' }).formatRelativeDay('not-a-date')).toBe('')
+    })
+  })
+
   describe('formatDateWithTime', () => {
     it('returns the bare date when no times are attached', () => {
       const { formatDateWithTime } = setup({ locale: 'en' })

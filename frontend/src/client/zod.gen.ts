@@ -220,69 +220,97 @@ export const zChangePasswordRequest = z
   })
 
 /**
- * DashboardBookingItem
+ * DashboardAttention
  *
- * Booking with inline shift info for calendar display — avoids N+1.
+ * The organiser's to-do list, counted rather than listed.
+ *
+ * Only populated for someone who administers the event in scope; a plain
+ * member gets ``None`` and never sees the block.
  */
-export const zDashboardBookingItem = z
+export const zDashboardAttention = z
   .object({
-    id: z.uuid(),
-    slot_id: z.uuid(),
-    date: z.iso.date(),
+    pending_join_requests: z.int().optional().default(0),
+    draft_tasks: z.int().optional().default(0),
+    empty_shifts_soon: z.int().optional().default(0),
+    short_shifts_soon: z.int().optional().default(0),
+    horizon_days: z.int().optional().default(7),
+  })
+  .register(z.globalRegistry, {
+    description:
+      "The organiser's to-do list, counted rather than listed.\n\nOnly populated for someone who administers the event in scope; a plain\nmember gets ``None`` and never sees the block.",
+  })
+
+/**
+ * DashboardOpenShift
+ *
+ * A shift that still has room, offered to the user to pick up.
+ */
+export const zDashboardOpenShift = z
+  .object({
+    shift_id: z.uuid(),
+    task_id: z.uuid(),
+    task_name: z.string(),
+    event_id: z.uuid().nullish(),
+    event_name: z.string().nullish(),
     title: z.string(),
+    date: z.iso.date(),
     start_time: z.iso.time().nullish(),
     end_time: z.iso.time().nullish(),
-  })
-  .register(z.globalRegistry, {
-    description: 'Booking with inline shift info for calendar display — avoids N+1.',
-  })
-
-/**
- * DashboardEvent
- *
- * Slim event for the dashboard calendar.
- */
-export const zDashboardEvent = z
-  .object({
-    id: z.uuid(),
-    name: z.string(),
-    start_date: z.iso.date(),
-    end_date: z.iso.date(),
-  })
-  .register(z.globalRegistry, {
-    description: 'Slim event for the dashboard calendar.',
-  })
-
-/**
- * DashboardTask
- *
- * Slim task for the dashboard calendar.
- */
-export const zDashboardTask = z
-  .object({
-    id: z.uuid(),
-    name: z.string(),
-    status: z.string(),
-    description: z.string().nullish(),
     location: z.string().nullish(),
-    start_date: z.iso.date(),
-    end_date: z.iso.date(),
+    taken: z.int(),
+    capacity: z.int(),
+    places_left: z.int(),
   })
   .register(z.globalRegistry, {
-    description: 'Slim task for the dashboard calendar.',
+    description: 'A shift that still has room, offered to the user to pick up.',
+  })
+
+/**
+ * DashboardShift
+ *
+ * A shift the signed-in user has already committed to.
+ */
+export const zDashboardShift = z
+  .object({
+    booking_id: z.uuid(),
+    shift_id: z.uuid(),
+    task_id: z.uuid(),
+    task_name: z.string(),
+    event_id: z.uuid().nullish(),
+    event_name: z.string().nullish(),
+    title: z.string(),
+    date: z.iso.date(),
+    start_time: z.iso.time().nullish(),
+    end_time: z.iso.time().nullish(),
+    location: z.string().nullish(),
+    taken: z.int(),
+    capacity: z.int(),
+  })
+  .register(z.globalRegistry, {
+    description: 'A shift the signed-in user has already committed to.',
   })
 
 /**
  * DashboardFeedResponse
+ *
+ * Everything /app/home renders, in one request.
  */
-export const zDashboardFeedResponse = z.object({
-  tasks: z.array(zDashboardTask),
-  task_count: z.int(),
-  events: z.array(zDashboardEvent),
-  bookings: z.array(zDashboardBookingItem),
-  booking_count: z.int(),
-  pending_join_request_count: z.int().optional().default(0),
-})
+export const zDashboardFeedResponse = z
+  .object({
+    event_id: z.uuid().nullish(),
+    event_name: z.string().nullish(),
+    my_shifts: z.array(zDashboardShift),
+    my_shift_count: z.int(),
+    my_minutes: z.int(),
+    open_shifts: z.array(zDashboardOpenShift),
+    open_shift_count: z.int(),
+    open_places: z.int(),
+    attention: zDashboardAttention.nullish(),
+    pending_join_request_count: z.int().optional().default(0),
+  })
+  .register(z.globalRegistry, {
+    description: 'Everything /app/home renders, in one request.',
+  })
 
 /**
  * DemoDataCreatedResponse

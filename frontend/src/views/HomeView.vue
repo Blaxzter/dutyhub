@@ -1,8 +1,17 @@
 <script setup lang="ts">
+/**
+ * The dashboard.
+ *
+ * It used to be a month calendar with three date-range layers painted on it,
+ * which looked like an overview and answered nothing: whether you are due
+ * anywhere, and where people are still missing, both needed you to open the
+ * grid and count. So the page is now two lists and a headline — what you have
+ * said yes to, and what still needs somebody — with the calendar left where it
+ * belongs, on the Tasks screen, behind a view switch.
+ */
 import { computed, onMounted, ref } from 'vue'
 
-import { BookCheck, CalendarDays, HelpCircle, SlidersHorizontal, Users } from '@lucide/vue'
-import { useLocalStorage } from '@vueuse/core'
+import { ArrowRight, BookCheck, HelpCircle, Search } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
@@ -10,84 +19,69 @@ import { useAuthStore } from '@/stores/auth'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Label from '@/components/ui/label/Label.vue'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Switch } from '@/components/ui/switch'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Skeleton } from '@/components/ui/skeleton'
 
+import AttentionStrip from '@/components/dashboard/AttentionStrip.vue'
+import NextShiftCard from '@/components/dashboard/NextShiftCard.vue'
+import ShiftRow from '@/components/dashboard/ShiftRow.vue'
 import ShiftDetailDialog from '@/components/tasks/ShiftDetailDialog.vue'
-import { ShiftCalendar } from '@/components/tasks/shift-calendar'
-import type { BookingCalendarItem } from '@/components/tasks/shift-calendar'
 
-import type { DashboardEvent, DashboardFeedResponse, DashboardTask } from '@/client'
+import type { DashboardFeedResponse, DashboardOpenShift, DashboardShift } from '@/client'
 import { toastApiError } from '@/lib/api-errors'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
-
 const { get } = useAuthenticatedClient()
 
-const eventCount = ref(0)
-const myBookingCount = ref(0)
+const feed = ref<DashboardFeedResponse | null>(null)
 const loading = ref(true)
 
-const tasks = ref<DashboardTask[]>([])
-const events = ref<DashboardEvent[]>([])
-const bookings = ref<BookingCalendarItem[]>([])
-
-// Shift detail dialog
-const showShiftDetail = ref(false)
 const detailShiftId = ref<string | null>(null)
+const showShiftDetail = ref(false)
 
-// Map booking ID → shift ID for dialog
-const bookingShiftMap = ref<Map<string, string>>(new Map())
+const todayStr = computed(() => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+})
 
-const openBookingDetail = (calendarItem: BookingCalendarItem) => {
-  const slotId = bookingShiftMap.value.get(calendarItem.id)
-  if (!slotId) return
-  detailShiftId.value = slotId
-  showShiftDetail.value = true
-}
+const nextShift = computed<DashboardShift | null>(() => feed.value?.my_shifts[0] ?? null)
+/** Everything after the headline one — the headline is not repeated below it. */
+const laterShifts = computed<DashboardShift[]>(() => feed.value?.my_shifts.slice(1) ?? [])
+const openShifts = computed<DashboardOpenShift[]>(() => feed.value?.open_shifts ?? [])
 
-const showTasks = useLocalStorage('wirksam-calendar-show-tasks', true)
-const showGroups = useLocalStorage('wirksam-calendar-show-events', true)
-const showBookings = useLocalStorage('wirksam-calendar-show-bookings', true)
-
-const hiddenFilterCount = computed(
-  () => [showTasks, showGroups, showBookings].filter((f) => !f.value).length,
+/** Rows the feed knows about but did not send, so the lists can say so. */
+const hiddenMine = computed(() =>
+  Math.max((feed.value?.my_shift_count ?? 0) - (feed.value?.my_shifts.length ?? 0), 0),
+)
+const hiddenOpen = computed(() =>
+  Math.max((feed.value?.open_shift_count ?? 0) - openShifts.value.length, 0),
 )
 
-async function loadStats() {
+const committedHours = computed(() => {
+  const hours = (feed.value?.my_minutes ?? 0) / 60
+  return hours.toLocaleString(locale.value, { maximumFractionDigits: 1 })
+})
+
+/**
+ * A shift in some other event than the one selected, labelled so. Your own
+ * duties are listed across every event you belong to — a promise to turn up
+ * should not vanish because the event switcher is pointing elsewhere — and
+ * without the name that list would silently mix two schedules together.
+ */
+const foreignEventName = (shift: DashboardShift): string | null =>
+  shift.event_id && shift.event_id !== feed.value?.event_id ? (shift.event_name ?? null) : null
+
+async function loadFeed() {
   loading.value = true
   try {
     const res = await get<{ data: DashboardFeedResponse }>({ url: '/dashboard/feed' })
-    const feed = res.data
-
-    tasks.value = feed.tasks
-    eventCount.value = feed.task_count
-    events.value = feed.events
-    myBookingCount.value = feed.booking_count
-
-    // Join requests waiting on this user, across the events they run.
-    authStore.notifyPendingJoinRequests(feed.pending_join_request_count ?? 0)
-
-    // Map feed bookings to calendar items
-    const newMap = new Map<string, string>()
-    bookings.value = feed.bookings.map((b) => {
-      newMap.set(b.id, b.slot_id)
-      return {
-        id: b.id,
-        slotId: b.slot_id,
-        date: b.date,
-        title: b.title,
-        startTime: b.start_time,
-        endTime: b.end_time,
-      }
-    })
-    bookingShiftMap.value = newMap
+    feed.value = res.data
+    // Join requests waiting on this user, across every event they run.
+    authStore.notifyPendingJoinRequests(res.data.pending_join_request_count ?? 0)
   } catch (error) {
     toastApiError(error)
   } finally {
@@ -95,219 +89,222 @@ async function loadStats() {
   }
 }
 
-const navigateToTask = (task: { id: string }) => {
-  router.push({ name: 'task-detail', params: { eventId: task.id } })
+const openShiftDetail = (shiftId: string) => {
+  detailShiftId.value = shiftId
+  showShiftDetail.value = true
 }
 
-const navigateToEvent = (event: { id: string }) => {
-  if (authStore.canManageEvent(event.id)) {
-    router.push({ name: 'event-settings', params: { eventId: event.id } })
-  }
-}
+const goBrowseOpenShifts = () => router.push({ name: 'tasks', query: { hide_full: 'true' } })
 
-onMounted(loadStats)
+onMounted(loadFeed)
 </script>
 
 <template>
   <div class="mx-auto max-w-7xl space-y-6">
     <div class="space-y-2">
-      <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold">
+      <h1 data-testid="page-heading" class="text-2xl font-bold sm:text-3xl">
         {{ t('dashboard.home.title') }}
       </h1>
       <p class="text-muted-foreground">
-        {{ t('dashboard.home.subtitle') }}
+        {{
+          feed?.event_name
+            ? t('dashboard.home.subtitleEvent', { event: feed.event_name })
+            : t('dashboard.home.subtitle')
+        }}
       </p>
     </div>
 
-    <!-- Stats Cards -->
-    <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-      <Card
-        data-testid="stat-card-tasks"
-        class="cursor-pointer hover:shadow-md transition-shadow"
-        @click="router.push({ name: 'tasks' })"
-      >
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{
-            t('dashboard.home.stats.tasks.title')
-          }}</CardTitle>
-          <CalendarDays class="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold">{{ eventCount }}</div>
-          <p class="text-xs text-muted-foreground">
-            {{ t('dashboard.home.stats.tasks.description') }}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card
-        data-testid="stat-card-bookings"
-        class="cursor-pointer hover:shadow-md transition-shadow"
-        @click="router.push({ name: 'my-bookings' })"
-      >
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{
-            t('dashboard.home.stats.bookings.title')
-          }}</CardTitle>
-          <BookCheck class="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold">{{ myBookingCount }}</div>
-          <p class="text-xs text-muted-foreground">
-            {{ t('dashboard.home.stats.bookings.description') }}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card
-        v-if="authStore.isEventManager"
-        data-testid="stat-card-join-requests"
-        class="cursor-pointer hover:shadow-md transition-shadow"
-        @click="router.push({ name: 'my-events', query: { tab: 'requests' } })"
-      >
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium">{{
-            t('dashboard.home.stats.joinRequests.title')
-          }}</CardTitle>
-          <Users class="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold">{{ authStore.pendingJoinRequestCount }}</div>
-          <p class="text-xs text-muted-foreground">
-            {{ t('dashboard.home.stats.joinRequests.description') }}
-          </p>
-        </CardContent>
-      </Card>
+    <div v-if="loading" class="space-y-6">
+      <Skeleton class="h-40 w-full rounded-xl" />
+      <div class="grid gap-6 lg:grid-cols-2">
+        <Skeleton class="h-64 w-full rounded-xl" />
+        <Skeleton class="h-64 w-full rounded-xl" />
+      </div>
     </div>
 
-    <!-- Calendar Section -->
-    <div data-testid="dashboard-calendar" class="space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-xl font-semibold">{{ t('dashboard.home.calendar.title') }}</h2>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger as="span" class="inline-flex">
-              <Popover>
-                <PopoverTrigger as-child>
-                  <Button
-                    data-testid="btn-calendar-filter"
-                    variant="outline"
-                    size="sm"
-                    class="relative"
-                  >
-                    <SlidersHorizontal class="mr-2 h-4 w-4" />
-                    {{ t('dashboard.home.calendar.filter') }}
-                    <span
-                      v-if="hiddenFilterCount > 0"
-                      class="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground"
-                    >
-                      {{ hiddenFilterCount }}
-                    </span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" class="w-56">
-                  <div class="space-y-4">
-                    <div class="flex items-center justify-between">
-                      <Label for="filter-tasks">{{
-                        t('dashboard.home.calendar.filters.tasks')
-                      }}</Label>
-                      <Switch id="filter-tasks" v-model="showTasks" />
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <Label for="filter-events">{{
-                        t('dashboard.home.calendar.filters.events')
-                      }}</Label>
-                      <Switch id="filter-events" v-model="showGroups" />
-                    </div>
-                    <div class="flex items-center justify-between">
-                      <Label for="filter-bookings">{{
-                        t('dashboard.home.calendar.filters.bookings')
-                      }}</Label>
-                      <Switch id="filter-bookings" v-model="showBookings" />
-                    </div>
-                    <p
-                      v-if="hiddenFilterCount > 0"
-                      class="text-xs text-muted-foreground border-t pt-3"
-                    >
-                      {{
-                        t(
-                          'dashboard.home.calendar.hiddenCount',
-                          { count: hiddenFilterCount },
-                          hiddenFilterCount,
-                        )
-                      }}
-                    </p>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              <p v-if="hiddenFilterCount > 0">
+    <template v-else>
+      <!-- Organisers only: the backend sends nothing here for a plain member. -->
+      <AttentionStrip v-if="feed?.attention" :attention="feed.attention" />
+
+      <NextShiftCard
+        :shift="nextShift"
+        :open-places="feed?.open_places ?? 0"
+        @open="openShiftDetail($event.shift_id)"
+        @browse="goBrowseOpenShifts"
+      />
+
+      <!--
+        `items-start` so a short list does not stretch into a void beside a long
+        one. `min-w-0` on each card because a grid item defaults to
+        `min-width: auto` and will not shrink below its content — without it a
+        long shift title pushes the whole card past the screen on a phone.
+      -->
+      <div class="grid items-start gap-6 lg:grid-cols-2">
+        <!-- What else you have said yes to -->
+        <Card v-if="laterShifts.length > 0" data-testid="dashboard-my-shifts" class="min-w-0">
+          <CardHeader class="flex flex-row items-start justify-between gap-2 space-y-0">
+            <div class="min-w-0">
+              <CardTitle class="text-base">{{ t('dashboard.home.mine.title') }}</CardTitle>
+              <p class="mt-1 text-sm text-muted-foreground">
                 {{
                   t(
-                    'dashboard.home.calendar.filterTooltip',
-                    { count: hiddenFilterCount },
-                    hiddenFilterCount,
+                    'dashboard.home.mine.summaryCount',
+                    { count: feed?.my_shift_count ?? 0 },
+                    feed?.my_shift_count ?? 0,
                   )
-                }}
+                }}<template v-if="(feed?.my_minutes ?? 0) > 0">
+                  · {{ t('dashboard.home.mine.summaryHours', { hours: committedHours }) }}
+                </template>
               </p>
-              <p v-else>
-                {{ t('dashboard.home.calendar.filterTooltipNone') }}
+            </div>
+            <Button
+              data-testid="btn-all-bookings"
+              variant="ghost"
+              size="sm"
+              class="shrink-0"
+              @click="router.push({ name: 'my-bookings' })"
+            >
+              {{ t('dashboard.home.mine.all') }}
+              <ArrowRight class="ml-1 h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent class="space-y-1">
+            <ShiftRow
+              v-for="shift in laterShifts"
+              :key="shift.booking_id"
+              :date="shift.date"
+              :start-time="shift.start_time"
+              :end-time="shift.end_time"
+              :title="shift.title"
+              :task-name="shift.task_name"
+              :location="shift.location"
+              :event-name="foreignEventName(shift)"
+              :highlight="shift.date === todayStr"
+              @select="openShiftDetail(shift.shift_id)"
+            />
+            <p v-if="hiddenMine > 0" class="px-2 pt-1 text-xs text-muted-foreground">
+              {{ t('dashboard.home.mine.more', { count: hiddenMine }, hiddenMine) }}
+            </p>
+          </CardContent>
+        </Card>
+
+        <!-- Where the event is still short of people -->
+        <Card
+          data-testid="dashboard-open-shifts"
+          :class="['min-w-0', laterShifts.length > 0 ? '' : 'lg:col-span-2']"
+        >
+          <CardHeader class="flex flex-row items-start justify-between gap-2 space-y-0">
+            <div class="min-w-0">
+              <CardTitle class="text-base">{{ t('dashboard.home.open.title') }}</CardTitle>
+              <p class="mt-1 text-sm text-muted-foreground">
+                <template v-if="feed && feed.open_places > 0">
+                  {{
+                    t(
+                      'dashboard.home.open.summaryPlaces',
+                      { count: feed.open_places },
+                      feed.open_places,
+                    )
+                  }}
+                  {{
+                    t(
+                      'dashboard.home.open.summaryShifts',
+                      { count: feed.open_shift_count },
+                      feed.open_shift_count,
+                    )
+                  }}
+                </template>
+                <template v-else>{{ t('dashboard.home.open.emptySummary') }}</template>
               </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+            </div>
+            <Button
+              data-testid="btn-browse-open-shifts"
+              variant="ghost"
+              size="sm"
+              class="shrink-0"
+              @click="goBrowseOpenShifts"
+            >
+              {{ t('dashboard.home.open.browse') }}
+              <ArrowRight class="ml-1 h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent class="space-y-1">
+            <ShiftRow
+              v-for="shift in openShifts"
+              :key="shift.shift_id"
+              :date="shift.date"
+              :start-time="shift.start_time"
+              :end-time="shift.end_time"
+              :title="shift.title"
+              :task-name="shift.task_name"
+              :location="shift.location"
+              :highlight="shift.date === todayStr"
+              @select="openShiftDetail(shift.shift_id)"
+            >
+              <template #trailing>
+                <Badge :variant="shift.taken === 0 ? 'warning' : 'secondary'">
+                  {{
+                    shift.taken === 0
+                      ? t('dashboard.home.open.nobodyYet')
+                      : t(
+                          'dashboard.home.open.placesLeft',
+                          { count: shift.places_left },
+                          shift.places_left,
+                        )
+                  }}
+                </Badge>
+              </template>
+            </ShiftRow>
+
+            <p v-if="hiddenOpen > 0" class="px-2 pt-1 text-xs text-muted-foreground">
+              {{ t('dashboard.home.open.more', { count: hiddenOpen }, hiddenOpen) }}
+            </p>
+
+            <div
+              v-if="openShifts.length === 0"
+              class="flex flex-col items-center gap-1 py-8 text-center"
+            >
+              <p class="font-medium">{{ t('dashboard.home.open.emptyTitle') }}</p>
+              <p class="text-sm text-muted-foreground">{{ t('dashboard.home.open.emptyBody') }}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div v-if="loading" class="py-12 text-center text-muted-foreground">
-        {{ t('common.states.loading') }}
+      <!-- Quick Actions -->
+      <div data-testid="dashboard-quick-actions" class="rounded-xl bg-muted/50 p-6">
+        <h2 class="mb-4 text-xl font-semibold">{{ t('dashboard.home.quickActions.title') }}</h2>
+        <div class="flex flex-wrap gap-3">
+          <Button
+            data-testid="btn-browse-tasks"
+            variant="outline"
+            @click="router.push({ name: 'tasks' })"
+          >
+            <Search class="mr-2 h-4 w-4" />
+            {{ t('dashboard.home.quickActions.browseTasks') }}
+          </Button>
+          <Button
+            data-testid="btn-my-bookings"
+            variant="outline"
+            @click="router.push({ name: 'my-bookings' })"
+          >
+            <BookCheck class="mr-2 h-4 w-4" />
+            {{ t('dashboard.home.quickActions.myBookings') }}
+          </Button>
+          <Button
+            variant="outline"
+            @click="router.push({ name: 'landing', hash: '#how-it-works' })"
+          >
+            <HelpCircle class="mr-2 h-4 w-4" />
+            {{ t('dashboard.home.quickActions.howItWorks') }}
+          </Button>
+        </div>
       </div>
-      <ShiftCalendar
-        v-else
-        :tasks="tasks"
-        :events="events"
-        :bookings="bookings"
-        :show-tasks="showTasks"
-        :show-events="showGroups"
-        :show-bookings="showBookings"
-        @navigate-task="navigateToTask"
-        @navigate-event="navigateToEvent"
-        @navigate-booking="openBookingDetail"
-      />
-    </div>
+    </template>
 
-    <!-- Quick Actions -->
-    <div data-testid="dashboard-quick-actions" class="rounded-xl bg-muted/50 p-6">
-      <h2 class="text-xl font-semibold mb-4">{{ t('dashboard.home.quickActions.title') }}</h2>
-      <div class="flex flex-wrap gap-3">
-        <Button
-          data-testid="btn-browse-tasks"
-          variant="outline"
-          @click="router.push({ name: 'tasks' })"
-        >
-          <CalendarDays class="mr-2 h-4 w-4" />
-          {{ t('dashboard.home.quickActions.browseTasks') }}
-        </Button>
-        <Button
-          data-testid="btn-my-bookings"
-          variant="outline"
-          @click="router.push({ name: 'my-bookings' })"
-        >
-          <BookCheck class="mr-2 h-4 w-4" />
-          {{ t('dashboard.home.quickActions.myBookings') }}
-        </Button>
-        <Button variant="outline" @click="router.push({ name: 'landing', hash: '#how-it-works' })">
-          <HelpCircle class="mr-2 h-4 w-4" />
-          {{ t('dashboard.home.quickActions.howItWorks') }}
-        </Button>
-      </div>
-    </div>
-
-    <!-- Shift Detail Dialog -->
     <ShiftDetailDialog
       v-model:open="showShiftDetail"
-      :shift-id="detailShiftId"
-      @booking-updated="loadStats"
+      :slot-id="detailShiftId"
+      @booking-updated="loadFeed"
     />
   </div>
 </template>

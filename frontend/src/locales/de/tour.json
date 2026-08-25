@@ -50,8 +50,8 @@
             "title": "Eine Aufgabe anlegen"
         },
         "dashboard": {
-            "body": "Der Kalender sammelt alle Schichten und Buchungen der Veranstaltung. Die Frage, die du immer zuerst hast, ob heute etwas ansteht, für das noch niemand eingetragen ist, beantwortet er, bevor du suchen gehst.",
-            "title": "Die Woche auf einen Blick"
+            "body": "Jede Schicht, in der noch jemand fehlt, die dringendste zuerst — die Lücke, um die du dich kümmern musst, steht also ganz oben. Was in der nächsten Woche brennt, steht darüber, zusammen mit allen, die noch auf Einlass warten.",
+            "title": "Wo noch Leute fehlen"
         },
         "finish": {
             "body": "Aufgabe beschreiben, wirksam daraus Schichten machen lassen, beim Füllen zusehen und hinterher nachlesen, wie es lief. Schau dich von hier aus weiter um. Die Demo gehört dir, bis sie abläuft, und keine echte Veranstaltung ist davon betroffen.",

@@ -25,7 +25,11 @@ export const managerTrack = defineTrack('manager', [
   {
     id: 'dashboard',
     route: 'home',
-    element: '[data-testid="dashboard-calendar"]',
+    // The open-shifts card rather than the organiser's alert panel above it:
+    // this one is always in the DOM, empty state included, and an anchor that
+    // only exists on a badly-staffed event would drop the step to a centred
+    // popover on a well-staffed one.
+    element: '[data-testid="dashboard-open-shifts"]',
     side: 'top',
   },
   {
