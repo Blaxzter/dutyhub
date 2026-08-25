@@ -32,6 +32,8 @@
  * is visible rather than a click that vanished. Only the close button stays
  * live: whatever else is going on, the visitor can leave.
  */
+import { nextTick } from 'vue'
+
 import { type DriveStep, type Driver, driver } from 'driver.js'
 import type { RouteLocationNormalized, Router } from 'vue-router'
 
@@ -353,6 +355,21 @@ export function createTourController(router: Router): TourController {
         .catch(() => {})
       if (token !== renderToken) return
     }
+
+    // Let the router's own render land before anything reads the DOM.
+    //
+    // `afterEach` runs the moment `currentRoute` changes, which is one Vue
+    // flush *before* `RouterView` swaps its component — so the view being left
+    // behind is still mounted, still visible, and still matches selectors that
+    // were only ever meant for the one arriving. `firstVisible` rejects a
+    // detached node, because its box is 0×0, but this one is not detached yet:
+    // it measures fine, wins the anchor, and is unmounted a microsecond later,
+    // leaving driver drawing a popover against a rectangle that no longer
+    // exists. Every screen the tour visits carries a `page-heading` inside a
+    // `main-content` — the landing page included — so the very first step of a
+    // demo was reliably anchoring to the hero it had just navigated away from.
+    await nextTick()
+    if (token !== renderToken) return
 
     if (step.before) {
       try {

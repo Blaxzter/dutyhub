@@ -18,7 +18,15 @@ const SHIFT_DIALOG = '[data-testid="dialog-shift-detail"]'
 
 /**
  * `page-heading` is on the pre-auth shell, the auth shell and every routed view
- * at once, so it is only unambiguous when scoped to the post-auth content area.
+ * at once, so it is only unambiguous when scoped to the content area.
+ *
+ * Note that `main-content` is *not* the post-auth shell's alone — `PreAuthLayout`
+ * marks its `<main>` the same way, so this selector matches the landing page's
+ * hero just as happily. What keeps the two apart is that only one shell is ever
+ * mounted, which holds everywhere except in the single flush between a route
+ * changing and `RouterView` catching up. `tour/engine.ts` waits that flush out
+ * before it reads the DOM; without it, the first step of a demo anchored to the
+ * landing page it had just left.
  */
 const PAGE_HEADING = '[data-testid="main-content"] [data-testid="page-heading"]'
 

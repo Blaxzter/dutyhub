@@ -153,6 +153,25 @@ test.describe('guided tour', () => {
     await exitDemo(page)
   })
 
+  test('the first step highlights the screen it arrived on, not the one it left', async ({
+    page,
+  }) => {
+    await startDemo(page, 'helper')
+    await expect(page.locator('.driver-popover-title')).toBeVisible({ timeout: 20_000 })
+
+    // `router.afterEach` fires one Vue flush before `RouterView` swaps its
+    // component, so the landing page is still mounted and still measurable when
+    // an auto-started tour resolves its first anchor — and the landing page has
+    // a `page-heading` inside a `main-content` of its own, exactly like every
+    // screen the tour visits. Anchoring to it left driver drawing against a
+    // rectangle that was unmounted a microsecond later, which puts the popover
+    // in the top-left corner with nothing highlighted at all.
+    const heading = page.getByTestId('main-content').getByTestId('page-heading')
+    await expect(heading).toHaveClass(/driver-active-element/)
+
+    await exitDemo(page)
+  })
+
   test('presses land one step at a time while a step is still opening', async ({ page }) => {
     await startDemo(page, 'helper')
     await expect(page.locator('.driver-popover-title')).toBeVisible({ timeout: 20_000 })
