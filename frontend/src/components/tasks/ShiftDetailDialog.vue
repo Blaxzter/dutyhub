@@ -1,15 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import {
-  Calendar,
-  Clock,
-  EllipsisVertical,
-  ExternalLink,
-  MapPin,
-  Tag,
-  Users,
-} from '@lucide/vue'
+import { EllipsisVertical, ExternalLink, MapPin, Tag, Users } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -23,23 +15,25 @@ import { useFormatters } from '@/composables/useFormatters'
 import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import Separator from '@/components/ui/separator/Separator.vue'
 
-import ShiftBookingsTable from '@/components/tasks/ShiftBookingsTable.vue'
+import ShiftRoster from '@/components/tasks/ShiftRoster.vue'
 
-import type { BookingRead, ShiftRead, ShiftBookingEntry } from '@/client/types.gen'
+import type { BookingRead, ShiftBookingEntry, ShiftRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const props = withDefaults(
@@ -64,7 +58,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const { formatTime, formatDateLabel } = useFormatters()
+const { formatTimeRange, formatDateLabel } = useFormatters()
 const router = useRouter()
 const { get, post, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
@@ -136,20 +130,36 @@ watch(
   },
 )
 
-const timeDisplay = computed(() => {
+/**
+ * What the shift *is*, in the reader's terms.
+ *
+ * The task name is what someone recognises ("Reception"), so it leads. The
+ * shift's own `title` is generated as `"<task> <HH:MM>-<HH:MM>"`, which would
+ * repeat both the heading and the line under it, so it is only a fallback for
+ * the callers that do not pass a task name at all.
+ */
+const headline = computed(
+  () => props.taskName || resolvedShift.value?.title || t('duties.shifts.detail.title'),
+)
+
+const capacity = computed(() => resolvedShift.value?.max_bookings ?? 1)
+const bookedCount = computed(() => resolvedShift.value?.current_bookings ?? 0)
+
+/** "Thu, 27 Aug 2026 · 09:00 – 11:00" — the one line people actually scan for. */
+const whenLine = computed(() => {
   const s = resolvedShift.value
-  if (!s) return null
-  const parts: string[] = []
-  if (s.start_time) parts.push(formatTime(s.start_time))
-  if (s.end_time) parts.push(formatTime(s.end_time))
-  return parts.length > 0 ? parts.join(' – ') : null
+  if (!s) return loadingShift.value ? t('common.states.loading') : (props.taskName ?? '')
+  const date = formatDateLabel(s.date, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+  const time = formatTimeRange(s.start_time, s.end_time)
+  return time ? `${date} · ${time}` : date
 })
 
-const isShiftFull = computed(() => {
-  const s = resolvedShift.value
-  if (!s) return true
-  return (s.current_bookings ?? 0) >= (s.max_bookings ?? 1)
-})
+const isShiftFull = computed(() => bookedCount.value >= capacity.value)
 
 const canBook = computed(() => {
   return !resolvedMyBooking.value && !isShiftFull.value
@@ -212,181 +222,117 @@ const navigateToBooking = () => {
 </script>
 
 <template>
-  <Dialog v-model:open="dialogOpen">
-    <DialogContent
-      data-testid="dialog-shift-detail"
-      class="sm:max-w-lg max-h-[85vh] overflow-y-auto"
-    >
-      <DialogHeader>
-        <div class="flex items-center justify-between gap-2 pr-6">
-          <DialogTitle>{{ t('duties.shifts.detail.title') }}</DialogTitle>
-          <Badge v-if="resolvedShift" variant="outline" class="text-xs shrink-0">
-            {{ resolvedShift.current_bookings ?? 0 }} / {{ resolvedShift.max_bookings ?? 1 }}
+  <ResponsiveDialog v-model:open="dialogOpen">
+    <ResponsiveDialogContent data-testid="dialog-shift-detail" dialog-class="sm:max-w-lg">
+      <ResponsiveDialogHeader>
+        <div class="flex items-start justify-between gap-3">
+          <ResponsiveDialogTitle>{{ headline }}</ResponsiveDialogTitle>
+          <Badge v-if="resolvedShift" variant="secondary" class="mt-0.5 shrink-0">
+            <Users />
+            {{ bookedCount }}/{{ capacity }}
           </Badge>
         </div>
-        <DialogDescription v-if="taskName">
-          {{ taskName }}
-        </DialogDescription>
-      </DialogHeader>
+        <ResponsiveDialogDescription>{{ whenLine }}</ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-      <!-- Loading state when fetching shift by ID -->
-      <div v-if="loadingShift" class="text-center py-8 text-muted-foreground">
-        {{ t('common.states.loading') }}
-      </div>
+      <ResponsiveDialogBody class="space-y-4 pb-4">
+        <p v-if="loadingShift" class="text-muted-foreground py-8 text-center text-sm">
+          {{ t('common.states.loading') }}
+        </p>
 
-      <template v-else-if="resolvedShift">
-        <!-- Shift info grid -->
-        <div class="space-y-4">
-          <!-- Date & Time -->
-          <div class="grid gap-3 sm:grid-cols-2">
-            <div class="flex items-start gap-2.5">
-              <Calendar class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <p class="text-xs text-muted-foreground">
-                  {{ t('duties.shifts.detail.date') }}
-                </p>
-                <p class="text-sm font-medium">
-                  {{
-                    formatDateLabel(resolvedShift.date, {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })
-                  }}
-                </p>
-              </div>
-            </div>
-            <div v-if="timeDisplay" class="flex items-start gap-2.5">
-              <Clock class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <p class="text-xs text-muted-foreground">
-                  {{ t('duties.shifts.detail.time') }}
-                </p>
-                <p class="text-sm font-medium font-mono">{{ timeDisplay }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Location & Category -->
+        <template v-else-if="resolvedShift">
+          <!--
+            Where and what, inline. These were two of five icon/label/value
+            blocks that stacked full-width on a phone and pushed the roster —
+            the part that changes — below the fold.
+          -->
           <div
             v-if="resolvedShift.location || resolvedShift.category"
-            class="grid gap-3 sm:grid-cols-2"
+            class="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-sm"
           >
-            <div v-if="resolvedShift.location" class="flex items-start gap-2.5">
-              <MapPin class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <p class="text-xs text-muted-foreground">
-                  {{ t('duties.shifts.detail.location') }}
-                </p>
-                <p class="text-sm font-medium">{{ resolvedShift.location }}</p>
-              </div>
-            </div>
-            <div v-if="resolvedShift.category" class="flex items-start gap-2.5">
-              <Tag class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <div>
-                <p class="text-xs text-muted-foreground">
-                  {{ t('duties.shifts.detail.category') }}
-                </p>
-                <p class="text-sm font-medium">{{ resolvedShift.category }}</p>
-              </div>
-            </div>
+            <span v-if="resolvedShift.location" class="flex min-w-0 items-center gap-1.5">
+              <MapPin class="text-muted-foreground size-4 shrink-0" />
+              <span class="truncate">{{ resolvedShift.location }}</span>
+            </span>
+            <span v-if="resolvedShift.category" class="flex min-w-0 items-center gap-1.5">
+              <Tag class="text-muted-foreground size-4 shrink-0" />
+              <span class="truncate">{{ resolvedShift.category }}</span>
+            </span>
           </div>
 
-          <!-- Capacity -->
-          <div class="flex items-start gap-2.5">
-            <Users class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <div>
-              <p class="text-xs text-muted-foreground">
-                {{ t('duties.shifts.detail.capacity') }}
-              </p>
-              <p class="text-sm font-medium">
-                {{
-                  t('duties.shifts.detail.capacityValue', {
-                    current: resolvedShift.current_bookings ?? 0,
-                    max: resolvedShift.max_bookings ?? 1,
-                  })
-                }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Description -->
-          <div v-if="resolvedShift.description">
-            <p class="text-xs text-muted-foreground mb-1">
-              {{ t('duties.shifts.detail.description') }}
-            </p>
-            <p class="text-sm whitespace-pre-line">{{ resolvedShift.description }}</p>
-          </div>
+          <p v-if="resolvedShift.description" class="text-sm whitespace-pre-line">
+            {{ resolvedShift.description }}
+          </p>
 
           <!-- Extensibility shift: future fields (materials, protection, etc.) go here -->
           <slot name="extra-details" />
 
           <Separator />
 
-          <!-- Booked users table -->
-          <div>
-            <h3 class="text-sm font-semibold mb-2">
-              {{ t('duties.shifts.detail.bookedUsers') }}
-            </h3>
-            <ShiftBookingsTable :bookings="shiftBookings" :loading="loadingBookings" />
-          </div>
+          <ShiftRoster :bookings="shiftBookings" :capacity="capacity" :loading="loadingBookings" />
 
           <!-- Extensibility shift: additional sections below the table -->
           <slot name="extra-sections" />
-        </div>
+        </template>
+      </ResponsiveDialogBody>
 
-        <!-- Footer actions -->
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <DropdownMenu v-if="hasMenuItems">
-            <DropdownMenuTrigger as-child>
-              <Button
-                variant="outline"
-                size="sm"
-                class="h-8 w-8 p-0"
-                :aria-label="t('common.actions.moreActions')"
-              >
-                <EllipsisVertical class="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem
-                v-if="showTaskLink && resolvedShift?.task_id"
-                @click="navigateToTask"
-              >
-                <ExternalLink class="mr-2 h-4 w-4" />
-                {{ t('duties.shifts.detail.viewTask') }}
-              </DropdownMenuItem>
-              <DropdownMenuItem v-if="resolvedMyBooking" @click="navigateToBooking">
-                <ExternalLink class="mr-2 h-4 w-4" />
-                {{ t('duties.shifts.detail.openBookingDetails') }}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+      <ResponsiveDialogFooter v-if="resolvedShift" layout="row">
+        <DropdownMenu v-if="hasMenuItems">
+          <DropdownMenuTrigger as-child>
+            <Button
+              variant="outline"
+              size="icon"
+              class="size-10 md:size-9"
+              :aria-label="t('common.actions.moreActions')"
+            >
+              <EllipsisVertical class="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem v-if="showTaskLink && resolvedShift?.task_id" @click="navigateToTask">
+              <ExternalLink class="mr-2 h-4 w-4" />
+              {{ t('duties.shifts.detail.viewTask') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem v-if="resolvedMyBooking" @click="navigateToBooking">
+              <ExternalLink class="mr-2 h-4 w-4" />
+              {{ t('duties.shifts.detail.openBookingDetails') }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <div class="flex-1" />
+        <!--
+          The action fills the row on a phone so it sits under the thumb, and
+          keeps its natural width beside a spacer on a desktop dialog.
+        -->
+        <div class="hidden flex-1 md:block" />
 
-          <Button
-            v-if="canBook"
-            data-testid="btn-book-shift"
-            size="sm"
-            :disabled="bookingInProgress"
-            @click="handleBook"
-          >
-            {{ t('duties.shifts.book') }}
-          </Button>
-          <Button
-            v-if="resolvedMyBooking"
-            data-testid="btn-cancel-shift-booking"
-            variant="destructive"
-            size="sm"
-            :disabled="bookingInProgress"
-            @click="handleCancelBooking"
-          >
-            {{ t('duties.bookings.cancel') }}
-          </Button>
-        </div>
-      </template>
-    </DialogContent>
-  </Dialog>
+        <p
+          v-if="isShiftFull && !resolvedMyBooking"
+          class="text-muted-foreground flex-1 text-sm md:flex-none"
+        >
+          {{ t('duties.shifts.detail.fullyBooked') }}
+        </p>
+
+        <Button
+          v-if="canBook"
+          data-testid="btn-book-shift"
+          class="h-10 flex-1 md:h-9 md:flex-none"
+          :disabled="bookingInProgress"
+          @click="handleBook"
+        >
+          {{ t('duties.shifts.book') }}
+        </Button>
+        <Button
+          v-if="resolvedMyBooking"
+          data-testid="btn-cancel-shift-booking"
+          variant="destructive"
+          class="h-10 flex-1 md:h-9 md:flex-none"
+          :disabled="bookingInProgress"
+          @click="handleCancelBooking"
+        >
+          {{ t('duties.bookings.cancel') }}
+        </Button>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialogContent>
+  </ResponsiveDialog>
 </template>

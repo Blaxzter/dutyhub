@@ -383,6 +383,7 @@
         "delete": "Delete Duty Shift",
         "deleteConfirm": "Are you sure you want to delete this duty shift?",
         "detail": {
+            "booked": "Booked",
             "bookedAt": "Booked at",
             "bookedUsers": "Booked Users",
             "capacity": "Capacity",
@@ -390,6 +391,8 @@
             "category": "Category",
             "date": "Date",
             "description": "Description",
+            "freeSlots": "1 spot still free | {count} spots still free",
+            "fullyBooked": "Fully booked",
             "location": "Location",
             "myNotes": "My Notes",
             "noBookings": "No bookings yet.",

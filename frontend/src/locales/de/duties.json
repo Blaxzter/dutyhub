@@ -383,6 +383,7 @@
         "delete": "Dienstschicht löschen",
         "deleteConfirm": "Sind Sie sicher, dass Sie diese Dienstschicht löschen möchten?",
         "detail": {
+            "booked": "Gebucht",
             "bookedAt": "Gebucht am",
             "bookedUsers": "Gebuchte Benutzer",
             "capacity": "Kapazität",
@@ -390,6 +391,8 @@
             "category": "Kategorie",
             "date": "Datum",
             "description": "Beschreibung",
+            "freeSlots": "Noch 1 Platz frei | Noch {count} Plätze frei",
+            "fullyBooked": "Ausgebucht",
             "location": "Ort",
             "myNotes": "Meine Anmerkungen",
             "noBookings": "Noch keine Buchungen.",

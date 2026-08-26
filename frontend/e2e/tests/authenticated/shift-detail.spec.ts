@@ -64,12 +64,15 @@ test.describe('Shift details – from the task list', () => {
     await openShiftChip(page, shifts[0].id)
 
     const dialog = page.getByTestId('dialog-shift-detail')
-    await expect(dialog).toContainText('Shift Details')
     // The task name arrives as its own prop, and was the other half of the
-    // rename that broke: the subtitle stayed blank even where the shift loaded.
+    // rename that broke: it is the dialog's heading now, and stayed blank even
+    // where the shift loaded.
     await expect(dialog).toContainText(taskName)
+    // Both of these come off the shift itself, so neither can be satisfied by a
+    // dialog that opened over nothing — which is the whole point of this test.
     await expect(dialog).toContainText('Side Entrance')
     await expect(dialog).toContainText('0 / 2 booked')
+    await expect(dialog.getByTestId('shift-roster-free')).toContainText('2 spots still free')
   })
 
   test('the dialog offers the shift for booking', async ({ adminPage: page }) => {
