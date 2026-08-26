@@ -47,8 +47,8 @@ const props = withDefaults(
     /** Pass a full shift object (from TaskDetailView) */
     shift?: ShiftRead | null
     /** Or pass just an ID to fetch the shift (from MyBookingsView) */
-    slotId?: string | null
-    eventName?: string | null
+    shiftId?: string | null
+    taskName?: string | null
     /** The current user's booking for this shift (enables booking link) */
     myBooking?: BookingRead | null
     /** Whether to show the "View Task" navigation link (hide when already on task page) */
@@ -71,7 +71,7 @@ const { confirmDestructive } = useDialog()
 const authStore = useAuthStore()
 
 const fetchedShift = ref<ShiftRead | null>(null)
-const slotBookings = ref<ShiftBookingEntry[]>([])
+const shiftBookings = ref<ShiftBookingEntry[]>([])
 const loadingShift = ref(false)
 const loadingBookings = ref(false)
 
@@ -87,8 +87,8 @@ const resolvedShift = computed(() => props.shift ?? fetchedShift.value)
 const resolvedMyBooking = computed(() => {
   if (props.myBooking) return props.myBooking
   const email = authStore.user?.email
-  if (!email || slotBookings.value.length === 0) return null
-  const entry = slotBookings.value.find((b) => b.user_email === email)
+  if (!email || shiftBookings.value.length === 0) return null
+  const entry = shiftBookings.value.find((b) => b.user_email === email)
   if (!entry) return null
   return { id: entry.id, notes: entry.notes ?? null } as { id: string; notes: string | null }
 })
@@ -98,18 +98,18 @@ watch(
   () => props.open,
   async (isOpen) => {
     if (!isOpen) {
-      slotBookings.value = []
+      shiftBookings.value = []
       fetchedShift.value = null
       return
     }
 
-    // If we only have a slotId, fetch the full shift
-    const slotId = props.shift?.id ?? props.slotId
-    if (!props.shift && props.slotId) {
+    // If we only have a shiftId, fetch the full shift
+    const shiftId = props.shift?.id ?? props.shiftId
+    if (!props.shift && props.shiftId) {
       loadingShift.value = true
       try {
         const response = await get<{ data: ShiftRead }>({
-          url: `/shifts/${props.slotId}`,
+          url: `/shifts/${props.shiftId}`,
         })
         fetchedShift.value = response.data
       } catch {
@@ -120,15 +120,15 @@ watch(
     }
 
     // Load bookings
-    if (slotId) {
+    if (shiftId) {
       loadingBookings.value = true
       try {
         const response = await get<{ data: ShiftBookingEntry[] }>({
-          url: `/shifts/${slotId}/bookings`,
+          url: `/shifts/${shiftId}/bookings`,
         })
-        slotBookings.value = response.data
+        shiftBookings.value = response.data
       } catch {
-        slotBookings.value = []
+        shiftBookings.value = []
       } finally {
         loadingBookings.value = false
       }
@@ -224,8 +224,8 @@ const navigateToBooking = () => {
             {{ resolvedShift.current_bookings ?? 0 }} / {{ resolvedShift.max_bookings ?? 1 }}
           </Badge>
         </div>
-        <DialogDescription v-if="eventName">
-          {{ eventName }}
+        <DialogDescription v-if="taskName">
+          {{ taskName }}
         </DialogDescription>
       </DialogHeader>
 
@@ -329,7 +329,7 @@ const navigateToBooking = () => {
             <h3 class="text-sm font-semibold mb-2">
               {{ t('duties.shifts.detail.bookedUsers') }}
             </h3>
-            <ShiftBookingsTable :bookings="slotBookings" :loading="loadingBookings" />
+            <ShiftBookingsTable :bookings="shiftBookings" :loading="loadingBookings" />
           </div>
 
           <!-- Extensibility shift: additional sections below the table -->

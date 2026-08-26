@@ -303,7 +303,7 @@ onMounted(loadFeed)
 
     <ShiftDetailDialog
       v-model:open="showShiftDetail"
-      :slot-id="detailShiftId"
+      :shift-id="detailShiftId"
       @booking-updated="loadFeed"
     />
   </div>
