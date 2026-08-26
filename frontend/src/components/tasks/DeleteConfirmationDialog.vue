@@ -3,15 +3,16 @@ import { Trash2 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import Label from '@/components/ui/label/Label.vue'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Textarea } from '@/components/ui/textarea'
 
 const open = defineModel<boolean>('open', { required: true })
@@ -30,19 +31,22 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <Dialog v-model:open="open">
-    <DialogContent class="sm:max-w-md">
-      <DialogHeader>
-        <DialogTitle class="flex items-center gap-2">
+  <ResponsiveDialog v-model:open="open">
+    <ResponsiveDialogContent dialog-class="sm:max-w-md">
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle class="flex items-center gap-2">
           <Trash2 class="h-5 w-5 text-destructive" />
           {{ t('common.dialog.confirm.title') }}
-        </DialogTitle>
-        <DialogDescription class="text-left">
+        </ResponsiveDialogTitle>
+        <ResponsiveDialogDescription class="text-left">
           {{ message }}
-        </DialogDescription>
-      </DialogHeader>
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-      <div v-if="bookingCount === undefined || bookingCount > 0" class="space-y-3">
+      <ResponsiveDialogBody
+        v-if="bookingCount === undefined || bookingCount > 0"
+        class="space-y-3 pb-2"
+      >
         <p
           v-if="bookingCount !== undefined && bookingCount > 0"
           class="text-sm font-medium text-destructive"
@@ -63,16 +67,16 @@ const { t } = useI18n()
             {{ t('duties.deleteDialog.reasonHint') }}
           </p>
         </div>
-      </div>
+      </ResponsiveDialogBody>
 
-      <DialogFooter class="sm:justify-start">
+      <ResponsiveDialogFooter class="sm:justify-start">
         <Button variant="outline" @click="open = false">
           {{ t('common.dialog.confirm.cancelText') }}
         </Button>
         <Button variant="destructive" @click="emit('confirm')">
           {{ t('common.dialog.confirm.confirmText') }}
         </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialogContent>
+  </ResponsiveDialog>
 </template>

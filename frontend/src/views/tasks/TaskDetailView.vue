@@ -35,14 +35,6 @@ import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -51,6 +43,15 @@ import {
 } from '@/components/ui/dropdown-menu'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import Separator from '@/components/ui/separator/Separator.vue'
 import { TimePicker } from '@/components/ui/time-picker'
 
@@ -60,11 +61,11 @@ import StatusDropdown from '@/components/tasks/StatusDropdown.vue'
 
 import type {
   BookingRead,
+  MyBookingsListResponse,
+  ShiftBatchRead,
   ShiftListResponse,
   ShiftRead,
   TaskRead,
-  MyBookingsListResponse,
-  ShiftBatchRead,
 } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 import { formatDate } from '@/lib/format'
@@ -229,9 +230,7 @@ const groupByDate = (shifts: ShiftRead[]) => {
 }
 
 const myBookedShiftIds = computed(() => {
-  return new Set(
-    myBookings.value.filter((b) => b.status === 'confirmed').map((b) => b.shift_id),
-  )
+  return new Set(myBookings.value.filter((b) => b.status === 'confirmed').map((b) => b.shift_id))
 })
 
 const getBookingForShift = (slotId: string) => {
@@ -552,7 +551,10 @@ onMounted(async () => {
         <div class="flex items-start justify-between gap-2">
           <div class="min-w-0 flex-1 space-y-2">
             <div class="flex items-center gap-3 flex-wrap">
-              <h1 data-testid="page-heading" class="text-2xl sm:text-3xl font-bold line-clamp-2 break-words">
+              <h1
+                data-testid="page-heading"
+                class="text-2xl sm:text-3xl font-bold line-clamp-2 break-words"
+              >
                 {{ task.name }}
               </h1>
               <StatusDropdown
@@ -637,11 +639,7 @@ onMounted(async () => {
           <div class="sm:hidden shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  :aria-label="t('common.actions.moreActions')"
-                >
+                <Button variant="outline" size="icon" :aria-label="t('common.actions.moreActions')">
                   <EllipsisVertical class="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -996,58 +994,62 @@ onMounted(async () => {
     />
 
     <!-- Create Shift Dialog -->
-    <Dialog v-model:open="showCreateShiftDialog">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{{ t('duties.shifts.create') }}</DialogTitle>
-          <DialogDescription>{{ t('duties.tasks.detail.addShift') }}</DialogDescription>
-        </DialogHeader>
-        <form class="space-y-4" @submit.prevent="handleCreateShift">
-          <div class="space-y-2">
-            <Label>{{ t('duties.shifts.fields.title') }}</Label>
-            <Input v-model="slotForm.title" required />
-          </div>
-          <div class="space-y-2">
-            <Label>{{ t('duties.shifts.fields.description') }}</Label>
-            <Input v-model="slotForm.description" />
-          </div>
-          <div class="space-y-2">
-            <Label>{{ t('duties.shifts.fields.date') }}</Label>
-            <DatePicker v-model="slotDate" :placeholder="t('duties.shifts.pickDate')" />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
+    <ResponsiveDialog v-model:open="showCreateShiftDialog">
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{{ t('duties.shifts.create') }}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{{
+            t('duties.tasks.detail.addShift')
+          }}</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <form class="contents" @submit.prevent="handleCreateShift">
+          <ResponsiveDialogBody class="space-y-4 pb-2">
             <div class="space-y-2">
-              <Label>{{ t('duties.shifts.fields.startTime') }}</Label>
-              <TimePicker v-model="slotForm.start_time" />
+              <Label>{{ t('duties.shifts.fields.title') }}</Label>
+              <Input v-model="slotForm.title" required />
             </div>
             <div class="space-y-2">
-              <Label>{{ t('duties.shifts.fields.endTime') }}</Label>
-              <TimePicker v-model="slotForm.end_time" />
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <Label>{{ t('duties.shifts.fields.location') }}</Label>
-              <Input v-model="slotForm.location" />
+              <Label>{{ t('duties.shifts.fields.description') }}</Label>
+              <Input v-model="slotForm.description" />
             </div>
             <div class="space-y-2">
-              <Label>{{ t('duties.shifts.fields.category') }}</Label>
-              <Input v-model="slotForm.category" />
+              <Label>{{ t('duties.shifts.fields.date') }}</Label>
+              <DatePicker v-model="slotDate" :placeholder="t('duties.shifts.pickDate')" />
             </div>
-          </div>
-          <div class="space-y-2">
-            <Label>{{ t('duties.shifts.fields.maxBookings') }}</Label>
-            <Input v-model.number="slotForm.max_bookings" type="number" min="1" required />
-          </div>
-          <DialogFooter>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <Label>{{ t('duties.shifts.fields.startTime') }}</Label>
+                <TimePicker v-model="slotForm.start_time" />
+              </div>
+              <div class="space-y-2">
+                <Label>{{ t('duties.shifts.fields.endTime') }}</Label>
+                <TimePicker v-model="slotForm.end_time" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2">
+                <Label>{{ t('duties.shifts.fields.location') }}</Label>
+                <Input v-model="slotForm.location" />
+              </div>
+              <div class="space-y-2">
+                <Label>{{ t('duties.shifts.fields.category') }}</Label>
+                <Input v-model="slotForm.category" />
+              </div>
+            </div>
+            <div class="space-y-2">
+              <Label>{{ t('duties.shifts.fields.maxBookings') }}</Label>
+              <Input v-model.number="slotForm.max_bookings" type="number" min="1" required />
+            </div>
+          </ResponsiveDialogBody>
+          <ResponsiveDialogFooter>
             <Button type="button" variant="outline" @click="showCreateShiftDialog = false">
               {{ t('common.actions.cancel') }}
             </Button>
             <Button type="submit">{{ t('common.actions.create') }}</Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
 
     <!-- Shift Detail Dialog -->
     <ShiftDetailDialog

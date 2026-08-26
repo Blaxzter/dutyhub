@@ -1,23 +1,24 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
-import { useMediaQuery } from '@vueuse/core'
 import { Check, Loader2 } from '@lucide/vue'
-import { toast } from 'vue-sonner'
+import { useMediaQuery } from '@vueuse/core'
+import { DrawerViewport } from 'reka-ui'
 import { useI18n } from 'vue-i18n'
+import { toast } from 'vue-sonner'
 
 import { useAuthStore } from '@/stores/auth'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 
 import type { EventListResponse, EventRead } from '@/client/types.gen'
@@ -27,6 +28,8 @@ const { t } = useI18n()
 const authStore = useAuthStore()
 const { get } = useAuthenticatedClient()
 
+// The complement of `RESPONSIVE_DIALOG_MOBILE_QUERY`, so this component and
+// every ResponsiveDialog change shells at the same width.
 const isDesktop = useMediaQuery('(min-width: 768px)')
 
 const open = ref(false)
@@ -133,16 +136,22 @@ function formatRange(event: EventRead): string {
     </PopoverContent>
   </Popover>
 
-  <Dialog v-else v-model:open="open">
-    <DialogTrigger as-child>
+  <Drawer v-else v-model:open="open">
+    <DrawerTrigger as-child>
       <slot :open="open" />
-    </DialogTrigger>
-    <DialogContent class="p-0 sm:max-w-md">
-      <DialogHeader class="px-4 pt-4">
-        <DialogTitle>{{ t('navigation.eventSwitcher.title') }}</DialogTitle>
-        <DialogDescription>{{ t('navigation.eventSwitcher.description') }}</DialogDescription>
-      </DialogHeader>
-      <div class="px-2 pb-4">
+    </DrawerTrigger>
+    <DrawerContent class="max-h-[85vh]">
+      <DrawerHeader class="px-4 pt-1 text-left">
+        <DrawerTitle>{{ t('navigation.eventSwitcher.title') }}</DrawerTitle>
+        <DrawerDescription>{{ t('navigation.eventSwitcher.description') }}</DrawerDescription>
+      </DrawerHeader>
+      <!--
+        `DrawerViewport`, not a plain scroller: it is what lets a drag that
+        starts inside the list scroll it instead of dismissing the sheet.
+      -->
+      <DrawerViewport
+        class="overflow-y-auto overscroll-contain px-2 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
         <div v-if="loading" class="flex items-center justify-center py-8">
           <Loader2 class="size-5 animate-spin text-muted-foreground" />
         </div>
@@ -152,7 +161,7 @@ function formatRange(event: EventRead): string {
         >
           {{ t('navigation.eventSwitcher.empty') }}
         </div>
-        <ul v-else class="max-h-[60vh] overflow-y-auto" role="listbox">
+        <ul v-else role="listbox">
           <li v-for="event in events" :key="event.id">
             <button
               type="button"
@@ -177,7 +186,7 @@ function formatRange(event: EventRead): string {
             </button>
           </li>
         </ul>
-      </div>
-    </DialogContent>
-  </Dialog>
+      </DrawerViewport>
+    </DrawerContent>
+  </Drawer>
 </template>

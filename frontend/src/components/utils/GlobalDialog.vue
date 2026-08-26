@@ -1,17 +1,17 @@
 <template>
-  <Dialog v-model:open="dialogStore.dialog.isOpen">
-    <DialogContent class="sm:max-w-md" priority>
-      <DialogHeader>
-        <DialogTitle class="flex items-center gap-2">
+  <ResponsiveDialog v-model:open="dialogStore.dialog.isOpen">
+    <ResponsiveDialogContent dialog-class="sm:max-w-md" priority>
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle class="flex items-center gap-2">
           <component :is="titleIcon" v-if="titleIcon" class="h-5 w-5" :class="titleIconClass" />
           {{ dialogTitle }}
-        </DialogTitle>
-        <DialogDescription class="text-left">
+        </ResponsiveDialogTitle>
+        <ResponsiveDialogDescription class="text-left">
           {{ dialogStore.dialog.text }}
-        </DialogDescription>
-      </DialogHeader>
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-      <DialogFooter class="sm:justify-start">
+      <ResponsiveDialogFooter class="sm:justify-start">
         <template v-if="dialogStore.dialog.type === 'confirm'">
           <Button
             v-if="dialogStore.dialog.onCancel"
@@ -46,9 +46,9 @@
             {{ okText }}
           </Button>
         </template>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialogContent>
+  </ResponsiveDialog>
 </template>
 
 <script setup lang="ts">
@@ -61,13 +61,13 @@ import { useDialogStore } from '@/stores/dialog'
 
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 
 const { t } = useI18n()
 const dialogStore = useDialogStore()

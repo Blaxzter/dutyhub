@@ -25,22 +25,23 @@ import Badge from '@/components/ui/badge/Badge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DatePicker } from '@/components/ui/date-picker'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import Textarea from '@/components/ui/textarea/Textarea.vue'
 
 import ScheduleConfigForm from '@/components/tasks/ScheduleConfigForm.vue'
 import ShiftPreviewGrid from '@/components/tasks/ShiftPreviewGrid.vue'
 
-import type { EventRead, ShiftRead, TaskRead, ShiftBatchRead } from '@/client/types.gen'
+import type { EventRead, ShiftBatchRead, ShiftRead, TaskRead } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 
 const { t } = useI18n()
@@ -511,9 +512,7 @@ onMounted(loadTask)
       <Card v-if="!isBatchMode">
         <CardHeader>
           <CardTitle>{{ t('duties.tasks.createView.sections.details') }}</CardTitle>
-          <CardDescription>{{
-            t('duties.tasks.createView.sections.detailsDesc')
-          }}</CardDescription>
+          <CardDescription>{{ t('duties.tasks.createView.sections.detailsDesc') }}</CardDescription>
         </CardHeader>
         <CardContent class="space-y-4">
           <div class="space-y-2">
@@ -667,19 +666,19 @@ onMounted(loadTask)
     </template>
 
     <!-- Affected Bookings Dialog -->
-    <Dialog v-model:open="showAffectedDialog">
-      <DialogContent class="max-w-lg">
-        <DialogHeader>
-          <DialogTitle class="flex items-center gap-2">
+    <ResponsiveDialog v-model:open="showAffectedDialog">
+      <ResponsiveDialogContent dialog-class="sm:max-w-lg">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle class="flex items-center gap-2">
             <Info class="h-5 w-5 text-destructive" />
             {{ t('duties.tasks.editView.affectedBookings.title') }}
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {{ t('duties.tasks.editView.affectedBookings.description') }}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
-        <div v-if="pendingPreview" class="space-y-3">
+        <ResponsiveDialogBody v-if="pendingPreview" class="space-y-3 pb-2">
           <!-- Summary badges -->
           <div class="flex gap-2 flex-wrap">
             <Badge variant="default">
@@ -717,17 +716,17 @@ onMounted(loadTask)
               </Badge>
             </div>
           </div>
-        </div>
+        </ResponsiveDialogBody>
 
-        <DialogFooter>
+        <ResponsiveDialogFooter>
           <Button variant="outline" @click="showAffectedDialog = false">
             {{ t('duties.tasks.editView.affectedBookings.cancel') }}
           </Button>
           <Button variant="destructive" @click="confirmRegeneration">
             {{ t('duties.tasks.editView.affectedBookings.confirm') }}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   </div>
 </template>

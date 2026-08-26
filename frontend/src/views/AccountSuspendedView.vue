@@ -18,14 +18,14 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import Button from '@/components/ui/button/Button.vue'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from '@/components/ui/responsive-dialog'
 
 import LanguageSwitch from '@/components/utils/LanguageSwitch.vue'
 
@@ -98,23 +98,25 @@ const handleDeleteAccount = async () => {
         {{ errorMessage }}
       </div>
 
-      <Dialog v-model:open="showDeleteDialog">
-        <DialogTrigger as-child>
+      <ResponsiveDialog v-model:open="showDeleteDialog">
+        <ResponsiveDialogTrigger as-child>
           <button
             data-testid="btn-delete-account"
             class="mt-6 text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-destructive hover:underline"
           >
             {{ t('common.accountSuspended.deleteAccount') }}
           </button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{{ t('common.accountSuspended.deleteConfirmTitle') }}</DialogTitle>
-            <DialogDescription>
+        </ResponsiveDialogTrigger>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{{
+              t('common.accountSuspended.deleteConfirmTitle')
+            }}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
               {{ t('common.accountSuspended.deleteConfirmDescription') }}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
+          <ResponsiveDialogFooter>
             <Button variant="outline" @click="showDeleteDialog = false">
               {{ t('common.accountSuspended.cancel') }}
             </Button>
@@ -125,9 +127,9 @@ const handleDeleteAccount = async () => {
                   : t('common.accountSuspended.confirmDelete')
               }}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </div>
   </div>
 </template>

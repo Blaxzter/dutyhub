@@ -7,16 +7,17 @@ import { z } from 'zod'
 
 import Button from '@/components/ui/button/Button.vue'
 import { DatePicker } from '@/components/ui/date-picker'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 
 import { zTaskCreate } from '@/client/zod.gen'
 
@@ -92,50 +93,54 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <Dialog v-model:open="open">
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>{{ t('duties.tasks.create') }}</DialogTitle>
-        <DialogDescription>{{ t('duties.tasks.subtitle') }}</DialogDescription>
-      </DialogHeader>
-      <form class="space-y-4" @submit.prevent="handleSubmit">
-        <div class="space-y-2">
-          <Label>{{ t('duties.tasks.fields.name') }}</Label>
-          <Input v-model="form.name" @input="delete errors.name" />
-          <p v-if="errors.name" class="text-destructive text-sm">{{ errors.name }}</p>
-        </div>
-        <div class="space-y-2">
-          <Label>{{ t('duties.tasks.fields.description') }}</Label>
-          <Input v-model="form.description" />
-        </div>
-        <div class="grid grid-cols-2 gap-4">
+  <ResponsiveDialog v-model:open="open">
+    <ResponsiveDialogContent>
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{{ t('duties.tasks.create') }}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>{{ t('duties.tasks.subtitle') }}</ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
+      <form class="contents" @submit.prevent="handleSubmit">
+        <ResponsiveDialogBody class="space-y-4 pb-2">
           <div class="space-y-2">
-            <Label>{{ t('duties.tasks.fields.startDate') }}</Label>
-            <DatePicker
-              v-model="startDate"
-              :max-value="endDate"
-              @update:model-value="delete errors.start_date"
-            />
-            <p v-if="errors.start_date" class="text-destructive text-sm">{{ errors.start_date }}</p>
+            <Label>{{ t('duties.tasks.fields.name') }}</Label>
+            <Input v-model="form.name" @input="delete errors.name" />
+            <p v-if="errors.name" class="text-destructive text-sm">{{ errors.name }}</p>
           </div>
           <div class="space-y-2">
-            <Label>{{ t('duties.tasks.fields.endDate') }}</Label>
-            <DatePicker
-              v-model="endDate"
-              :min-value="startDate"
-              :highlight="startDate"
-              @update:model-value="delete errors.end_date"
-            />
-            <p v-if="errors.end_date" class="text-destructive text-sm">{{ errors.end_date }}</p>
+            <Label>{{ t('duties.tasks.fields.description') }}</Label>
+            <Input v-model="form.description" />
           </div>
-        </div>
-        <DialogFooter>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>{{ t('duties.tasks.fields.startDate') }}</Label>
+              <DatePicker
+                v-model="startDate"
+                :max-value="endDate"
+                @update:model-value="delete errors.start_date"
+              />
+              <p v-if="errors.start_date" class="text-destructive text-sm">
+                {{ errors.start_date }}
+              </p>
+            </div>
+            <div class="space-y-2">
+              <Label>{{ t('duties.tasks.fields.endDate') }}</Label>
+              <DatePicker
+                v-model="endDate"
+                :min-value="startDate"
+                :highlight="startDate"
+                @update:model-value="delete errors.end_date"
+              />
+              <p v-if="errors.end_date" class="text-destructive text-sm">{{ errors.end_date }}</p>
+            </div>
+          </div>
+        </ResponsiveDialogBody>
+        <ResponsiveDialogFooter>
           <Button type="button" variant="outline" @click="open = false">
             {{ t('common.actions.cancel') }}
           </Button>
           <Button type="submit">{{ t('common.actions.create') }}</Button>
-        </DialogFooter>
+        </ResponsiveDialogFooter>
       </form>
-    </DialogContent>
-  </Dialog>
+    </ResponsiveDialogContent>
+  </ResponsiveDialog>
 </template>

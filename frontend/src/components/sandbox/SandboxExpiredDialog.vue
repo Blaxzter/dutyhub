@@ -8,13 +8,13 @@ import { useSandboxStore } from '@/stores/sandbox'
 
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 
 import { SANDBOX_ENDED_KEY } from '@/lib/auth-session'
 
@@ -62,16 +62,16 @@ function createAccount() {
 </script>
 
 <template>
-  <Dialog v-model:open="open">
-    <DialogContent data-testid="dialog-sandbox-expired" class="sm:max-w-md">
-      <DialogHeader>
-        <DialogTitle>{{ t('sandbox.expired.title') }}</DialogTitle>
-        <DialogDescription class="text-left">
+  <ResponsiveDialog v-model:open="open">
+    <ResponsiveDialogContent data-testid="dialog-sandbox-expired" dialog-class="sm:max-w-md">
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{{ t('sandbox.expired.title') }}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription class="text-left">
           {{ t('sandbox.expired.message') }}
-        </DialogDescription>
-      </DialogHeader>
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-      <DialogFooter>
+      <ResponsiveDialogFooter>
         <Button
           v-if="sandboxStore.enabled"
           variant="outline"
@@ -83,7 +83,7 @@ function createAccount() {
         <Button data-testid="btn-sandbox-register" @click="createAccount">
           {{ t('sandbox.expired.createAccount') }}
         </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialogContent>
+  </ResponsiveDialog>
 </template>

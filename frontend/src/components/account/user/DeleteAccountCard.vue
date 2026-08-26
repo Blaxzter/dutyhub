@@ -15,31 +15,33 @@
           </p>
         </div>
 
-        <Dialog v-model:open="showConfirmDialog">
-          <DialogTrigger as-child>
+        <ResponsiveDialog v-model:open="showConfirmDialog">
+          <ResponsiveDialogTrigger as-child>
             <Button variant="destructive" size="sm" class="w-full sm:w-auto">
               <Trash2Icon class="h-4 w-4 mr-2" />
               {{ $t('user.settings.deleteAccount.button') }}
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{{ $t('user.settings.deleteAccount.confirmTitle') }}</DialogTitle>
-              <DialogDescription>
+          </ResponsiveDialogTrigger>
+          <ResponsiveDialogContent>
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle>{{
+                $t('user.settings.deleteAccount.confirmTitle')
+              }}</ResponsiveDialogTitle>
+              <ResponsiveDialogDescription>
                 {{ $t('user.settings.deleteAccount.confirmDescription') }}
-              </DialogDescription>
-            </DialogHeader>
+              </ResponsiveDialogDescription>
+            </ResponsiveDialogHeader>
 
-            <div class="space-y-4 py-4">
+            <ResponsiveDialogBody class="space-y-4 pb-2">
               <div>
                 <label class="text-sm font-medium">
                   {{ $t('user.settings.deleteAccount.typeToConfirm', { confirmWord }) }}
                 </label>
                 <Input v-model="confirmText" :placeholder="confirmWord" class="mt-2" />
               </div>
-            </div>
+            </ResponsiveDialogBody>
 
-            <DialogFooter>
+            <ResponsiveDialogFooter>
               <Button variant="outline" @click="showConfirmDialog = false">
                 {{ $t('user.settings.deleteAccount.cancelButton') }}
               </Button>
@@ -54,9 +56,9 @@
                     : $t('user.settings.deleteAccount.confirmButton')
                 }}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </ResponsiveDialogFooter>
+          </ResponsiveDialogContent>
+        </ResponsiveDialog>
 
         <!-- Error message -->
         <div
@@ -82,16 +84,17 @@ import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from '@/components/ui/responsive-dialog'
 
 const authStore = useAuthStore()
 const { t } = useI18n()

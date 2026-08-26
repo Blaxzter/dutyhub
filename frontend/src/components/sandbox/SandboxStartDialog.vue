@@ -9,13 +9,14 @@ import { type SandboxRole, useSandboxStore } from '@/stores/sandbox'
 
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 
 /**
  * The one decision a visitor makes before the demo opens: which side of the
@@ -66,49 +67,51 @@ async function start() {
 </script>
 
 <template>
-  <Dialog :open="props.open" @update:open="emit('update:open', $event)">
-    <DialogContent data-testid="dialog-sandbox-start" class="sm:max-w-lg">
-      <DialogHeader>
-        <DialogTitle>{{ t('sandbox.startDialog.title') }}</DialogTitle>
-        <DialogDescription class="text-left">
+  <ResponsiveDialog :open="props.open" @update:open="emit('update:open', $event)">
+    <ResponsiveDialogContent data-testid="dialog-sandbox-start" dialog-class="sm:max-w-lg">
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{{ t('sandbox.startDialog.title') }}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription class="text-left">
           {{ t('sandbox.startDialog.intro') }}
-        </DialogDescription>
-      </DialogHeader>
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-      <fieldset class="space-y-3">
-        <legend class="pb-2 text-sm font-medium">{{ t('sandbox.startDialog.question') }}</legend>
+      <ResponsiveDialogBody class="pb-2">
+        <fieldset class="space-y-3">
+          <legend class="pb-2 text-sm font-medium">{{ t('sandbox.startDialog.question') }}</legend>
 
-        <button
-          v-for="role in ROLES"
-          :key="role.value"
-          type="button"
-          :data-testid="role.testid"
-          :aria-pressed="selected === role.value"
-          class="flex w-full items-start gap-3 rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
-          :class="selected === role.value ? 'border-primary bg-primary/5' : ''"
-          @click="selected = role.value"
+          <button
+            v-for="role in ROLES"
+            :key="role.value"
+            type="button"
+            :data-testid="role.testid"
+            :aria-pressed="selected === role.value"
+            class="flex w-full items-start gap-3 rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
+            :class="selected === role.value ? 'border-primary bg-primary/5' : ''"
+            @click="selected = role.value"
+          >
+            <component :is="role.icon" class="mt-0.5 size-5 shrink-0 text-primary" />
+            <span class="min-w-0">
+              <span class="block text-sm font-medium">
+                {{ t(`sandbox.startDialog.${role.value}.title`) }}
+              </span>
+              <span class="mt-1 block text-sm text-muted-foreground">
+                {{ t(`sandbox.startDialog.${role.value}.description`) }}
+              </span>
+            </span>
+          </button>
+        </fieldset>
+
+        <p
+          v-if="warnsAboutSignOut"
+          data-testid="sandbox-signout-warning"
+          class="mt-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
         >
-          <component :is="role.icon" class="mt-0.5 size-5 shrink-0 text-primary" />
-          <span class="min-w-0">
-            <span class="block text-sm font-medium">
-              {{ t(`sandbox.startDialog.${role.value}.title`) }}
-            </span>
-            <span class="mt-1 block text-sm text-muted-foreground">
-              {{ t(`sandbox.startDialog.${role.value}.description`) }}
-            </span>
-          </span>
-        </button>
-      </fieldset>
+          {{ t('sandbox.startDialog.signedInWarning') }}
+        </p>
+      </ResponsiveDialogBody>
 
-      <p
-        v-if="warnsAboutSignOut"
-        data-testid="sandbox-signout-warning"
-        class="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm"
-      >
-        {{ t('sandbox.startDialog.signedInWarning') }}
-      </p>
-
-      <DialogFooter>
+      <ResponsiveDialogFooter>
         <Button
           variant="outline"
           :disabled="sandboxStore.starting"
@@ -124,7 +127,7 @@ async function start() {
               : t('sandbox.startDialog.start')
           }}
         </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialogContent>
+  </ResponsiveDialog>
 </template>

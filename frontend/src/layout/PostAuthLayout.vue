@@ -15,13 +15,13 @@ import { useChangelogStatus } from '@/composables/useChangelogStatus'
 
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 import PostAuthHeader from '@/components/layout/postauth/PostAuthHeader.vue'
@@ -98,7 +98,7 @@ function goToChangelog() {
     <MobileBottomNav />
 
     <!-- What's New dialog -->
-    <Dialog
+    <ResponsiveDialog
       :open="showWhatsNew"
       @update:open="
         (v: boolean) => {
@@ -106,9 +106,9 @@ function goToChangelog() {
         }
       "
     >
-      <DialogContent class="sm:max-w-md" data-testid="dialog-whats-new">
-        <DialogHeader>
-          <DialogTitle class="flex items-center gap-2">
+      <ResponsiveDialogContent dialog-class="sm:max-w-md" data-testid="dialog-whats-new">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle class="flex items-center gap-2">
             <Sparkles class="size-5" />
             <template v-if="newVersionCount === 1">
               {{ t('changelog.whatsNew.titleSingle', { version: `v${latestVersion}` }) }}
@@ -116,25 +116,25 @@ function goToChangelog() {
             <template v-else>
               {{ t('changelog.whatsNew.titleMultiple', { count: newVersionCount }) }}
             </template>
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             <template v-if="newVersionCount === 1 && latestTitle">
               {{ latestTitle }}
             </template>
             <template v-else>
               {{ t('changelog.whatsNew.description') }}
             </template>
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter class="flex-row gap-2 sm:justify-end">
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <ResponsiveDialogFooter layout="row" class="justify-end">
           <Button variant="ghost" data-testid="btn-dismiss-whats-new" @click="dismissWhatsNew">
             {{ t('changelog.whatsNew.dismiss') }}
           </Button>
           <Button @click="goToChangelog">
             {{ t('changelog.whatsNew.showMe') }}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   </SidebarProvider>
 </template>

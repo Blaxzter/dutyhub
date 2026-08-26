@@ -134,32 +134,32 @@
 
               <!-- Regenerate + last synced -->
               <div class="flex flex-wrap items-center gap-3">
-                <Dialog v-model:open="showRegenerateDialog">
-                  <DialogTrigger as-child>
+                <ResponsiveDialog v-model:open="showRegenerateDialog">
+                  <ResponsiveDialogTrigger as-child>
                     <Button variant="outline" size="sm">
                       <RefreshCwIcon class="h-4 w-4 mr-2" />
                       {{ t('user.settings.calendarSync.regenerate') }}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{{
+                  </ResponsiveDialogTrigger>
+                  <ResponsiveDialogContent>
+                    <ResponsiveDialogHeader>
+                      <ResponsiveDialogTitle>{{
                         t('user.settings.calendarSync.regenerateConfirmTitle')
-                      }}</DialogTitle>
-                      <DialogDescription>
+                      }}</ResponsiveDialogTitle>
+                      <ResponsiveDialogDescription>
                         {{ t('user.settings.calendarSync.regenerateConfirmDescription') }}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
+                      </ResponsiveDialogDescription>
+                    </ResponsiveDialogHeader>
+                    <ResponsiveDialogFooter>
                       <Button variant="outline" @click="showRegenerateDialog = false">
                         {{ t('common.actions.cancel') }}
                       </Button>
                       <Button @click="handleRegenerate">
                         {{ t('user.settings.calendarSync.regenerateConfirmButton') }}
                       </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
+                    </ResponsiveDialogFooter>
+                  </ResponsiveDialogContent>
+                </ResponsiveDialog>
 
                 <p class="text-xs text-muted-foreground">
                   <template v-if="feedSettings.last_accessed_at">
@@ -200,16 +200,16 @@ import { useCalendarFeedStore } from '@/stores/calendarFeed'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from '@/components/ui/responsive-dialog'
 import { Switch } from '@/components/ui/switch'
 
 import MicrosoftIcon from '@/components/icons/MicrosoftIcon.vue'

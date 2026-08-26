@@ -1,14 +1,19 @@
 <template>
-  <Dialog :open="open" @update:open="handleOpenChange">
-    <DialogContent class="sm:max-w-xl" @open-auto-focus="(e) => e.preventDefault()">
-      <DialogHeader>
-        <DialogTitle>{{ $t('user.settings.profile.edit.fields.picture.cropper.title') }}</DialogTitle>
-        <DialogDescription>
+  <ResponsiveDialog :open="open" @update:open="handleOpenChange">
+    <ResponsiveDialogContent
+      dialog-class="sm:max-w-xl"
+      @open-auto-focus="(e: Event) => e.preventDefault()"
+    >
+      <ResponsiveDialogHeader>
+        <ResponsiveDialogTitle>{{
+          $t('user.settings.profile.edit.fields.picture.cropper.title')
+        }}</ResponsiveDialogTitle>
+        <ResponsiveDialogDescription>
           {{ $t('user.settings.profile.edit.fields.picture.cropper.description') }}
-        </DialogDescription>
-      </DialogHeader>
+        </ResponsiveDialogDescription>
+      </ResponsiveDialogHeader>
 
-      <div class="min-w-0 space-y-3">
+      <ResponsiveDialogBody class="min-w-0 space-y-3 pb-2">
         <div
           ref="containerRef"
           class="relative overflow-hidden rounded-md border bg-muted/40"
@@ -31,39 +36,21 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            :disabled="!ready"
-            @click="rotate(-90)"
-          >
+          <Button type="button" variant="outline" size="sm" :disabled="!ready" @click="rotate(-90)">
             <RotateCcwIcon class="mr-1.5 h-4 w-4" />
             {{ $t('user.settings.profile.edit.fields.picture.cropper.rotateLeft') }}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            :disabled="!ready"
-            @click="rotate(90)"
-          >
+          <Button type="button" variant="outline" size="sm" :disabled="!ready" @click="rotate(90)">
             <RotateCwIcon class="mr-1.5 h-4 w-4" />
             {{ $t('user.settings.profile.edit.fields.picture.cropper.rotateRight') }}
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            :disabled="!ready"
-            @click="reset"
-          >
+          <Button type="button" variant="ghost" size="sm" :disabled="!ready" @click="reset">
             {{ $t('user.settings.profile.edit.fields.picture.cropper.reset') }}
           </Button>
         </div>
-      </div>
+      </ResponsiveDialogBody>
 
-      <DialogFooter>
+      <ResponsiveDialogFooter>
         <Button type="button" variant="outline" :disabled="confirming" @click="cancel">
           {{ $t('common.actions.cancel') }}
         </Button>
@@ -71,29 +58,29 @@
           <LoaderIcon v-if="confirming" class="mr-2 h-4 w-4 animate-spin" />
           {{ $t('user.settings.profile.edit.fields.picture.cropper.confirm') }}
         </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
+      </ResponsiveDialogFooter>
+    </ResponsiveDialogContent>
+  </ResponsiveDialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 
-import { useResizeObserver } from '@vueuse/core'
 import { LoaderIcon, RotateCcwIcon, RotateCwIcon } from '@lucide/vue'
+import { useResizeObserver } from '@vueuse/core'
 import { Cropper, RectangleStencil } from 'vue-advanced-cropper'
+import 'vue-advanced-cropper/dist/style.css'
 
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-
-import 'vue-advanced-cropper/dist/style.css'
+  ResponsiveDialog,
+  ResponsiveDialogBody,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 
 interface Props {
   open: boolean
