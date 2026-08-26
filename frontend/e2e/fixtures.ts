@@ -321,10 +321,18 @@ export const test = base.extend<
     { scope: 'worker' },
   ],
 
-  // Test-scoped: a page pre-configured as the admin user
-  adminPage: async ({ browser, adminUser, workerEvent }, use) => {
+  // Test-scoped: a page pre-configured as the admin user.
+  //
+  // `contextOptions` is not decoration: a bare `browser.newContext()` takes
+  // Playwright's own defaults and throws away whatever the project asked for in
+  // `use`. That went unnoticed while every project ran at a desktop viewport —
+  // the default happens to be the same 1280x720 `devices['Desktop Chrome']`
+  // sets. The `mobile` project is the first one that asks for something else,
+  // and without this it would have run on a desktop viewport and reported that
+  // the bottom drawer works.
+  adminPage: async ({ browser, contextOptions, adminUser, workerEvent }, use) => {
     void workerEvent // ensure event + selected_event_id are set before the page boots
-    const context = await browser.newContext()
+    const context = await browser.newContext(contextOptions)
     // The build flag alone does nothing: `main.ts` and the router both also
     // require this cookie before they stand the real session flow down.
     await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
@@ -338,9 +346,9 @@ export const test = base.extend<
   },
 
   // Test-scoped: a page pre-configured as the member user
-  memberPage: async ({ browser, memberUser, workerEvent }, use) => {
+  memberPage: async ({ browser, contextOptions, memberUser, workerEvent }, use) => {
     void workerEvent
-    const context = await browser.newContext()
+    const context = await browser.newContext(contextOptions)
     await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
     await setupAuthBypass(context, memberUser)
     const page = await context.newPage()
@@ -422,8 +430,8 @@ export const test = base.extend<
   },
 
   /** Test-scoped: a page pre-configured as the disposable user. */
-  disposablePage: async ({ browser, disposableUser }, use) => {
-    const context = await browser.newContext()
+  disposablePage: async ({ browser, contextOptions, disposableUser }, use) => {
+    const context = await browser.newContext(contextOptions)
     await context.addCookies([{ name: 'e2e_bypass', value: '1', domain: 'localhost', path: '/' }])
     await setupAuthBypass(context, disposableUser)
     const page = await context.newPage()

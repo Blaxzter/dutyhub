@@ -46,10 +46,11 @@ Not yet covered, and not currently tracked by an issue:
 | `auth`       | 4          | 14      |
 | `chromium`   | 23         | 210     |
 | `member`     | 2          | 18      |
+| `mobile`     | 1          | 6       |
 | `multi-user` | 4          | 54      |
 | `public`     | 7          | 24      |
 | `test-reset` | 1          | 1       |
-| **Total**    | **46**     | **349** |
+| **Total**    | **47**     | **355** |
 
 ## Inventory
 
@@ -519,6 +520,19 @@ Not yet covered, and not currently tracked by an issue:
   - member can see published tasks
   - member can view task detail
   - member can book a shift
+
+### Project `mobile` — 1 file, 6 tests
+
+#### `frontend/e2e/tests/mobile/responsive-dialog.spec.ts` — 6 tests
+
+- **Shift details – as a bottom sheet** (5)
+  - the viewport really is a phone
+  - a shift opens as a drawer anchored to the bottom edge
+  - the body is the swipe-aware viewport, not a plain scroller
+  - only the body scrolls; the footer stays on the bottom edge
+  - booking from the drawer takes the shift
+- **Confirm prompts – as an action sheet** (1)
+  - a destructive confirm opens over the drawer and can be dismissed
 
 ### Project `multi-user` — 4 files, 54 tests
 

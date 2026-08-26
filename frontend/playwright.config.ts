@@ -104,6 +104,18 @@ export default defineConfig({
       testMatch: '**/tests/multi-user/**/*.spec.ts',
     },
 
+    // The bottom-drawer half of every dialog.
+    //
+    // Every project above runs at a desktop viewport, so all of them exercise
+    // `ResponsiveDialog`'s `Dialog` branch and none of them would notice the
+    // drawer breaking. This is the only project that renders the other half.
+    {
+      name: 'mobile',
+      use: { ...devices['Pixel 7'] },
+      dependencies: ['test-reset'],
+      testMatch: '**/tests/mobile/**/*.spec.ts',
+    },
+
     // Accessibility tests (axe-core scans + keyboard/focus behaviour).
     // Own project so it can be run and sharded independently:
     //   pnpm exec playwright test --project=a11y

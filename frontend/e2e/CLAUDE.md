@@ -49,6 +49,24 @@ endpoint to shortcut.
 Pass `disposableUserOptions: { joinWorkerEvent: false }` for a user in no event
 at all, which is what a genuine first sign-in looks like.
 
+## A project's `use` only arrives if the fixture passes it on
+
+`adminPage`, `memberPage` and `disposablePage` build their own context rather
+than taking Playwright's `page`, so they have to hand `contextOptions` to
+`browser.newContext()` themselves. A bare `newContext()` silently takes
+Playwright's defaults and drops whatever the project asked for — viewport,
+device, locale, colour scheme.
+
+This hid for a long time because the default viewport is the same 1280x720
+`devices['Desktop Chrome']` sets, so every project agreed with the default by
+accident. The `mobile` project is the first that asks for something else, and
+without the fix it ran at a desktop viewport and cheerfully reported that the
+bottom drawer worked.
+
+`tests/mobile/responsive-dialog.spec.ts` therefore opens with a test that just
+asserts the viewport is narrow. If that one fails, ignore the rest of the file
+— they are all testing the wrong shell.
+
 ## Assertions must survive parallel workers
 
 Every worker seeds its **own** admin, member and event, and they all run
