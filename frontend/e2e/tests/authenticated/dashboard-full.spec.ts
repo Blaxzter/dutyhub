@@ -85,7 +85,10 @@ test.describe('Dashboard – shifts that need people', () => {
       .filter({ hasText: taskName })
       .first()
       .click()
-    await expect(page.getByTestId('dialog-shift-detail')).toBeVisible()
+    // On the contents, not the container: `dialog-shift-detail` is on
+    // `DialogContent`, which renders whether or not a shift resolved, so
+    // `toBeVisible()` alone passes on an empty dialog.
+    await expect(page.getByTestId('dialog-shift-detail')).toContainText('Main Gate')
   })
 
   test('Browse shifts goes to the task list', async ({ adminPage: page }) => {
@@ -121,7 +124,8 @@ test.describe('Dashboard – what you have said yes to', () => {
     try {
       await page.goto('/app/home')
       await page.getByTestId('btn-open-next-shift').click()
-      await expect(page.getByTestId('dialog-shift-detail')).toBeVisible()
+      // Named, so the assertion fails on a dialog that opened over nothing.
+      await expect(page.getByTestId('dialog-shift-detail')).toContainText('Main Gate')
     } finally {
       await cancelBooking(page, booking.id).catch(() => {})
     }

@@ -44,12 +44,12 @@ Not yet covered, and not currently tracked by an issue:
 | ------------ | ---------- | ------- |
 | `a11y`       | 5          | 28      |
 | `auth`       | 4          | 14      |
-| `chromium`   | 22         | 206     |
+| `chromium`   | 23         | 210     |
 | `member`     | 2          | 18      |
 | `multi-user` | 4          | 54      |
 | `public`     | 7          | 24      |
 | `test-reset` | 1          | 1       |
-| **Total**    | **45**     | **345** |
+| **Total**    | **46**     | **349** |
 
 ## Inventory
 
@@ -138,7 +138,7 @@ Not yet covered, and not currently tracked by an issue:
   - a new account signs straight in and lands in the app
   - registering twice with the same address is refused
 
-### Project `chromium` — 22 files, 206 tests
+### Project `chromium` — 23 files, 210 tests
 
 #### `frontend/e2e/tests/authenticated/admin-events.spec.ts` — 13 tests
 
@@ -414,6 +414,14 @@ Not yet covered, and not currently tracked by an issue:
 - **Settings – notification preferences** (2)
   - can navigate to notification preferences
   - notification preferences page loads
+
+#### `frontend/e2e/tests/authenticated/shift-detail.spec.ts` — 4 tests
+
+- **Shift details – from the task list** (4)
+  - a chip opens a dialog describing the shift it names
+  - the dialog offers the shift for booking
+  - booking from the dialog takes the shift
+  - a shift already taken offers cancelling instead
 
 #### `frontend/e2e/tests/authenticated/task-create.spec.ts` — 6 tests
 
