@@ -261,12 +261,34 @@ export function createTourController(router: Router): TourController {
     dying.destroy()
   }
 
+  /**
+   * Close the dialog the current step opened, when the tour ends inside one.
+   *
+   * An `inOverlay` step reaches its anchor by opening a modal, and reka-ui
+   * holds `pointer-events: none` on `<body>` for as long as one is up — driver's
+   * own stylesheet re-enables it for the popover, which is the only reason the
+   * step works at all. End the tour there and the popover goes with it, leaving
+   * a visitor behind a dialog they never opened themselves and every control
+   * outside it inert. The demo banner is one of those controls, so "restart the
+   * tour" did nothing: the click never reached the button.
+   *
+   * Escape is the dialog's own documented way out, so this closes it through
+   * the component rather than reaching past it into somebody's `v-model`.
+   */
+  function dismissStepOverlay() {
+    if (!useTourStore().currentStep?.inOverlay) return
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+  }
+
   function stop() {
+    // Before the store forgets which step it was on.
+    dismissStepOverlay()
     useTourStore().stop()
     teardown()
   }
 
   function finish() {
+    dismissStepOverlay()
     useTourStore().finish()
     teardown()
   }
