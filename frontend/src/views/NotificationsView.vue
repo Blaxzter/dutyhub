@@ -408,6 +408,7 @@ onMounted(() => {
       <li
         v-for="n in filtered"
         :key="n.id"
+        data-testid="notification-row"
         class="relative overflow-hidden sm:overflow-visible"
       >
         <!-- Swipe action backgrounds (revealed under the row) -->

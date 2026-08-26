@@ -129,6 +129,13 @@ test.describe('demo session', () => {
     await page.getByTestId('sidebar-link-my-bookings').click()
     await expect(page.getByTestId('booking-card').first()).toBeVisible()
 
+    // The inbox is the one screen the demo cannot fill for itself: the
+    // notification service drops a sandbox recipient before it writes a row,
+    // so nothing the visitor does during the tour ever reaches the bell. If
+    // the seeder stops writing these, the screen is empty for the whole hour.
+    await page.getByTestId('sidebar-link-notifications').click()
+    await expect(page.getByTestId('notification-row').first()).toBeVisible()
+
     await exitDemo(page)
   })
 

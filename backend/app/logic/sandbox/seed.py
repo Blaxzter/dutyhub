@@ -14,7 +14,11 @@ first impression than no demo at all, so the seed has a minimum it must satisfy:
 * there are teammates with availabilities, because the staffing heatmap is one
   of the more convincing screens and it needs more than one person;
 * the manager variant additionally gets a pending invitation and a pending join
-  request, so the two decisions an organiser actually makes are on screen.
+  request, so the two decisions an organiser actually makes are on screen;
+* the notification bell carries a badge and the inbox behind it has an entry
+  under every classification tab, because nothing the visitor does during the
+  tour can produce one — ``NotificationService`` skips a sandbox recipient
+  before it writes a row, so a demo inbox is seeded or it is empty forever.
 
 Shifts are produced through ``logic.shift_generator`` and recorded as a real
 ``ShiftBatch`` with the generation config stored on the task, rather than being
@@ -35,12 +39,14 @@ from dataclasses import dataclass
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.user_availability import user_availability as crud_user_availability
+from app.logic.notifications.messages import format_time_until, get_message
 from app.logic.shift_generator import generate_shifts
 from app.models.booking import Booking
 from app.models.event import Event
 from app.models.event_invitation import EventInvitation
 from app.models.event_join_request import EventJoinRequest
 from app.models.event_membership import EventMembership
+from app.models.notification import Notification
 from app.models.shift import Shift
 from app.models.shift_batch import ShiftBatch
 from app.models.task import Task
@@ -57,6 +63,32 @@ from app.schemas.user_availability import (
 _DAYS_BEFORE_TODAY = 3
 _DAYS_AFTER_TODAY = 11
 _TEAMMATE_COUNT = 5
+
+# Which of the two reminder offsets every account ships with (see
+# ``User.default_reminder_offsets``) the seeded reminder is written against.
+# The day-before one, because it is the only one whose send moment reliably
+# falls in the past for a shift the visitor has not worked yet.
+_REMINDER_OFFSET_MINUTES = 1440
+
+
+@dataclass(frozen=True, slots=True)
+class _GuestBooking:
+    """One shift the visitor holds, with the roster standing around them.
+
+    Returned by ``_seed_bookings`` because the inbox is written from it. A
+    notification about a shift the visitor is not on, or naming a colleague who
+    is not actually rostered beside them, is exactly the kind of detail that
+    gives a demo away — and neither is checkable after the fact from the rows
+    alone without re-deriving the whole rota.
+    """
+
+    booking: Booking
+    shift: Shift
+    co_workers: tuple[User, ...]
+
+    def starts_at(self) -> dt.datetime:
+        """When the shift begins, as a naive datetime to compare against ``now``."""
+        return dt.datetime.combine(self.shift.date, self.shift.start_time or dt.time())
 
 
 @dataclass(frozen=True, slots=True)
@@ -273,10 +305,10 @@ async def seed_sandbox(
     for teammate in teammates:
         db.add(EventMembership(user_id=teammate.id, event_id=event.id, role="member"))
 
-    _tasks, shifts = await _seed_tasks_and_shifts(
+    tasks, shifts = await _seed_tasks_and_shifts(
         db, event=event, owner=owner, lang=lang, today=today
     )
-    await _seed_bookings(
+    guest_bookings = await _seed_bookings(
         db,
         shifts=shifts,
         owner=owner,
@@ -286,8 +318,22 @@ async def seed_sandbox(
     )
     await _seed_availabilities(db, event=event, teammates=teammates, rng=rng)
 
+    requester: User | None = None
     if role == "manager":
-        await _seed_pending_decisions(db, event=event, owner=owner, lang=lang, now=now)
+        requester = await _seed_pending_decisions(
+            db, event=event, owner=owner, lang=lang, now=now
+        )
+
+    _seed_notifications(
+        db,
+        event=event,
+        owner=owner,
+        tasks=tasks,
+        guest_bookings=guest_bookings,
+        requester=requester,
+        lang=lang,
+        now=now,
+    )
 
     await db.flush()
     return event
@@ -387,22 +433,27 @@ async def _seed_bookings(
     teammates: list[User],
     today: dt.date,
     rng: "_DeterministicRng",
-) -> None:
-    """Fill the rota unevenly, and put the visitor on it.
+) -> list[_GuestBooking]:
+    """Fill the rota unevenly, put the visitor on it, and say where they landed.
 
     Uneven on purpose: a board where every shift is full says nothing about
     what the app is for. Past shifts are filled harder than future ones,
     because that is what a real rota looks like and it makes the reporting
     charts show a trend rather than a flat line.
-    """
-    taken: dict[uuid.UUID, int] = {}
 
-    def _book(shift: Shift, user: User) -> None:
-        used = taken.get(shift.id, 0)
-        if used >= shift.max_bookings:
-            return
-        taken[shift.id] = used + 1
-        db.add(Booking(shift_id=shift.id, user_id=user.id, status="confirmed"))
+    The roster is kept per shift rather than a count, because ``_seed_notifications``
+    needs to name a colleague who is genuinely on the same shift.
+    """
+    roster: dict[uuid.UUID, list[tuple[User, Booking]]] = {}
+
+    def _book(shift: Shift, user: User) -> Booking | None:
+        on_it = roster.setdefault(shift.id, [])
+        if len(on_it) >= shift.max_bookings:
+            return None
+        booking = Booking(shift_id=shift.id, user_id=user.id, status="confirmed")
+        on_it.append((user, booking))
+        db.add(booking)
+        return booking
 
     for shift in shifts:
         past = shift.date < today
@@ -417,10 +468,26 @@ async def _seed_bookings(
     # the dashboard counter is never zero.
     upcoming = [s for s in shifts if s.date >= today]
     past_shifts = [s for s in shifts if s.date < today]
+    held: list[_GuestBooking] = []
     for shift in _pick_spread(upcoming, 2) + _pick_spread(past_shifts, 1):
-        # Force room for the guest even on a shift the loop above filled.
-        taken[shift.id] = min(taken.get(shift.id, 0), shift.max_bookings - 1)
-        _book(shift, owner)
+        # Make room for the guest on a shift the loop above already filled — by
+        # dropping a teammate rather than by lowering a counter. Nothing has
+        # been flushed yet, so expunging the pending row means its INSERT never
+        # happens; counting the guest as an extra head instead would put a
+        # three-of-two fill badge on the staffing board.
+        on_it = roster.setdefault(shift.id, [])
+        while len(on_it) >= shift.max_bookings:
+            db.expunge(on_it.pop()[1])
+        booking = _book(shift, owner)
+        if booking is not None:
+            held.append(
+                _GuestBooking(
+                    booking=booking,
+                    shift=shift,
+                    co_workers=tuple(user for user, _ in on_it if user.id != owner.id),
+                )
+            )
+    return held
 
 
 async def _seed_availabilities(
@@ -489,11 +556,13 @@ async def _seed_pending_decisions(
     owner: User,
     lang: str,
     now: dt.datetime,
-) -> None:
-    """One invitation and one join request, both still waiting.
+) -> User:
+    """One invitation and one join request, both still waiting. Returns the applicant.
 
     Manager-only. These are the two decisions running an event actually
-    consists of, and both screens read as broken when empty.
+    consists of, and both screens read as broken when empty. The applicant is
+    returned because the organiser's inbox carries a notification about them,
+    and the two have to name the same person.
 
     The invitation address is on ``example.invalid`` — reserved by RFC 2606 and
     guaranteed never to resolve. Nothing in the demo may send mail, and the
@@ -544,6 +613,225 @@ async def _seed_pending_decisions(
     # The requester is a guest of this event too, so the purge finds and
     # removes them — membership is how ``cleanup`` enumerates the guests.
     db.add(EventMembership(user_id=requester.id, event_id=event.id, role="member"))
+    return requester
+
+
+def _seed_notifications(
+    db: AsyncSession,
+    *,
+    event: Event,
+    owner: User,
+    tasks: list[Task],
+    guest_bookings: list[_GuestBooking],
+    requester: User | None,
+    lang: str,
+    now: dt.datetime,
+) -> None:
+    """Write the visitor an inbox — rows only, no dispatch.
+
+    Deliberately not through ``NotificationService``. That service drops a
+    sandbox recipient *before* it writes anything, so that a demo can never
+    cause a send attempt on any channel and never leaves rows for the purge to
+    chase. The consequence is that nothing the visitor does during the tour
+    produces a notification: without this function the bell has no badge and
+    the inbox has four empty tabs behind it, on a screen the app otherwise
+    makes a point of.
+
+    So the rows are written here directly, and ``channels_sent`` stays empty on
+    every one of them, because nothing was sent and a demo may not claim
+    otherwise. What the shape has to satisfy:
+
+    * every classification the notifications screen offers a tab for —
+      reminder, change, match, announcement — has at least one entry behind it;
+    * some are unread, so the bell carries a badge on arrival, and some are
+      read, so the list is not a wall of bold;
+    * ``created_at`` spans minutes, hours and days, which is the whole range
+      the relative timestamps can render before they fall back to a date;
+    * every ``data`` payload carries the keys ``logic/notifications/triggers.py``
+      writes for that type and points at a row seeded into *this* demo, so
+      opening an entry lands on the task or the booking it is about.
+
+    Nothing here needs the rows to be flushed: ``Base.id`` is a client-side
+    ``uuid4``, so a booking can be pointed at before it exists.
+    """
+    entries: list[Notification] = []
+    tasks_by_id = {task.id: task for task in tasks}
+
+    def _add(
+        code: str,
+        *,
+        created_at: dt.datetime,
+        is_read: bool,
+        data: dict[str, str | int | None],
+        **fields: str,
+    ) -> None:
+        title, body = get_message(code, lang, **fields)
+        entries.append(
+            Notification(
+                recipient_id=owner.id,
+                notification_type_code=code,
+                title=title,
+                body=body,
+                data=data,
+                is_read=is_read,
+                # Read half an hour after it arrived, or now for anything that
+                # arrived inside that window — never a read_at in the future.
+                read_at=min(created_at + dt.timedelta(minutes=30), now)
+                if is_read
+                else None,
+                channels_sent=[],
+                channels_failed=[],
+                created_at=created_at,
+                updated_at=created_at,
+            )
+        )
+
+    # ── match: a task went up, which is how a helper hears about work ──
+    if tasks:
+        published = tasks[-1]
+        _add(
+            "task.published",
+            created_at=now - dt.timedelta(days=3, hours=2),
+            is_read=True,
+            data={"task_id": str(published.id)},
+            task_name=published.name,
+        )
+
+    # ── announcement: the organiser's half of the inbox ──
+    if requester is not None:
+        _add(
+            "event.join_requested",
+            created_at=now - dt.timedelta(minutes=50),
+            is_read=False,
+            data={"event_id": str(event.id), "user_id": str(requester.id)},
+            name=requester.name or "",
+            event_name=event.name,
+        )
+
+    if not guest_bookings:
+        db.add_all(entries)
+        return
+
+    ahead = sorted(
+        (held for held in guest_bookings if held.starts_at() > now),
+        key=lambda held: held.starts_at(),
+    )
+
+    def _slot_fields(held: _GuestBooking) -> dict[str, str]:
+        shift = held.shift
+        task = tasks_by_id.get(shift.task_id)
+        return {
+            "slot_title": shift.title,
+            "task_name": task.name if task else "",
+            "date": shift.date.strftime("%d.%m.%Y"),
+            "start_time": shift.start_time.strftime("%H:%M")
+            if shift.start_time
+            else "",
+            "end_time": shift.end_time.strftime("%H:%M") if shift.end_time else "",
+            "location": shift.location or "",
+        }
+
+    def _slot_data(held: _GuestBooking) -> dict[str, str | int | None]:
+        return {
+            "booking_id": str(held.booking.id),
+            "slot_id": str(held.shift.id),
+            "task_id": str(held.shift.task_id),
+        }
+
+    # Which booking each entry is about is not free choice. Several
+    # notifications about one shift read as a single incident rather than as an
+    # inbox, so each entry takes the first shift in its own order of preference
+    # that no earlier entry has claimed, and doubles up only when the visitor
+    # holds too few to go round.
+    spoken_for: set[uuid.UUID] = set()
+
+    def _claim(*preferences: list[_GuestBooking]) -> _GuestBooking:
+        for bucket in preferences:
+            for held in bucket:
+                if held.shift.id not in spoken_for:
+                    spoken_for.add(held.shift.id)
+                    return held
+        fallback = next(bucket[0] for bucket in preferences if bucket)
+        spoken_for.add(fallback.shift.id)
+        return fallback
+
+    # ── change: something moved under them, which is the whole point of an
+    # inbox — and unread, because it is the one entry worth opening.
+    #
+    # Claimed first, and skipped outright when the visitor holds nothing that
+    # has not already run: a shift cannot be rescheduled after the fact, and
+    # the "changes" tab has the confirmation below in it either way. Taken from
+    # the far end of what is ahead, so the nearer shift stays free for that
+    # confirmation. ──
+    if ahead:
+        moved = _claim(list(reversed(ahead)))
+        _add(
+            "shift.time_changed",
+            created_at=now - dt.timedelta(hours=4),
+            is_read=False,
+            data={
+                "slot_id": str(moved.shift.id),
+                "task_id": str(moved.shift.task_id),
+            },
+            slot_title=moved.shift.title,
+        )
+
+    # ── change: a booking they hold, confirmed back when they took it ──
+    confirmed = _claim(ahead, guest_bookings)
+    _add(
+        "booking.confirmed",
+        created_at=now - dt.timedelta(days=2, hours=3),
+        is_read=True,
+        data=_slot_data(confirmed),
+        **_slot_fields(confirmed),
+    )
+
+    # ── announcement: someone joined them on a shift. Named from the roster,
+    # so the colleague really is on it — the staffing board is one click away
+    # and it would show them missing. ──
+    with_company = [held for held in [*ahead, *guest_bookings] if held.co_workers]
+    if with_company:
+        shared = _claim(with_company)
+        _add(
+            "booking.shift_cobooked",
+            created_at=now - dt.timedelta(hours=9),
+            is_read=False,
+            data={
+                "slot_id": str(shared.shift.id),
+                "task_id": str(shared.shift.task_id),
+            },
+            name=shared.co_workers[0].name or "",
+            slot_title=shared.shift.title,
+        )
+
+    # ── reminder: sent the configured day ahead of a shift they hold.
+    #
+    # Which shift is not a free choice. The body says "in 1 day", so the row
+    # has to be stamped a day before that shift starts, and a row stamped in
+    # the future renders as "just now" and reads as broken. Hence: of every
+    # shift the visitor holds, the one whose send moment already passed and
+    # passed most recently — the shift starting today wins when there is one,
+    # the shift they already worked when there is not. ──
+    offset = dt.timedelta(minutes=_REMINDER_OFFSET_MINUTES)
+    due = [
+        (held.starts_at() - offset, held)
+        for held in guest_bookings
+        if held.starts_at() - offset <= now - dt.timedelta(minutes=5)
+    ]
+    if due:
+        sent_at, reminded = max(due, key=lambda pair: pair[0])
+        fields = _slot_fields(reminded)
+        fields.pop("task_name")  # the reminder body names the shift, not the task
+        _add(
+            "booking.reminder",
+            created_at=sent_at,
+            is_read=False,
+            data=_slot_data(reminded),
+            time_until=format_time_until(_REMINDER_OFFSET_MINUTES, lang),
+            **fields,
+        )
+
+    db.add_all(entries)
 
 
 def _build_teammates(*, lang: str, count: int) -> list[User]:

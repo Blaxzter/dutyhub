@@ -7,6 +7,11 @@ decisions, and every one of those screens has an empty state that reads as a
 broken product rather than as a demo with nothing in it. A visitor who sees one
 of those closes the tab, and nothing anywhere logs why.
 
+The notification inbox is the same problem with an extra twist: it cannot fill
+itself. ``NotificationService`` drops a sandbox recipient before it writes a
+row, so nothing the visitor does during the tour lands in their bell — a demo
+inbox is seeded or it is empty for the whole hour.
+
 So these are not assertions about the seeder's implementation. They are the
 minimum contract the tour depends on, written down where a change to
 ``_TASK_SPECS`` or to the day offsets will trip over them: dates spanning today
@@ -29,11 +34,13 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import col
 
+from app.logic.notifications.registry import classification_for_code
 from app.logic.sandbox.seed import guest_display_name
 from app.models.booking import Booking
 from app.models.event_invitation import EventInvitation
 from app.models.event_join_request import EventJoinRequest
 from app.models.event_membership import EventMembership
+from app.models.notification import Notification
 from app.models.shift import Shift
 from app.models.shift_batch import ShiftBatch
 from app.models.task import Task
@@ -54,6 +61,16 @@ async def _tasks(db: AsyncSession, sandbox: SandboxSetup) -> list[Task]:
 async def _shifts(db: AsyncSession, sandbox: SandboxSetup) -> list[Shift]:
     task_ids = [task.id for task in await _tasks(db, sandbox)]
     rows = await db.execute(select(Shift).where(col(Shift.task_id).in_(task_ids)))
+    return list(rows.scalars())
+
+
+async def _inbox(db: AsyncSession, sandbox: SandboxSetup) -> list[Notification]:
+    """The visitor's own notifications, newest first — what the bell opens onto."""
+    rows = await db.execute(
+        select(Notification)
+        .where(col(Notification.recipient_id) == sandbox.guest.id)
+        .order_by(col(Notification.created_at).desc())
+    )
     return list(rows.scalars())
 
 
@@ -288,6 +305,237 @@ class TestSeededBookings:
         assert len({a.availability_type for a in availabilities}) >= 2
 
 
+# ── The inbox the demo cannot fill for itself ─────────────────────
+
+
+@pytest.mark.asyncio
+class TestSeededNotifications:
+    """The bell, its badge, and the four tabs behind it.
+
+    Every claim here is one the demo makes on screen and cannot make on its
+    own: the notification service refuses sandbox recipients outright, so an
+    unseeded demo shows a bell with no badge over an inbox with four empty
+    filter tabs. These rows are that inbox.
+    """
+
+    async def test_the_visitor_arrives_with_notifications(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that the bell opens onto something."""
+        inbox = await _inbox(db_session, test_sandbox)
+
+        assert len(inbox) >= 4
+        assert all(n.recipient_id == test_sandbox.guest.id for n in inbox)
+
+    async def test_only_the_visitor_gets_one(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that the fake teammates have no inbox of their own.
+
+        Nobody can sign into those accounts, so a notification addressed to one
+        is a row that exists only to be deleted again. It would also be the
+        first sign that the seeder had started fanning out the way a real
+        trigger does.
+        """
+        others = [
+            guest.id
+            for guest in await _guests(db_session, test_sandbox)
+            if guest.id != test_sandbox.guest.id
+        ]
+        rows = await db_session.execute(
+            select(Notification).where(col(Notification.recipient_id).in_(others))
+        )
+
+        assert list(rows.scalars()) == []
+
+    async def test_some_are_unread_and_some_are_not(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that the badge has a number on it without the list being a wall of bold.
+
+        Both halves are the point. Nothing unread means no badge, and the bell
+        is then indistinguishable from a bell with nothing behind it; nothing
+        read means every row is highlighted, which is the same as none being.
+        """
+        inbox = await _inbox(db_session, test_sandbox)
+
+        assert any(not n.is_read for n in inbox), "the bell would carry no badge"
+        assert any(n.is_read for n in inbox), "every row would render as unread"
+        assert all(n.read_at is not None for n in inbox if n.is_read)
+        assert all(n.read_at is None for n in inbox if not n.is_read)
+
+    async def test_every_filter_tab_has_something_behind_it(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that all four classifications are represented.
+
+        The notifications screen offers a pill per classification and each one
+        renders its own empty state. A demo that seeded only, say, changes puts
+        three empty screens one click away from the full one.
+        """
+        inbox = await _inbox(db_session, test_sandbox)
+        classifications = {
+            classification_for_code(n.notification_type_code) for n in inbox
+        }
+
+        assert classifications == {"reminder", "change", "match", "announcement"}
+
+    async def test_they_are_stamped_across_the_range_the_list_can_render(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that the relative timestamps read as an inbox rather than a batch.
+
+        Everything created in the same second renders as one block of "just
+        now", which is what a seeded list looks like when it looks seeded.
+        Nothing may be stamped in the future either: the frontend subtracts and
+        floors, so a future row also reads as "just now" — and past seven days
+        the wording gives way to a plain date, which is where a demo starts
+        looking abandoned.
+        """
+        now = dt.datetime.now(dt.timezone.utc).replace(tzinfo=None)
+        inbox = await _inbox(db_session, test_sandbox)
+        ages = [(now - n.created_at) for n in inbox]
+
+        assert all(age > dt.timedelta(0) for age in ages), "stamped in the future"
+        assert all(age < dt.timedelta(days=7) for age in ages), "renders as a date"
+        assert any(age < dt.timedelta(hours=12) for age in ages), "nothing recent"
+        assert any(age > dt.timedelta(days=1) for age in ages), "nothing older"
+
+    async def test_nothing_claims_to_have_been_delivered(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that no seeded row records a channel it went out on.
+
+        Nothing was sent — the demo has no address to send to and must never
+        acquire one. ``channels_sent`` is the field that would say otherwise,
+        and it is the field any future "resend" affordance would read.
+        """
+        inbox = await _inbox(db_session, test_sandbox)
+
+        assert all(n.channels_sent == [] for n in inbox)
+        assert all(n.channels_failed == [] for n in inbox)
+
+    async def test_every_entry_opens_something_that_exists(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that the deep-link payloads point into this demo.
+
+        Clicking a notification navigates on whichever of ``task_id``,
+        ``event_id`` or ``booking_id`` it carries. A payload naming a row that
+        was never seeded — or one belonging to a different sandbox — sends the
+        visitor to a 404 from the one screen that exists to be clicked through.
+        """
+        inbox = await _inbox(db_session, test_sandbox)
+        known: dict[str, set[str]] = {
+            "task_id": {
+                str(task.id) for task in await _tasks(db_session, test_sandbox)
+            },
+            "slot_id": {
+                str(shift.id) for shift in await _shifts(db_session, test_sandbox)
+            },
+            "user_id": {
+                str(guest.id) for guest in await _guests(db_session, test_sandbox)
+            },
+            "event_id": {str(test_sandbox.event.id)},
+            "booking_id": {
+                str(booking_id)
+                for booking_id in (
+                    await db_session.execute(
+                        select(col(Booking.id)).where(
+                            col(Booking.user_id) == test_sandbox.guest.id
+                        )
+                    )
+                ).scalars()
+            },
+        }
+
+        assert inbox
+        for notification in inbox:
+            data = notification.data or {}
+            assert data, notification.notification_type_code
+            for key, value in data.items():
+                assert key in known, key
+                assert value in known[key], (
+                    f"{notification.notification_type_code}.{key}"
+                )
+
+    async def test_the_co_booking_names_someone_actually_on_that_shift(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that "X also booked this shift" is true of the seeded rota.
+
+        The body names a person and the payload names a shift, and the staffing
+        board is one click away — so a name taken from the teammate list rather
+        than from the roster is a contradiction the visitor can see.
+        """
+        inbox = await _inbox(db_session, test_sandbox)
+        cobooked = next(
+            n for n in inbox if n.notification_type_code == "booking.shift_cobooked"
+        )
+        slot_id = uuid.UUID(str((cobooked.data or {})["slot_id"]))
+
+        rostered = list(
+            (
+                await db_session.execute(
+                    select(User)
+                    .join(Booking, col(Booking.user_id) == col(User.id))
+                    .where(col(Booking.shift_id) == slot_id)
+                )
+            ).scalars()
+        )
+
+        assert test_sandbox.guest.id in {user.id for user in rostered}
+        assert any(
+            user.name and user.name in cobooked.body
+            for user in rostered
+            if user.id != test_sandbox.guest.id
+        ), cobooked.body
+
+    async def test_the_reminder_is_stamped_when_it_would_have_been_sent(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that the reminder's body and its timestamp agree.
+
+        It says "in 1 day", which is only true of a row written a day before
+        the shift starts. Stamping it anywhere else is invisible in the code
+        and obvious on screen, because the list prints the age of the row right
+        next to the sentence claiming the gap.
+        """
+        inbox = await _inbox(db_session, test_sandbox)
+        reminder = next(
+            n for n in inbox if n.notification_type_code == "booking.reminder"
+        )
+        slot_id = uuid.UUID(str((reminder.data or {})["slot_id"]))
+        shift = next(
+            shift
+            for shift in await _shifts(db_session, test_sandbox)
+            if shift.id == slot_id
+        )
+        starts_at = dt.datetime.combine(shift.date, shift.start_time or dt.time())
+
+        assert "1 day" in reminder.body
+        assert starts_at - reminder.created_at == dt.timedelta(days=1)
+
+    async def test_it_speaks_the_language_the_visitor_clicked(
+        self, db_session: AsyncSession, make_sandbox: SandboxFactory
+    ) -> None:
+        """Test that the inbox is written in the demo's language.
+
+        Real notifications are rendered per recipient at dispatch time, so a
+        German visitor's inbox is German. A seeded one that is not would be the
+        only English screen in an otherwise German demo.
+        """
+        german = await make_sandbox(language="de")
+        english = await make_sandbox(language="en")
+
+        assert any(
+            n.title == "Shift-Zeit geändert" for n in await _inbox(db_session, german)
+        )
+        assert any(
+            n.title == "Shift Time Changed" for n in await _inbox(db_session, english)
+        )
+
+
 # ── The two tracks ────────────────────────────────────────────────
 
 
@@ -392,6 +640,57 @@ class TestRoleShapesTheDemo:
         assert invitations[0].email.endswith("@example.invalid")
         assert len(requests) == 1
         assert requests[0].status == "pending"
+
+    async def test_the_organiser_is_told_about_the_join_request(
+        self, db_session: AsyncSession, make_sandbox: SandboxFactory
+    ) -> None:
+        """Test that the pending decision also arrives in the manager's inbox.
+
+        The join-request screen is two clicks deep. The bell is what sends an
+        organiser there in the real product, so a demo whose only trace of the
+        request is the screen itself teaches the wrong workflow — and the
+        notification has to name the applicant the request is actually from,
+        because approving it is the next thing the tour asks them to do.
+        """
+        sandbox = await make_sandbox(role="manager")
+        request = (
+            await db_session.execute(
+                select(EventJoinRequest).where(
+                    col(EventJoinRequest.event_id) == sandbox.event.id
+                )
+            )
+        ).scalar_one()
+        applicant = (
+            await db_session.execute(
+                select(User).where(col(User.id) == request.user_id)
+            )
+        ).scalar_one()
+
+        told = [
+            n
+            for n in await _inbox(db_session, sandbox)
+            if n.notification_type_code == "event.join_requested"
+        ]
+
+        assert len(told) == 1
+        assert not told[0].is_read
+        assert applicant.name and applicant.name in told[0].body
+        assert (told[0].data or {})["user_id"] == str(applicant.id)
+
+    async def test_a_helper_is_not_told_about_decisions_they_cannot_make(
+        self, db_session: AsyncSession, test_sandbox: SandboxSetup
+    ) -> None:
+        """Test that the volunteer inbox carries nothing organiser-shaped.
+
+        A helper cannot open the join-request screen, so an entry pointing at
+        it is a dead end — and event-scoped payloads route to event settings,
+        which the router's ``requiresEventManager`` guard bounces them off.
+        """
+        codes = {
+            n.notification_type_code for n in await _inbox(db_session, test_sandbox)
+        }
+
+        assert "event.join_requested" not in codes
 
     async def test_the_applicant_is_a_member_so_the_purge_finds_them(
         self, db_session: AsyncSession, make_sandbox: SandboxFactory

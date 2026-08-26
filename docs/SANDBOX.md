@@ -21,8 +21,21 @@ Two rows and everything hanging off them:
 Seeded into it: four published tasks, each with a real `ShiftBatch` and stored
 generation config; shifts before, on and after today; five more guest accounts
 as teammates, with availabilities; bookings that leave the rota deliberately
-uneven; and — for the manager role only — one pending invitation and one
-pending join request.
+uneven; a notification inbox for the visitor; and — for the manager role only —
+one pending invitation, one pending join request, and the notification telling
+them about it.
+
+The inbox is the one part of the seed that exists because of a guard rather
+than in spite of one. `NotificationService` drops a sandbox recipient *before*
+it writes a row (see the invisibility table below), so nothing the visitor does
+during the tour can ever reach their bell. `logic/sandbox/seed.py::_seed_notifications`
+therefore writes the rows directly — never through the service, so no channel
+is ever asked to send anything, and `channels_sent` stays empty because nothing
+was sent. The shape is dictated by the screen: one entry under each of the four
+classification tabs the notifications view offers, some read and some not so
+the bell carries a badge, timestamps spread over minutes, hours and days, and
+every `data` payload pointing at a row from this same demo so that clicking an
+entry opens the task or booking it is about.
 
 The caller picks a role, and that is the entire configuration of the demo:
 
@@ -69,7 +82,9 @@ leaves the orphans described above.
 3. shift_batches, then tasks (by event_id)   — never by cascade from the event
 4. user_availabilities, event_memberships
 5. events                                    — invitations and join requests cascade
-6. auth_sessions, then users                 — last, always
+6. auth_sessions, then users                 — last, always; notifications,
+                                                avatars and tokens cascade from
+                                                the guest
 ```
 
 Two traps are worth stating explicitly:
@@ -130,7 +145,7 @@ This is the checklist. Each row is one guard, individually testable, covered in
 | `api/routes/events.py` invitation creators | 403 `sandbox.invitations_disabled` — a guest is `owner`, so `require_event_role` would let them mail a real address |
 | `api/routes/users.py::update_selected_event` | 404 for someone else's sandbox |
 | `crud/user.py::search` | guests never appear in the superadmin user list |
-| `logic/notifications/service.py` | a sandbox recipient gets **no notification row**, not merely no delivery |
+| `logic/notifications/service.py` | a sandbox recipient gets **no notification row**, not merely no delivery — which is why the demo inbox is seeded directly instead |
 | `logic/notifications/triggers.py::dispatch_task_published` | hard stop — that fan-out reaches every active account on the installation |
 | `api/routes/auth.py` | change-password and resend-verification return 403 `sandbox.not_available` |
 

@@ -40,6 +40,7 @@ from app.models.event import Event
 from app.models.event_invitation import EventInvitation
 from app.models.event_join_request import EventJoinRequest
 from app.models.event_membership import EventMembership
+from app.models.notification import Notification
 from app.models.shift import Shift
 from app.models.shift_batch import ShiftBatch
 from app.models.task import Task
@@ -75,6 +76,7 @@ class _Inventory:
     booking_ids: list[uuid.UUID]
     guest_ids: list[uuid.UUID]
     availability_ids: list[uuid.UUID]
+    notification_ids: list[uuid.UUID]
 
 
 async def _inventory(db: AsyncSession, event_id: uuid.UUID) -> _Inventory:
@@ -94,6 +96,17 @@ async def _inventory(db: AsyncSession, event_id: uuid.UUID) -> _Inventory:
         ),
         availability_ids=await _ids(
             db, col(UserAvailability.id), col(UserAvailability.event_id) == event_id
+        ),
+        notification_ids=await _ids(
+            db,
+            col(Notification.id),
+            col(Notification.recipient_id).in_(
+                await _ids(
+                    db,
+                    col(EventMembership.user_id),
+                    col(EventMembership.event_id) == event_id,
+                )
+            ),
         ),
     )
 
@@ -127,6 +140,14 @@ async def _remaining(db: AsyncSession, inv: _Inventory) -> dict[str, int]:
         ),
         "event_join_requests": await _count(
             db, EventJoinRequest, col(EventJoinRequest.event_id) == inv.event_id
+        ),
+        # Not deleted explicitly anywhere — ``notifications.recipient_id`` is
+        # ON DELETE CASCADE, so these go when the guest does. Counted because
+        # that is a property of the schema rather than of this module, and a
+        # migration that loosened it would otherwise leave every seeded inbox
+        # behind, addressed to an account that no longer exists.
+        "notifications": await _count(
+            db, Notification, col(Notification.id).in_(inv.notification_ids)
         ),
         "auth_sessions": await _count(
             db, AuthSession, col(AuthSession.user_id).in_(inv.guest_ids)
@@ -242,8 +263,8 @@ class TestPurgeSandbox:
         """Test that every table a demo writes into comes back to zero.
 
         The invitation, the join request and the booking reminder are added on
-        top of the seed so that the census covers all thirteen tables rather
-        than the ten a freshly seeded helper demo happens to populate. Every
+        top of the seed so that the census covers all fourteen tables rather
+        than the eleven a freshly seeded helper demo happens to populate. Every
         line of it starts non-zero and must end at zero — a count that was
         never anything but zero proves nothing.
         """
@@ -257,6 +278,7 @@ class TestPurgeSandbox:
         assert inv.booking_ids, "the seeder must have produced bookings"
         assert len(inv.guest_ids) > 1, "the seeder must have produced teammates"
         assert inv.availability_ids, "the seeder must have produced availabilities"
+        assert inv.notification_ids, "the seeder must have produced an inbox"
 
         before = await _remaining(db_session, inv)
         assert all(count > 0 for count in before.values()), before

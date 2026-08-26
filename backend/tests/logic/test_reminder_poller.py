@@ -25,9 +25,9 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.booking_reminder import booking_reminder as crud_reminder
+from app.logic.notifications.messages import format_time_until
 from app.logic.notifications.reminder_poller import (
     _cleanup_cycle,
-    _format_time_until,
     _poll_cycle,
     _process_reminder,
     run_reminder_poller,
@@ -131,7 +131,7 @@ async def _dispatch_reminder(
     return service_cls, notify
 
 
-# ── _format_time_until ────────────────────────────────────────────
+# ── format_time_until ────────────────────────────────────────────
 
 
 class TestFormatTimeUntil:
@@ -182,7 +182,7 @@ class TestFormatTimeUntil:
         self, offset_minutes: int, lang: str, expected: str
     ) -> None:
         """Every offset bucket renders the documented wording per language."""
-        assert _format_time_until(offset_minutes, lang) == expected
+        assert format_time_until(offset_minutes, lang) == expected
 
 
 # ── selection window (remind_at <= now AND status == "pending") ───

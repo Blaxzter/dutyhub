@@ -12,7 +12,7 @@ from sqlalchemy import text
 from app.core.db import async_session
 from app.core.logger import get_logger
 from app.crud.booking_reminder import booking_reminder as crud_reminder
-from app.logic.notifications.messages import get_message
+from app.logic.notifications.messages import format_time_until, get_message
 from app.logic.notifications.service import NotificationService
 from app.models.booking_reminder import BookingReminder
 from app.models.shift import Shift
@@ -27,28 +27,6 @@ _POLL_INTERVAL = 30
 
 # Run cleanup every N poll cycles (~50 min at 30s interval)
 _CLEANUP_EVERY_N_CYCLES = 100
-
-
-def _format_time_until(offset_minutes: int, lang: str) -> str:
-    """Human-readable time-until string for the reminder body."""
-    if offset_minutes < 60:
-        if lang == "de":
-            return f"in {offset_minutes} Minuten"
-        return f"in {offset_minutes} minutes"
-    hours = offset_minutes // 60
-    remaining_mins = offset_minutes % 60
-    if offset_minutes < 1440:
-        if lang == "de":
-            if remaining_mins:
-                return f"in {hours} Std. {remaining_mins} Min."
-            return f"in {hours} Stunde{'n' if hours > 1 else ''}"
-        if remaining_mins:
-            return f"in {hours}h {remaining_mins}min"
-        return f"in {hours} hour{'s' if hours > 1 else ''}"
-    days = offset_minutes // 1440
-    if lang == "de":
-        return f"in {days} Tag{'en' if days > 1 else ''}"
-    return f"in {days} day{'s' if days > 1 else ''}"
 
 
 async def _process_reminder(reminder: BookingReminder) -> None:
@@ -93,7 +71,7 @@ async def _process_reminder(reminder: BookingReminder) -> None:
                     "booking.reminder",
                     lang,
                     slot_title=shift.title,
-                    time_until=_format_time_until(reminder.offset_minutes, lang),
+                    time_until=format_time_until(reminder.offset_minutes, lang),
                     date=shift.date.strftime("%d.%m.%Y") if shift.date else "",
                     start_time=shift.start_time.strftime("%H:%M")
                     if shift.start_time

@@ -46,3 +46,31 @@ def get_email_strings(language: str) -> dict[str, str]:
     return _messages.get(lang, _messages[DEFAULT_LANGUAGE]).get(
         "email", _messages[DEFAULT_LANGUAGE]["email"]
     )
+
+
+def format_time_until(offset_minutes: int, lang: str) -> str:
+    """Human-readable time-until string for the ``booking.reminder`` body.
+
+    Lives here rather than in ``reminder_poller`` because it is the wording of
+    a message placeholder, and it has two callers: the poller that sends real
+    reminders, and the sandbox seeder that writes a demo inbox. A demo whose
+    reminder is phrased differently from the real one is a tell.
+    """
+    if offset_minutes < 60:
+        if lang == "de":
+            return f"in {offset_minutes} Minuten"
+        return f"in {offset_minutes} minutes"
+    hours = offset_minutes // 60
+    remaining_mins = offset_minutes % 60
+    if offset_minutes < 1440:
+        if lang == "de":
+            if remaining_mins:
+                return f"in {hours} Std. {remaining_mins} Min."
+            return f"in {hours} Stunde{'n' if hours > 1 else ''}"
+        if remaining_mins:
+            return f"in {hours}h {remaining_mins}min"
+        return f"in {hours} hour{'s' if hours > 1 else ''}"
+    days = offset_minutes // 1440
+    if lang == "de":
+        return f"in {days} Tag{'en' if days > 1 else ''}"
+    return f"in {days} day{'s' if days > 1 else ''}"

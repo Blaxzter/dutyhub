@@ -680,13 +680,19 @@ class TestNotifications:
         test_sandbox: SandboxSetup,
         test_user: User,
     ) -> None:
-        """Test that nothing lands in ``notifications`` for a demo account.
+        """Test that nothing *dispatched* lands in ``notifications`` for a guest.
 
         The per-channel guards further down stop the *send* but still leave an
         in-app notification and an SSE unread bump behind — noise inside a demo
         and rows to clean up afterwards. The real account in the same call is
         what proves this is a filter on the recipient rather than the whole
         dispatch quietly turning into a no-op.
+
+        Scoped to the type code this call dispatched, not to the guest's whole
+        inbox: the seeder writes one deliberately (``logic/sandbox/seed.py``),
+        precisely *because* this guard means the demo can never fill its own
+        bell. The two are not in tension — one is a row written for a
+        recipient, the other is a send the recipient could never receive.
         """
         db_session.add(
             NotificationType(
@@ -711,7 +717,8 @@ class TestNotifications:
         assert [n.recipient_id for n in created] == [test_user.id]
         rows = await db_session.execute(
             select(Notification).where(
-                col(Notification.recipient_id) == test_sandbox.guest.id
+                col(Notification.recipient_id) == test_sandbox.guest.id,
+                col(Notification.notification_type_code) == "test.sandbox_skip",
             )
         )
         assert rows.scalars().all() == []
