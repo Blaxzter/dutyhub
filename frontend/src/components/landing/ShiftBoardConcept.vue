@@ -87,15 +87,18 @@ const openPlaces = computed(() =>
 
 const legend: Fill[] = ['full', 'partial', 'open']
 
+// `partial` mirrors `full`'s shape against `--warning` rather than `--primary`,
+// so the two states differ by hue alone and stay apart in both themes. It used
+// to borrow `--accent`, which is the hover surface — see the note in index.css.
 const chipClass: Record<Fill, string> = {
   full: 'border-primary/35 bg-primary/12 text-foreground',
-  partial: 'border-accent-foreground/35 bg-accent/50 text-foreground',
+  partial: 'border-warning/55 bg-warning/8 text-foreground',
   open: 'border-dashed border-border bg-transparent text-muted-foreground',
 }
 
 const dotClass: Record<Fill, string> = {
   full: 'bg-primary',
-  partial: 'bg-accent-foreground',
+  partial: 'bg-warning',
   open: 'border border-dashed border-muted-foreground/60',
 }
 

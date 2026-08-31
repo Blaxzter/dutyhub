@@ -105,14 +105,14 @@ const ticks = [0, 3, 6, 9, 12, 15, 18, 21, 24]
         :style="{ left: `${fromPct}%`, transform: 'translateX(-50%)' }"
         @pointerdown="(e) => handleDown('from', e)"
       >
-        <div class="bg-accent-foreground h-7 w-1 rounded-sm shadow-sm" />
+        <div class="bg-foreground h-7 w-1 rounded-sm shadow-sm" />
       </div>
       <div
         class="absolute top-0 bottom-0 flex w-5 cursor-ew-resize items-center justify-center"
         :style="{ left: `${toPct}%`, transform: 'translateX(-50%)' }"
         @pointerdown="(e) => handleDown('to', e)"
       >
-        <div class="bg-accent-foreground h-7 w-1 rounded-sm shadow-sm" />
+        <div class="bg-foreground h-7 w-1 rounded-sm shadow-sm" />
       </div>
     </div>
 

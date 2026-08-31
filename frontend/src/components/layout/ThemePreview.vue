@@ -19,7 +19,11 @@ const props = withDefaults(
 )
 
 /** Hardcoded swatches (not CSS vars) so each tile shows its OWN palette,
-    not whichever one is currently active. Keep in sync with index.css. */
+    not whichever one is currently active. Keep in sync with index.css.
+
+    `accent` here is the tile's dot — the palette's signal colour, i.e.
+    `--warning`, not the `--accent` hover surface, which is too close to the
+    card to show up at 64×48. */
 const SWATCHES: Record<
   Palette,
   Record<
@@ -33,16 +37,16 @@ const SWATCHES: Record<
       card: 'oklch(0.965 0.014 80)',
       border: 'oklch(0.87 0.025 80)',
       primary: 'oklch(0.40 0.072 145)',
-      accent: 'oklch(0.62 0.135 45)',
+      accent: 'oklch(0.50 0.13 45)',
       fg: 'oklch(0.27 0.012 60)',
     },
     dark: {
-      bg: 'oklch(0.18 0.008 75)',
-      card: 'oklch(0.22 0.010 75)',
-      border: 'oklch(0.30 0.012 75)',
+      bg: 'oklch(0.17 0.010 155)',
+      card: 'oklch(0.21 0.012 155)',
+      border: 'oklch(0.29 0.014 155)',
       primary: 'oklch(0.65 0.10 145)',
-      accent: 'oklch(0.70 0.13 45)',
-      fg: 'oklch(0.92 0.015 80)',
+      accent: 'oklch(0.86 0.12 88)',
+      fg: 'oklch(0.93 0.010 155)',
     },
   },
   classic: {
@@ -51,7 +55,7 @@ const SWATCHES: Record<
       card: 'oklch(0.985 0 0)',
       border: 'oklch(0.922 0 0)',
       primary: 'oklch(0.205 0 0)',
-      accent: 'oklch(0.97 0 0)',
+      accent: 'oklch(0.58 0.14 55)',
       fg: 'oklch(0.145 0 0)',
     },
     dark: {
@@ -59,7 +63,7 @@ const SWATCHES: Record<
       card: 'oklch(0.205 0 0)',
       border: 'oklch(0.269 0 0)',
       primary: 'oklch(0.985 0 0)',
-      accent: 'oklch(0.269 0 0)',
+      accent: 'oklch(0.78 0.13 65)',
       fg: 'oklch(0.985 0 0)',
     },
   },

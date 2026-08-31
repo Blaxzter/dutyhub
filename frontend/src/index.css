@@ -26,6 +26,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-warning: var(--warning);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -165,12 +166,19 @@
 /* ─────────────────────────────────────────────────────────────────────────
    Palettes
    Two palettes × two modes = four blocks.
-     Default (earthy)  — warm cream + forest/terracotta. Selected when the
-                         <html> element has no .palette-* class.
+     Default           — warm cream in light, forest-cast grey in dark, green
+                         throughout. Selected when the <html> element has no
+                         .palette-* class.
      Classic (mono)    — original monochrome shadcn look. Opt-in via
                          <html class="palette-classic">.
    Dark mode is orthogonal: any palette + .dark on the same element.
    The palette class is set by usePalette(); .dark by useColorMode().
+
+   `--accent` is the shadcn hover/selected *surface* and nothing more. The
+   "a shift still needs someone" signal has its own `--warning`, because it
+   used to ride on `--accent-foreground` — which meant the one token that
+   paints every hover state in the app had to stay amber to keep a status
+   legible, and every dark surface inherited that warmth as brown.
    ───────────────────────────────────────────────────────────────────────── */
 
 /* Default palette — light (earthy) */
@@ -194,7 +202,8 @@
   --muted: oklch(0.91 0.022 78);
   --muted-foreground: oklch(0.43 0.013 70);
   --accent: oklch(0.90 0.038 50);
-  --accent-foreground: oklch(0.50 0.13 45);
+  --accent-foreground: oklch(0.27 0.012 60);
+  --warning: oklch(0.50 0.13 45);
   --destructive: oklch(0.46 0.13 17);
   --destructive-foreground: oklch(0.965 0.014 80);
   --border: oklch(0.87 0.025 80);
@@ -216,43 +225,56 @@
   --sidebar-ring: oklch(0.55 0.06 145);
 }
 
-/* Default palette — dark (warm earthy dark) */
+/* Default palette — dark (forest-cast)
+   Deliberately not the light palette dimmed. Hue 75 at L 0.945 reads as paper,
+   which is why the cream works; the same hue at L 0.18 reads as mud, which is
+   what the earlier dark theme was. So the neutrals here sit in the *primary's*
+   hue family (~155) at a chroma low enough to still read as grey, and green is
+   left as the only strong colour on the screen. */
 .dark {
-  --background: oklch(0.18 0.008 75);
-  --foreground: oklch(0.92 0.015 80);
-  --card: oklch(0.22 0.010 75);
-  --card-foreground: oklch(0.92 0.015 80);
-  --popover: oklch(0.22 0.010 75);
-  --popover-foreground: oklch(0.92 0.015 80);
+  --background: oklch(0.17 0.010 155);
+  --foreground: oklch(0.93 0.010 155);
+  --card: oklch(0.21 0.012 155);
+  --card-foreground: oklch(0.93 0.010 155);
+  --popover: oklch(0.21 0.012 155);
+  --popover-foreground: oklch(0.93 0.010 155);
   --primary: oklch(0.65 0.10 145);
-  --primary-foreground: oklch(0.18 0.008 75);
+  --primary-foreground: oklch(0.17 0.010 155);
   --hero: oklch(0.30 0.04 145);
-  --hero-foreground: oklch(0.92 0.015 80);
-  --hero-speck: oklch(0.76 0.135 75);
-  --hero-speck-opacity: 35%;
-  --secondary: oklch(0.27 0.012 75);
-  --secondary-foreground: oklch(0.92 0.015 80);
-  --muted: oklch(0.27 0.012 75);
-  --muted-foreground: oklch(0.70 0.014 75);
-  --accent: oklch(0.30 0.040 50);
-  --accent-foreground: oklch(0.78 0.110 45);
+  --hero-foreground: oklch(0.93 0.010 155);
+  /* Green-gold, not the amber the light palette uses: this speck lights the
+     landing gradients, and an orange glow over a green-grey ground mixes back
+     into exactly the brown this palette exists to avoid. */
+  --hero-speck: oklch(0.72 0.11 130);
+  --hero-speck-opacity: 22%;
+  --secondary: oklch(0.25 0.012 155);
+  --secondary-foreground: oklch(0.93 0.010 155);
+  --muted: oklch(0.25 0.012 155);
+  --muted-foreground: oklch(0.71 0.014 155);
+  --accent: oklch(0.30 0.035 160);
+  --accent-foreground: oklch(0.93 0.010 155);
+  /* Gold rather than amber, and lighter than the light palette's terracotta.
+     A warm hue at low alpha over a dark ground mixes back to brown, so the
+     signal has to come from a bright border rather than a saturated fill —
+     see the chip classes in ShiftBoardConcept.vue. */
+  --warning: oklch(0.86 0.12 88);
   --destructive: oklch(0.62 0.18 17);
-  --destructive-foreground: oklch(0.92 0.015 80);
-  --border: oklch(0.30 0.012 75);
-  --input: oklch(0.30 0.012 75);
+  --destructive-foreground: oklch(0.93 0.010 155);
+  --border: oklch(0.29 0.014 155);
+  --input: oklch(0.29 0.014 155);
   --ring: oklch(0.55 0.06 145);
   --chart-1: oklch(0.65 0.10 145);
   --chart-2: oklch(0.70 0.13 45);
   --chart-3: oklch(0.80 0.13 75);
   --chart-4: oklch(0.65 0.07 235);
   --chart-5: oklch(0.62 0.18 17);
-  --sidebar: oklch(0.22 0.010 75);
-  --sidebar-foreground: oklch(0.92 0.015 80);
+  --sidebar: oklch(0.21 0.012 155);
+  --sidebar-foreground: oklch(0.93 0.010 155);
   --sidebar-primary: oklch(0.65 0.10 145);
-  --sidebar-primary-foreground: oklch(0.18 0.008 75);
-  --sidebar-accent: oklch(0.27 0.012 75);
-  --sidebar-accent-foreground: oklch(0.92 0.015 80);
-  --sidebar-border: oklch(0.30 0.012 75);
+  --sidebar-primary-foreground: oklch(0.17 0.010 155);
+  --sidebar-accent: oklch(0.25 0.012 155);
+  --sidebar-accent-foreground: oklch(0.93 0.010 155);
+  --sidebar-border: oklch(0.29 0.014 155);
   --sidebar-ring: oklch(0.55 0.06 145);
 }
 
@@ -276,6 +298,7 @@
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
+  --warning: oklch(0.58 0.14 55);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
@@ -316,6 +339,7 @@
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.78 0.13 65);
   --destructive: oklch(0.637 0.237 25.331);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.269 0 0);
@@ -393,6 +417,7 @@
     --secondary-foreground: oklch(0.205 0 0) !important;
     --accent: oklch(0.97 0 0) !important;
     --accent-foreground: oklch(0.205 0 0) !important;
+    --warning: oklch(0.50 0.13 45) !important;
     --input: oklch(0.922 0 0) !important;
   }
 
