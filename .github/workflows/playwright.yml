@@ -35,7 +35,6 @@ permissions:
 
 jobs:
     changes:
-        if: github.actor != 'dependabot[bot]'
         runs-on: ubuntu-latest
         # Set job outputs to values from filter step
         outputs:

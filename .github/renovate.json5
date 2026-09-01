@@ -1,0 +1,92 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+
+  extends: [
+    'config:recommended',
+    // Workflows pin every action to a SHA with a trailing `# vX.Y.Z` comment.
+    // This preset keeps that shape instead of rewriting them to floating tags.
+    'helpers:pinGitHubActionDigests',
+    // One tracking issue listing everything Renovate knows about, including
+    // updates it is holding back. Replaces "why is there no PR for X?".
+    ':dependencyDashboard',
+  ],
+
+  timezone: 'Europe/Berlin',
+  // One sweep a week. Everything below groups into a handful of PRs, so this
+  // is quieter than the old per-dependency Dependabot stream despite covering
+  // strictly more (patches, transitive deps, docker-compose images).
+  schedule: ['before 6am on monday'],
+
+  // Dependency commits in this repo start with `⬆`, and the title-derived
+  // half of .github/labeler.yml keys the `upgrade` gate label off exactly that
+  // prefix. Keep both.
+  semanticCommits: 'disabled',
+  commitMessagePrefix: '⬆',
+
+  // Apply the gate label at PR creation rather than letting the labeler
+  // workflow race itself. `check-labels` went red on three Dependabot PRs
+  // because two concurrent labeler runs left the `upgrade` label unapplied.
+  labels: ['dependencies', 'upgrade'],
+
+  prConcurrentLimit: 5,
+  prHourlyLimit: 0,
+  rebaseWhen: 'conflicted',
+
+  // Transitive drift never surfaces as a declared-version bump, so nothing
+  // above catches it. Regenerate uv.lock and pnpm-lock.yaml wholesale once a
+  // month instead.
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ['before 6am on the first day of the month'],
+  },
+
+  packageRules: [
+    {
+      // --- Python: pyproject.toml + uv.lock -------------------------------
+      // The reason for the migration. Dependabot has no uv.lock support, so
+      // every one of its pip PRs raised the floor in pyproject.toml and left
+      // uv.lock pinned to the old version — `uv lock --check` fails on each.
+      // `update-lockfile` moves uv.lock when the new version already satisfies
+      // the declared range, and only rewrites the range when it does not, so
+      // the `>=x,<y+1` windows stay the deliberate compatibility statement
+      // they are instead of drifting up with every release. Out-of-range
+      // updates fall back to rewriting the constraint on their own.
+      matchManagers: ['pep621'],
+      rangeStrategy: 'update-lockfile',
+      groupName: 'python dependencies',
+    },
+    {
+      // Majors cross the `<y` bound and rewrite the constraint, so they get
+      // their own PR to be read rather than riding along in the group.
+      // (A rule may not set both matchUpdateTypes and rangeStrategy, so the
+      // strategy stays inherited from the rule above.)
+      matchManagers: ['pep621'],
+      matchUpdateTypes: ['major'],
+      groupName: null,
+    },
+    {
+      // --- Frontend: package.json + pnpm-lock.yaml ------------------------
+      matchManagers: ['npm'],
+      matchUpdateTypes: ['minor', 'patch'],
+      groupName: 'frontend dependencies',
+    },
+    {
+      // TypeScript 6→7, @tanstack/vue-table 8→9 and markdown-it 14→15 all
+      // arrived inside a single 14-package Dependabot PR. One major per PR.
+      matchManagers: ['npm'],
+      matchUpdateTypes: ['major'],
+      groupName: null,
+    },
+    {
+      matchManagers: ['github-actions'],
+      groupName: 'github actions',
+    },
+    {
+      // Dependabot only watched backend/Dockerfile and frontend/Dockerfile;
+      // the images in docker-compose*.yml (postgres, traefik, adminer,
+      // mailcatcher) were never tracked at all.
+      matchManagers: ['dockerfile', 'docker-compose'],
+      groupName: 'docker images',
+    },
+  ],
+}
