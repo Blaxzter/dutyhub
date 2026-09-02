@@ -7,7 +7,7 @@
         "booking": "Buchungen",
         "event": "Veranstaltungsgruppen",
         "shift": "Dienstschichten",
-        "task": "Veranstaltungen",
+        "task": "Aufgaben",
         "user": "Konto"
     },
     "channels": {
@@ -86,7 +86,7 @@
     "reminders": {
         "addReminder": "Erinnerung hinzufuegen",
         "channelActiveHint": "Du wirst {offset} per {channel} benachrichtigt",
-        "description": "Erinnerungen werden automatisch hinzugefuegt, wenn du einen Shift buchst. Du kannst sie auch pro Buchung anpassen.",
+        "description": "Erinnerungen werden automatisch hinzugefuegt, wenn du eine Schicht buchst. Du kannst sie auch pro Buchung anpassen.",
         "lastChannelHint": "Mindestens ein Kanal muss aktiviert bleiben",
         "noDefaults": "Keine Standard-Erinnerungen gesetzt. Du kannst sie unten hinzufuegen.",
         "offset": {
@@ -198,8 +198,8 @@
         },
         "task": {
             "published": {
-                "description": "Wenn eine neue Veranstaltung veröffentlicht wird",
-                "name": "Veranstaltung veröffentlicht"
+                "description": "Wenn eine neue Aufgabe veröffentlicht wird",
+                "name": "Aufgabe veröffentlicht"
             }
         },
         "user": {

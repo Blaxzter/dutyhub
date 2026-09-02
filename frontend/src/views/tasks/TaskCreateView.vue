@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, toRaw, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, toRaw, watch } from 'vue'
 
 import type { DateValue } from '@internationalized/date'
-import { parseDate } from '@internationalized/date'
+import { getLocalTimeZone, parseDate, today } from '@internationalized/date'
 import { ArrowLeft, CalendarDays, CalendarPlus, Clock, Plus, Users, X } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -284,7 +284,68 @@ const loadEvents = async () => {
   }
 }
 
-onMounted(loadEvents)
+/**
+ * Fill the form with a worked example, for the guided tour only.
+ *
+ * Verified necessary: `name` starts `''` and `singleDate` `undefined`, so
+ * `totalShifts` is 0 and the preview section renders its `preview.noShifts`
+ * empty state — the manager tour's most persuasive screen would otherwise
+ * describe an empty box.
+ *
+ * The reka-ui DatePicker is never driven by clicking; the values are written
+ * straight into the refs.
+ *
+ * The two `nextTick`s are load-bearing: `watch([eventMode, selectedEventId])`
+ * and `watch(dateMode)` both clear every date ref, and they flush *after* the
+ * assignment that triggered them. Writing the dates in the same tick means
+ * watching them be wiped a moment later.
+ */
+const applyTourPrefill = async () => {
+  if (route.query.tour !== 'prefill') return
+  // The one gate that matters: a real organiser must never find their form
+  // filled in behind their back, whatever ends up in the query string.
+  if (!authStore.profile?.is_sandbox) return
+  const untouched =
+    !name.value.trim() &&
+    !singleDate.value &&
+    !rangeStartDate.value &&
+    !rangeEndDate.value &&
+    specificDates.value.length === 0
+  if (!untouched) return
+
+  const eventId = authStore.selectedEventId
+  const event = eventId ? events.value.find((e) => e.id === eventId) : undefined
+  if (!event) return
+
+  eventMode.value = 'existing'
+  selectedEventId.value = event.id
+  await nextTick()
+
+  dateMode.value = 'range'
+  await nextTick()
+
+  const min = parseDate(event.start_date)
+  const max = parseDate(event.end_date)
+  const from = today(getLocalTimeZone())
+  const start = from.compare(min) < 0 ? min : from
+  const threeDays = start.add({ days: 2 })
+  rangeStartDate.value = start
+  rangeEndDate.value = threeDays.compare(max) > 0 ? max : threeDays
+
+  name.value = t('duties.tasks.createView.tourExample.name')
+  location.value = t('duties.tasks.createView.tourExample.location')
+  description.value = t('duties.tasks.createView.tourExample.description')
+  // 10:00–18:00 in two-hour blocks over three days = 12 shifts: enough for the
+  // preview to be convincing, few enough to read, and the same block length the
+  // seeded tasks use, so the example looks native.
+  shiftDurationMinutes.value = 120
+  peoplePerShift.value = 2
+}
+
+onMounted(async () => {
+  await loadEvents()
+  await applyTourPrefill()
+})
 
 // --- Available dates for exceptions ---
 const availableDates = computed(() => {
@@ -541,7 +602,7 @@ const handleSubmit = async () => {
             <!-- Event date constraint hint -->
             <p v-if="hasEventDateConstraint" class="text-sm text-muted-foreground">
               {{
-                t('duties.tasks.createView.eventDateHint', {
+                t('duties.tasks.createView.groupDateHint', {
                   start: formatDateLabel(eventMinDate!.toString()),
                   end: formatDateLabel(eventMaxDate!.toString()),
                 })
@@ -549,7 +610,7 @@ const handleSubmit = async () => {
             </p>
 
             <!-- Date mode selection -->
-            <RadioGroup v-model="dateMode" class="flex gap-4">
+            <RadioGroup v-model="dateMode" data-testid="input-task-date-mode" class="flex gap-4">
               <div class="flex items-center gap-2">
                 <RadioGroupItem value="single" id="dm-single" />
                 <Label for="dm-single">{{ t('duties.tasks.createView.dateMode.single') }}</Label>
@@ -711,11 +772,15 @@ const handleSubmit = async () => {
           </div>
         </AccordionTrigger>
         <AccordionContent class="px-6 pb-6">
-          <div v-if="totalShifts === 0" class="py-8 text-center text-muted-foreground">
+          <div
+            v-if="totalShifts === 0"
+            data-testid="preview-summary"
+            class="py-8 text-center text-muted-foreground"
+          >
             {{ t('duties.tasks.createView.preview.noShifts') }}
           </div>
           <div v-else class="space-y-4">
-            <p class="text-sm font-medium text-muted-foreground">
+            <p data-testid="preview-summary" class="text-sm font-medium text-muted-foreground">
               {{
                 t('duties.tasks.createView.preview.summary', {
                   shifts: totalShifts,

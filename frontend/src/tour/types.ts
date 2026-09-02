@@ -2,7 +2,7 @@
  * The shape of a guided tour, and the one convention that binds a step to its
  * copy.
  *
- * A step is *data*, deliberately: it names a route, a selector and two
+ * A step is *data*, deliberately: it names a route, a selector and a handful of
  * translation keys, and it holds no element reference and no driver.js object.
  * That is what lets `tour/engine.ts` throw its driver away before every
  * navigation and rebuild it from the store afterwards — see the module comment
@@ -26,11 +26,36 @@ export interface TourStepContext {
    * `null` once the timeout runs out. Never rejects.
    */
   waitFor: (selector: string, options?: { timeout?: number }) => Promise<HTMLElement | null>
+  /**
+   * Open the `TaskCreateView` accordion section with this `data-testid`, and
+   * resolve once its content is open and measurable.
+   *
+   * `activeSection` is a component-local `ref` with no public handle, so the
+   * only honest way in is the trigger the visitor would press themselves —
+   * which is also what makes this idempotent, because it reads `data-state`
+   * first and leaves an already-open section alone. `details` is the section
+   * that starts open (`TaskCreateView.vue:182`), so a blind click would
+   * *collapse* the one part of the form the copy can currently see.
+   *
+   * Resolves `null` when the section is not on this screen, which a track
+   * treats as "carry on with a centred popover" rather than as an error.
+   */
+  openSection: (testId: string) => Promise<HTMLElement | null>
 }
 
 export interface TourStep {
   /** Stable across releases: it is half of the translation key. */
   id: string
+  /**
+   * Which act of the track this step belongs to; the key half of
+   * `tour.common.chapters.<chapter>`.
+   *
+   * Required rather than optional, because the progress line reads
+   * "{chapter} · Step n of m" — an absent chapter would not degrade, it would
+   * print an empty gap with a stray separator in front of it. Making the field
+   * mandatory means a step cannot silently fall out of the narrative.
+   */
+  chapter: string
   /**
    * Route *name* the step belongs to. The engine navigates here when the step
    * is entered, and hides the popover whenever the browser is somewhere else.
@@ -59,6 +84,28 @@ export interface TourStep {
    * buttons.
    */
   waitFor?: string
+  /**
+   * A box the popover must be nudged clear of, as a selector.
+   *
+   * Staying off the *anchor* is driver.js's job; staying off the container the
+   * anchor sits in is not, and that is the case that reads as broken: a popover
+   * placed beside a button inside a dialog can still land on top of the dialog,
+   * covering the very roster the copy is talking about. The engine resolves
+   * this against the anchor's ancestors first and the document second, and
+   * defaults it to the enclosing `[role="dialog"]` for an `inOverlay` step, so
+   * only the unusual case has to say anything here.
+   */
+  avoid?: string
+  /**
+   * Override `ANCHOR_TIMEOUT_MS` for a step whose anchor is conditional.
+   *
+   * The default wait is generous because most anchors are merely late. An
+   * anchor that may legitimately never arrive — a panel that hides itself when
+   * it has nothing to report — should give up quickly instead, so the step
+   * degrades to a centred popover in a second or two rather than freezing the
+   * tour while the visitor watches a stage that is never coming.
+   */
+  anchorTimeout?: number
   side?: Side
   align?: Alignment
   /**
@@ -66,6 +113,11 @@ export interface TourStep {
    * opened. Must be **idempotent**: the engine re-runs it whenever the view
    * remounts under it, which a filter change in `TasksView` does on every
    * keystroke.
+   *
+   * The return value is discarded, so a hook that forwards one of the context
+   * helpers has to await it in a block body rather than returning it — the
+   * engine needs the promise the hook itself returns, not the element the
+   * helper resolves with.
    */
   before?: (ctx: TourStepContext) => Promise<void> | void
   /**
@@ -77,10 +129,24 @@ export interface TourStep {
   titleKey: string
   /** `tour.<track>.<id>.body` — filled in by `defineTrack`. */
   bodyKey: string
+  /**
+   * `tour.<track>.<id>.next` — **optional copy**: the engine falls back to
+   * `tour.common.next` when the key does not resolve.
+   *
+   * Derived for every step even though most steps will never have the copy,
+   * because that is what lets a step opt into a verb-shaped label ("Open this
+   * shift") purely by a translator adding the string. The wording stays in the
+   * locale files rather than in TypeScript, one step can carry both locales,
+   * and the extra key stays invisible to `tracks.spec.ts`'s exact key-set
+   * assertion, which reads one level above the step id.
+   */
+  nextKey: string
+  /** `tour.common.chapters.<chapter>` — filled in by `defineTrack`. */
+  chapterKey: string
 }
 
-/** What a track file writes; the two translation keys are derived. */
-export type TourStepDefinition = Omit<TourStep, 'titleKey' | 'bodyKey'>
+/** What a track file writes; the translation keys are derived. */
+export type TourStepDefinition = Omit<TourStep, 'titleKey' | 'bodyKey' | 'nextKey' | 'chapterKey'>
 
 export interface TourTrack {
   id: TourTrackId
@@ -93,7 +159,9 @@ export interface TourTrack {
  * The keys end up as real fields on the step rather than being computed at
  * render time so that `tour/__tests__/tracks.spec.ts` can walk them and assert
  * every one resolves in both locales — vue-i18n renders a missing key as its
- * own dotted path, on screen, in the app's first impression.
+ * own dotted path, on screen, in the app's first impression. `nextKey` is the
+ * one exception the spec cannot make: it is allowed to miss, and the engine
+ * reads it through a `te()` probe.
  */
 export function defineTrack(id: TourTrackId, steps: TourStepDefinition[]): TourTrack {
   return {
@@ -102,6 +170,8 @@ export function defineTrack(id: TourTrackId, steps: TourStepDefinition[]): TourT
       ...step,
       titleKey: `tour.${id}.${step.id}.title`,
       bodyKey: `tour.${id}.${step.id}.body`,
+      nextKey: `tour.${id}.${step.id}.next`,
+      chapterKey: `tour.common.chapters.${step.chapter}`,
     })),
   }
 }

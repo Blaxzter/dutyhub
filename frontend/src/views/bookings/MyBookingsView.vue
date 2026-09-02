@@ -13,7 +13,7 @@ import {
   XCircle,
 } from '@lucide/vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { useAuthenticatedClient } from '@/composables/useAuthenticatedClient'
@@ -37,6 +37,7 @@ const { formatTime, formatDateLabel } = useFormatters()
 const { get, delete: del } = useAuthenticatedClient()
 const { confirmDestructive } = useDialog()
 const router = useRouter()
+const route = useRoute()
 
 const bookings = ref<BookingReadWithShift[]>([])
 const loading = ref(false)
@@ -46,7 +47,26 @@ const openBookingDetail = (booking: BookingReadWithShift) => {
 }
 
 // --- Filter state ---
-const dateFrom = ref<string | null>(null)
+
+/**
+ * How far back `?range=all` reaches.
+ *
+ * The guided tour's "my bookings" step talks about both halves of this screen —
+ * what you have promised and what you have already done — but the default view
+ * only ever shows the first, because `loadBookings` falls back to today when no
+ * `dateFrom` is set. A tour step can only carry a static query value, so the
+ * view resolves the actual date itself and the tour just asks for "all".
+ */
+const HISTORY_DAYS = 120
+
+/** Local calendar date N days back — `toISOString()` would shift it by the UTC offset. */
+const isoDaysAgo = (days: number) => {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const dateFrom = ref<string | null>(route.query.range === 'all' ? isoDaysAgo(HISTORY_DAYS) : null)
 const dateTo = ref<string | null>(null)
 const showCancelled = ref(false)
 

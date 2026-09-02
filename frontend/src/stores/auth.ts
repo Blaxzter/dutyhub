@@ -15,6 +15,7 @@ import type { EventRead, UserProfile } from '@/client/types.gen'
 import type { AuthUser } from '@/lib/auth-session'
 import type { EventRole } from '@/lib/event-roles'
 import i18n from '@/locales/i18n'
+import { whenTourIsOver } from '@/tour/quiet'
 
 // `User` is the name the components that render the signed-in identity already
 // import; it now points at our own shape instead of the identity provider's.
@@ -200,14 +201,23 @@ export const useAuthStore = defineStore('auth', () => {
     pendingJoinRequestCount.value = count
     if (count <= 0 || joinRequestToastShown) return
     joinRequestToastShown = true
-    toast.custom(markRaw(ActionToast), {
-      duration: Infinity,
-      componentProps: {
-        message: t('dashboard.home.joinRequestToast.message', { count }, count),
-        actionLabel: t('dashboard.home.joinRequestToast.action'),
-        dismissLabel: t('dashboard.home.joinRequestToast.dismiss'),
-        onAction: () => router.push({ name: 'my-events', query: { tab: 'requests' } }),
-      },
+    // Held rather than dropped while a guided tour is on screen. `loadFeed()`
+    // fires this the moment the organiser's dashboard settles, which is exactly
+    // when the tour's first step lands: an `Infinity`-duration toast then sits
+    // over the popover *and* has both its buttons killed by driver's
+    // `.driver-active * { pointer-events: none }`, so the visitor's first act
+    // inside the product is a click that does nothing. Outside a tour —
+    // every visit but a demo's first — `whenTourIsOver` is a plain call.
+    whenTourIsOver(() => {
+      toast.custom(markRaw(ActionToast), {
+        duration: Infinity,
+        componentProps: {
+          message: t('dashboard.home.joinRequestToast.message', { count }, count),
+          actionLabel: t('dashboard.home.joinRequestToast.action'),
+          dismissLabel: t('dashboard.home.joinRequestToast.dismiss'),
+          onAction: () => router.push({ name: 'my-events', query: { tab: 'requests' } }),
+        },
+      })
     })
   }
 

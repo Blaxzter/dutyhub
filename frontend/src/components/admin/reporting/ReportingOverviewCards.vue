@@ -35,7 +35,7 @@ const { t } = useI18n()
       </CardContent>
     </Card>
 
-    <Card>
+    <Card data-testid="stat-fill-rate">
       <CardHeader>
         <div class="flex items-center justify-between">
           <CardTitle class="text-sm font-medium">

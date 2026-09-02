@@ -7,6 +7,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSandboxStore } from '@/stores/sandbox'
 
 import type { UserProfile } from '@/client/types.gen'
+// The real module, not a mock: it imports nothing, it is the single owner of
+// the storage key, and reading the flag back through its own `hasAutoStarted`
+// is what proves the store cleared the thing `tour/install.ts` actually reads.
+import { hasAutoStarted, markAutoStarted } from '@/tour/autostart'
 
 /**
  * Everything the store reaches for is stubbed, because none of it is what the
@@ -81,6 +85,9 @@ function deferred<T>() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // Real jsdom storage, shared by every case in the file — the tour's autostart
+  // flag would otherwise survive from one case into the next.
+  sessionStorage.clear()
   holders.locale.value = 'en'
   holders.authStore = reactive({
     profile: null as UserProfile | null,
@@ -217,6 +224,31 @@ describe('useSandboxStore', () => {
       // No call to `eventRole` needed: the store still knows what was clicked.
       expect(store.role).toBe('manager')
       expect(holders.authStore.eventRole).not.toHaveBeenCalled()
+    })
+
+    it('lets the tour introduce itself again in a tab that has already had one', async () => {
+      // The second demo of a sitting: somebody who tried the helper side and
+      // came back for the manager one, or whose first demo expired under them.
+      // The autostart flag is per tab, so without this the whole point of the
+      // second demo — seeing the *other* half of the product explained — is
+      // silently withheld, with nothing on screen to say why.
+      markAutoStarted()
+      holders.post.mockResolvedValue(sandboxResponse())
+
+      await useSandboxStore().start('manager')
+
+      expect(hasAutoStarted()).toBe(false)
+    })
+
+    it('leaves the flag alone when the demo was refused', async () => {
+      // Nothing started, so this sitting's tour has still had its turn: a
+      // failed request must not re-arm a tour over the demo already running.
+      markAutoStarted()
+      holders.post.mockRejectedValue(new Error('all demo slots taken'))
+
+      await useSandboxStore().start('helper')
+
+      expect(hasAutoStarted()).toBe(true)
     })
 
     it('surfaces a refusal and stays where it is', async () => {

@@ -24,7 +24,9 @@ import { useTourStore } from '@/stores/tour'
 
 import { useChangelogStatus } from '@/composables/useChangelogStatus'
 
+import { hasAutoStarted, markAutoStarted } from '@/tour/autostart'
 import { type TourController, createTourController } from '@/tour/engine'
+import { setTourRunning } from '@/tour/quiet'
 import type { TourTrackId } from '@/tour/types'
 
 /**
@@ -33,34 +35,8 @@ import type { TourTrackId } from '@/tour/types'
  */
 export const TOUR_RESTART_EVENT = 'wirksam:restart-tour'
 
-/**
- * Remembers that the automatic start has already happened. Per *sitting*, like
- * the tour state itself — a visitor who reloads mid-demo should not be sent
- * back to step one, and one who opens the demo again tomorrow should be
- * welcomed again.
- */
-const AUTOSTART_KEY = 'wirksam:tour:autostarted'
-
 /** The screen a demo session lands on, and the only place a tour starts itself. */
 const DASHBOARD_ROUTE = 'home'
-
-function hasAutoStarted(): boolean {
-  try {
-    return sessionStorage.getItem(AUTOSTART_KEY) === '1'
-  } catch {
-    // A browser that refuses storage would restart the tour on every
-    // navigation, which is far worse than never starting it automatically.
-    return true
-  }
-}
-
-function markAutoStarted(): void {
-  try {
-    sessionStorage.setItem(AUTOSTART_KEY, '1')
-  } catch {
-    // Nothing to do: `hasAutoStarted()` answers `true` in the same conditions.
-  }
-}
 
 /**
  * Keep the "What's New" dialog off a running tour.
@@ -115,6 +91,12 @@ export function installTour(router: Router): void {
   })
 
   router.afterEach((to) => {
+    // A tour restored from `sessionStorage` by a reload is already running and
+    // nothing called `start()` for it, so this is the only place that fact can
+    // be handed to `tour/quiet.ts` — which is what keeps the join-request toast
+    // off a popover it would sit on top of and take the clicks from. It is also
+    // the earliest a store may be touched at all: see the module comment.
+    setTourRunning(useTourStore().status === 'running')
     // An automatic start already renders its own first step, so letting the
     // route handler run as well would only race it.
     if (maybeAutoStart(controller, to)) return

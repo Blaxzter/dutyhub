@@ -1,5 +1,5 @@
 {
-    "allTasks": "Alle Veranstaltungen drucken",
+    "allTasks": "Alle Aufgaben drucken",
     "contactColumn": "Kontakt",
     "nameColumn": "Name",
     "optionsDialog": {
@@ -7,7 +7,7 @@
     },
     "overview": "Übersicht drucken",
     "printButton": "Drucken",
-    "printTask": "Veranstaltung drucken",
+    "printTask": "Aufgabe drucken",
     "scanToSignUp": "Scannen, um sich online anzumelden",
     "toolbar": {
         "close": "Druckoptionen schließen",

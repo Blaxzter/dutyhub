@@ -2,30 +2,30 @@
     "demoData": {
         "create": {
             "button": "Demodaten erstellen",
-            "description": "Tasks, Veranstaltungen, Benutzer und Dienstshifts mit dem Präfix [DEMO] generieren.",
+            "description": "Aufgaben, Veranstaltungen, Benutzer und Dienstschichten mit dem Präfix [DEMO] generieren.",
             "title": "Demodaten erstellen"
         },
-        "createSuccess": "{tasks} Tasks, {events} Gruppen, {users} Benutzer, {shifts} Shifts, {bookings} Buchungen und {availabilities} Verfügbarkeiten erstellt.",
+        "createSuccess": "{tasks} Aufgaben, {events} Gruppen, {users} Benutzer, {shifts} Schichten, {bookings} Buchungen und {availabilities} Verfügbarkeiten erstellt.",
         "delete": {
             "button": "Alle Demodaten löschen",
             "description": "Alle Demodaten aus dem System entfernen.",
-            "info": "Dies löscht alle mit [DEMO] gekennzeichneten Einträge — Tasks, Veranstaltungen, Dienstshifts, Buchungen und Demobenutzer.",
+            "info": "Dies löscht alle mit [DEMO] gekennzeichneten Einträge — Aufgaben, Veranstaltungen, Dienstschichten, Buchungen und Demobenutzer.",
             "title": "Demodaten löschen"
         },
-        "deleteSuccess": "{tasks} Tasks, {events} Gruppen, {users} Benutzer, {shifts} Shifts und {bookings} Buchungen gelöscht.",
+        "deleteSuccess": "{tasks} Aufgaben, {events} Gruppen, {users} Benutzer, {shifts} Schichten und {bookings} Buchungen gelöscht.",
         "fields": {
             "numEvents": "Anzahl Veranstaltungen",
-            "numShiftsPerTask": "Shifts pro Task",
-            "numTasks": "Anzahl Tasks",
+            "numShiftsPerTask": "Schichten pro Aufgabe",
+            "numTasks": "Anzahl Aufgaben",
             "numUsers": "Anzahl Demobenutzer",
-            "publishTasks": "Tasks sofort veröffentlichen"
+            "publishTasks": "Aufgaben sofort veröffentlichen"
         },
         "subtitle": "Demodaten zu Testzwecken generieren oder entfernen.",
         "title": "Demodaten"
     },
     "events": {
-        "deleteEvent": "Event {name} löschen",
-        "editEvent": "Event {name} bearbeiten",
+        "deleteEvent": "Veranstaltung {name} löschen",
+        "editEvent": "Veranstaltung {name} bearbeiten",
         "expiredSection": "Abgelaufene Veranstaltungen",
         "filters": {
             "allDates": "Alle Daten",
@@ -51,9 +51,9 @@
             "booked": "Gebucht",
             "capacity": "Kapazität",
             "category": "Kategorie",
-            "description": "Shift-Kapazität und Auslastung pro Kategorie.",
+            "description": "Schichtkapazität und Auslastung pro Kategorie.",
             "fillRate": "Auslastung",
-            "shifts": "Shifts",
+            "shifts": "Schichten",
             "title": "Nach Kategorie",
             "uncategorized": "Ohne Kategorie"
         },
@@ -61,10 +61,10 @@
         "eventFillRates": {
             "booked": "Gebucht",
             "capacity": "Kapazität",
-            "description": "Wie voll die Shifts jedes Tasks belegt sind.",
+            "description": "Wie voll die Schichten jeder Aufgabe besetzt sind.",
             "fillRate": "Auslastung",
-            "task": "Task",
-            "title": "Auslastung nach Task"
+            "task": "Aufgabe",
+            "title": "Auslastung nach Aufgabe"
         },
         "export": "CSV exportieren",
         "from": "Von",
@@ -79,12 +79,12 @@
             "cancelledBookings": "Storniert",
             "confirmedBookings": "Bestätigt",
             "fillRate": "Auslastung",
-            "filledShifts": "Belegte Shifts",
+            "filledShifts": "Belegte Schichten",
             "title": "Übersicht",
             "totalBookings": "Buchungen gesamt",
             "totalCapacity": "Gesamtkapazität",
-            "totalShifts": "Shifts",
-            "totalTasks": "Tasks",
+            "totalShifts": "Schichten",
+            "totalTasks": "Aufgaben",
             "totalVolunteers": "Freiwillige gesamt"
         },
         "reset": "Zurücksetzen",
@@ -120,7 +120,7 @@
         "delete": "Benutzer löschen",
         "deleteDialogDescription": "Möchten Sie das Konto von {name} wirklich dauerhaft löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
         "deleteDialogTitle": "Benutzer löschen",
-        "deleteTransferDescription": "{name} hat noch Veranstaltungsgruppen oder Veranstaltungen erstellt. Wählen Sie, wer diese übernehmen soll – danach wird das Konto dauerhaft gelöscht.",
+        "deleteTransferDescription": "{name} hat noch Veranstaltungen oder Aufgaben erstellt. Wählen Sie, wer diese übernehmen soll – danach wird das Konto dauerhaft gelöscht.",
         "deletedToast": "Konto für {name} gelöscht.",
         "empty": "Keine Benutzer vorhanden.",
         "filters": {
@@ -135,7 +135,7 @@
         "makeAdmin": "Admin machen",
         "makeTaskManager": "Task-Manager machen",
         "ownedEvents": "Veranstaltungsgruppen: {count}",
-        "ownedTasks": "Veranstaltungen: {count}",
+        "ownedTasks": "Aufgaben: {count}",
         "pending": "Ausstehend",
         "reject": "Ablehnen",
         "rejectDialogDescription": "Geben Sie optional einen Grund für die Ablehnung der Kontoanfrage von {name} an. Der Benutzer sieht diese Nachricht.",

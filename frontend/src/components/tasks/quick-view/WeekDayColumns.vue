@@ -101,6 +101,23 @@ function slotClasses(shift: DayShiftEntry): string {
   return 'border-muted text-muted-foreground opacity-60 hover:opacity-80 hover:bg-muted/50'
 }
 
+/**
+ * Whether the guided tour may open this chip.
+ *
+ * Three ways a chip is a dead end for the tour: it is full, the visitor is
+ * already on it, or it is behind them. The seeder used to hand the tour the
+ * first chip on the board, which is exactly the one it had booked the guest
+ * into — so the "Book shift" button the step highlights did not render at all.
+ *
+ * A string rather than a boolean binding because Vue drops a `false` attribute
+ * entirely, and `[data-tour-bookable="false"]` is worth being able to select.
+ */
+function tourBookable(day: DayColumn, shift: DayShiftEntry): 'true' | 'false' {
+  if (shift.isBookedByMe) return 'false'
+  if (!slotHasCapacity(shift)) return 'false'
+  return day.dateStr >= today.value ? 'true' : 'false' // ISO dates compare lexicographically
+}
+
 function slotCountClasses(shift: DayShiftEntry): string {
   if (shift.isBookedByMe) return 'text-green-600/70 dark:text-green-400/70'
   if (slotHasCapacity(shift)) return 'text-primary'
@@ -173,6 +190,9 @@ defineExpose({ totalHidden, maxShiftCount })
               v-for="shift in visibleShifts(day)"
               :key="shift.slotId"
               :data-testid="'shift-chip-' + shift.slotId"
+              :data-tour-bookable="tourBookable(day, shift)"
+              :data-tour-booked-by-me="shift.isBookedByMe ? 'true' : 'false'"
+              :data-tour-full="slotHasCapacity(shift) ? 'false' : 'true'"
               variant="outline"
               size="sm"
               class="h-auto w-full px-1.5 py-1 text-xs"

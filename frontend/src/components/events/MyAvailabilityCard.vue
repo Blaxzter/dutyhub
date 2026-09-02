@@ -77,7 +77,7 @@ const daysWord = computed(() => t('duties.availability.days'))
 <template>
   <div class="space-y-4">
     <!-- Mode picker (desktop): cards with summary box -->
-    <div class="hidden gap-5 sm:flex">
+    <div class="hidden gap-5 sm:flex" data-testid="availability-mode-picker">
       <div class="flex-1">
         <div
           class="text-muted-foreground mb-2 text-[11px] font-semibold uppercase tracking-wider"
@@ -147,7 +147,7 @@ const daysWord = computed(() => t('duties.availability.days'))
 
     <!-- Mobile mode picker: 3 segmented buttons -->
     <div class="sm:hidden">
-      <div class="mb-3 flex gap-1.5">
+      <div class="mb-3 flex gap-1.5" data-testid="availability-mode-picker">
         <button
           v-for="m in shortModes"
           :key="m.key"

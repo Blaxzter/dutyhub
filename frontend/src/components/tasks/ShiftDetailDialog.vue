@@ -80,9 +80,18 @@ const resolvedShift = computed(() => props.shift ?? fetchedShift.value)
 /** The resolved booking — from props, or auto-detected from fetched shift bookings */
 const resolvedMyBooking = computed(() => {
   if (props.myBooking) return props.myBooking
-  const email = authStore.user?.email
-  if (!email || shiftBookings.value.length === 0) return null
-  const entry = shiftBookings.value.find((b) => b.user_email === email)
+  // By id, not by email. A sandbox guest has no email address at all — the
+  // seeder refuses to give them one, because `send_verify_email` short-circuits
+  // on a missing one — so matching on `user_email` never matched: a demo
+  // visitor was never offered *Cancel* for a shift they were on, and was
+  // offered *Book* for one, which answers 409.
+  //
+  // `profile` rather than `user`: `profile` is the `/users/me` row and always
+  // carries an id, including under the E2E `X-Test-User-Email` bypass, whose
+  // hand-made session identity has a `sub` and no `id`.
+  const userId = authStore.profile?.id ?? authStore.user?.id ?? null
+  if (!userId || shiftBookings.value.length === 0) return null
+  const entry = shiftBookings.value.find((b) => b.user_id === userId)
   if (!entry) return null
   return { id: entry.id, notes: entry.notes ?? null } as { id: string; notes: string | null }
 })
@@ -161,8 +170,18 @@ const whenLine = computed(() => {
 
 const isShiftFull = computed(() => bookedCount.value >= capacity.value)
 
+/**
+ * The server's own answer, from `_enrich_shift` in `api/routes/shifts.py`.
+ *
+ * It cannot replace `resolvedMyBooking`, which has to carry the booking id for
+ * the cancel call, but it is authoritative and it arrives before the roster
+ * request settles — so it is what keeps *Book shift* from being offered in the
+ * window where the roster is still in flight, or came back empty on an error.
+ */
+const bookedByMeOnServer = computed(() => resolvedShift.value?.is_booked_by_me === true)
+
 const canBook = computed(() => {
-  return !resolvedMyBooking.value && !isShiftFull.value
+  return !resolvedMyBooking.value && !bookedByMeOnServer.value && !isShiftFull.value
 })
 
 const hasMenuItems = computed(() => {
@@ -226,7 +245,9 @@ const navigateToBooking = () => {
     <ResponsiveDialogContent data-testid="dialog-shift-detail" dialog-class="sm:max-w-lg">
       <ResponsiveDialogHeader>
         <div class="flex items-start justify-between gap-3">
-          <ResponsiveDialogTitle>{{ headline }}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle data-testid="shift-detail-title">{{
+            headline
+          }}</ResponsiveDialogTitle>
           <Badge v-if="resolvedShift" variant="secondary" class="mt-0.5 shrink-0">
             <Users />
             {{ bookedCount }}/{{ capacity }}
@@ -276,7 +297,7 @@ const navigateToBooking = () => {
         </template>
       </ResponsiveDialogBody>
 
-      <ResponsiveDialogFooter v-if="resolvedShift" layout="row">
+      <ResponsiveDialogFooter v-if="resolvedShift" data-testid="shift-detail-footer" layout="row">
         <DropdownMenu v-if="hasMenuItems">
           <DropdownMenuTrigger as-child>
             <Button

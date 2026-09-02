@@ -13,6 +13,7 @@ import type { SandboxSessionResponse } from '@/client/types.gen'
 import { toastApiError } from '@/lib/api-errors'
 import { authSession } from '@/lib/auth-session'
 import i18n from '@/locales/i18n'
+import { clearAutoStarted } from '@/tour/autostart'
 
 /**
  * The throwaway demo session.
@@ -110,6 +111,16 @@ export const useSandboxStore = defineStore('sandbox', () => {
       // keeps the demo alive across an F5 — stubbing it out, the way the E2E
       // bypass does, would end the demo at the first reload.
       authSession.setSession(response.data)
+
+      // A second demo in the same tab is a second first impression, so the tour
+      // is allowed to introduce itself again. Here rather than in `exit()`,
+      // which an *expired* demo never reaches — that one ends at the 401 in
+      // `requestRefresh` and is restarted from the landing page's dialog — and
+      // `start()` is in any case the exact moment the fact becomes true. The
+      // flag lives in `tour/autostart.ts` rather than in `tour/install.ts`
+      // precisely so this line does not drag driver.js into the landing page's
+      // bundle.
+      clearAutoStarted()
 
       // `ensureProfile()` short-circuits on whatever profile is already loaded,
       // which for somebody who was signed in a moment ago is still their real

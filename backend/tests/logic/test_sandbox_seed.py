@@ -16,8 +16,10 @@ So these are not assertions about the seeder's implementation. They are the
 minimum contract the tour depends on, written down where a change to
 ``_TASK_SPECS`` or to the day offsets will trip over them: dates spanning today
 in both directions, published tasks that can actually be regenerated, shifts
-behind and ahead, a booking already in the visitor's name, teammates with
-availabilities, and — for the organiser — one decision of each kind waiting.
+behind and ahead, a booking already in the visitor's name, one upcoming shift
+on the first job that the visitor can still take — the only thing the tour asks
+them to do — teammates with availabilities, and, for the organiser, one
+decision of each kind waiting.
 
 The one thing here that is not about the tour is the last class. No account the
 seeder creates may have an email address, and that is a safety property rather
@@ -46,6 +48,7 @@ from app.models.shift_batch import ShiftBatch
 from app.models.task import Task
 from app.models.user import User
 from app.models.user_availability import UserAvailability
+from app.schemas.sandbox import SandboxRole
 from tests.fixtures.sandbox import SandboxFactory, SandboxSetup
 
 
@@ -284,6 +287,94 @@ class TestSeededBookings:
         dates = [shift_by_id[booking.shift_id].date for booking in bookings]  # type: ignore[index]
         assert any(date >= today for date in dates), "nothing upcoming"
         assert any(date < today for date in dates), "no history"
+
+    async def test_the_tour_always_has_a_shift_it_can_book(
+        self, db_session: AsyncSession, make_sandbox: SandboxFactory
+    ) -> None:
+        """Test that the first job holds its first shift after today open.
+
+        The one thing the guided tour asks the visitor to *do* is take a shift:
+        it opens a chip on the first row of the board and points at *Book
+        shift*. That button renders only for a shift that is still to come, has
+        a place free and is not one the visitor already holds — so a chip that
+        is full, or already theirs, turns the demo's single interactive moment
+        into a popover aimed at a button that was never drawn. Which is what
+        happened on all but a few per cent of demos: the guest's own bookings
+        began at the first upcoming shift of the first job, and the teammates
+        filled whatever was left of it.
+
+        Pinned on one specific shift rather than on "some shift somewhere",
+        because a board this size nearly always has *a* gap in it by luck — the
+        seeder has to reserve one on purpose, and this is the one it reserves:
+        the earliest shift of the first job that falls after today. After
+        today, not today, because a chip whose start time has already gone by
+        reads as a demo that was built last week.
+
+        The second assertion is the step *before* the button, which tells the
+        visitor they would be joining people rather than volunteering alone. So
+        the shift being open is not enough — somebody has to be on it already.
+
+        Repeated across several demos and both roles because the rota is filled
+        from a generator seeded with the guest's own account id, and one demo
+        passing would only prove that one draw happened to be kind.
+        """
+        today = dt.date.today()
+        roles: tuple[SandboxRole, ...] = ("helper", "manager")
+
+        for index in range(8):
+            sandbox = await make_sandbox(role=roles[index % len(roles)])
+            first_job = (
+                await db_session.execute(
+                    select(Task)
+                    .where(col(Task.event_id) == sandbox.event.id)
+                    # The order the board itself puts them in: ``crud.task``
+                    # sorts on ``start_date`` ascending unless asked otherwise,
+                    # so this is the row the tour looks for its chip in.
+                    .order_by(col(Task.start_date), col(Task.name))
+                    .limit(1)
+                )
+            ).scalar_one()
+
+            reserved = (
+                await db_session.execute(
+                    select(Shift)
+                    .where(
+                        col(Shift.task_id) == first_job.id,
+                        col(Shift.date) > today,
+                    )
+                    .order_by(col(Shift.date), col(Shift.start_time))
+                    .limit(1)
+                )
+            ).scalar_one_or_none()
+
+            assert reserved is not None, (
+                f"{first_job.name}: the first job on the board has no shift "
+                "after today, so the tour has no chip to open at all"
+            )
+
+            takers = [
+                booking.user_id
+                for booking in (
+                    await db_session.execute(
+                        select(Booking).where(
+                            col(Booking.shift_id) == reserved.id,
+                            col(Booking.status) == "confirmed",
+                        )
+                    )
+                ).scalars()
+            ]
+
+            assert sandbox.guest.id not in takers, (
+                f"{reserved.title}: the visitor already holds the shift the "
+                "tour asks them to take"
+            )
+            assert len(takers) < reserved.max_bookings, (
+                f"{reserved.title}: full, so *Book shift* never renders"
+            )
+            assert takers, (
+                f"{reserved.title}: nobody on it, so the roster step has no "
+                "name to point at"
+            )
 
     async def test_the_teammates_have_availabilities(
         self, db_session: AsyncSession, test_sandbox: SandboxSetup

@@ -11,7 +11,7 @@
     "mobileBottomNav": {
         "bookings": "Buchungen",
         "inbox": "Posteingang",
-        "tasks": "Tasks"
+        "tasks": "Aufgaben"
     },
     "sidebar": {
         "badges": {
@@ -39,8 +39,8 @@
             },
             "settings": "Einstellungen",
             "tasks": {
-                "description": "Dienst-Veranstaltungen durchsuchen",
-                "label": "Veranstaltungen"
+                "description": "Aufgaben durchsuchen",
+                "label": "Aufgaben"
             }
         },
         "platform": "Plattform",

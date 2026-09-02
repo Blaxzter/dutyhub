@@ -79,7 +79,7 @@
         "cancellationReason": "Grund der Stornierung",
         "detail": {
             "loadFailed": "Buchungsdetails konnten nicht geladen werden.",
-            "pastTask": "Diese Veranstaltung hat bereits stattgefunden.",
+            "pastTask": "Diese Aufgabe hat bereits stattgefunden.",
             "title": "Buchungsdetails",
             "viewBooking": "Buchung anzeigen"
         },
@@ -98,11 +98,11 @@
             "date": "Nach Datum",
             "location": "Nach Ort",
             "none": "Keine Gruppierung",
-            "task": "Nach Veranstaltung"
+            "task": "Nach Aufgabe"
         },
         "noDate": "Kein Datum",
         "noLocation": "Kein Ort",
-        "noTask": "Keine Veranstaltung",
+        "noTask": "Keine Aufgabe",
         "slotDeleted": "Diese Schicht wurde von einem Administrator entfernt.",
         "statuses": {
             "cancelled": "Storniert",
@@ -120,7 +120,7 @@
         "activeBookingsWarning": "Falls aktive Buchungen vorhanden sind, werden diese storniert. Betroffene Benutzer sehen die Stornierung in ihren Buchungen.",
         "reasonHint": "Dieser Grund wird den Benutzern angezeigt, deren Buchungen storniert werden.",
         "reasonLabel": "Stornierungsgrund (optional)",
-        "reasonPlaceholder": "z.B. Veranstaltung verschoben, nicht mehr benötigt..."
+        "reasonPlaceholder": "z.B. Aufgabe verschoben, nicht mehr benötigt..."
     },
     "events": {
         "create": "Veranstaltung erstellen",
@@ -146,14 +146,14 @@
         "delete": "Veranstaltungsgruppe löschen",
         "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltungsgruppe löschen möchten? Alle Verfügbarkeitsdaten gehen verloren.",
         "detail": {
-            "dateConstraintHint": "Der Zeitraum ist durch vorhandene Veranstaltungen eingeschränkt. Verwenden Sie \"Termine verschieben\", um alles gleichzeitig zu verschieben.",
-            "earliestTask": "Früheste Veranstaltung: {date}",
+            "dateConstraintHint": "Der Zeitraum ist durch vorhandene Aufgaben eingeschränkt. Verwenden Sie \"Termine verschieben\", um alles gleichzeitig zu verschieben.",
+            "earliestTask": "Früheste Aufgabe: {date}",
             "editDescription": "Name, Beschreibung und Zeitraum dieser Veranstaltungsgruppe bearbeiten.",
-            "latestTask": "Späteste Veranstaltung: {date}",
+            "latestTask": "Späteste Aufgabe: {date}",
             "legend": {
-                "eventDay": "Veranstaltungstag",
-                "eventEnd": "Veranstaltungsende",
-                "eventStart": "Veranstaltungsbeginn",
+                "eventDay": "Aufgabentag",
+                "eventEnd": "Ende der Aufgabe",
+                "eventStart": "Beginn der Aufgabe",
                 "today": "Heute"
             },
             "nav": {
@@ -161,19 +161,19 @@
                 "details": "Details",
                 "people": "Personen",
                 "print": "Drucken",
-                "tasks": "Veranstaltungen"
+                "tasks": "Aufgaben"
             },
-            "printDescription": "Druckbare Übersichtsblätter oder vollständige Veranstaltungsdetails für diese Gruppe erstellen.",
+            "printDescription": "Druckbare Übersichtsblätter oder vollständige Aufgabendetails für diese Gruppe erstellen.",
             "shiftApply": "Alle Termine verschieben",
             "shiftBackward": "zurück",
             "shiftDates": "Termine verschieben",
-            "shiftDescription": "Das gesamte Programm auf ein neues Datum verschieben. Alle Veranstaltungen, Dienstschichten und Verfügbarkeiten werden um denselben Zeitraum verschoben.",
+            "shiftDescription": "Das gesamte Programm auf ein neues Datum verschieben. Alle Aufgaben, Dienstschichten und Verfügbarkeiten werden um denselben Zeitraum verschoben.",
             "shiftForward": "vorwärts",
             "shiftNewStart": "Neues Startdatum",
             "shiftPreview": "{days} Tage {direction}",
             "shiftSuccess": "Alle Termine erfolgreich verschoben.",
-            "tasks": "Veranstaltungen in dieser Gruppe",
-            "tasksEmpty": "Noch keine Veranstaltungen dieser Gruppe zugeordnet.",
+            "tasks": "Aufgaben in dieser Gruppe",
+            "tasksEmpty": "Noch keine Aufgaben dieser Gruppe zugeordnet.",
             "title": "Veranstaltungsgruppendetails",
             "updated": "Veranstaltungsgruppe aktualisiert."
         },
@@ -290,7 +290,7 @@
             "draft": "Entwurf",
             "published": "Veröffentlicht"
         },
-        "subtitle": "Anstehende Veranstaltungsprogramme durchsuchen",
+        "subtitle": "Anstehende Programme durchsuchen",
         "title": "Veranstaltungsgruppen",
         "visibility": {
             "private": {
@@ -401,15 +401,15 @@
             "notesSaved": "Anmerkungen gespeichert.",
             "openBookingDetails": "Buchungsdetails öffnen",
             "openDetails": "Details anzeigen",
-            "task": "Veranstaltung",
+            "task": "Aufgabe",
             "time": "Zeit",
             "title": "Schicht-Details",
             "userName": "Name",
             "userNotes": "Anmerkungen",
-            "viewTask": "Veranstaltung anzeigen"
+            "viewTask": "Aufgabe anzeigen"
         },
         "edit": "Dienstschicht bearbeiten",
-        "empty": "Noch keine Dienstschichten für diese Veranstaltung.",
+        "empty": "Noch keine Dienstschichten für diese Aufgabe.",
         "fields": {
             "category": "Kategorie",
             "date": "Datum",
@@ -431,7 +431,7 @@
                 "batchDesc": "Optionaler Ort und Kategorie für diese Schichten"
             },
             "submit": "Schichten hinzufügen",
-            "subtitle": "Neue Dienstschichten zu dieser Veranstaltung hinzufügen",
+            "subtitle": "Neue Dienstschichten zu dieser Aufgabe hinzufügen",
             "success": "{count} Dienstschichten hinzugefügt!",
             "title": "Schichten hinzufügen"
         },
@@ -440,7 +440,7 @@
             "more": "weitere",
             "next": "Nächster Zeitraum",
             "noItems": "Keine Termine für diesen Tag.",
-            "openEvent": "Event {name} öffnen",
+            "openEvent": "Veranstaltung {name} öffnen",
             "openTask": "Aufgabe {name} öffnen",
             "previous": "Vorheriger Zeitraum",
             "today": "Heute",
@@ -450,7 +450,7 @@
                 "week": "Woche"
             }
         },
-        "create": "Veranstaltung erstellen",
+        "create": "Aufgabe erstellen",
         "createView": {
             "addDate": "Datum hinzufügen",
             "dateMode": {
@@ -461,9 +461,9 @@
             "eventOption": {
                 "existing": "Bestehende auswählen",
                 "new": "Neue erstellen",
-                "none": "Keine Veranstaltungsgruppe"
+                "none": "Keine Veranstaltung"
             },
-            "groupDateHint": "Termine sind auf die Veranstaltungsgruppe beschränkt ({start} – {end})",
+            "groupDateHint": "Termine sind auf den Zeitraum der Veranstaltung beschränkt ({start} – {end})",
             "noDatesSelected": "Noch keine Termine ausgewählt",
             "preview": {
                 "clickToExclude": "Klicken Sie auf eine Schicht, um sie von der Erstellung auszuschließen.",
@@ -493,24 +493,29 @@
                 "slotDuration": "Schichtdauer"
             },
             "sections": {
-                "dates": "Veranstaltungstermine",
-                "datesDesc": "Wählen Sie, wann die Veranstaltung stattfindet",
-                "details": "Veranstaltungsdetails",
-                "detailsDesc": "Grundlegende Informationen zur Veranstaltung",
-                "event": "Veranstaltungsgruppe",
-                "eventDesc": "Diese Veranstaltung optional einer Gruppe zuordnen",
+                "dates": "Termine der Aufgabe",
+                "datesDesc": "Wählen Sie, wann die Aufgabe stattfindet",
+                "details": "Aufgabendetails",
+                "detailsDesc": "Grundlegende Informationen zur Aufgabe",
+                "event": "Veranstaltung",
+                "eventDesc": "Diese Aufgabe optional einer Veranstaltung zuordnen",
                 "preview": "Vorschau",
                 "previewDesc": "Überprüfen Sie die Schichten, die generiert werden",
                 "schedule": "Zeitplan & Schichten",
                 "scheduleDesc": "Konfigurieren, wann Dienstschichten erstellt werden sollen"
             },
-            "submit": "Veranstaltung erstellen",
-            "subtitle": "Neue Veranstaltung mit automatisch generierten Dienstschichten einrichten",
-            "success": "Veranstaltung mit {count} Dienstschichten erstellt!",
-            "title": "Veranstaltung erstellen"
+            "submit": "Aufgabe erstellen",
+            "subtitle": "Neue Aufgabe mit automatisch generierten Dienstschichten einrichten",
+            "success": "Aufgabe mit {count} Dienstschichten erstellt!",
+            "title": "Aufgabe erstellen",
+            "tourExample": {
+                "description": "Autos aufs Feld einweisen und die Einfahrt frei halten. Warnwesten liegen im Häuschen am Tor.",
+                "location": "Feldtor",
+                "name": "Parkplatz-Einweisung"
+            }
         },
-        "delete": "Veranstaltung löschen",
-        "deleteConfirm": "Sind Sie sicher, dass Sie diese Veranstaltung löschen möchten? Alle Dienstschichten und Buchungen gehen verloren.",
+        "delete": "Aufgabe löschen",
+        "deleteConfirm": "Sind Sie sicher, dass Sie diese Aufgabe löschen möchten? Alle Dienstschichten und Buchungen gehen verloren.",
         "detail": {
             "addShift": "Dienstschicht hinzufügen",
             "addShiftBatch": "Schicht-Batch generieren",
@@ -529,11 +534,11 @@
             "noShiftsMatch": "Keine Schichten entsprechen den aktuellen Filtern.",
             "shifts": "Dienstschichten",
             "shiftsCount": "{count} Schichten",
-            "title": "Veranstaltungsdetails",
+            "title": "Aufgabendetails",
             "unbatchedShifts": "Weitere Schichten"
         },
-        "draftBanner": "Diese Veranstaltung ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
-        "edit": "Veranstaltung bearbeiten",
+        "draftBanner": "Diese Aufgabe ist ein Entwurf und für reguläre Benutzer nicht sichtbar. Ändern Sie den Status auf „Veröffentlicht\", um sie verfügbar zu machen.",
+        "edit": "Aufgabe bearbeiten",
         "editView": {
             "affectedBookings": {
                 "cancel": "Abbrechen",
@@ -552,12 +557,12 @@
                 "removed": "{count} entfernt"
             },
             "regenerate": "Schichten neu generieren",
-            "saveSuccess": "Veranstaltung erfolgreich aktualisiert!",
+            "saveSuccess": "Aufgabe erfolgreich aktualisiert!",
             "saving": "Wird gespeichert...",
-            "subtitle": "Veranstaltungsdetails ändern und Dienstschichten neu generieren",
-            "title": "Veranstaltung bearbeiten"
+            "subtitle": "Aufgabendetails ändern und Dienstschichten neu generieren",
+            "title": "Aufgabe bearbeiten"
         },
-        "empty": "Keine Veranstaltungen gefunden.",
+        "empty": "Keine Aufgaben gefunden.",
         "fields": {
             "category": "Kategorie",
             "description": "Beschreibung",
@@ -584,7 +589,7 @@
         "quickView": {
             "availableShifts": "{count} verfügbar",
             "nextDays": "Nächste Tage",
-            "noMore": "Keine weiteren Veranstaltungen",
+            "noMore": "Keine weiteren Aufgaben",
             "previousDays": "Vorherige Tage",
             "showLess": "Weniger anzeigen",
             "showMore": "{count} weitere anzeigen"
@@ -594,8 +599,8 @@
             "draft": "Entwurf",
             "published": "Veröffentlicht"
         },
-        "subtitle": "Anstehende Dienst-Veranstaltungen durchsuchen",
-        "title": "Veranstaltungen",
+        "subtitle": "Anstehende Aufgaben durchsuchen",
+        "title": "Aufgaben",
         "views": {
             "box": "Karten",
             "calendar": "Kalender",

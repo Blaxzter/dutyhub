@@ -111,7 +111,7 @@ const outsideEventWindow = computed(() => {
     <span>{{ t('duties.tasks.createView.schedule.outsideEventWindow', { range: eventWindow.label }) }}</span>
   </p>
   <div class="grid grid-cols-2 gap-4">
-    <div class="space-y-2">
+    <div class="space-y-2" data-testid="input-shift-duration">
       <Label>{{ t('duties.tasks.createView.schedule.slotDuration') }}</Label>
       <Select v-model="shiftDurationMinutes">
         <SelectTrigger>

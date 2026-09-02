@@ -443,6 +443,10 @@ async def _seed_bookings(
 
     The roster is kept per shift rather than a count, because ``_seed_notifications``
     needs to name a colleague who is genuinely on the same shift.
+
+    One upcoming shift is exempted from both halves of that and left half
+    staffed on purpose — the guided tour needs a chip it can actually book. See
+    the block at the bottom of this function.
     """
     roster: dict[uuid.UUID, list[tuple[User, Booking]]] = {}
 
@@ -468,8 +472,32 @@ async def _seed_bookings(
     # the dashboard counter is never zero.
     upcoming = [s for s in shifts if s.date >= today]
     past_shifts = [s for s in shifts if s.date < today]
+
+    # …minus one shift, held back from everything below because the guided tour
+    # has to have something to press.
+    #
+    # The tour's book step opens the first *bookable* chip on the board, where
+    # bookable means: still to come, a place free on it, and not one the visitor
+    # already holds. Both halves of this function used to destroy precisely that
+    # chip. ``_pick_spread`` starts at index 0 and ``shifts`` is built task by
+    # task in ``_TASK_SPECS`` order, so ``upcoming[0]`` *is* the first upcoming
+    # shift of the first task — the guest was booked onto it every single time,
+    # and where they were not, the teammate loop above had usually filled it.
+    # The step that says "press Book" then pointed at a button
+    # ``ShiftDetailDialog`` had not rendered.
+    #
+    # A shift a whole day out is preferred to one starting today, because a chip
+    # whose start time has already gone by reads as a demo built last week.
+    first_task_id = shifts[0].task_id if shifts else None
+    on_first_task = [s for s in upcoming if s.task_id == first_task_id]
+    tour_shift = next(
+        (s for s in on_first_task if s.date > today),
+        on_first_task[0] if on_first_task else None,
+    )
+
+    guest_choices = [s for s in upcoming if s is not tour_shift]
     held: list[_GuestBooking] = []
-    for shift in _pick_spread(upcoming, 2) + _pick_spread(past_shifts, 1):
+    for shift in _pick_spread(guest_choices, 2) + _pick_spread(past_shifts, 1):
         # Make room for the guest on a shift the loop above already filled — by
         # dropping a teammate rather than by lowering a counter. Nothing has
         # been flushed yet, so expunging the pending row means its INSERT never
@@ -487,6 +515,24 @@ async def _seed_bookings(
                     co_workers=tuple(user for user, _ in on_it if user.id != owner.id),
                 )
             )
+
+    # And now leave that one shift genuinely half staffed: a place free, and —
+    # wherever the shift wants more than one pair of hands — a name already on
+    # it. The free place is what makes *Book shift* render at all; the name is
+    # what makes the step before it ("you would be the third of four rather than
+    # the only one") describe something the visitor can see on the roster.
+    #
+    # Trimming uses the same expunge trick as the loop above, for the same
+    # reason. Topping up, when the teammate loop happened to leave the shift
+    # empty, is deterministic rather than another ``rng`` draw — this runs after
+    # every generator call, so nothing upstream reshuffles.
+    if tour_shift is not None:
+        on_it = roster.setdefault(tour_shift.id, [])
+        while len(on_it) >= tour_shift.max_bookings:
+            db.expunge(on_it.pop()[1])
+        if not on_it and tour_shift.max_bookings > 1 and teammates:
+            _book(tour_shift, teammates[0])
+
     return held
 
 
